@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>DelivUz</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0f1e;--card:#111827;--card2:#1a2235;--border:#1f2d45;
+  --accent:#3b82f6;--green:#10b981;--text:#f1f5f9;--sub:#94a3b8;--muted:#475569;
+}
+html,body{height:100%;width:100%;font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;touch-action:manipulation}
+
+/* ROLE */
+#roleScreen{
+  position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;padding:24px;
+  background:radial-gradient(ellipse at 30% 20%,#1e3a5f55,transparent 55%),
+             radial-gradient(ellipse at 70% 80%,#06402244,transparent 55%),var(--bg);
+}
+.logo-ani{font-size:64px;animation:flt 3s ease-in-out infinite;margin-bottom:8px}
+@keyframes flt{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.brand{font-size:36px;font-weight:900;letter-spacing:-1px}
+.brand b{color:var(--accent)}
+.tagline{color:var(--sub);font-size:13px;margin:6px 0 36px;text-align:center}
+.rbtn{
+  width:100%;max-width:320px;padding:18px 22px;border-radius:18px;border:none;
+  font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;
+  display:flex;align-items:center;gap:14px;margin-bottom:12px;
+  transition:transform .15s,box-shadow .15s;
+}
+.rbtn:active{transform:scale(.96)}
+.rbtn.m{background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;box-shadow:0 8px 28px #3b82f640}
+.rbtn.d{background:linear-gradient(135deg,#065f46,#10b981);color:#fff;box-shadow:0 8px 28px #10b98140}
+.rbtn .ico{font-size:28px}
+.rbtn .tx small{display:block;font-size:11px;font-weight:600;opacity:.75;margin-top:2px}
+
+/* HEADER */
+#hdr{
+  position:fixed;top:0;left:0;right:0;z-index:500;height:48px;
+  background:var(--card);border-bottom:1px solid var(--border);
+  padding:0 14px;display:none;align-items:center;justify-content:space-between;
+}
+.hbrand{font-size:18px;font-weight:900}.hbrand b{color:var(--accent)}
+.hback{background:var(--card2);border:1px solid var(--border);color:var(--sub);
+  border-radius:9px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Nunito',sans-serif}
+.htag{font-size:11px;font-weight:800;padding:3px 10px;border-radius:20px}
+.htag.m{background:#1d4ed820;color:var(--accent);border:1px solid #1d4ed840}
+.htag.d{background:#06402220;color:var(--green);border:1px solid #06402240}
+
+/* MAP CANVAS */
+#mapWrap{position:fixed;top:48px;left:0;right:0;bottom:0;display:none;overflow:hidden}
+#mapCanvas{position:absolute;top:0;left:0;cursor:crosshair;touch-action:none}
+
+/* MAP UI */
+.zoom-btns{
+  position:absolute;right:12px;top:12px;z-index:10;
+  display:flex;flex-direction:column;gap:4px;
+}
+.zbtn{
+  width:36px;height:36px;background:var(--card);border:1px solid var(--border);
+  border-radius:9px;color:var(--text);font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;font-weight:700;
+  box-shadow:0 2px 8px #00000050;
+}
+
+/* MIJOZ PANEL */
+#mPanel{
+  position:fixed;bottom:0;left:0;right:0;z-index:400;
+  background:var(--card);border-top:1px solid var(--border);
+  border-radius:22px 22px 0 0;padding:14px 16px 28px;
+  box-shadow:0 -8px 40px #00000088;display:none;
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+  max-height:80vh;overflow-y:auto;
+}
+#mPanel.col{transform:translateY(calc(100% - 52px))}
+.drag{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 12px;cursor:pointer}
+.ptitle{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+
+.pzone{
+  border:2px dashed var(--border);border-radius:12px;padding:18px;
+  text-align:center;cursor:pointer;position:relative;overflow:hidden;
+  transition:border-color .2s,background .2s;margin-bottom:10px;
+}
+.pzone:active{background:#1d4ed810}
+.pzone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.pzone .pi{font-size:32px;margin-bottom:4px}
+.pzone .pt{font-size:13px;color:var(--sub);font-weight:700}
+.pzone .ps{font-size:11px;color:var(--muted);margin-top:2px}
+#prev{width:100%;height:130px;object-fit:cover;border-radius:12px;display:none;margin-bottom:10px;border:2px solid var(--border)}
+
+.row{display:flex;gap:8px;margin-bottom:9px}
+.fi{
+  flex:1;background:var(--card2);border:1px solid var(--border);border-radius:11px;
+  padding:11px 13px;color:var(--text);font-family:'Nunito',sans-serif;
+  font-size:13px;font-weight:600;outline:none;transition:border-color .2s;
+}
+.fi:focus{border-color:var(--accent)}
+.fi::placeholder{color:var(--muted)}
+.gpsbtn{
+  background:var(--card2);border:1px solid var(--border);border-radius:11px;
+  padding:11px 13px;font-size:17px;cursor:pointer;flex-shrink:0;
+}
+.mhint{font-size:11px;color:var(--muted);text-align:center;margin-bottom:9px;transition:color .3s}
+.sbtn{
+  width:100%;padding:14px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);
+  border:none;border-radius:13px;color:#fff;font-family:'Nunito',sans-serif;
+  font-size:14px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px #3b82f640;
+  transition:transform .15s,opacity .2s;
+}
+.sbtn:active{transform:scale(.97)}
+.sbtn:disabled{opacity:.3;cursor:not-allowed}
+
+/* DRIVER HINT */
+#drvHint{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:10px 18px;font-size:13px;font-weight:700;color:var(--sub);
+  z-index:300;white-space:nowrap;box-shadow:0 6px 24px #00000060;
+  display:none;transition:opacity .5s;
+}
+#drvHint b{color:var(--green)}
+
+/* POPUP */
+#popup{
+  position:fixed;inset:0;z-index:600;display:none;
+  align-items:flex-end;justify-content:center;
+  background:#00000090;backdrop-filter:blur(6px);
+}
+.pcard{
+  background:var(--card);border-radius:22px 22px 0 0;
+  width:100%;max-width:460px;padding:18px 18px 30px;
+  animation:sup .3s cubic-bezier(.4,0,.2,1);
+  max-height:88vh;overflow-y:auto;
+}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.pdrag{width:36px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 14px}
+.pimg{width:100%;height:175px;object-fit:cover;border-radius:13px;margin-bottom:12px;border:2px solid var(--border)}
+.pnoimg{width:100%;height:110px;background:var(--card2);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:48px;margin-bottom:12px;border:2px solid var(--border)}
+.pbadge{display:inline-block;background:#1d4ed820;color:var(--accent);border:1px solid #1d4ed840;border-radius:20px;padding:3px 10px;font-size:11px;font-weight:800;margin-bottom:8px}
+.pname{font-size:18px;font-weight:900;margin-bottom:4px}
+.pdesc{font-size:13px;color:var(--sub);margin-bottom:13px;line-height:1.6}
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:15px}
+.icell{background:var(--card2);border-radius:10px;padding:10px 12px}
+.icell .il{font-size:10px;color:var(--muted);font-weight:700;margin-bottom:3px}
+.icell .iv{font-size:13px;font-weight:800}
+.arow{display:flex;gap:8px}
+.cbtn{flex:1;padding:13px;background:var(--card2);border:1px solid var(--border);border-radius:12px;color:var(--text);font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px}
+.abtn{flex:2;padding:13px;background:linear-gradient(135deg,#065f46,#10b981);border:none;border-radius:12px;color:#fff;font-family:'Nunito',sans-serif;font-size:13px;font-weight:800;cursor:pointer;box-shadow:0 6px 20px #10b98140;display:flex;align-items:center;justify-content:center;gap:6px}
+.abtn:active{transform:scale(.97)}
+.xbtn{width:100%;margin-top:10px;background:none;border:none;color:var(--muted);font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;padding:8px}
+
+/* TOAST */
+.toast{
+  position:fixed;top:58px;left:50%;transform:translateX(-50%);
+  background:var(--green);color:#fff;border-radius:10px;padding:10px 18px;
+  font-size:13px;font-weight:800;z-index:900;white-space:nowrap;
+  pointer-events:none;box-shadow:0 6px 20px #10b98150;
+  animation:tin .3s ease,tout .3s 2.5s ease forwards;
+}
+@keyframes tin{from{opacity:0;transform:translate(-50%,-10px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes tout{to{opacity:0}}
+</style>
+</head>
+<body>
+
+<!-- ROLE -->
+<div id="roleScreen">
+  <div class="logo-ani">📦</div>
+  <div class="brand">Deliv<b>Uz</b></div>
+  <div class="tagline">Toshkent ↔ Viloyatlar · Tezkor dostavka</div>
+  <button class="rbtn m" onclick="enter('mijoz')">
+    <span class="ico">🛍️</span>
+    <span class="tx">Mijoz<small>Buyum yuboring</small></span>
+  </button>
+  <button class="rbtn d" onclick="enter('driver')">
+    <span class="ico">🚗</span>
+    <span class="tx">Haydovchi<small>Buyurtmalarni ko'ring</small></span>
+  </button>
+</div>
+
+<!-- HEADER -->
+<div id="hdr">
+  <button class="hback" onclick="location.reload()">← Chiqish</button>
+  <div class="hbrand">Deliv<b>Uz</b></div>
+  <div class="htag" id="htag"></div>
+</div>
+
+<!-- MAP -->
+<div id="mapWrap">
+  <canvas id="mapCanvas"></canvas>
+  <div class="zoom-btns">
+    <button class="zbtn" onclick="zoom(1)">+</button>
+    <button class="zbtn" onclick="zoom(-1)">−</button>
+  </div>
+</div>
+
+<!-- MIJOZ PANEL -->
+<div id="mPanel" class="col">
+  <div class="drag" onclick="togglePanel()"></div>
+  <div class="ptitle">📦 Buyurtma qo'shish</div>
+  <div class="pzone" id="pzone">
+    <input type="file" accept="image/*" capture="environment" onchange="onPhoto(event)"/>
+    <div class="pi">📸</div>
+    <div class="pt">Buyumni rasmga oling</div>
+    <div class="ps">Kamera yoki galereya</div>
+  </div>
+  <img id="prev"/>
+  <div class="row">
+    <input class="fi" id="iname" placeholder="Tovar nomi (kiyim, telefon...)" oninput="chk()"/>
+  </div>
+  <div class="row">
+    <input class="fi" id="icity" placeholder="Qayerga (Samarqand, Farg'ona...)" oninput="chk()"/>
+    <button class="gpsbtn" onclick="gps()">📍</button>
+  </div>
+  <input class="fi" id="inote" placeholder="Izoh (ixtiyoriy)" style="width:100%;margin-bottom:9px"/>
+  <div class="mhint" id="mhint">🗺️ Xaritaga bosib joylashuvni belgilang</div>
+  <button class="sbtn" id="sbtn" onclick="postOrder()" disabled>🗺️ Xaritaga joylashtirish</button>
+</div>
+
+<!-- DRIVER HINT -->
+<div id="drvHint"></div>
+
+<!-- POPUP -->
+<div id="popup" onclick="if(event.target===this)closePopup()">
+  <div class="pcard" id="pcard"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CANVAS MAP ENGINE
+// ═══════════════════════════════════════════════
+
+const TASHKENT = {lat:41.2995, lng:69.2401};
+let cv, ctx, W, H;
+let camLat=TASHKENT.lat, camLng=TASHKENT.lng, scale=200000;
+let isDragging=false, lastX=0, lastY=0;
+let orders=[], role=null, photo=null, pinLat=null, pinLng=null, panelOpen=false;
+let activePopupOrder=null;
+
+// Demo orders
+const demoOrders=[
+  {id:'d1',lat:41.3120,lng:69.2700,item:"Kiyim to'plami",to:"Samarqand",note:"Ehtiyotkorlik bilan",photo:null,sender:"Jasur T.",phone:"+998901234567",weight:"2 kg",price:"60 000 so'm",color:'#10b981'},
+  {id:'d2',lat:41.2820,lng:69.2100,item:"iPhone 14",to:"Farg'ona",note:"Qadoqlangan, sinmasin",photo:null,sender:"Malika R.",phone:"+998907654321",weight:"0.5 kg",price:"70 000 so'm",color:'#10b981'},
+  {id:'d3',lat:41.3350,lng:69.3200,item:"Hujjatlar paketi",to:"Andijon",note:"Shoshilinch",photo:null,sender:"Bobur K.",phone:"+998935551122",weight:"0.1 kg",price:"75 000 so'm",color:'#10b981'},
+  {id:'d4',lat:41.2600,lng:69.1800,item:"Oziq-ovqat",to:"Namangan",note:"Sovuq saqlang",photo:null,sender:"Dilnoza S.",phone:"+998941237788",weight:"5 kg",price:"72 000 so'm",color:'#10b981'},
+];
+
+// lat/lng → canvas pixel
+function latLngToXY(lat,lng){
+  const x=W/2+(lng-camLng)*scale;
+  const y=H/2-(lat-camLat)*scale;
+  return{x,y};
+}
+function xyToLatLng(x,y){
+  return{lat:camLat+(H/2-y)/scale, lng:camLng+(x-W/2)/scale};
+}
+
+function initCanvas(){
+  cv=document.getElementById('mapCanvas');
+  const wrap=document.getElementById('mapWrap');
+  W=cv.width=wrap.clientWidth;
+  H=cv.height=wrap.clientHeight;
+  ctx=cv.getContext('2d');
+  draw();
+
+  // Mouse / Touch events
+  cv.addEventListener('mousedown',e=>{isDragging=true;lastX=e.clientX;lastY=e.clientY});
+  cv.addEventListener('mousemove',e=>{
+    if(!isDragging)return;
+    camLng-=(e.clientX-lastX)/scale;
+    camLat+=(e.clientY-lastY)/scale;
+    lastX=e.clientX;lastY=e.clientY;
+    draw();
+  });
+  cv.addEventListener('mouseup',()=>isDragging=false);
+  cv.addEventListener('click',e=>{
+    if(role==='mijoz') handleMapClick(e.offsetX,e.offsetY);
+    else handleDriverClick(e.offsetX,e.offsetY);
+  });
+
+  // Touch
+  let t0=null;
+  cv.addEventListener('touchstart',e=>{
+    isDragging=true;
+    t0={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    lastX=t0.x;lastY=t0.y;
+  },{passive:true});
+  cv.addEventListener('touchmove',e=>{
+    if(!isDragging||!t0)return;
+    const dx=e.touches[0].clientX-lastX;
+    const dy=e.touches[0].clientY-lastY;
+    camLng-=dx/scale;
+    camLat+=dy/scale;
+    lastX=e.touches[0].clientX;
+    lastY=e.touches[0].clientY;
+    draw();
+  },{passive:true});
+  cv.addEventListener('touchend',e=>{
+    isDragging=false;
+    if(t0){
+      const dx=e.changedTouches[0].clientX-t0.x;
+      const dy=e.changedTouches[0].clientY-t0.y;
+      if(Math.abs(dx)<8&&Math.abs(dy)<8){
+        const r=cv.getBoundingClientRect();
+        const ox=e.changedTouches[0].clientX-r.left;
+        const oy=e.changedTouches[0].clientY-r.top;
+        if(role==='mijoz') handleMapClick(ox,oy);
+        else handleDriverClick(ox,oy);
+      }
+    }
+    t0=null;
+  });
+
+  window.addEventListener('resize',()=>{
+    W=cv.width=wrap.clientWidth;
+    H=cv.height=wrap.clientHeight;
+    draw();
+  });
+}
+
+// ── DRAW ──────────────────────────────────────────────────
+function draw(){
+  ctx.clearRect(0,0,W,H);
+
+  // Background
+  ctx.fillStyle='#0d1829';
+  ctx.fillRect(0,0,W,H);
+
+  drawGrid();
+  drawRoads();
+  drawCityLabels();
+  drawOrders();
+  if(pinLat!==null) drawPin();
+}
+
+function drawGrid(){
+  ctx.strokeStyle='#1a2640';
+  ctx.lineWidth=1;
+  const step=0.05;
+  const startLng=Math.floor((camLng-W/scale/2)/step)*step;
+  const startLat=Math.floor((camLat-H/scale/2)/step)*step;
+  for(let ln=startLng;ln<camLng+W/scale/2;ln+=step){
+    const {x}=latLngToXY(camLat,ln);
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke();
+  }
+  for(let la=startLat;la<camLat+H/scale/2;la+=step){
+    const {y}=latLngToXY(la,camLng);
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();
+  }
+}
+
+const roads=[
+  // Main streets Tashkent (simplified)
+  [[41.3200,69.1800],[41.2900,69.2500],[41.2600,69.3200]],
+  [[41.2500,69.1900],[41.2900,69.2200],[41.3300,69.2800]],
+  [[41.3100,69.1500],[41.3000,69.2400],[41.2800,69.3100]],
+  [[41.2400,69.2000],[41.2900,69.2400],[41.3400,69.2600]],
+  [[41.2800,69.1800],[41.2950,69.2400],[41.3100,69.3000]],
+];
+
+function drawRoads(){
+  roads.forEach((road,i)=>{
+    ctx.beginPath();
+    ctx.strokeStyle= i<2 ? '#243352' : '#1e2d42';
+    ctx.lineWidth= i<2 ? 3 : 1.5;
+    road.forEach(([la,ln],j)=>{
+      const {x,y}=latLngToXY(la,ln);
+      j===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    });
+    ctx.stroke();
+  });
+}
+
+const cities=[
+  {name:"Toshkent",lat:41.2995,lng:69.2401,r:18,color:'#1d4ed860'},
+  {name:"Yunusobod",lat:41.3350,lng:69.2800,r:8,color:'#1e293b'},
+  {name:"Chilonzor",lat:41.2800,lng:69.1900,r:8,color:'#1e293b'},
+  {name:"Mirzo Ulug'bek",lat:41.3100,lng:69.3100,r:7,color:'#1e293b'},
+  {name:"Sergeli",lat:41.2300,lng:69.2500,r:6,color:'#1e293b'},
+];
+
+function drawCityLabels(){
+  cities.forEach(c=>{
+    const {x,y}=latLngToXY(c.lat,c.lng);
+    // blob
+    ctx.beginPath();
+    ctx.arc(x,y,c.r,0,Math.PI*2);
+    ctx.fillStyle=c.color;
+    ctx.fill();
+    // label
+    ctx.fillStyle='#64748b';
+    ctx.font=`600 ${c.r>10?12:10}px Nunito,sans-serif`;
+    ctx.textAlign='center';
+    ctx.fillText(c.name,x,y+c.r+12);
+  });
+
+  // Compass
+  ctx.fillStyle='#2a3a52';
+  ctx.font='bold 11px Nunito,sans-serif';
+  ctx.textAlign='left';
+  ctx.fillText('N ↑',12,H-12);
+}
+
+function drawOrders(){
+  const list=role==='driver'?demoOrders:orders;
+  list.forEach(o=>{
+    const {x,y}=latLngToXY(o.lat,o.lng);
+    drawMarker(x,y,o.color||'#3b82f6');
+  });
+}
+
+function drawMarker(x,y,clr){
+  // Shadow
+  ctx.beginPath();
+  ctx.arc(x,y+2,14,0,Math.PI*2);
+  ctx.fillStyle='rgba(0,0,0,0.4)';
+  ctx.fill();
+  // Circle
+  ctx.beginPath();
+  ctx.arc(x,y,14,0,Math.PI*2);
+  ctx.fillStyle=clr;
+  ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,0.9)';
+  ctx.lineWidth=2.5;
+  ctx.stroke();
+  // Emoji
+  ctx.font='14px serif';
+  ctx.textAlign='center';
+  ctx.fillStyle='#fff';
+  ctx.fillText('📦',x,y+5);
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(x-7,y+11);
+  ctx.lineTo(x+7,y+11);
+  ctx.lineTo(x,y+22);
+  ctx.closePath();
+  ctx.fillStyle=clr;
+  ctx.fill();
+}
+
+function drawPin(){
+  const {x,y}=latLngToXY(pinLat,pinLng);
+  // Pulse ring
+  ctx.beginPath();
+  ctx.arc(x,y,20,0,Math.PI*2);
+  ctx.strokeStyle='rgba(59,130,246,0.3)';
+  ctx.lineWidth=4;
+  ctx.stroke();
+  // Circle
+  ctx.beginPath();
+  ctx.arc(x,y,13,0,Math.PI*2);
+  ctx.fillStyle='#3b82f6';
+  ctx.fill();
+  ctx.strokeStyle='#fff';
+  ctx.lineWidth=2.5;
+  ctx.stroke();
+  // Icon
+  ctx.font='13px serif';
+  ctx.textAlign='center';
+  ctx.fillText('📍',x,y+5);
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(x-6,y+10);
+  ctx.lineTo(x+6,y+10);
+  ctx.lineTo(x,y+20);
+  ctx.closePath();
+  ctx.fillStyle='#3b82f6';
+  ctx.fill();
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────
+function handleMapClick(ox,oy){
+  const {lat,lng}=xyToLatLng(ox,oy);
+  pinLat=lat;pinLng=lng;
+  document.getElementById('mhint').style.color='#10b981';
+  document.getElementById('mhint').textContent='✅ Joylashuv belgilandi!';
+  draw();chk();
+}
+
+function handleDriverClick(ox,oy){
+  for(const o of demoOrders){
+    const {x,y}=latLngToXY(o.lat,o.lng);
+    const dist=Math.sqrt((ox-x)**2+(oy-y)**2);
+    if(dist<28){showPopup(o);return;}
+  }
+  for(const o of orders){
+    const {x,y}=latLngToXY(o.lat,o.lng);
+    const dist=Math.sqrt((ox-x)**2+(oy-y)**2);
+    if(dist<28){showPopup(o);return;}
+  }
+}
+
+function zoom(dir){
+  scale*=dir>0?1.4:0.7;
+  scale=Math.min(Math.max(scale,30000),800000);
+  draw();
+}
+
+// ── GPS ───────────────────────────────────────────────────
+function gps(){
+  toast('📍 Aniqlanmoqda...');
+  if(!navigator.geolocation){setPin(TASHKENT.lat,TASHKENT.lng);return;}
+  navigator.geolocation.getCurrentPosition(
+    p=>{camLat=p.coords.latitude;camLng=p.coords.longitude;pinLat=camLat;pinLng=camLng;draw();chk();toast('✅ Joylashuv topildi!');},
+    ()=>{setPin(TASHKENT.lat,TASHKENT.lng);toast('📍 Toshkent belgisi qo\'yildi');}
+  );
+}
+function setPin(la,ln){pinLat=la;pinLng=ln;camLat=la;camLng=ln;draw();chk();}
+
+// ── PHOTO ─────────────────────────────────────────────────
+function onPhoto(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{
+    photo=ev.target.result;
+    const p=document.getElementById('prev');
+    p.src=photo;p.style.display='block';
+    document.getElementById('pzone').style.display='none';
+    chk();
+  };
+  r.readAsDataURL(f);
+}
+
+function chk(){
+  const ok=document.getElementById('iname').value.trim()&&document.getElementById('icity').value.trim()&&pinLat!==null;
+  document.getElementById('sbtn').disabled=!ok;
+}
+
+// ── POST ORDER ────────────────────────────────────────────
+function postOrder(){
+  orders.push({
+    id:'o'+Date.now(),
+    lat:pinLat,lng:pinLng,
+    item:document.getElementById('iname').value.trim(),
+    to:document.getElementById('icity').value.trim(),
+    note:document.getElementById('inote').value.trim(),
+    photo,
+    sender:"Siz",phone:"+998901112233",
+    weight:"—",price:"Bepul",color:'#3b82f6'
+  });
+  // reset
+  document.getElementById('iname').value='';
+  document.getElementById('icity').value='';
+  document.getElementById('inote').value='';
+  document.getElementById('prev').style.display='none';
+  document.getElementById('pzone').style.display='block';
+  document.getElementById('mhint').style.color='';
+  document.getElementById('mhint').textContent='🗺️ Xaritaga bosib joylashuvni belgilang';
+  photo=null;pinLat=null;pinLng=null;
+  document.getElementById('sbtn').disabled=true;
+  draw();
+  togglePanel();
+  toast('✅ Buyurtma xaritaga joylandi!');
+}
+
+// ── POPUP ─────────────────────────────────────────────────
+function showPopup(o){
+  activePopupOrder=o;
+  const img=o.photo?`<img src="${o.photo}" class="pimg"/>`:`<div class="pnoimg">📦</div>`;
+  document.getElementById('pcard').innerHTML=`
+    <div class="pdrag"></div>
+    ${img}
+    <div class="pbadge">📦 Yangi buyurtma</div>
+    <div class="pname">${o.item}</div>
+    <div class="pdesc">🎯 <b>Qayerga:</b> ${o.to}${o.note?'<br>📝 '+o.note:''}</div>
+    <div class="igrid">
+      <div class="icell"><div class="il">👤 YUBORUVCHI</div><div class="iv">${o.sender}</div></div>
+      <div class="icell"><div class="il">⚖️ OG'IRLIK</div><div class="iv">${o.weight}</div></div>
+      <div class="icell"><div class="il">💰 NARX</div><div class="iv" style="color:#10b981">${o.price}</div></div>
+      <div class="icell"><div class="il">📞 TELEFON</div><div class="iv">${o.phone}</div></div>
+    </div>
+    <div class="arow">
+      <button class="cbtn" onclick="window.location.href='tel:${o.phone}'">📞 Qo'ng'iroq</button>
+      <button class="cbtn" onclick="chatAction()">💬 Chat</button>
+      <button class="abtn" onclick="acceptOrder()">✅ Qabul qilish</button>
+    </div>
+    <button class="xbtn" onclick="closePopup()">Yopish ✕</button>`;
+  document.getElementById('popup').style.display='flex';
+}
+function closePopup(){document.getElementById('popup').style.display='none';}
+function chatAction(){toast('💬 Telegram chat ochildi!');closePopup();}
+function acceptOrder(){toast('🎉 Buyurtma qabul qilindi!');closePopup();}
+
+// ── PANEL ─────────────────────────────────────────────────
+function togglePanel(){
+  panelOpen=!panelOpen;
+  document.getElementById('mPanel').classList.toggle('col',!panelOpen);
+}
+
+// ── ENTER ─────────────────────────────────────────────────
+function enter(r){
+  role=r;
+  document.getElementById('roleScreen').style.display='none';
+  document.getElementById('hdr').style.display='flex';
+  document.getElementById('mapWrap').style.display='block';
+  const t=document.getElementById('htag');
+  t.textContent=r==='mijoz'?'🛍️ Mijoz':'🚗 Haydovchi';
+  t.className='htag '+(r==='mijoz'?'m':'d');
+
+  if(r==='mijoz'){
+    document.getElementById('mPanel').style.display='block';
+    setTimeout(togglePanel,700);
+  } else {
+    const h=document.getElementById('drvHint');
+    h.style.display='block';
+    h.innerHTML=`📦 <b>${demoOrders.length} ta buyurtma</b> xaritada · Markerlarga bosing`;
+    setTimeout(()=>{ h.style.opacity='0'; setTimeout(()=>h.style.display='none',500); },5000);
+  }
+
+  // start canvas after DOM is visible
+  requestAnimationFrame(()=>{ initCanvas(); });
+}
+
+// ── TOAST ─────────────────────────────────────────────────
+function toast(msg){
+  const t=document.createElement('div');
+  t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+// animation loop for pulse effect
+function loop(){draw();requestAnimationFrame(loop);}
+// started after enter()
+</script>
+</body>
+</html>
