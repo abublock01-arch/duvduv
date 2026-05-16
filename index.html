@@ -137,7 +137,7 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 </div>
 
 <!-- TO'G'RIDAN KAMERA -->
-<input type="file" accept="image/*" capture="camera" id="photoInput" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" onchange="onPhotoSelected(event)">
+<input type="file" accept="image/*;capture=camera" id="photoInput" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" onchange="onPhotoSelected(event)">
 
 <div class="sheet-overlay" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
   <div class="sheet sheet--send" onclick="event.stopPropagation()">
