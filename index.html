@@ -375,11 +375,16 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .zone-placeholder{
   position:absolute;inset:0;display:flex;flex-direction:column;
   align-items:center;justify-content:center;gap:10px;
-  background:#FAFAFA;pointer-events:none;
+  background:#FAFAFA;
 }
 .zone-placeholder.hidden{display:none}
 .zone-placeholder svg{width:28px;height:28px;stroke:#D35400;stroke-width:2;fill:none}
 .zone-placeholder span{color:#A1A1AA;font-size:12px;font-weight:600}
+.zone-placeholder-btn{
+  margin-top:4px;padding:10px 18px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;pointer-events:auto;
+}
 .upload-actions{
   width:100%;display:flex;align-items:center;justify-content:center;
   gap:28px;
@@ -530,14 +535,15 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         <img class="upload-preview" id="photoPreview" alt="Olingan rasm">
         <div class="zone-placeholder" id="zonePlaceholder">
           <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-          <span>Kamera yuklanmoqda…</span>
+          <span id="zonePlaceholderText">Kamera yuklanmoqda…</span>
+          <button type="button" class="zone-placeholder-btn" onclick="openGallery()">Galereyadan tanlash</button>
         </div>
         <div class="camera-fallback" id="cameraFallback" hidden>
           <p>Kameraga ruxsat bering yoki galereyadan tanlang</p>
           <button type="button" onclick="openGallery()">Galereyadan tanlash</button>
         </div>
       </div>
-      <input type="file" accept="image/*" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
+      <input type="file" accept="image/*" capture="environment" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
     </div>
     <div class="upload-actions">
       <button type="button" class="gallery-btn" onclick="openGallery()" aria-label="Galereya">
@@ -716,6 +722,56 @@ function acceptOrder(){
 }
 
 const shipments = [];
+let cameraStream = null;
+let facingMode = 'environment';
+let previewObjectUrl = null;
+let selectedPhotoFile = null;
+let cameraSession = 0;
+
+function getUserMediaWithTimeout(constraints, ms){
+  return new Promise((resolve, reject) => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      reject(new Error('unsupported'));
+      return;
+    }
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('timeout'));
+    }, ms);
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(stream => {
+        if (settled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        resolve(stream);
+      })
+      .catch(err => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
+function showCameraFallback(msg){
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  const video = document.getElementById('cameraVideo');
+  stopCamera();
+  video.classList.remove('active');
+  placeholder.classList.add('hidden');
+  fallback.hidden = false;
+  if (msg) {
+    const p = fallback.querySelector('p');
+    if (p) p.textContent = msg;
+  }
+}
 
 function persistData(){
   try {
@@ -792,12 +848,13 @@ function openOrder(){
   overlay.classList.remove('closing');
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
-  setTimeout(startCamera, 280);
+  startCamera();
 }
 
 function closeUpload(){
   const overlay = document.getElementById('uploadOverlay');
   if (!overlay.classList.contains('open')) return;
+  cameraSession++;
   overlay.classList.remove('open');
   overlay.classList.add('closing');
   stopCamera();
@@ -812,32 +869,57 @@ async function startCamera(){
   const video = document.getElementById('cameraVideo');
   const fallback = document.getElementById('cameraFallback');
   const placeholder = document.getElementById('zonePlaceholder');
+  const placeholderText = document.getElementById('zonePlaceholderText');
   const preview = document.getElementById('photoPreview');
   if (preview.classList.contains('visible')) return;
 
+  const session = ++cameraSession;
   stopCamera();
   fallback.hidden = true;
   placeholder.classList.remove('hidden');
+  if (placeholderText) placeholderText.textContent = 'Kamera yuklanmoqda…';
 
   if (!navigator.mediaDevices?.getUserMedia) {
-    fallback.hidden = false;
-    placeholder.classList.add('hidden');
+    showCameraFallback('Kamera qo\'llab-quvvatlanmaydi — galereyadan tanlang');
     return;
   }
 
+  const constraintsList = [
+    { video: { facingMode: { exact: facingMode } }, audio: false },
+    { video: { facingMode: { ideal: facingMode } }, audio: false },
+    { video: true, audio: false }
+  ];
+
   try {
-    cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: facingMode } }, audio: false
-    });
+    let stream = null;
+    for (const constraints of constraintsList) {
+      if (session !== cameraSession) return;
+      try {
+        stream = await getUserMediaWithTimeout(constraints, 8000);
+        break;
+      } catch (_) {}
+    }
+    if (!stream) throw new Error('no stream');
+    if (session !== cameraSession) {
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+    cameraStream = stream;
     video.srcObject = cameraStream;
-    await video.play();
+    await Promise.race([
+      video.play(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('play timeout')), 5000))
+    ]);
+    if (session !== cameraSession) return;
     video.classList.add('active');
     placeholder.classList.add('hidden');
   } catch (err) {
     console.warn('Camera error:', err);
-    video.classList.remove('active');
-    fallback.hidden = false;
-    placeholder.classList.add('hidden');
+    if (session !== cameraSession) return;
+    const msg = err && err.message === 'timeout'
+      ? 'Kamera javob bermadi — galereyadan tanlang'
+      : 'Kameraga ruxsat bering yoki galereyadan tanlang';
+    showCameraFallback(msg);
   }
 }
 
