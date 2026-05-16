@@ -121,8 +121,51 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   text-shadow:0 1px 2px rgba(0,0,0,.05);flex-shrink:0;
 }
 
+/* Jo'natmalar ro'yxati */
+.sender-empty{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  width:100%;min-height:0;overflow:hidden;
+}
+.sender-empty.hidden{display:none}
+.shipments-wrap{
+  flex:1;display:none;flex-direction:column;
+  width:100%;min-height:0;overflow:hidden;padding-top:4px;
+}
+.shipments-wrap.visible{display:flex}
+.shipments-head{
+  font-size:13px;font-weight:700;color:#D35400;
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:12px;flex-shrink:0;
+}
+.shipments-list{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;
+  gap:10px;padding-bottom:8px;-webkit-overflow-scrolling:touch;
+}
+.shipment-card{
+  display:flex;align-items:center;gap:14px;padding:12px 14px;
+  background:#fff;border:1px solid #F0F0F0;border-radius:16px;
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+}
+.shipment-thumb{
+  width:56px;height:56px;border-radius:12px;object-fit:cover;
+  border:1px solid #EEE;flex-shrink:0;
+}
+.shipment-body{flex:1;min-width:0}
+.shipment-dest{
+  font-size:16px;font-weight:700;color:#111;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;
+}
+.shipment-status{
+  display:inline-block;font-size:12px;font-weight:700;color:#16a34a;
+  background:rgba(22,163,74,.12);padding:4px 10px;border-radius:100px;
+}
+
 /* CTA */
-.cta-wrap{flex:1;display:flex;align-items:flex-end;padding-bottom:max(32px,env(safe-area-inset-bottom));width:100%}
+.cta-wrap{
+  flex-shrink:0;width:100%;
+  padding:12px 0 max(24px,env(safe-area-inset-bottom));
+  background:#fff;
+}
 .cta-btn{
   width:100%;height:64px;
   background:linear-gradient(to bottom,#2A2A2A,#111);
@@ -422,6 +465,7 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
       <!-- SENDER -->
       <div id="senderView">
+        <div class="sender-empty" id="senderEmpty">
         <div class="scene">
           <div class="road"><div class="road-line"></div></div>
           <div class="camera">
@@ -450,6 +494,12 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         <h2 class="sender-title">
           RASMGA OLING<br>VA JO'NATING
         </h2>
+        </div>
+
+        <div class="shipments-wrap" id="shipmentsWrap">
+          <div class="shipments-head">Jo'natmalarim</div>
+          <div class="shipments-list" id="shipmentsList"></div>
+        </div>
 
         <div class="cta-wrap">
           <button class="cta-btn" onclick="openOrder()">
@@ -626,6 +676,37 @@ let cameraStream = null;
 let facingMode = 'environment';
 let previewObjectUrl = null;
 let selectedPhotoFile = null;
+const shipments = [];
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderShipments(){
+  const empty = document.getElementById('senderEmpty');
+  const wrap = document.getElementById('shipmentsWrap');
+  const list = document.getElementById('shipmentsList');
+  if (!empty || !wrap || !list) return;
+  if (!shipments.length) {
+    empty.classList.remove('hidden');
+    wrap.classList.remove('visible');
+    list.innerHTML = '';
+    return;
+  }
+  empty.classList.add('hidden');
+  wrap.classList.add('visible');
+  list.innerHTML = shipments.map(s => `
+    <div class="shipment-card">
+      <img class="shipment-thumb" src="${escapeHtml(s.thumbUrl)}" alt="">
+      <div class="shipment-body">
+        <div class="shipment-dest">${escapeHtml(s.dest)}</div>
+        <span class="shipment-status">${escapeHtml(s.status)}</span>
+      </div>
+    </div>
+  `).join('');
+}
 
 function openOrder(){
   const overlay = document.getElementById('uploadOverlay');
@@ -753,7 +834,9 @@ function resetUpload(){
   const fallback = document.getElementById('cameraFallback');
   const placeholder = document.getElementById('zonePlaceholder');
   input.value = '';
-  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl)) {
+    URL.revokeObjectURL(previewObjectUrl);
+  }
   previewObjectUrl = null;
   preview.src = '';
   preview.classList.remove('visible');
@@ -803,8 +886,22 @@ function submitOrder(e){
     showToast('Telefon va manzilni to\'ldiring');
     return;
   }
+  const thumbUrl = previewObjectUrl;
+  if (!thumbUrl) {
+    showToast('Avval rasm oling');
+    return;
+  }
   const btn = document.getElementById('sendSubmitBtn');
   btn.disabled = true;
+  shipments.unshift({
+    thumbUrl,
+    dest,
+    phone,
+    status: 'Aktiv'
+  });
+  previewObjectUrl = null;
+  selectedPhotoFile = null;
+  renderShipments();
   closeSendSheet();
   closeUpload();
   btn.disabled = false;
