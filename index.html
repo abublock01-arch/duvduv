@@ -215,89 +215,144 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 }
 .sheet-accept:active{transform:scale(.97)}
 
-/* ══ CAMERA OVERLAY ══ */
-.camera-overlay{
+/* ══ RASM YUKLASH — KONTENT MAYDONI (qizil ramka o'lchami) ══ */
+.upload-overlay{
   position:fixed;inset:0;z-index:200;
   pointer-events:none;
 }
-.camera-overlay.open{pointer-events:auto}
-.camera-backdrop{
+.upload-overlay.open,
+.upload-overlay.closing{pointer-events:auto}
+.upload-backdrop{
   position:absolute;inset:0;
   background:rgba(0,0,0,0);
   transition:background .4s cubic-bezier(.4,0,.2,1);
 }
-.camera-overlay.open .camera-backdrop{background:rgba(0,0,0,.72)}
-.camera-sheet{
-  position:absolute;left:0;right:0;bottom:0;
-  background:#111;border-radius:28px 28px 0 0;
-  transform:translateY(100%);
-  transition:transform .45s cubic-bezier(.32,.72,0,1);
+.upload-overlay.open .upload-backdrop{background:rgba(17,17,17,.35)}
+.upload-overlay.closing .upload-backdrop{background:rgba(0,0,0,0)}
+.upload-panel{
+  position:fixed;
+  left:20px;right:20px;
+  top:max(118px,calc(env(safe-area-inset-top) + 102px));
+  bottom:max(108px,calc(env(safe-area-inset-bottom) + 92px));
+  border-radius:36px;
+  background:#fff;
+  box-shadow:0 24px 64px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);
+  transform:scale(.15);
+  opacity:0;
+  transform-origin:center center;
+  transition:transform .5s cubic-bezier(.32,.72,0,1),opacity .35s ease;
   display:flex;flex-direction:column;
-  max-height:min(92dvh,100%);
   overflow:hidden;
-  box-shadow:0 -24px 48px rgba(0,0,0,.35);
+  will-change:transform,opacity;
 }
-.camera-overlay.open .camera-sheet{transform:translateY(0)}
-.camera-top{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:16px 20px 12px;
-  padding-top:max(16px,env(safe-area-inset-top));
+.upload-overlay.open .upload-panel{
+  transform:scale(1);
+  opacity:1;
 }
-.camera-title{color:#fff;font-size:17px;font-weight:700;letter-spacing:-.02em}
-.camera-close{
+.upload-overlay.closing .upload-panel{
+  transform:scale(.15);
+  opacity:0;
+  transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .25s ease;
+}
+.upload-inner{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:20px 20px 24px;
+  min-height:0;
+  opacity:0;
+  transition:opacity .25s ease .15s;
+}
+.upload-overlay.open .upload-inner{opacity:1}
+.upload-overlay.closing .upload-inner{opacity:0;transition-delay:0s}
+.upload-close{
+  position:absolute;top:14px;right:14px;
   width:40px;height:40px;border-radius:50%;
-  background:rgba(255,255,255,.12);border:none;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;
-}
-.camera-close svg{width:20px;height:20px;stroke:#fff;stroke-width:2.5;fill:none}
-.camera-viewport{
-  position:relative;width:100%;aspect-ratio:3/4;
-  background:#000;overflow:hidden;
-}
-.camera-viewport video{
-  width:100%;height:100%;object-fit:cover;display:block;
-}
-.camera-frame{
-  position:absolute;inset:24px;border:2px dashed rgba(255,255,255,.45);
-  border-radius:20px;pointer-events:none;
-}
-.camera-hint{
-  position:absolute;bottom:20px;left:0;right:0;text-align:center;
-  color:rgba(255,255,255,.85);font-size:14px;font-weight:600;
-  text-shadow:0 2px 8px rgba(0,0,0,.5);pointer-events:none;
-}
-.camera-controls{
-  display:flex;align-items:center;justify-content:center;gap:48px;
-  padding:28px 24px;
-  padding-bottom:max(28px,env(safe-area-inset-bottom));
-}
-.cam-gallery{
-  width:48px;height:48px;border-radius:12px;
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  background:#F4F4F5;border:none;
   display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:10;
+  transition:background .2s,transform .15s;
 }
-.cam-gallery svg{width:22px;height:22px;stroke:#fff;stroke-width:2;fill:none}
-.cam-shutter-btn{
-  width:76px;height:76px;border-radius:50%;
-  background:#fff;border:5px solid rgba(255,255,255,.35);
-  box-shadow:0 0 0 4px rgba(255,255,255,.15);
-  cursor:pointer;transition:transform .15s;
-  display:flex;align-items:center;justify-content:center;
+.upload-close:active{transform:scale(.92);background:#E8E8EB}
+.upload-close svg{width:20px;height:20px;stroke:#666;stroke-width:2.5;fill:none}
+.upload-title{
+  color:#111;font-size:20px;font-weight:800;
+  letter-spacing:-.03em;margin-bottom:6px;text-align:center;
+  padding-right:36px;padding-left:36px;
 }
-.cam-shutter-btn:active{transform:scale(.92)}
-.cam-shutter-inner{
-  width:58px;height:58px;border-radius:50%;background:#fff;
+.upload-sub{
+  color:#888;font-size:13px;font-weight:600;
+  margin-bottom:16px;text-align:center;
 }
-.cam-flip{
-  width:48px;height:48px;border-radius:50%;
-  background:rgba(255,255,255,.12);border:none;
-  display:flex;align-items:center;justify-content:center;cursor:pointer;
+.upload-zone{
+  width:100%;flex:1;min-height:0;
+  border:2px dashed #D4D4D8;
+  border-radius:28px;
+  position:relative;
+  overflow:hidden;
+  background:#111;
 }
-.cam-flip svg{width:24px;height:24px;stroke:#fff;stroke-width:2;fill:none}
+.upload-zone video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.upload-zone video.active{display:block}
+.upload-preview{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.upload-preview.visible{display:block}
 .camera-fallback{
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  color:rgba(255,255,255,.6);font-size:14px;font-weight:600;padding:24px;text-align:center;
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:20px;
+  background:#FAFAFA;text-align:center;
 }
+.camera-fallback[hidden]{display:none}
+.camera-fallback p{color:#666;font-size:13px;font-weight:600}
+.camera-fallback button{
+  padding:10px 18px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+}
+.zone-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;
+  background:#FAFAFA;pointer-events:none;
+}
+.zone-placeholder.hidden{display:none}
+.zone-placeholder svg{width:28px;height:28px;stroke:#D35400;stroke-width:2;fill:none}
+.zone-placeholder span{color:#A1A1AA;font-size:12px;font-weight:600}
+.upload-actions{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  gap:32px;padding-top:14px;flex-shrink:0;
+}
+.gallery-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.gallery-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.capture-btn{
+  width:72px;height:72px;border-radius:50%;
+  border:5px solid #E5E5E5;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+  transition:transform .15s;
+}
+.capture-btn:active{transform:scale(.92)}
+.capture-btn-inner{
+  width:56px;height:56px;border-radius:50%;background:#D35400;
+  transition:background .2s;
+}
+.capture-btn.captured .capture-btn-inner{background:#111}
+.flip-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.flip-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.upload-file-input{display:none}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -396,32 +451,40 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
     </div>
 </div>
 
-<!-- CAMERA -->
-<div class="camera-overlay" id="cameraOverlay">
-  <div class="camera-backdrop" onclick="closeCamera()"></div>
-  <div class="camera-sheet">
-    <div class="camera-top">
-      <span class="camera-title">Jo'natma rasmi</span>
-      <button class="camera-close" type="button" onclick="closeCamera()" aria-label="Yopish">
-        <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-      </button>
-    </div>
-    <div class="camera-viewport">
-      <video id="cameraVideo" autoplay playsinline muted></video>
-      <div class="camera-frame"></div>
-      <p class="camera-hint">Quti yoki konvertni ramka ichiga joylashtiring</p>
-      <div class="camera-fallback" id="cameraFallback" hidden>Kamera ruxsati kerak</div>
-    </div>
-    <div class="camera-controls">
-      <div class="cam-gallery">
-        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-      </div>
-      <button class="cam-shutter-btn" type="button" onclick="capturePhoto()" aria-label="Rasm olish">
-        <div class="cam-shutter-inner"></div>
-      </button>
-      <button class="cam-flip" type="button" onclick="flipCamera()" aria-label="Kamerani almashtirish">
-        <svg viewBox="0 0 24 24"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><polyline points="8 12 11 15 8 18"/><polyline points="16 6 13 9 16 12"/></svg>
-      </button>
+<!-- RASM YUKLASH -->
+<div class="upload-overlay" id="uploadOverlay">
+  <div class="upload-backdrop" onclick="closeUpload()"></div>
+  <div class="upload-panel">
+    <button class="upload-close" type="button" onclick="closeUpload()" aria-label="Yopish">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="upload-inner">
+      <h2 class="upload-title">Jo'natma rasmi</h2>
+      <p class="upload-sub">Qutini ramka ichida ko'ring va rasm oling</p>
+      <div class="upload-zone" id="uploadZone">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <img class="upload-preview" id="photoPreview" alt="Olingan rasm">
+        <div class="zone-placeholder" id="zonePlaceholder">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Kamera yuklanmoqda…</span>
+        <//div>>
+        <div class="camera-fallback" id="cameraFallback" hidden>
+          <p>Kameraga ruxsat bering yoki galereyadan tanlang</p>
+          <button type="button" onclick="openGallery()">Galereyadan tanlash</button>
+        <//div>>
+      <//div>>
+      <div class="upload-actions">
+        <button type="button" class="gallery-btn" onclick="openGallery()" aria-label="Galereya">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+        </button>
+        <button type="button" class="capture-btn" id="captureBtn" onclick="capturePhoto()" aria-label="Rasm olish">
+          <div class="capture-btn-inner"><//div>>
+        </button>
+        <button type="button" class="flip-btn" onclick="flipCamera()" aria-label="Kamerani almashtirish">
+          <svg viewBox="0 0 24 24"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><polyline points="8 12 11 15 8 18"/><polyline points="16 6 13 9 16 12"/></svg>
+        </button>
+      <//div>>
+      <input type="file" accept="image/*" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
     </div>
   </div>
 </div>
@@ -480,9 +543,6 @@ function acceptOrder(){
   setTimeout(()=>t.remove(),3000);
 }
 
-let cameraStream = null;
-let facingMode = 'environment';
-
 if (window.Telegram?.WebApp) {
   const tg = Telegram.WebApp;
   tg.ready();
@@ -492,34 +552,61 @@ if (window.Telegram?.WebApp) {
   tg.setBackgroundColor('#ffffff');
 }
 
+let cameraStream = null;
+let facingMode = 'environment';
+let previewObjectUrl = null;
+
 function openOrder(){
-  const overlay = document.getElementById('cameraOverlay');
+  const overlay = document.getElementById('uploadOverlay');
+  overlay.classList.remove('closing');
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
-  requestAnimationFrame(() => startCamera());
+  setTimeout(startCamera, 280);
 }
 
-function closeCamera(){
-  document.getElementById('cameraOverlay').classList.remove('open');
-  document.body.style.overflow = '';
+function closeUpload(){
+  const overlay = document.getElementById('uploadOverlay');
+  if (!overlay.classList.contains('open')) return;
+  overlay.classList.remove('open');
+  overlay.classList.add('closing');
   stopCamera();
+  setTimeout(() => {
+    overlay.classList.remove('closing');
+    document.body.style.overflow = '';
+    resetUpload();
+  }, 550);
 }
 
 async function startCamera(){
   const video = document.getElementById('cameraVideo');
   const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  const preview = document.getElementById('photoPreview');
+  if (preview.classList.contains('visible')) return;
+
   stopCamera();
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    fallback.hidden = false;
+    placeholder.classList.add('hidden');
+    return;
+  }
+
   try {
     cameraStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode },
-      audio: false
+      video: { facingMode: { ideal: facingMode } }, audio: false
     });
     video.srcObject = cameraStream;
-    video.hidden = false;
-    fallback.hidden = true;
-  } catch {
-    video.hidden = true;
+    await video.play();
+    video.classList.add('active');
+    placeholder.classList.add('hidden');
+  } catch (err) {
+    console.warn('Camera error:', err);
+    video.classList.remove('active');
     fallback.hidden = false;
+    placeholder.classList.add('hidden');
   }
 }
 
@@ -528,25 +615,100 @@ function stopCamera(){
     cameraStream.getTracks().forEach(t => t.stop());
     cameraStream = null;
   }
-  document.getElementById('cameraVideo').srcObject = null;
+  const video = document.getElementById('cameraVideo');
+  video.srcObject = null;
+  video.classList.remove('active');
 }
 
 function flipCamera(){
   facingMode = facingMode === 'environment' ? 'user' : 'environment';
-  if (document.getElementById('cameraOverlay').classList.contains('open')) startCamera();
+  if (document.getElementById('uploadOverlay').classList.contains('open')) {
+    startCamera();
+  }
 }
 
 function capturePhoto(){
   const video = document.getElementById('cameraVideo');
-  if (!cameraStream || video.hidden) return;
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+
+  if (preview.classList.contains('visible')) {
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    preview.src = '';
+    preview.classList.remove('visible');
+    captureBtn.classList.remove('captured');
+    startCamera();
+    return;
+  }
+
+  if (!cameraStream || !video.videoWidth) {
+    showToast('Kamera tayyor emas');
+    return;
+  }
+
   const canvas = document.createElement('canvas');
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   canvas.getContext('2d').drawImage(video, 0, 0);
-  closeCamera();
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = URL.createObjectURL(blob);
+    preview.src = previewObjectUrl;
+    preview.classList.add('visible');
+    captureBtn.classList.add('captured');
+    stopCamera();
+    document.getElementById('zonePlaceholder').classList.add('hidden');
+    showToast('✅ Rasm olindi!');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  }, 'image/jpeg', 0.9);
+}
+
+function openGallery(){
+  document.getElementById('photoInput').click();
+}
+
+function resetUpload(){
+  stopCamera();
+  const input = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  input.value = '';
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = null;
+  preview.src = '';
+  preview.classList.remove('visible');
+  captureBtn.classList.remove('captured');
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+}
+
+function onPhotoSelected(e){
+  const file = e.target.files?.[0];
+  if (!file) return;
+  stopCamera();
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const placeholder = document.getElementById('zonePlaceholder');
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = URL.createObjectURL(file);
+  preview.src = previewObjectUrl;
+  preview.classList.add('visible');
+  captureBtn.classList.add('captured');
+  placeholder.classList.add('hidden');
+  document.getElementById('cameraFallback').hidden = true;
+  document.getElementById('cameraVideo').classList.remove('active');
+  showToast('✅ Rasm yuklandi!');
+}
+
+function showToast(msg){
   const t = document.createElement('div');
   t.style.cssText = 'position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
-  t.textContent = '✅ Rasm olindi!';
+  t.textContent = msg;
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
