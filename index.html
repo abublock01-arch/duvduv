@@ -6,25 +6,19 @@
 <title>duv•duv</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:#EFEFF0;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
+html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
 
-/* ── PHONE WRAP ── */
-.phone{
-  position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;
+/* ── FULL SCREEN APP ── */
+.app{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  background:#fff;overflow:hidden;
 }
-.phone-inner{
-  width:100%;max-width:390px;height:100%;max-height:844px;
-  background:#fff;border-radius:56px;overflow:hidden;display:flex;flex-direction:column;
-  box-shadow:0 40px 80px rgba(0,0,0,.1),0 0 0 10px #fff,0 0 0 12px #e5e5e5;
-  border:1px solid #f0f0f0;position:relative;
-}
-
-/* STATUS BAR */
-.status-bar{height:56px;display:flex;justify-content:center;align-items:flex-end;padding-bottom:8px;flex-shrink:0}
-.notch{width:120px;height:6px;background:#111;opacity:.08;border-radius:10px}
 
 /* HEADER */
-.header{padding:16px 24px 16px;background:#fff;z-index:20;position:relative}
+.header{
+  padding:max(12px,env(safe-area-inset-top)) 24px 16px;
+  background:#fff;z-index:20;position:relative;flex-shrink:0;
+}
 .logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:20px;height:32px}
 .logo span{color:#111;line-height:1;transform:translateY(2px)}
 .logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0;transform:translateY(3px)}
@@ -128,7 +122,7 @@ html,body{height:100%;background:#EFEFF0;font-family:-apple-system,'SF Pro Displ
 }
 
 /* CTA */
-.cta-wrap{flex:1;display:flex;align-items:flex-end;padding-bottom:32px;width:100%}
+.cta-wrap{flex:1;display:flex;align-items:flex-end;padding-bottom:max(32px,env(safe-area-inset-bottom));width:100%}
 .cta-btn{
   width:100%;height:64px;
   background:linear-gradient(to bottom,#2A2A2A,#111);
@@ -197,8 +191,8 @@ html,body{height:100%;background:#EFEFF0;font-family:-apple-system,'SF Pro Displ
 }
 .sheet-overlay.open{display:flex}
 .sheet{
-  background:#fff;border-radius:40px 40px 0 0;width:100%;max-width:390px;
-  padding:32px;padding-bottom:40px;
+  background:#fff;border-radius:40px 40px 0 0;width:100%;
+  padding:32px;padding-bottom:max(40px,env(safe-area-inset-bottom));
   box-shadow:0 -20px 40px rgba(0,0,0,.1);border-top:1px solid #f0f0f0;
   animation:sheetUp .3s cubic-bezier(.4,0,.2,1);
 }
@@ -221,18 +215,152 @@ html,body{height:100%;background:#EFEFF0;font-family:-apple-system,'SF Pro Displ
 }
 .sheet-accept:active{transform:scale(.97)}
 
-/* HOME INDICATOR */
-.home-ind{position:absolute;bottom:8px;left:0;right:0;display:flex;justify-content:center;pointer-events:none;z-index:50}
-.home-bar{width:130px;height:5px;background:#111;border-radius:100px;opacity:.15}
+/* ══ RASM YUKLASH — KONTENT MAYDONI (qizil ramka o'lchami) ══ */
+.upload-overlay{
+  position:fixed;inset:0;z-index:200;
+  pointer-events:none;
+}
+.upload-overlay.open,
+.upload-overlay.closing{pointer-events:auto}
+.upload-backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0);
+  transition:background .4s cubic-bezier(.4,0,.2,1);
+}
+.upload-overlay.open .upload-backdrop{background:rgba(17,17,17,.35)}
+.upload-overlay.closing .upload-backdrop{background:rgba(0,0,0,0)}
+.upload-panel{
+  position:fixed;
+  left:16px;right:16px;
+  top:max(112px,calc(env(safe-area-inset-top) + 96px));
+  bottom:max(124px,calc(env(safe-area-inset-bottom) + 108px));
+  border-radius:36px;
+  background:#fff;
+  box-shadow:0 24px 64px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);
+  transform:scale(.15);
+  opacity:0;
+  transform-origin:center center;
+  transition:transform .5s cubic-bezier(.32,.72,0,1),opacity .35s ease;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  will-change:transform,opacity;
+  z-index:1;
+}
+.upload-overlay.open .upload-panel{
+  transform:scale(1);
+  opacity:1;
+}
+.upload-overlay.closing .upload-panel{
+  transform:scale(.15);
+  opacity:0;
+  transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .25s ease;
+}
+.upload-inner{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:16px 16px 8px;
+  min-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity .25s ease .15s;
+}
+.upload-overlay.open .upload-inner{opacity:1}
+.upload-overlay.closing .upload-inner{opacity:0;transition-delay:0s}
+.upload-close{
+  position:absolute;top:14px;right:14px;
+  width:40px;height:40px;border-radius:50%;
+  background:#F4F4F5;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:10;
+  transition:background .2s,transform .15s;
+}
+.upload-close:active{transform:scale(.92);background:#E8E8EB}
+.upload-close svg{width:20px;height:20px;stroke:#666;stroke-width:2.5;fill:none}
+.upload-title{
+  color:#111;font-size:20px;font-weight:800;
+  letter-spacing:-.03em;margin-bottom:6px;text-align:center;
+  padding-right:36px;padding-left:36px;
+}
+.upload-sub{
+  color:#888;font-size:13px;font-weight:600;
+  margin-bottom:10px;text-align:center;
+  flex-shrink:0;
+}
+.upload-zone{
+  width:100%;flex:1;min-height:120px;
+  border:2px dashed #D4D4D8;
+  border-radius:28px;
+  position:relative;
+  overflow:hidden;
+  background:#FAFAFA;
+  display:block;cursor:pointer;
+}
+.upload-zone input[type="file"]{
+  position:absolute;inset:0;width:100%;height:100%;
+  opacity:0;cursor:pointer;z-index:2;
+}
+.upload-preview{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;pointer-events:none;
+}
+.upload-preview.visible{display:block}
+.zone-empty{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;
+  padding:20px;pointer-events:none;
+}
+.zone-empty.hidden{display:none}
+.zone-empty svg{width:32px;height:32px;stroke:#D35400;stroke-width:2;fill:none}
+.zone-empty-text{color:#111;font-size:15px;font-weight:700;text-align:center}
+.zone-empty-hint{color:#A1A1AA;font-size:12px;font-weight:600;text-align:center}
+.upload-actions{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  gap:28px;
+  padding:12px 16px max(14px,env(safe-area-inset-bottom));
+  flex-shrink:0;
+  background:#fff;
+  border-top:1px solid #F0F0F0;
+  position:relative;
+  z-index:5;
+}
+.gallery-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.gallery-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.capture-btn{
+  width:72px;height:72px;border-radius:50%;
+  border:5px solid #E5E5E5;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+  transition:transform .15s;
+}
+.capture-btn:active{transform:scale(.92)}
+.capture-btn-inner{
+  width:56px;height:56px;border-radius:50%;background:#D35400;
+  transition:background .2s;
+}
+.capture-btn.captured .capture-btn-inner{background:#111}
+
+@media (max-height:740px){
+  .upload-panel{
+    top:max(100px,calc(env(safe-area-inset-top) + 88px));
+    bottom:max(118px,calc(env(safe-area-inset-bottom) + 102px));
+  }
+  .upload-title{font-size:18px;margin-bottom:4px}
+  .upload-sub{font-size:12px;margin-bottom:8px}
+  .capture-btn{width:64px;height:64px;border-width:4px}
+  .capture-btn-inner{width:48px;height:48px}
+  .gallery-btn{width:44px;height:44px}
+}
 </style>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
 
-<div class="phone">
-  <div class="phone-inner">
-
-    <!-- Status bar -->
-    <div class="status-bar"><div class="notch"></div></div>
+<div class="app">
 
     <!-- Header -->
     <div class="header">
@@ -323,9 +451,36 @@ html,body{height:100%;background:#EFEFF0;font-family:-apple-system,'SF Pro Displ
       </div>
 
     </div>
+</div>
 
-    <!-- Home indicator -->
-    <div class="home-ind"><div class="home-bar"></div></div>
+<!-- RASM YUKLASH -->
+<div class="upload-overlay" id="uploadOverlay">
+  <div class="upload-backdrop" onclick="closeUpload()"></div>
+  <div class="upload-panel">
+    <button class="upload-close" type="button" onclick="closeUpload()" aria-label="Yopish">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="upload-inner">
+      <h2 class="upload-title">Jo'natma rasmi</h2>
+      <p class="upload-sub">Rasmga oling yoki galereyadan tanlang</p>
+      <label class="upload-zone" id="uploadZone">
+        <input type="file" accept="image/*" capture="environment" id="photoInput" onchange="onPhotoSelected(event)">
+        <img class="upload-preview" id="photoPreview" alt="Olingan rasm">
+        <div class="zone-empty" id="zoneEmpty">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span class="zone-empty-text">Rasm yuklash</span>
+          <span class="zone-empty-hint">Bosing — kamera ochiladi</span>
+        </div>
+      </label>
+    </div>
+    <div class="upload-actions">
+      <button type="button" class="gallery-btn" onclick="openGallery()" aria-label="Galereya">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </button>
+      <button type="button" class="capture-btn" id="captureBtn" onclick="openCamera()" aria-label="Rasm olish">
+        <div class="capture-btn-inner"></div>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -383,13 +538,91 @@ function acceptOrder(){
   setTimeout(()=>t.remove(),3000);
 }
 
+if (window.Telegram?.WebApp) {
+  const tg = Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+  if (tg.requestFullscreen) tg.requestFullscreen();
+  tg.setHeaderColor('#ffffff');
+  tg.setBackgroundColor('#ffffff');
+}
+
+let previewObjectUrl = null;
+
 function openOrder(){
-  // Jo'natuvchi uchun keyingi screen (hozircha toast)
-  const t=document.createElement('div');
-  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;white-space:nowrap;font-family:inherit;box-shadow:0 8px 24px rgba(0,0,0,.3)';
-  t.textContent='📸 Rasm olish ekrani (keyingi versiya)';
+  const overlay = document.getElementById('uploadOverlay');
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeUpload(){
+  const overlay = document.getElementById('uploadOverlay');
+  if (!overlay.classList.contains('open')) return;
+  overlay.classList.remove('open');
+  overlay.classList.add('closing');
+  setTimeout(() => {
+    overlay.classList.remove('closing');
+    document.body.style.overflow = '';
+    resetUpload();
+  }, 550);
+}
+
+function openCamera(){
+  const preview = document.getElementById('photoPreview');
+  const input = document.getElementById('photoInput');
+  if (preview.classList.contains('visible')) {
+    clearPreview();
+  }
+  input.click();
+}
+
+function openGallery(){
+  openCamera();
+}
+
+function clearPreview(){
+  const input = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const zoneEmpty = document.getElementById('zoneEmpty');
+  input.value = '';
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = null;
+  preview.src = '';
+  preview.classList.remove('visible');
+  captureBtn.classList.remove('captured');
+  zoneEmpty.classList.remove('hidden');
+}
+
+function resetUpload(){
+  clearPreview();
+}
+
+function onPhotoSelected(e){
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const zoneEmpty = document.getElementById('zoneEmpty');
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = URL.createObjectURL(file);
+  preview.src = previewObjectUrl;
+  preview.classList.add('visible');
+  captureBtn.classList.add('captured');
+  zoneEmpty.classList.add('hidden');
+  showToast('✅ Rasm olindi!');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+}
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
+  t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(()=>t.remove(),3000);
+  setTimeout(() => t.remove(), 2500);
 }
 </script>
 </body>
