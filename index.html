@@ -8,88 +8,87 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
 .app{position:fixed;inset:0;display:flex;flex-direction:column;background:#fff;overflow:hidden}
-.header{padding:max(12px,env(safe-area-inset-top)) 24px 12px;background:#fff;z-index:20;flex-shrink:0}
-.logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:16px;height:32px}
-.logo span{color:#111;line-height:1}
-.logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0}
+.header{padding:max(12px,env(safe-area-inset-top)) 24px 16px;background:#fff;z-index:20;position:relative;flex-shrink:0}
+.logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:20px;height:32px}
+.logo span{color:#111;line-height:1;transform:translateY(2px)}
+.logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0;transform:translateY(3px)}
 .toggle{background:#F4F4F5;border-radius:100px;padding:4px;display:flex;gap:4px}
 .toggle-btn{flex:1;padding:10px;border-radius:100px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s;font-family:inherit;background:transparent;color:#888}
-.toggle-btn.active{background:#D35400;color:#fff;box-shadow:0 8px 16px rgba(211,84,0,.25)}
-.content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-#senderView{display:flex;flex-direction:column;height:100%;overflow:hidden}
-.sender-empty{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 24px;overflow:hidden}
-.sender-empty.hidden{display:none}
-.scene{width:100%;height:280px;position:relative;display:flex;align-items:center;justify-content:center;margin-top:4px;flex-shrink:0;pointer-events:none}
+.toggle-btn.active{background:#D35400;color:#fff;box-shadow:0 8px 16px rgba(211,84,0,.25),inset 0 2px 4px rgba(255,255,255,.3)}
+.content{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+#senderView{display:flex;flex-direction:column;align-items:center;padding:0 24px;height:100%;overflow:hidden}
+.scene{width:100%;height:280px;position:relative;display:flex;align-items:center;justify-content:center;margin-top:8px;flex-shrink:0;pointer-events:none}
 @keyframes floatSlow{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(-4deg)}}
+@keyframes floatFast{0%,100%{transform:translateY(0) rotate(8deg)}50%{transform:translateY(-12px) rotate(12deg)}}
 @keyframes floatOpp{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(8px) scale(.95)}}
-.road{position:absolute;top:170px;width:240px;height:65px;background:#F8F8F9;border-radius:2rem;border:1px solid #eeeef0;transform:rotate(-12deg);animation:floatOpp 6s ease-in-out infinite;display:flex;align-items:center;justify-content:center}
+@keyframes floatEnv{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(-12deg)}}
+.road{position:absolute;top:175px;width:240px;height:65px;background:#F8F8F9;border-radius:2rem;border:1px solid #eeeef0;transform:rotate(-12deg);animation:floatOpp 6s ease-in-out infinite;display:flex;align-items:center;justify-content:center}
 .road-line{width:80%;height:3px;border-top:3px dashed #111;opacity:.15}
-.camera{position:absolute;z-index:30;width:110px;height:75px;background:#EBEBEC;border-radius:24px;animation:floatSlow 5s ease-in-out infinite;transform:translateY(-32px);display:flex;align-items:center;justify-content:center;box-shadow:0 20px 40px rgba(0,0,0,.12)}
-.cam-lens{width:50px;height:50px;background:#111;border-radius:50%;border:4px solid #D35400;display:flex;align-items:center;justify-content:center}
-.cam-inner{width:22px;height:22px;background:#222;border-radius:50%}
-.sender-title{text-align:center;font-size:32px;font-weight:900;color:#111;line-height:1.05;letter-spacing:-.03em;margin-top:8px;flex-shrink:0}
-.shipments-wrap{flex:1;display:none;flex-direction:column;padding:0 20px;min-height:0;overflow:hidden}
-.shipments-wrap.visible{display:flex}
-.shipments-head{font-size:13px;font-weight:700;color:#D35400;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-top:4px}
-.shipments-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:12px;-webkit-overflow-scrolling:touch}
-.shipment-card{
-  display:flex;align-items:center;gap:14px;padding:12px 14px;
-  background:#fff;border:1px solid #F0F0F0;border-radius:16px;
-  box-shadow:0 2px 12px rgba(0,0,0,.04);
-}
-.shipment-card:active{background:#FAFAFA}
-.shipment-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;border:1px solid #EEE;flex-shrink:0}
-.shipment-body{flex:1;min-width:0}
-.shipment-dest{font-size:16px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
-.shipment-status{
-  display:inline-block;font-size:12px;font-weight:700;color:#D35400;
-  background:rgba(211,84,0,.1);padding:4px 10px;border-radius:100px;
-}
-.cta-wrap{flex-shrink:0;padding:12px 24px max(20px,env(safe-area-inset-bottom));width:100%;background:#fff}
-.cta-btn{width:100%;height:60px;background:linear-gradient(to bottom,#2A2A2A,#111);border:1px solid #333;border-radius:100px;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;outline:none}
+.camera{position:absolute;z-index:30;width:110px;height:75px;background:#EBEBEC;border-radius:24px;border:1px solid #fff;animation:floatSlow 5s ease-in-out infinite;transform:translateY(-32px);display:flex;align-items:center;justify-content:center;box-shadow:0 20px 40px rgba(0,0,0,.12)}
+.cam-shutter{position:absolute;top:-8px;right:16px;width:18px;height:8px;background:#D35400;border-radius:4px 4px 0 0}
+.cam-flash{position:absolute;top:10px;right:12px;width:12px;height:10px;background:#fff;border-radius:50%}
+.cam-lens{width:50px;height:50px;background:#111;border-radius:50%;border:4px solid #D35400;box-shadow:0 6px 12px rgba(0,0,0,.2),inset 0 3px 8px rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cam-lens::before{content:'';position:absolute;top:4px;left:6px;width:16px;height:16px;background:#fff;border-radius:50%;opacity:.2;filter:blur(1px)}
+.cam-inner{width:22px;height:22px;background:#222;border-radius:50%;border:1px solid #333;display:flex;align-items:center;justify-content:center}
+.cam-dot{width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;filter:blur(1px)}
+.box{position:absolute;z-index:20;width:70px;height:70px;background:#fff;border-radius:16px;border:1px solid #f4f4f5;animation:floatFast 4.5s ease-in-out infinite;transform:translateY(64px) translateX(-64px);box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden}
+.box-tape{position:absolute;top:0;bottom:0;left:20px;width:14px;background:#D35400;opacity:.95}
+.env{position:absolute;z-index:10;width:75px;height:55px;background:#fff;border-radius:12px;border:1px solid #f4f4f5;animation:floatEnv 5.5s ease-in-out infinite;transform:translateY(40px) translateX(64px) rotate(12deg);box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden}
+.env-top{position:absolute;top:0;left:0;width:100%;height:28px;background:#fafafa;border-bottom:1px solid #eee;clip-path:polygon(0 0,100% 0,50% 100%)}
+.env-seal{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#D35400;border-radius:50%}
+.cloud{position:absolute;z-index:0;top:55px;right:20px;animation:floatSlow 6s ease-in-out infinite reverse}
+.cloud-body{width:60px;height:28px;background:#fff;border-radius:100px;border:1px solid #f9f9f9;box-shadow:0 20px 40px rgba(0,0,0,.08)}
+.cloud-puff{position:absolute;top:-12px;left:10px;width:30px;height:30px;background:#fff;border-radius:50%}
+.cube{position:absolute;z-index:0;bottom:80px;left:40px;width:24px;height:24px;background:#D35400;border-radius:8px;animation:floatFast 4s ease-in-out infinite reverse;transform:rotate(24deg)}
+.sender-title{text-align:center;font-size:34px;font-weight:900;color:#111;line-height:1.05;letter-spacing:-.03em;margin-top:8px;z-index:10;flex-shrink:0}
+.orders-list{width:100%;flex:1;overflow-y:auto;padding:12px 0;display:none;flex-direction:column;gap:10px}
+.orders-list.visible{display:flex}
+.order-item{background:#F9F9FA;border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:12px;border:1px solid #eeeef0}
+.order-thumb{width:52px;height:52px;border-radius:10px;object-fit:cover;flex-shrink:0;border:1px solid #eee}
+.order-info{flex:1;min-width:0}
+.order-dest{font-size:15px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.order-status{font-size:12px;font-weight:600;color:#D35400;margin-top:2px}
+.cta-wrap{flex-shrink:0;padding:16px 0 max(32px,env(safe-area-inset-bottom));width:100%}
+.cta-btn{width:100%;height:64px;background:linear-gradient(to bottom,#2A2A2A,#111);border:1px solid #333;border-radius:100px;display:flex;align-items:center;justify-content:center;gap:12px;padding:0 24px;box-shadow:0 20px 40px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.15);cursor:pointer;transition:all .3s;position:relative;overflow:hidden;outline:none}
 .cta-btn:active{transform:scale(.98)}
+.cta-shine{position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(to bottom,rgba(255,255,255,.1),transparent);pointer-events:none}
+.cta-icon{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
 .cta-icon svg{width:20px;height:20px;stroke:#fff;stroke-width:3;fill:none}
-.cta-text{color:#fff;font-size:17px;font-weight:700}
+.cta-text{color:#fff;font-size:17px;font-weight:700;position:relative;z-index:1}
 #driverView{display:none;flex-direction:column;align-items:center;padding:0 24px;height:100%}
-.driver-title{text-align:center;font-size:34px;font-weight:900;color:#111;margin-top:40px;margin-bottom:28px}
+.driver-title{text-align:center;font-size:34px;font-weight:900;color:#111;line-height:1.05;letter-spacing:-.03em;margin-top:40px;margin-bottom:28px}
 .map-wrap{width:100%;flex:1;margin-bottom:36px;background:#F9F9FA;border-radius:40px;border:1px solid #eeeef0;overflow:hidden;position:relative}
 .map-grid{position:absolute;inset:0;opacity:.5;background-image:linear-gradient(#E8E8EB 2px,transparent 2px),linear-gradient(90deg,#E8E8EB 2px,transparent 2px);background-size:40px 40px;pointer-events:none}
 .marker{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;z-index:10}
 .marker-price{position:absolute;bottom:68px;background:#fff;color:#111;padding:8px 18px;border-radius:16px;font-weight:700;font-size:15px;box-shadow:0 12px 24px rgba(0,0,0,.08);white-space:nowrap;border:1px solid #f5f5f5}
-.marker-pin{width:56px;height:56px;background:#D35400;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 24px rgba(211,84,0,.3)}
+.marker-pin{width:56px;height:56px;background:#D35400;border-radius:16px;display:flex;align-items:center;justify-content:center;border:1px solid #e66210;box-shadow:0 12px 24px rgba(211,84,0,.3),inset 0 4px 8px rgba(255,255,255,.4)}
 .marker-pin svg{width:24px;height:24px;stroke:#fff;stroke-width:2.5;fill:none}
-.sheet-overlay{position:fixed;inset:0;background:rgba(17,17,17,.3);backdrop-filter:blur(6px);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.sheet-overlay{position:fixed;inset:0;background:rgba(17,17,17,.3);backdrop-filter:blur(6px);z-index:300;display:none;align-items:flex-end;justify-content:center}
 .sheet-overlay.open{display:flex}
-.sheet{background:#fff;border-radius:32px 32px 0 0;width:100%;padding:24px;padding-bottom:max(28px,env(safe-area-inset-bottom));box-shadow:0 -20px 40px rgba(0,0,0,.1);animation:sheetUp .3s cubic-bezier(.4,0,.2,1)}
+.send-sheet{background:#fff;border-radius:40px 40px 0 0;width:100%;padding:24px 24px max(32px,env(safe-area-inset-bottom));box-shadow:0 -20px 40px rgba(0,0,0,.1);animation:sheetUp .3s cubic-bezier(.4,0,.2,1);max-height:88vh;overflow-y:auto}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-drag{width:48px;height:6px;background:#E5E5E5;border-radius:100px;margin:0 auto 20px}
+.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:20px}
+.send-thumb{width:88px;height:88px;border-radius:16px;object-fit:cover;border:2px solid #f0f0f0;box-shadow:0 8px 20px rgba(0,0,0,.1)}
+.send-field{border-bottom:1px solid #F0F0F0;padding:14px 0}
+.send-field:last-of-type{border-bottom:none}
+.send-label{font-size:11px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:5px}
+.send-input,.send-textarea{width:100%;border:none;background:transparent;font-size:17px;font-weight:500;color:#111;font-family:inherit;outline:none;padding:0}
+.send-input::placeholder,.send-textarea::placeholder{color:#D4D4D8}
+.send-textarea{min-height:52px;resize:none;line-height:1.4}
+.send-submit{width:100%;margin-top:20px;padding:18px;border:none;border-radius:100px;background:#D35400;color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 10px 24px rgba(211,84,0,.3);transition:transform .15s}
+.send-submit:active{transform:scale(.97)}
+.driver-sheet{background:#fff;border-radius:40px 40px 0 0;width:100%;padding:32px;padding-bottom:max(40px,env(safe-area-inset-bottom));box-shadow:0 -20px 40px rgba(0,0,0,.1);animation:sheetUp .3s cubic-bezier(.4,0,.2,1)}
 .sheet-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .sheet-amount-lbl{font-size:12px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.sheet-amount{font-size:42px;font-weight:900;color:#111}
+.sheet-amount{font-size:42px;font-weight:900;color:#111;letter-spacing:-.03em;line-height:1}
 .sheet-icon-wrap{width:56px;height:56px;border-radius:16px;background:#F4F4F5;display:flex;align-items:center;justify-content:center}
 .sheet-icon-wrap svg{width:24px;height:24px;stroke:#D35400;stroke-width:2.5;fill:none}
-.sheet-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:28px}
-.sheet-field{background:#F9F9FA;padding:20px 24px;border-radius:20px;border:1px solid #eeeef0}
-.sheet-field-lbl{font-size:11px;font-weight:700;color:#A1A1AA;text-transform:uppercase;margin-bottom:4px}
+.sheet-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:36px}
+.sheet-field-d{background:#F9F9FA;padding:20px 24px;border-radius:20px;border:1px solid #eeeef0}
+.sheet-field-lbl{font-size:11px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .sheet-field-val{font-size:18px;font-weight:700;color:#111}
-.sheet-accept{width:100%;background:#D35400;color:#fff;padding:20px;border-radius:100px;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
-.sheet--send{padding-top:12px}
-.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:20px}
-.send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
-.send-form{display:flex;flex-direction:column;gap:14px}
-.send-field{display:flex;flex-direction:column;gap:6px}
-.send-label{font-size:12px;font-weight:600;color:#888}
-.send-input,.send-textarea{width:100%;padding:14px 0;border:none;border-bottom:1px solid #E8E8E8;background:transparent;font-size:17px;color:#111;font-family:inherit;outline:none}
-.send-input:focus,.send-textarea:focus{border-bottom-color:#D35400}
-.send-input::placeholder,.send-textarea::placeholder{color:#C4C4C4}
-.send-textarea{min-height:60px;resize:none}
-.send-submit{width:100%;margin-top:6px;padding:18px;border:none;border-radius:100px;background:#D35400;color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 10px 24px rgba(211,84,0,.28)}
-.send-submit:disabled{opacity:.45}
-.upload-overlay{position:fixed;inset:0;z-index:150;pointer-events:none;visibility:hidden}
-.upload-overlay.open,.upload-overlay.closing{visibility:visible;pointer-events:auto}
-.upload-backdrop{position:absolute;inset:0;background:rgba(17,17,17,0);transition:background .4s ease}
-.upload-overlay.open .upload-backdrop{background:rgba(17,17,17,.35)}
-.upload-overlay.closing .upload-backdrop{background:rgba(0,0,0,0)}
+.sheet-accept{width:100%;background:#D35400;color:#fff;padding:20px;border-radius:100px;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit;box-shadow:0 12px 24px rgba(211,84,0,.3)}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -104,19 +103,19 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   </div>
   <div class="content">
     <div id="senderView">
-      <div class="sender-empty" id="senderEmpty">
-        <div class="scene">
-          <div class="road"><div class="road-line"></div></div>
-          <div class="camera"><div class="cam-lens"><div class="cam-inner"></div></div></div>
-        </div>
-        <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
+      <div class="scene">
+        <div class="road"><div class="road-line"></div></div>
+        <div class="camera"><div class="cam-shutter"></div><div class="cam-flash"></div><div class="cam-lens"><div class="cam-inner"><div class="cam-dot"></div></div></div></div>
+        <div class="box"><div class="box-tape"></div></div>
+        <div class="env"><div class="env-top"></div><div class="env-seal"></div></div>
+        <div class="cloud"><div class="cloud-body"></div><div class="cloud-puff"></div></div>
+        <div class="cube"></div>
       </div>
-      <div class="shipments-wrap" id="shipmentsWrap">
-        <div class="shipments-head">Jo'natmalarim</div>
-        <div class="shipments-list" id="shipmentsList"></div>
-      </div>
+      <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
+      <div class="orders-list" id="ordersList"></div>
       <div class="cta-wrap">
         <button type="button" class="cta-btn" onclick="document.getElementById('photoInput').click()">
+          <div class="cta-shine"></div>
           <div class="cta-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
           <span class="cta-text">Jo'natma yuborish</span>
         </button>
@@ -126,9 +125,9 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
       <h2 class="driver-title">YUKLAR XARITASI</h2>
       <div class="map-wrap">
         <div class="map-grid"></div>
-        <div class="marker" style="top:28%;left:22%" onclick="openSheet('Toshkent','Samarqand','150 000')"><div class="marker-price">150 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
-        <div class="marker" style="top:55%;left:58%" onclick="openSheet('Buxoro','Xiva','85 000')"><div class="marker-price">85 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
-        <div class="marker" style="top:70%;left:30%" onclick="openSheet('Farg\'ona','Toshkent','120 000')"><div class="marker-price">120 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
+        <div class="marker" style="top:28%;left:22%" onclick="openDriverSheet('Toshkent','Samarqand','150 000')"><div class="marker-price">150 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
+        <div class="marker" style="top:55%;left:58%" onclick="openDriverSheet('Buxoro','Xiva','85 000')"><div class="marker-price">85 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
+        <div class="marker" style="top:70%;left:30%" onclick="openDriverSheet('Farg\'ona','Toshkent','120 000')"><div class="marker-price">120 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
       </div>
     </div>
   </div>
@@ -136,55 +135,39 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
 <input type="file" accept="image/*" capture="environment" id="photoInput" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" onchange="onPhotoSelected(event)">
 
-<div class="upload-overlay" id="uploadOverlay">
-  <div class="upload-backdrop" onclick="closeAllSendUI()"></div>
-</div>
-
-<div class="sheet-overlay" id="sendSheetOverlay" onclick="if(event.target===this)closeAllSendUI()">
-  <div class="sheet sheet--send" onclick="event.stopPropagation()">
+<div class="sheet-overlay" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
+  <div class="send-sheet" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <div class="send-thumb-wrap">
-      <img class="send-thumb" id="sendThumb" alt="">
-    </div>
-    <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
-      <div class="send-field">
-        <label class="send-label" for="sendPhone">Telefon raqam</label>
-        <input class="send-input" type="tel" id="sendPhone" inputmode="tel" placeholder="+998 90 123 45 67" required>
-      </div>
-      <div class="send-field">
-        <label class="send-label" for="sendDest">Qayerga</label>
-        <input class="send-input" type="text" id="sendDest" placeholder="Shahar, manzil" required>
-      </div>
-      <div class="send-field">
-        <label class="send-label" for="sendNote">Izoh</label>
-        <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
-      </div>
-      <button type="submit" class="send-submit" id="sendSubmitBtn">Yuborish</button>
+    <div class="send-thumb-wrap"><img class="send-thumb" id="sendThumb" alt=""/></div>
+    <form onsubmit="submitOrder(event)">
+      <div class="send-field"><label class="send-label">Telefon</label><input class="send-input" type="tel" id="sendPhone" placeholder="+998 90 123 45 67" required/></div>
+      <div class="send-field"><label class="send-label">Qayerga</label><input class="send-input" type="text" id="sendDest" placeholder="Shahar, manzil" required/></div>
+      <div class="send-field"><label class="send-label">Izoh</label><textarea class="send-textarea" id="sendNote" placeholder="Ixtiyoriy"></textarea></div>
+      <button type="submit" class="send-submit">Yuborish</button>
     </form>
   </div>
 </div>
 
-<div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
-  <div class="sheet">
+<div class="sheet-overlay" id="driverSheetOverlay" onclick="if(event.target===this)closeDriverSheet()">
+  <div class="driver-sheet">
     <div class="sheet-drag"></div>
     <div class="sheet-row">
       <div><div class="sheet-amount-lbl">To'lov miqdori</div><div class="sheet-amount" id="sheetPrice">150 000</div></div>
       <div class="sheet-icon-wrap"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
     </div>
     <div class="sheet-fields">
-      <div class="sheet-field"><div class="sheet-field-lbl">Olib ketish</div><div class="sheet-field-val" id="sheetFrom">Toshkent</div></div>
-      <div class="sheet-field"><div class="sheet-field-lbl">Yetkazish</div><div class="sheet-field-val" id="sheetTo">Samarqand</div></div>
+      <div class="sheet-field-d"><div class="sheet-field-lbl">Olib ketish</div><div class="sheet-field-val" id="sheetFrom">Toshkent</div></div>
+      <div class="sheet-field-d"><div class="sheet-field-lbl">Yetkazish</div><div class="sheet-field-val" id="sheetTo">Samarqand</div></div>
     </div>
     <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
   </div>
 </div>
 
 <script>
-let previewObjectUrl = null;
-let selectedPhotoFile = null;
-const shipments = [];
-
 if(window.Telegram?.WebApp){try{const tg=Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#ffffff');tg.setBackgroundColor('#ffffff')}catch(_){}}
+
+let previewUrl=null;
+const orders=[];
 
 function switchView(v){
   document.getElementById('senderView').style.display=v==='sender'?'flex':'none';
@@ -192,100 +175,56 @@ function switchView(v){
   document.getElementById('btnSender').className='toggle-btn'+(v==='sender'?' active':'');
   document.getElementById('btnDriver').className='toggle-btn'+(v==='driver'?' active':'');
 }
-function openSheet(from,to,price){
-  document.getElementById('sheetFrom').textContent=from;
-  document.getElementById('sheetTo').textContent=to;
-  document.getElementById('sheetPrice').textContent=price+" so'm";
-  document.getElementById('sheetOverlay').classList.add('open');
-}
-function closeSheet(){document.getElementById('sheetOverlay').classList.remove('open')}
-function acceptOrder(){closeSheet();showToast('✅ Buyurtma qabul qilindi!')}
 
 function onPhotoSelected(e){
   const file=e.target.files?.[0];
   if(!file)return;
   e.target.value='';
-  if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);
-  selectedPhotoFile=file;
-  previewObjectUrl=URL.createObjectURL(file);
-  document.getElementById('sendThumb').src=previewObjectUrl;
-  document.getElementById('sendForm').reset();
-  document.getElementById('uploadOverlay').classList.remove('closing');
-  document.getElementById('uploadOverlay').classList.add('open');
+  if(previewUrl)URL.revokeObjectURL(previewUrl);
+  previewUrl=URL.createObjectURL(file);
+  document.getElementById('sendThumb').src=previewUrl;
   document.getElementById('sendSheetOverlay').classList.add('open');
-  document.body.style.overflow='hidden';
   if(window.Telegram?.WebApp?.HapticFeedback)Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-}
-
-function closeUploadOverlay(){
-  const overlay=document.getElementById('uploadOverlay');
-  if(!overlay.classList.contains('open'))return;
-  overlay.classList.remove('open');
-  overlay.classList.add('closing');
-  setTimeout(()=>overlay.classList.remove('closing'),450);
 }
 
 function closeSendSheet(){
   document.getElementById('sendSheetOverlay').classList.remove('open');
-  document.body.style.overflow='';
-  document.getElementById('sendForm').reset();
-  if(previewObjectUrl && !shipments.some(s=>s.thumbUrl===previewObjectUrl)){
-    URL.revokeObjectURL(previewObjectUrl);
-    previewObjectUrl=null;
-  }
-  selectedPhotoFile=null;
-  document.getElementById('sendThumb').removeAttribute('src');
-}
-
-function closeAllSendUI(){
-  closeSendSheet();
-  closeUploadOverlay();
-}
-
-function renderShipments(){
-  const list=document.getElementById('shipmentsList');
-  list.innerHTML='';
-  shipments.forEach(s=>{
-    const card=document.createElement('div');
-    card.className='shipment-card';
-    card.innerHTML=`
-      <img class="shipment-thumb" src="${s.thumbUrl}" alt="">
-      <div class="shipment-body">
-        <div class="shipment-dest">${escapeHtml(s.dest)}</div>
-        <span class="shipment-status">Kutilmoqda</span>
-      </div>`;
-    list.appendChild(card);
-  });
-  document.getElementById('senderEmpty').classList.toggle('hidden',shipments.length>0);
-  document.getElementById('shipmentsWrap').classList.toggle('visible',shipments.length>0);
-}
-
-function escapeHtml(str){
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function submitOrder(e){
   e.preventDefault();
-  if(!selectedPhotoFile||!previewObjectUrl){showToast('Avval rasm oling');return}
-  const phone=document.getElementById('sendPhone').value.trim();
   const dest=document.getElementById('sendDest').value.trim();
-  if(!phone||!dest){showToast('Telefon va manzilni to\'ldiring');return}
-  const btn=document.getElementById('sendSubmitBtn');
-  btn.disabled=true;
-  const thumbUrl=previewObjectUrl;
-  shipments.unshift({thumbUrl,dest,phone,status:'Kutilmoqda'});
-  previewObjectUrl=null;
-  selectedPhotoFile=null;
-  renderShipments();
+  const thumb=previewUrl;
+  orders.unshift({dest,thumb,status:'Kutilmoqda'});
+  renderOrders();
   closeSendSheet();
-  const upload=document.getElementById('uploadOverlay');
-  upload.classList.remove('open');
-  upload.classList.add('closing');
-  setTimeout(()=>upload.classList.remove('closing'),450);
-  btn.disabled=false;
-  showToast('✅ Jo\'natma yuborildi!');
+  showToast("✅ Jo'natma yuborildi!");
   if(window.Telegram?.WebApp?.HapticFeedback)Telegram.WebApp.HapticFeedback.notificationOccurred('success');
 }
+
+function renderOrders(){
+  const list=document.getElementById('ordersList');
+  if(orders.length===0){list.classList.remove('visible');return;}
+  list.classList.add('visible');
+  list.innerHTML=orders.map(o=>`
+    <div class="order-item">
+      <img class="order-thumb" src="${o.thumb}" alt=""/>
+      <div class="order-info">
+        <div class="order-dest">${o.dest}</div>
+        <div class="order-status">${o.status}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openDriverSheet(from,to,price){
+  document.getElementById('sheetFrom').textContent=from;
+  document.getElementById('sheetTo').textContent=to;
+  document.getElementById('sheetPrice').textContent=price+" so'm";
+  document.getElementById('driverSheetOverlay').classList.add('open');
+}
+function closeDriverSheet(){document.getElementById('driverSheetOverlay').classList.remove('open')}
+function acceptOrder(){closeDriverSheet();showToast('✅ Buyurtma qabul qilindi!')}
 
 function showToast(msg){
   const t=document.createElement('div');
