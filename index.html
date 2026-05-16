@@ -215,6 +215,29 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 }
 .sheet-accept:active{transform:scale(.97)}
 
+/* Jo'natma formasi sheet */
+.sheet-overlay--send{z-index:210}
+.sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:20px}
+.send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
+.send-form{display:flex;flex-direction:column;gap:14px}
+.send-field{display:flex;flex-direction:column;gap:6px}
+.send-label{font-size:12px;font-weight:600;color:#888}
+.send-input,.send-textarea{
+  width:100%;padding:14px 0;border:none;border-bottom:1px solid #E8E8E8;
+  background:transparent;font-size:17px;color:#111;font-family:inherit;outline:none;
+}
+.send-input:focus,.send-textarea:focus{border-bottom-color:#D35400}
+.send-input::placeholder,.send-textarea::placeholder{color:#C4C4C4}
+.send-textarea{min-height:60px;resize:none;line-height:1.4}
+.send-submit{
+  width:100%;margin-top:6px;padding:18px;border:none;border-radius:100px;
+  background:#D35400;color:#fff;font-size:16px;font-weight:700;font-family:inherit;
+  cursor:pointer;box-shadow:0 10px 24px rgba(211,84,0,.28);
+}
+.send-submit:active{transform:scale(.98)}
+.send-submit:disabled{opacity:.45;cursor:not-allowed}
+
 /* ══ RASM YUKLASH — KONTENT MAYDONI (qizil ramka o'lchami) ══ */
 .upload-overlay{
   position:fixed;inset:0;z-index:200;
@@ -510,6 +533,31 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   </div>
 </div>
 
+<!-- JO'NATMA FORMASI SHEET -->
+<div class="sheet-overlay sheet-overlay--send" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
+  <div class="sheet sheet--send" onclick="event.stopPropagation()">
+    <div class="sheet-drag"></div>
+    <div class="send-thumb-wrap">
+      <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
+    </div>
+    <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
+      <div class="send-field">
+        <label class="send-label" for="sendPhone">Telefon raqam</label>
+        <input class="send-input" type="tel" id="sendPhone" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="sendDest">Qayerga</label>
+        <input class="send-input" type="text" id="sendDest" placeholder="Shahar, manzil" required>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="sendNote">Izoh</label>
+        <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
+      </div>
+      <button type="submit" class="send-submit" id="sendSubmitBtn">Yuborish</button>
+    </form>
+  </div>
+</div>
+
 <!-- BOTTOM SHEET -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
   <div class="sheet">
@@ -565,17 +613,19 @@ function acceptOrder(){
 }
 
 if (window.Telegram?.WebApp) {
-  const tg = Telegram.WebApp;
-  tg.ready();
-  tg.expand();
-  if (tg.requestFullscreen) tg.requestFullscreen();
-  tg.setHeaderColor('#ffffff');
-  tg.setBackgroundColor('#ffffff');
+  try {
+    const tg = Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor('#ffffff');
+    tg.setBackgroundColor('#ffffff');
+  } catch (_) {}
 }
 
 let cameraStream = null;
 let facingMode = 'environment';
 let previewObjectUrl = null;
+let selectedPhotoFile = null;
 
 function openOrder(){
   const overlay = document.getElementById('uploadOverlay');
@@ -684,6 +734,10 @@ function capturePhoto(){
     if (window.Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
+    selectedPhotoFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    document.getElementById('sendThumb').src = previewObjectUrl;
+    document.getElementById('sendForm').reset();
+    document.getElementById('sendSheetOverlay').classList.add('open');
   }, 'image/jpeg', 0.9);
 }
 
@@ -724,6 +778,40 @@ function onPhotoSelected(e){
   document.getElementById('cameraFallback').hidden = true;
   document.getElementById('cameraVideo').classList.remove('active');
   showToast('✅ Rasm yuklandi!');
+  selectedPhotoFile = file;
+  document.getElementById('sendThumb').src = previewObjectUrl;
+  document.getElementById('sendForm').reset();
+  document.getElementById('sendSheetOverlay').classList.add('open');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+}
+
+function closeSendSheet(){
+  document.getElementById('sendSheetOverlay').classList.remove('open');
+}
+
+function submitOrder(e){
+  e.preventDefault();
+  if (!selectedPhotoFile && !previewObjectUrl) {
+    showToast('Avval rasm oling');
+    return;
+  }
+  const phone = document.getElementById('sendPhone').value.trim();
+  const dest = document.getElementById('sendDest').value.trim();
+  if (!phone || !dest) {
+    showToast('Telefon va manzilni to\'ldiring');
+    return;
+  }
+  const btn = document.getElementById('sendSubmitBtn');
+  btn.disabled = true;
+  closeSendSheet();
+  closeUpload();
+  btn.disabled = false;
+  showToast('✅ Jo\'natma yuborildi!');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
 }
 
 function showToast(msg){
