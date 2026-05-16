@@ -7,242 +7,731 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
-.app{position:fixed;inset:0;display:flex;flex-direction:column;background:#fff;overflow:hidden}
-.header{padding:max(12px,env(safe-area-inset-top)) 24px 16px;background:#fff;z-index:20;position:relative;flex-shrink:0}
+
+/* ── FULL SCREEN APP ── */
+.app{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  background:#fff;overflow:hidden;
+}
+
+/* HEADER */
+.header{
+  padding:max(12px,env(safe-area-inset-top)) 24px 16px;
+  background:#fff;z-index:20;position:relative;flex-shrink:0;
+}
 .logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:20px;height:32px}
 .logo span{color:#111;line-height:1;transform:translateY(2px)}
 .logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0;transform:translateY(3px)}
+
+/* TOGGLE */
 .toggle{background:#F4F4F5;border-radius:100px;padding:4px;display:flex;gap:4px}
-.toggle-btn{flex:1;padding:10px;border-radius:100px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s;font-family:inherit;background:transparent;color:#888}
-.toggle-btn.active{background:#D35400;color:#fff;box-shadow:0 8px 16px rgba(211,84,0,.25),inset 0 2px 4px rgba(255,255,255,.3)}
+.toggle-btn{
+  flex:1;padding:10px;border-radius:100px;border:none;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .25s;font-family:inherit;letter-spacing:-.01em;
+  background:transparent;color:#888;
+}
+.toggle-btn.active{
+  background:#D35400;color:#fff;
+  box-shadow:0 8px 16px rgba(211,84,0,.25),inset 0 2px 4px rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.1);
+}
+
+/* CONTENT */
 .content{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
-#senderView{display:flex;flex-direction:column;align-items:center;padding:0 24px;height:100%;overflow:hidden}
-.scene{width:100%;height:320px;position:relative;display:flex;align-items:center;justify-content:center;margin-top:8px;flex-shrink:0;pointer-events:none}
+
+/* ══ SENDER VIEW ══ */
+#senderView{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 24px;height:100%;overflow:hidden;
+}
+
+/* 3D SCENE */
+.scene{
+  width:100%;height:320px;position:relative;display:flex;
+  align-items:center;justify-content:center;margin-top:8px;
+  perspective:1000px;flex-shrink:0;pointer-events:none;
+}
+
 @keyframes floatSlow{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(-4deg)}}
 @keyframes floatFast{0%,100%{transform:translateY(0) rotate(8deg)}50%{transform:translateY(-12px) rotate(12deg)}}
 @keyframes floatOpp{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(8px) scale(.95)}}
 @keyframes floatEnv{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(-12deg)}}
-.road{position:absolute;top:195px;width:240px;height:65px;background:#F8F8F9;border-radius:2rem;border:1px solid #eeeef0;transform:rotate(-12deg);animation:floatOpp 6s ease-in-out infinite;display:flex;align-items:center;justify-content:center}
+
+.clay{box-shadow:0 20px 40px rgba(0,0,0,.08),inset 0 4px 8px rgba(255,255,255,.8),inset 0 -4px 8px rgba(0,0,0,.05)}
+
+/* Road */
+.road{
+  position:absolute;top:195px;width:240px;height:65px;
+  background:#F8F8F9;border-radius:2rem;border:1px solid #eeeef0;
+  transform:rotate(-12deg);animation:floatOpp 6s ease-in-out infinite;
+  display:flex;align-items:center;justify-content:center;
+}
 .road-line{width:80%;height:3px;border-top:3px dashed #111;opacity:.15}
-.camera{position:absolute;z-index:30;width:110px;height:75px;background:#EBEBEC;border-radius:24px;border:1px solid #fff;animation:floatSlow 5s ease-in-out infinite;transform:translateY(-32px);display:flex;align-items:center;justify-content:center;box-shadow:0 20px 40px rgba(0,0,0,.12)}
-.cam-shutter{position:absolute;top:-8px;right:16px;width:18px;height:8px;background:#D35400;border-radius:4px 4px 0 0}
-.cam-flash{position:absolute;top:10px;right:12px;width:12px;height:10px;background:#fff;border-radius:50%}
+
+/* Camera */
+.camera{
+  position:absolute;z-index:30;width:110px;height:75px;
+  background:#EBEBEC;border-radius:24px;border:1px solid #fff;
+  animation:floatSlow 5s ease-in-out infinite;
+  transform:translateY(-32px);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
+}
+.cam-shutter{position:absolute;top:-8px;right:16px;width:18px;height:8px;background:#D35400;border-radius:4px 4px 0 0;box-shadow:inset 0 2px 4px rgba(255,255,255,.4),0 4px 8px rgba(211,84,0,.4)}
+.cam-flash{position:absolute;top:10px;right:12px;width:12px;height:10px;background:#fff;border-radius:50%;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
 .cam-lens{width:50px;height:50px;background:#111;border-radius:50%;border:4px solid #D35400;box-shadow:0 6px 12px rgba(0,0,0,.2),inset 0 3px 8px rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
 .cam-lens::before{content:'';position:absolute;top:4px;left:6px;width:16px;height:16px;background:#fff;border-radius:50%;opacity:.2;filter:blur(1px)}
-.cam-inner{width:22px;height:22px;background:#222;border-radius:50%;border:1px solid #333;display:flex;align-items:center;justify-content:center}
+.cam-inner{width:22px;height:22px;background:#222;border-radius:50%;border:1px solid #333;box-shadow:inset 0 2px 4px rgba(0,0,0,1);display:flex;align-items:center;justify-content:center}
 .cam-dot{width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;filter:blur(1px)}
-.box{position:absolute;z-index:20;width:70px;height:70px;background:#fff;border-radius:16px;border:1px solid #f4f4f5;animation:floatFast 4.5s ease-in-out infinite;transform:translateY(64px) translateX(-64px);box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden}
-.box-tape{position:absolute;top:0;bottom:0;left:20px;width:14px;background:#D35400;opacity:.95}
-.env{position:absolute;z-index:10;width:75px;height:55px;background:#fff;border-radius:12px;border:1px solid #f4f4f5;animation:floatEnv 5.5s ease-in-out infinite;transform:translateY(40px) translateX(64px) rotate(12deg);box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden}
+
+/* Box */
+.box{
+  position:absolute;z-index:20;width:70px;height:70px;
+  background:#fff;border-radius:16px;border:1px solid #f4f4f5;
+  animation:floatFast 4.5s ease-in-out infinite;
+  transform:translateY(64px) translateX(-64px);
+  box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden;
+}
+.box-tape{position:absolute;top:0;bottom:0;left:20px;width:14px;background:#D35400;box-shadow:0 2px 8px rgba(0,0,0,.1);opacity:.95}
+.box-line1{position:absolute;top:25px;left:10px;width:8px;height:2px;background:#111;opacity:.2;border-radius:2px}
+.box-line2{position:absolute;top:32px;left:10px;width:6px;height:2px;background:#111;opacity:.2;border-radius:2px}
+
+/* Envelope */
+.env{
+  position:absolute;z-index:10;width:75px;height:55px;
+  background:#fff;border-radius:12px;border:1px solid #f4f4f5;
+  animation:floatEnv 5.5s ease-in-out infinite;
+  transform:translateY(40px) translateX(64px) rotate(12deg);
+  box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden;
+}
 .env-top{position:absolute;top:0;left:0;width:100%;height:28px;background:#fafafa;border-bottom:1px solid #eee;clip-path:polygon(0 0,100% 0,50% 100%)}
-.env-seal{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#D35400;border-radius:50%}
+.env-seal{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#D35400;border-radius:50%;box-shadow:inset 0 1px 2px rgba(255,255,255,.4),0 2px 4px rgba(211,84,0,.3)}
+
+/* Cloud */
 .cloud{position:absolute;z-index:0;top:55px;right:20px;animation:floatSlow 6s ease-in-out infinite reverse}
-.cloud-body{width:60px;height:28px;background:#fff;border-radius:100px;border:1px solid #f9f9f9;box-shadow:0 20px 40px rgba(0,0,0,.08)}
-.cloud-puff{position:absolute;top:-12px;left:10px;width:30px;height:30px;background:#fff;border-radius:50%}
-.cube{position:absolute;z-index:0;bottom:100px;left:40px;width:24px;height:24px;background:#D35400;border-radius:8px;animation:floatFast 4s ease-in-out infinite reverse;transform:rotate(24deg)}
-.sender-title{text-align:center;font-size:34px;font-weight:900;color:#111;line-height:1.05;letter-spacing:-.03em;margin-top:8px;z-index:10;flex-shrink:0}
+.cloud-body{width:60px;height:28px;background:#fff;border-radius:100px;border:1px solid #f9f9f9;box-shadow:0 20px 40px rgba(0,0,0,.08),inset 0 4px 8px rgba(255,255,255,.8)}
+.cloud-puff{position:absolute;top:-12px;left:10px;width:30px;height:30px;background:#fff;border-radius:50%;border-top:1px solid #f9f9f9}
+
+/* Cube */
+.cube{position:absolute;z-index:0;bottom:100px;left:40px;width:24px;height:24px;background:#D35400;border-radius:8px;border:1px solid #e66210;animation:floatFast 4s ease-in-out infinite reverse;transform:rotate(24deg);box-shadow:0 20px 40px rgba(0,0,0,.08)}
+
+/* TITLE */
+.sender-title{
+  text-align:center;font-size:34px;font-weight:900;color:#111;
+  line-height:1.05;letter-spacing:-.03em;margin-top:8px;z-index:10;
+  text-shadow:0 1px 2px rgba(0,0,0,.05);flex-shrink:0;
+}
+
+/* CTA */
 .cta-wrap{flex:1;display:flex;align-items:flex-end;padding-bottom:max(32px,env(safe-area-inset-bottom));width:100%}
-.cta-btn{width:100%;height:64px;background:linear-gradient(to bottom,#2A2A2A,#111);border:1px solid #333;border-radius:100px;display:flex;align-items:center;justify-content:center;gap:12px;padding:0 24px;box-shadow:0 20px 40px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.15);cursor:pointer;transition:all .3s;position:relative;overflow:hidden;outline:none}
-.cta-btn:active{transform:scale(.98)}
+.cta-btn{
+  width:100%;height:64px;
+  background:linear-gradient(to bottom,#2A2A2A,#111);
+  border:1px solid #333;border-radius:100px;
+  display:flex;align-items:center;justify-content:center;gap:12px;padding:0 24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.15),inset 0 -2px 4px rgba(0,0,0,.4);
+  cursor:pointer;transition:all .3s;position:relative;overflow:hidden;outline:none;
+}
+.cta-btn:active{transform:scale(.98);box-shadow:0 10px 20px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.1),inset 0 -2px 4px rgba(0,0,0,.6)}
 .cta-shine{position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(to bottom,rgba(255,255,255,.1),transparent);pointer-events:none}
-.cta-icon{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center}
+.cta-icon{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 2px rgba(255,255,255,.2)}
 .cta-icon svg{width:20px;height:20px;stroke:#fff;stroke-width:3;fill:none}
-.cta-text{color:#fff;font-size:17px;font-weight:700;position:relative;z-index:1}
-#driverView{display:none;flex-direction:column;align-items:center;padding:0 24px;height:100%}
-.driver-title{text-align:center;font-size:34px;font-weight:900;color:#111;line-height:1.05;letter-spacing:-.03em;margin-top:40px;margin-bottom:28px}
-.map-wrap{width:100%;flex:1;margin-bottom:36px;background:#F9F9FA;border-radius:40px;border:1px solid #eeeef0;overflow:hidden;position:relative}
-.map-grid{position:absolute;inset:0;opacity:.5;background-image:linear-gradient(#E8E8EB 2px,transparent 2px),linear-gradient(90deg,#E8E8EB 2px,transparent 2px);background-size:40px 40px;pointer-events:none}
-.marker{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;z-index:10}
-.marker-price{position:absolute;bottom:68px;background:#fff;color:#111;padding:8px 18px;border-radius:16px;font-weight:700;font-size:15px;box-shadow:0 12px 24px rgba(0,0,0,.08);white-space:nowrap;border:1px solid #f5f5f5}
-.marker-pin{width:56px;height:56px;background:#D35400;border-radius:16px;display:flex;align-items:center;justify-content:center;border:1px solid #e66210;box-shadow:0 12px 24px rgba(211,84,0,.3),inset 0 4px 8px rgba(255,255,255,.4)}
-.marker-pin svg{width:24px;height:24px;stroke:#fff;stroke-width:2.5;fill:none}
-.sheet-overlay{position:fixed;inset:0;background:rgba(17,17,17,.3);backdrop-filter:blur(6px);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.cta-text{color:#fff;font-size:17px;font-weight:700;letter-spacing:.02em;position:relative;z-index:1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+
+/* ══ DRIVER VIEW ══ */
+#driverView{
+  display:none;flex-direction:column;align-items:center;
+  padding:0 24px;height:100%;
+}
+.driver-title{
+  text-align:center;font-size:34px;font-weight:900;color:#111;
+  line-height:1.05;letter-spacing:-.03em;margin-top:40px;margin-bottom:28px;
+  text-shadow:0 1px 2px rgba(0,0,0,.05);
+}
+
+/* MAP */
+.map-wrap{
+  width:100%;flex:1;margin-bottom:36px;
+  background:#F9F9FA;border-radius:40px;
+  box-shadow:inset 0 4px 16px rgba(0,0,0,.03),0 2px 0 #fff;
+  border:1px solid #eeeef0;overflow:hidden;position:relative;
+}
+.map-grid{
+  position:absolute;inset:0;opacity:.5;
+  background-image:linear-gradient(#E8E8EB 2px,transparent 2px),linear-gradient(90deg,#E8E8EB 2px,transparent 2px);
+  background-size:40px 40px;pointer-events:none;
+}
+
+/* MARKER */
+.marker{
+  position:absolute;display:flex;flex-direction:column;align-items:center;
+  cursor:pointer;z-index:10;
+}
+.marker-price{
+  position:absolute;bottom:68px;background:#fff;color:#111;
+  padding:8px 18px;border-radius:16px;font-weight:700;font-size:15px;
+  box-shadow:0 12px 24px rgba(0,0,0,.08),inset 0 2px 4px #fff;
+  white-space:nowrap;border:1px solid #f5f5f5;
+  transition:transform .15s;
+}
+.marker:active .marker-price{transform:translateY(-4px)}
+.marker-pin{
+  width:56px;height:56px;background:#D35400;border-radius:16px;
+  display:flex;align-items:center;justify-content:center;border:1px solid #e66210;
+  box-shadow:0 12px 24px rgba(211,84,0,.3),inset 0 4px 8px rgba(255,255,255,.4),inset 0 -4px 8px rgba(0,0,0,.15);
+  transition:transform .15s;
+}
+.marker:active .marker-pin{transform:scale(.93)}
+.marker-pin svg{width:24px;height:24px;stroke:#fff;stroke-width:2.5;fill:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2))}
+
+/* BOTTOM SHEET */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(17,17,17,.3);
+  backdrop-filter:blur(6px);z-index:100;
+  display:none;align-items:flex-end;justify-content:center;
+}
 .sheet-overlay.open{display:flex}
-.sheet{background:#fff;border-radius:40px 40px 0 0;width:100%;padding:32px;padding-bottom:max(40px,env(safe-area-inset-bottom));box-shadow:0 -20px 40px rgba(0,0,0,.1);animation:sheetUp .3s cubic-bezier(.4,0,.2,1)}
+.sheet{
+  background:#fff;border-radius:40px 40px 0 0;width:100%;
+  padding:32px;padding-bottom:max(40px,env(safe-area-inset-bottom));
+  box-shadow:0 -20px 40px rgba(0,0,0,.1);border-top:1px solid #f0f0f0;
+  animation:sheetUp .3s cubic-bezier(.4,0,.2,1);
+}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
 .sheet-drag{width:48px;height:6px;background:#E5E5E5;border-radius:100px;margin:0 auto 32px}
 .sheet-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .sheet-amount-lbl{font-size:12px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .sheet-amount{font-size:42px;font-weight:900;color:#111;letter-spacing:-.03em;line-height:1}
-.sheet-icon-wrap{width:56px;height:56px;border-radius:16px;background:#F4F4F5;display:flex;align-items:center;justify-content:center}
+.sheet-icon-wrap{width:56px;height:56px;border-radius:16px;background:#F4F4F5;border:1px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(0,0,0,.05),inset 0 2px 4px #fff}
 .sheet-icon-wrap svg{width:24px;height:24px;stroke:#D35400;stroke-width:2.5;fill:none}
 .sheet-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:36px}
-.sheet-field{background:#F9F9FA;padding:20px 24px;border-radius:20px;border:1px solid #eeeef0}
+.sheet-field{background:#F9F9FA;padding:20px 24px;border-radius:20px;border:1px solid #eeeef0;box-shadow:inset 0 2px 4px rgba(0,0,0,.02),0 2px 0 #fff}
 .sheet-field-lbl{font-size:11px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .sheet-field-val{font-size:18px;font-weight:700;color:#111}
-.sheet-accept{width:100%;background:#D35400;color:#fff;padding:20px;border-radius:100px;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit;box-shadow:0 12px 24px rgba(211,84,0,.3)}
-.sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:24px}
-.send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
-.send-form{display:flex;flex-direction:column;gap:16px}
-.send-field{display:flex;flex-direction:column;gap:6px}
-.send-label{font-size:12px;font-weight:600;color:#888}
-.send-input,.send-textarea{
-  width:100%;padding:14px 0;border:none;border-bottom:1px solid #E8E8E8;
-  background:transparent;font-size:17px;font-weight:500;color:#111;
-  font-family:inherit;outline:none;border-radius:0;
-  transition:border-color .2s;
+.sheet-accept{
+  width:100%;background:#D35400;color:#fff;padding:20px;border-radius:100px;
+  font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit;
+  box-shadow:0 12px 24px rgba(211,84,0,.3),inset 0 4px 8px rgba(255,255,255,.3),inset 0 -4px 8px rgba(0,0,0,.15);
+  transition:transform .15s,box-shadow .15s;
 }
-.send-input::placeholder,.send-textarea::placeholder{color:#C4C4C4}
-.send-input:focus,.send-textarea:focus{border-bottom-color:#D35400}
-.send-textarea{min-height:64px;resize:none;line-height:1.45;padding-top:4px}
-.send-submit{
-  width:100%;margin-top:8px;padding:18px;border:none;border-radius:100px;
-  background:#D35400;color:#fff;font-size:16px;font-weight:700;
-  font-family:inherit;cursor:pointer;box-shadow:0 10px 24px rgba(211,84,0,.28);
+.sheet-accept:active{transform:scale(.97)}
+
+/* ══ RASM YUKLASH — KONTENT MAYDONI (qizil ramka o'lchami) ══ */
+.upload-overlay{
+  position:fixed;inset:0;z-index:200;
+  pointer-events:none;
 }
-.send-submit:active{transform:scale(.98)}
-.send-submit:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.upload-overlay.open,
+.upload-overlay.closing{pointer-events:auto}
+.upload-backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0);
+  transition:background .4s cubic-bezier(.4,0,.2,1);
+}
+.upload-overlay.open .upload-backdrop{background:rgba(17,17,17,.35)}
+.upload-overlay.closing .upload-backdrop{background:rgba(0,0,0,0)}
+.upload-panel{
+  position:fixed;
+  left:16px;right:16px;
+  top:max(112px,calc(env(safe-area-inset-top) + 96px));
+  bottom:max(124px,calc(env(safe-area-inset-bottom) + 108px));
+  border-radius:36px;
+  background:#fff;
+  box-shadow:0 24px 64px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);
+  transform:scale(.15);
+  opacity:0;
+  transform-origin:center center;
+  transition:transform .5s cubic-bezier(.32,.72,0,1),opacity .35s ease;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  will-change:transform,opacity;
+  z-index:1;
+}
+.upload-overlay.open .upload-panel{
+  transform:scale(1);
+  opacity:1;
+}
+.upload-overlay.closing .upload-panel{
+  transform:scale(.15);
+  opacity:0;
+  transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .25s ease;
+}
+.upload-inner{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:16px 16px 8px;
+  min-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity .25s ease .15s;
+}
+.upload-overlay.open .upload-inner{opacity:1}
+.upload-overlay.closing .upload-inner{opacity:0;transition-delay:0s}
+.upload-close{
+  position:absolute;top:14px;right:14px;
+  width:40px;height:40px;border-radius:50%;
+  background:#F4F4F5;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:10;
+  transition:background .2s,transform .15s;
+}
+.upload-close:active{transform:scale(.92);background:#E8E8EB}
+.upload-close svg{width:20px;height:20px;stroke:#666;stroke-width:2.5;fill:none}
+.upload-title{
+  color:#111;font-size:20px;font-weight:800;
+  letter-spacing:-.03em;margin-bottom:6px;text-align:center;
+  padding-right:36px;padding-left:36px;
+}
+.upload-sub{
+  color:#888;font-size:13px;font-weight:600;
+  margin-bottom:10px;text-align:center;
+  flex-shrink:0;
+}
+.upload-zone{
+  width:100%;flex:1;min-height:120px;
+  border:2px dashed #D4D4D8;
+  border-radius:28px;
+  position:relative;
+  overflow:hidden;
+  background:#111;
+}
+.upload-zone video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.upload-zone video.active{display:block}
+.upload-preview{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.upload-preview.visible{display:block}
+.camera-fallback{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:20px;
+  background:#FAFAFA;text-align:center;
+}
+.camera-fallback[hidden]{display:none}
+.camera-fallback p{color:#666;font-size:13px;font-weight:600}
+.camera-fallback button{
+  padding:10px 18px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+}
+.zone-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;
+  background:#FAFAFA;pointer-events:none;
+}
+.zone-placeholder.hidden{display:none}
+.zone-placeholder svg{width:28px;height:28px;stroke:#D35400;stroke-width:2;fill:none}
+.zone-placeholder span{color:#A1A1AA;font-size:12px;font-weight:600}
+.upload-actions{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  gap:28px;
+  padding:12px 16px max(14px,env(safe-area-inset-bottom));
+  flex-shrink:0;
+  background:#fff;
+  border-top:1px solid #F0F0F0;
+  position:relative;
+  z-index:5;
+}
+.gallery-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.gallery-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.capture-btn{
+  width:72px;height:72px;border-radius:50%;
+  border:5px solid #E5E5E5;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+  transition:transform .15s;
+}
+.capture-btn:active{transform:scale(.92)}
+.capture-btn-inner{
+  width:56px;height:56px;border-radius:50%;background:#D35400;
+  transition:background .2s;
+}
+.capture-btn.captured .capture-btn-inner{background:#111}
+.flip-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.flip-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.upload-file-input{display:none}
+
+@media (max-height:740px){
+  .upload-panel{
+    top:max(100px,calc(env(safe-area-inset-top) + 88px));
+    bottom:max(118px,calc(env(safe-area-inset-bottom) + 102px));
+  }
+  .upload-title{font-size:18px;margin-bottom:4px}
+  .upload-sub{font-size:12px;margin-bottom:8px}
+  .capture-btn{width:64px;height:64px;border-width:4px}
+  .capture-btn-inner{width:48px;height:48px}
+  .gallery-btn,.flip-btn{width:44px;height:44px}
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+
 <div class="app">
-  <div class="header">
-    <div class="logo"><span>duv</span><div class="logo-dot"></div><span>duv</span></div>
-    <div class="toggle">
-      <button class="toggle-btn active" id="btnSender" onclick="switchView('sender')">Jo'natuvchi</button>
-      <button class="toggle-btn" id="btnDriver" onclick="switchView('driver')">Haydovchi</button>
-    </div>
-  </div>
-  <div class="content">
-    <div id="senderView">
-      <div class="scene">
-        <div class="road"><div class="road-line"></div></div>
-        <div class="camera"><div class="cam-shutter"></div><div class="cam-flash"></div><div class="cam-lens"><div class="cam-inner"><div class="cam-dot"></div></div></div></div>
-        <div class="box"><div class="box-tape"></div></div>
-        <div class="env"><div class="env-top"></div><div class="env-seal"></div></div>
-        <div class="cloud"><div class="cloud-body"></div><div class="cloud-puff"></div></div>
-        <div class="cube"></div>
+
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">
+        <span>duv</span>
+        <div class="logo-dot"></div>
+        <span>duv</span>
       </div>
-      <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
-      <div class="cta-wrap">
-        <button type="button" class="cta-btn" onclick="document.getElementById('photoInput').click()">
-          <div class="cta-shine"></div>
-          <div class="cta-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-          <span class="cta-text">Jo'natma yuborish</span>
-        </button>
+      <div class="toggle">
+        <button class="toggle-btn active" id="btnSender" onclick="switchView('sender')">Jo'natuvchi</button>
+        <button class="toggle-btn" id="btnDriver" onclick="switchView('driver')">Haydovchi</button>
       </div>
     </div>
-    <div id="driverView">
-      <h2 class="driver-title">YUKLAR XARITASI</h2>
-      <div class="map-wrap">
-        <div class="map-grid"></div>
-        <div class="marker" style="top:28%;left:22%" onclick="openSheet('Toshkent','Samarqand','150 000')"><div class="marker-price">150 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
-        <div class="marker" style="top:55%;left:58%" onclick="openSheet('Buxoro','Xiva','85 000')"><div class="marker-price">85 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
-        <div class="marker" style="top:70%;left:30%" onclick="openSheet('Farg\'ona','Toshkent','120 000')"><div class="marker-price">120 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- SENDER -->
+      <div id="senderView">
+        <div class="scene">
+          <div class="road"><div class="road-line"></div></div>
+          <div class="camera">
+            <div class="cam-shutter"></div>
+            <div class="cam-flash"></div>
+            <div class="cam-lens">
+              <div class="cam-inner"><div class="cam-dot"></div></div>
+            </div>
+          </div>
+          <div class="box">
+            <div class="box-tape"></div>
+            <div class="box-line1"></div>
+            <div class="box-line2"></div>
+          </div>
+          <div class="env">
+            <div class="env-top"></div>
+            <div class="env-seal"></div>
+          </div>
+          <div class="cloud">
+            <div class="cloud-body"></div>
+            <div class="cloud-puff"></div>
+          </div>
+          <div class="cube"></div>
+        </div>
+
+        <h2 class="sender-title">
+          RASMGA OLING<br>VA JO'NATING
+        </h2>
+
+        <div class="cta-wrap">
+          <button class="cta-btn" onclick="openOrder()">
+            <div class="cta-shine"></div>
+            <div class="cta-icon">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <span class="cta-text">Jo'natma yuborish</span>
+          </button>
+        </div>
       </div>
+
+      <!-- DRIVER -->
+      <div id="driverView">
+        <h2 class="driver-title">YUKLAR XARITASI</h2>
+
+        <div class="map-wrap" id="mapWrap">
+          <div class="map-grid"></div>
+
+          <div class="marker" style="top:28%;left:22%" onclick="openSheet('Toshkent','Samarqand','150 000')">
+            <div class="marker-price">150 000 so'm</div>
+            <div class="marker-pin">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+          </div>
+
+          <div class="marker" style="top:55%;left:58%" onclick="openSheet('Buxoro','Xiva','85 000')">
+            <div class="marker-price">85 000 so'm</div>
+            <div class="marker-pin">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+          </div>
+
+          <div class="marker" style="top:70%;left:30%" onclick="openSheet('Farg\'ona','Toshkent','120 000')">
+            <div class="marker-price">120 000 so'm</div>
+            <div class="marker-pin">
+              <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+</div>
+
+<!-- RASM YUKLASH -->
+<div class="upload-overlay" id="uploadOverlay">
+  <div class="upload-backdrop" onclick="closeUpload()"></div>
+  <div class="upload-panel">
+    <button class="upload-close" type="button" onclick="closeUpload()" aria-label="Yopish">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="upload-inner">
+      <h2 class="upload-title">Jo'natma rasmi</h2>
+      <p class="upload-sub">Qutini ramka ichida ko'ring va rasm oling</p>
+      <div class="upload-zone" id="uploadZone">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <img class="upload-preview" id="photoPreview" alt="Olingan rasm">
+        <div class="zone-placeholder" id="zonePlaceholder">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span>Kamera yuklanmoqda…</span>
+        </div>
+        <div class="camera-fallback" id="cameraFallback" hidden>
+          <p>Kameraga ruxsat bering yoki galereyadan tanlang</p>
+          <button type="button" onclick="openGallery()">Galereyadan tanlash</button>
+        </div>
+      </div>
+      <input type="file" accept="image/*" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
+    </div>
+    <div class="upload-actions">
+      <button type="button" class="gallery-btn" onclick="openGallery()" aria-label="Galereya">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </button>
+      <button type="button" class="capture-btn" id="captureBtn" onclick="capturePhoto()" aria-label="Rasm olish">
+        <div class="capture-btn-inner"></div>
+      </button>
+      <button type="button" class="flip-btn" onclick="flipCamera()" aria-label="Kamerani almashtirish">
+        <svg viewBox="0 0 24 24"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><polyline points="8 12 11 15 8 18"/><polyline points="16 6 13 9 16 12"/></svg>
+      </button>
     </div>
   </div>
 </div>
 
-<!-- TO'G'RIDAN KAMERA -->
-<input type="file" accept="image/*" capture="environment" id="photoInput" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" onchange="onPhotoSelected(event)">
-
-<div class="sheet-overlay" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
-  <div class="sheet sheet--send" onclick="event.stopPropagation()">
-    <div class="sheet-drag"></div>
-    <div class="send-thumb-wrap">
-      <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
-    </div>
-    <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
-      <div class="send-field">
-        <label class="send-label" for="sendPhone">Telefon raqam</label>
-        <input class="send-input" type="tel" id="sendPhone" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required>
-      </div>
-      <div class="send-field">
-        <label class="send-label" for="sendDest">Qayerga</label>
-        <input class="send-input" type="text" id="sendDest" placeholder="Shahar, manzil" required>
-      </div>
-      <div class="send-field">
-        <label class="send-label" for="sendNote">Izoh</label>
-        <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
-      </div>
-      <button type="submit" class="send-submit" id="sendSubmitBtn">Yuborish</button>
-    </form>
-  </div>
-</div>
-
+<!-- BOTTOM SHEET -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
   <div class="sheet">
     <div class="sheet-drag"></div>
     <div class="sheet-row">
-      <div><div class="sheet-amount-lbl">To'lov miqdori</div><div class="sheet-amount" id="sheetPrice">150 000</div></div>
-      <div class="sheet-icon-wrap"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+      <div>
+        <div class="sheet-amount-lbl">To'lov miqdori</div>
+        <div class="sheet-amount" id="sheetPrice">150 000</div>
+      </div>
+      <div class="sheet-icon-wrap">
+        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      </div>
     </div>
     <div class="sheet-fields">
-      <div class="sheet-field"><div class="sheet-field-lbl">Olib ketish</div><div class="sheet-field-val" id="sheetFrom">Toshkent</div></div>
-      <div class="sheet-field"><div class="sheet-field-lbl">Yetkazish</div><div class="sheet-field-val" id="sheetTo">Samarqand</div></div>
+      <div class="sheet-field">
+        <div class="sheet-field-lbl">Olib ketish</div>
+        <div class="sheet-field-val" id="sheetFrom">Toshkent</div>
+      </div>
+      <div class="sheet-field">
+        <div class="sheet-field-lbl">Yetkazish</div>
+        <div class="sheet-field-val" id="sheetTo">Samarqand</div>
+      </div>
     </div>
     <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
   </div>
 </div>
 
 <script>
-let previewObjectUrl = null;
-let selectedPhotoFile = null;
-
-if(window.Telegram?.WebApp){try{const tg=Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#ffffff');tg.setBackgroundColor('#ffffff')}catch(_){}}
-
 function switchView(v){
-  document.getElementById('senderView').style.display=v==='sender'?'flex':'none';
-  document.getElementById('driverView').style.display=v==='driver'?'flex':'none';
-  document.getElementById('btnSender').className='toggle-btn'+(v==='sender'?' active':'');
-  document.getElementById('btnDriver').className='toggle-btn'+(v==='driver'?' active':'');
+  document.getElementById('senderView').style.display = v==='sender'?'flex':'none';
+  document.getElementById('driverView').style.display = v==='driver'?'flex':'none';
+  document.getElementById('btnSender').className = 'toggle-btn'+(v==='sender'?' active':'');
+  document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
 }
-function openSheet(from,to,price){
-  document.getElementById('sheetFrom').textContent=from;
-  document.getElementById('sheetTo').textContent=to;
-  document.getElementById('sheetPrice').textContent=price+" so'm";
+
+function openSheet(from, to, price){
+  document.getElementById('sheetFrom').textContent = from;
+  document.getElementById('sheetTo').textContent = to;
+  document.getElementById('sheetPrice').textContent = price + " so'm";
   document.getElementById('sheetOverlay').classList.add('open');
 }
-function closeSheet(){document.getElementById('sheetOverlay').classList.remove('open')}
-function acceptOrder(){closeSheet();showToast('✅ Buyurtma qabul qilindi!')}
-function onPhotoSelected(e){
-  const file=e.target.files?.[0];
-  if(!file)return;
-  e.target.value='';
-  if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);
-  selectedPhotoFile=file;
-  previewObjectUrl=URL.createObjectURL(file);
-  document.getElementById('sendThumb').src=previewObjectUrl;
-  document.getElementById('sendForm').reset();
-  document.getElementById('sendSheetOverlay').classList.add('open');
-  document.body.style.overflow='hidden';
-  if(window.Telegram?.WebApp?.HapticFeedback)Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-  setTimeout(()=>document.getElementById('sendPhone').focus(),400);
+function closeSheet(){
+  document.getElementById('sheetOverlay').classList.remove('open');
 }
-
-function closeSendSheet(){
-  document.getElementById('sendSheetOverlay').classList.remove('open');
-  document.body.style.overflow='';
-  document.getElementById('sendForm').reset();
-  if(previewObjectUrl){URL.revokeObjectURL(previewObjectUrl);previewObjectUrl=null}
-  selectedPhotoFile=null;
-  document.getElementById('sendThumb').removeAttribute('src');
-}
-
-function submitOrder(e){
-  e.preventDefault();
-  if(!selectedPhotoFile){showToast('Avval rasm oling');return}
-  const phone=document.getElementById('sendPhone').value.trim();
-  const dest=document.getElementById('sendDest').value.trim();
-  const note=document.getElementById('sendNote').value.trim();
-  if(!phone||!dest){showToast('Telefon va manzilni to\'ldiring');return}
-  const btn=document.getElementById('sendSubmitBtn');
-  btn.disabled=true;
-  // keyingi bosqich: serverga yuborish
-  setTimeout(()=>{
-    closeSendSheet();
-    btn.disabled=false;
-    showToast('✅ Jo\'natma yuborildi!');
-    if(window.Telegram?.WebApp?.HapticFeedback)Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-  },400);
-}
-function showToast(msg){
+function acceptOrder(){
+  closeSheet();
+  // Toast
   const t=document.createElement('div');
-  t.style.cssText='position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
-  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
+  t.textContent='✅ Buyurtma qabul qilindi!';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+if (window.Telegram?.WebApp) {
+  const tg = Telegram.WebApp;
+  tg.ready();
+  tg.expand();
+  if (tg.requestFullscreen) tg.requestFullscreen();
+  tg.setHeaderColor('#ffffff');
+  tg.setBackgroundColor('#ffffff');
+}
+
+let cameraStream = null;
+let facingMode = 'environment';
+let previewObjectUrl = null;
+
+function openOrder(){
+  const overlay = document.getElementById('uploadOverlay');
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(startCamera, 280);
+}
+
+function closeUpload(){
+  const overlay = document.getElementById('uploadOverlay');
+  if (!overlay.classList.contains('open')) return;
+  overlay.classList.remove('open');
+  overlay.classList.add('closing');
+  stopCamera();
+  setTimeout(() => {
+    overlay.classList.remove('closing');
+    document.body.style.overflow = '';
+    resetUpload();
+  }, 550);
+}
+
+async function startCamera(){
+  const video = document.getElementById('cameraVideo');
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  const preview = document.getElementById('photoPreview');
+  if (preview.classList.contains('visible')) return;
+
+  stopCamera();
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    fallback.hidden = false;
+    placeholder.classList.add('hidden');
+    return;
+  }
+
+  try {
+    cameraStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: facingMode } }, audio: false
+    });
+    video.srcObject = cameraStream;
+    await video.play();
+    video.classList.add('active');
+    placeholder.classList.add('hidden');
+  } catch (err) {
+    console.warn('Camera error:', err);
+    video.classList.remove('active');
+    fallback.hidden = false;
+    placeholder.classList.add('hidden');
+  }
+}
+
+function stopCamera(){
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById('cameraVideo');
+  video.srcObject = null;
+  video.classList.remove('active');
+}
+
+function flipCamera(){
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  if (document.getElementById('uploadOverlay').classList.contains('open')) {
+    startCamera();
+  }
+}
+
+function capturePhoto(){
+  const video = document.getElementById('cameraVideo');
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+
+  if (preview.classList.contains('visible')) {
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    preview.src = '';
+    preview.classList.remove('visible');
+    captureBtn.classList.remove('captured');
+    startCamera();
+    return;
+  }
+
+  if (!cameraStream || !video.videoWidth) {
+    showToast('Kamera tayyor emas');
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = URL.createObjectURL(blob);
+    preview.src = previewObjectUrl;
+    preview.classList.add('visible');
+    captureBtn.classList.add('captured');
+    stopCamera();
+    document.getElementById('zonePlaceholder').classList.add('hidden');
+    showToast('✅ Rasm olindi!');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  }, 'image/jpeg', 0.9);
+}
+
+function openGallery(){
+  document.getElementById('photoInput').click();
+}
+
+function resetUpload(){
+  stopCamera();
+  const input = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  input.value = '';
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = null;
+  preview.src = '';
+  preview.classList.remove('visible');
+  captureBtn.classList.remove('captured');
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+}
+
+function onPhotoSelected(e){
+  const file = e.target.files?.[0];
+  if (!file) return;
+  stopCamera();
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const placeholder = document.getElementById('zonePlaceholder');
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = URL.createObjectURL(file);
+  preview.src = previewObjectUrl;
+  preview.classList.add('visible');
+  captureBtn.classList.add('captured');
+  placeholder.classList.add('hidden');
+  document.getElementById('cameraFallback').hidden = true;
+  document.getElementById('cameraVideo').classList.remove('active');
+  showToast('✅ Rasm yuklandi!');
+}
+
+function showToast(msg){
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
 }
 </script>
 </body>
