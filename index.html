@@ -6,7 +6,6 @@
 <title>duv•duv</title>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
-<script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
@@ -599,8 +598,8 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 </div>
 
 <script>
-const MAPBOX_TOKEN = (window.DUVDUV_CONFIG && window.DUVDUV_CONFIG.mapboxToken) || '';
-mapboxgl.accessToken = MAPBOX_TOKEN;
+const STORAGE_KEY = 'duvduv_data_v1';
+mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
 
 let map = null;
 let driverLocationMarker = null;
@@ -623,8 +622,8 @@ function getCurrentPosition(){
 
 function initDriverMap(){
   if (map) return;
-  if (!MAPBOX_TOKEN) {
-    showToast('Xarita: config.js da mapboxToken kiriting');
+  if (!window.mapboxgl) {
+    showToast('Mapbox kutubxonasi yuklanmadi');
     return;
   }
   map = new mapboxgl.Map({
@@ -699,7 +698,7 @@ function switchView(v){
         map.resize();
         centerMapOnDriver();
         refreshOrderMarkers();
-      }, 150);
+      }, 200);
     }
   }
 }
@@ -717,6 +716,46 @@ function acceptOrder(){
 }
 
 const shipments = [];
+
+function persistData(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shipments, orders }));
+  } catch (e) {
+    console.warn('Saqlash xatosi:', e);
+  }
+}
+
+function loadPersistedData(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    shipments.length = 0;
+    orders.length = 0;
+    (data.shipments || []).forEach(s => shipments.push(s));
+    (data.orders || []).forEach(o => orders.push(o));
+    renderShipments();
+    if (map) refreshOrderMarkers();
+  } catch (e) {
+    console.warn('Yuklash xatosi:', e);
+  }
+}
+
+async function thumbToStorable(url){
+  if (!url || url.startsWith('data:')) return url;
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
 
 function escapeHtml(s){
   const d = document.createElement('div');
@@ -935,10 +974,11 @@ function submitOrder(e){
   const note = document.getElementById('sendNote').value.trim();
   btn.disabled = true;
 
-  function saveOrder(coords){
+  async function saveOrder(coords){
+    const storedThumb = await thumbToStorable(thumbUrl);
     const order = {
       id: Date.now(),
-      thumbUrl,
+      thumbUrl: storedThumb,
       dest,
       phone,
       note,
@@ -948,6 +988,7 @@ function submitOrder(e){
     };
     shipments.unshift(order);
     orders.unshift(order);
+    persistData();
     previewObjectUrl = null;
     selectedPhotoFile = null;
     renderShipments();
@@ -973,6 +1014,8 @@ function showToast(msg){
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2500);
 }
+
+loadPersistedData();
 </script>
 </body>
 </html>
