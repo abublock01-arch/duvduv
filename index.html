@@ -4,8 +4,9 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>duv•duv</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="config.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
@@ -200,10 +201,22 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   box-shadow:inset 0 4px 16px rgba(0,0,0,.03),0 2px 0 #fff;
   border:1px solid #eeeef0;overflow:hidden;position:relative;
 }
-#map{width:100%;height:100%;z-index:1}
-.leaflet-container{font-family:inherit;border-radius:40px}
-.leaflet-popup-content-wrapper{border-radius:14px;box-shadow:0 12px 24px rgba(0,0,0,.12)}
-.leaflet-popup-content{margin:10px 14px;font-size:14px;font-weight:700;line-height:1.4}
+#map{width:100%;height:100%;z-index:1;border-radius:40px}
+.mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-bottom-left{display:none}
+.map-order-marker{
+  width:40px;height:40px;background:#D35400;border-radius:50% 50% 50% 4px;
+  transform:rotate(-45deg);border:3px solid #fff;cursor:pointer;
+  box-shadow:0 6px 16px rgba(211,84,0,.45);
+}
+.map-driver-marker{
+  width:18px;height:18px;background:#2563eb;border:3px solid #fff;
+  border-radius:50%;box-shadow:0 2px 10px rgba(37,99,235,.5);
+}
+.sheet-order-thumb{
+  width:88px;height:88px;border-radius:16px;object-fit:cover;
+  border:1px solid #EEE;display:block;margin:0 auto 24px;
+}
+.sheet--order .sheet-fields{margin-bottom:28px}
 
 /* BOTTOM SHEET */
 .sheet-overlay{
@@ -566,27 +579,19 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   </div>
 </div>
 
-<!-- BOTTOM SHEET -->
+<!-- BUYURTMA SHEET (haydovchi) -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
-  <div class="sheet">
+  <div class="sheet sheet--order" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <div class="sheet-row">
-      <div>
-        <div class="sheet-amount-lbl">To'lov miqdori</div>
-        <div class="sheet-amount" id="sheetPrice">150 000</div>
-      </div>
-      <div class="sheet-icon-wrap">
-        <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      </div>
-    </div>
+    <img class="sheet-order-thumb" id="sheetOrderThumb" alt="Jo'natma">
     <div class="sheet-fields">
       <div class="sheet-field">
-        <div class="sheet-field-lbl">Olib ketish</div>
-        <div class="sheet-field-val" id="sheetFrom">Toshkent</div>
+        <div class="sheet-field-lbl">Qayerga</div>
+        <div class="sheet-field-val" id="sheetOrderDest"></div>
       </div>
       <div class="sheet-field">
-        <div class="sheet-field-lbl">Yetkazish</div>
-        <div class="sheet-field-val" id="sheetTo">Samarqand</div>
+        <div class="sheet-field-lbl">Telefon</div>
+        <div class="sheet-field-val" id="sheetOrderPhone"></div>
       </div>
     </div>
     <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
@@ -594,22 +599,92 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 </div>
 
 <script>
-var map;
-const driverLoads = [
-  { lat: 41.311, lng: 69.279, from: 'Toshkent', to: 'Samarqand', price: '150 000' },
-  { lat: 39.776, lng: 64.428, from: 'Buxoro', to: 'Xiva', price: '85 000' },
-  { lat: 40.386, lng: 71.786, from: "Farg'ona", to: 'Toshkent', price: '120 000' }
-];
+const MAPBOX_TOKEN = (window.DUVDUV_CONFIG && window.DUVDUV_CONFIG.mapboxToken) || '';
+mapboxgl.accessToken = MAPBOX_TOKEN;
+
+let map = null;
+let driverLocationMarker = null;
+const orderMapMarkers = [];
+const orders = [];
+
+function getCurrentPosition(){
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation unavailable'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve(pos.coords),
+      err => reject(err),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  });
+}
 
 function initDriverMap(){
   if (map) return;
-  map = L.map('map').setView([41.2995, 69.2401], 12);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  driverLoads.forEach(load => {
-    const marker = L.marker([load.lat, load.lng]).addTo(map);
-    marker.bindPopup('<b>' + load.price + ' so\'m</b><br>' + load.from + ' → ' + load.to);
-    marker.on('click', () => openSheet(load.from, load.to, load.price));
+  if (!MAPBOX_TOKEN) {
+    showToast('Xarita: config.js da mapboxToken kiriting');
+    return;
+  }
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [69.2401, 41.2991],
+    zoom: 12
   });
+  map.on('load', () => {
+    refreshOrderMarkers();
+    centerMapOnDriver();
+  });
+}
+
+function centerMapOnDriver(){
+  if (!map) return;
+  getCurrentPosition()
+    .then(coords => {
+      const lng = coords.longitude;
+      const lat = coords.latitude;
+      map.flyTo({ center: [lng, lat], zoom: 13, essential: true });
+      if (!driverLocationMarker) {
+        const el = document.createElement('div');
+        el.className = 'map-driver-marker';
+        driverLocationMarker = new mapboxgl.Marker({ element: el })
+          .setLngLat([lng, lat])
+          .addTo(map);
+      } else {
+        driverLocationMarker.setLngLat([lng, lat]);
+      }
+    })
+    .catch(() => {
+      map.flyTo({ center: [69.2401, 41.2991], zoom: 13, essential: true });
+    });
+}
+
+function refreshOrderMarkers(){
+  if (!map) return;
+  orderMapMarkers.forEach(m => m.remove());
+  orderMapMarkers.length = 0;
+  orders.forEach(order => {
+    if (order.lat == null || order.lng == null) return;
+    const el = document.createElement('div');
+    el.className = 'map-order-marker';
+    const marker = new mapboxgl.Marker({ element: el })
+      .setLngLat([order.lng, order.lat])
+      .addTo(map);
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      openOrderSheet(order);
+    });
+    orderMapMarkers.push(marker);
+  });
+}
+
+function openOrderSheet(order){
+  document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
+  document.getElementById('sheetOrderDest').textContent = order.dest || '';
+  document.getElementById('sheetOrderPhone').textContent = order.phone || '';
+  document.getElementById('sheetOverlay').classList.add('open');
 }
 
 function switchView(v){
@@ -619,22 +694,21 @@ function switchView(v){
   document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
   if (v === 'driver') {
     if (!map) initDriverMap();
-    else setTimeout(() => map.invalidateSize(), 150);
+    else {
+      setTimeout(() => {
+        map.resize();
+        centerMapOnDriver();
+        refreshOrderMarkers();
+      }, 150);
+    }
   }
 }
 
-function openSheet(from, to, price){
-  document.getElementById('sheetFrom').textContent = from;
-  document.getElementById('sheetTo').textContent = to;
-  document.getElementById('sheetPrice').textContent = price + " so'm";
-  document.getElementById('sheetOverlay').classList.add('open');
-}
 function closeSheet(){
   document.getElementById('sheetOverlay').classList.remove('open');
 }
 function acceptOrder(){
   closeSheet();
-  // Toast
   const t=document.createElement('div');
   t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
   t.textContent='✅ Buyurtma qabul qilindi!';
@@ -642,20 +716,6 @@ function acceptOrder(){
   setTimeout(()=>t.remove(),3000);
 }
 
-if (window.Telegram?.WebApp) {
-  try {
-    const tg = Telegram.WebApp;
-    tg.ready();
-    tg.expand();
-    tg.setHeaderColor('#ffffff');
-    tg.setBackgroundColor('#ffffff');
-  } catch (_) {}
-}
-
-let cameraStream = null;
-let facingMode = 'environment';
-let previewObjectUrl = null;
-let selectedPhotoFile = null;
 const shipments = [];
 
 function escapeHtml(s){
@@ -814,7 +874,7 @@ function resetUpload(){
   const fallback = document.getElementById('cameraFallback');
   const placeholder = document.getElementById('zonePlaceholder');
   input.value = '';
-  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl)) {
+  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl) && !orders.some(o => o.thumbUrl === previewObjectUrl)) {
     URL.revokeObjectURL(previewObjectUrl);
   }
   previewObjectUrl = null;
@@ -872,23 +932,38 @@ function submitOrder(e){
     return;
   }
   const btn = document.getElementById('sendSubmitBtn');
+  const note = document.getElementById('sendNote').value.trim();
   btn.disabled = true;
-  shipments.unshift({
-    thumbUrl,
-    dest,
-    phone,
-    status: 'Aktiv'
-  });
-  previewObjectUrl = null;
-  selectedPhotoFile = null;
-  renderShipments();
-  closeSendSheet();
-  closeUpload();
-  btn.disabled = false;
-  showToast('✅ Jo\'natma yuborildi!');
-  if (window.Telegram?.WebApp?.HapticFeedback) {
-    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+
+  function saveOrder(coords){
+    const order = {
+      id: Date.now(),
+      thumbUrl,
+      dest,
+      phone,
+      note,
+      status: 'Aktiv',
+      lat: coords ? coords.latitude : null,
+      lng: coords ? coords.longitude : null
+    };
+    shipments.unshift(order);
+    orders.unshift(order);
+    previewObjectUrl = null;
+    selectedPhotoFile = null;
+    renderShipments();
+    if (map) refreshOrderMarkers();
+    closeSendSheet();
+    closeUpload();
+    btn.disabled = false;
+    showToast('✅ Jo\'natma yuborildi!');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
   }
+
+  getCurrentPosition()
+    .then(coords => saveOrder(coords))
+    .catch(() => saveOrder(null));
 }
 
 function showToast(msg){
