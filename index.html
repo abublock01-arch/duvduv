@@ -248,6 +248,14 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   transition:transform .15s,box-shadow .15s;
 }
 .sheet-accept:active{transform:scale(.97)}
+.sheet-tg-btn{
+  width:100%;background:#D35400;color:#fff;padding:16px 20px;border-radius:100px;
+  font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:inherit;
+  box-shadow:0 10px 20px rgba(211,84,0,.25);
+  transition:transform .15s;
+}
+.sheet-tg-btn:active{transform:scale(.97)}
+.sheet-tg-btn:disabled{opacity:.4;cursor:not-allowed}
 
 /* Jo'natma formasi sheet */
 .sheet-overlay--send{z-index:210}
@@ -503,6 +511,7 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .send-input::placeholder,
 .theme-telegram .send-textarea::placeholder{color:var(--tg-hint)!important}
 .theme-telegram .sheet-accept,
+.theme-telegram .sheet-tg-btn,
 .theme-telegram .send-submit,
 .theme-telegram .zone-placeholder-btn,
 .theme-telegram .camera-fallback button{
@@ -689,8 +698,7 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         <div class="sheet-field-val" id="sheetOrderDest"></div>
       </div>
       <div class="sheet-field">
-        <div class="sheet-field-lbl">Telefon</div>
-        <div class="sheet-field-val" id="sheetOrderPhone"></div>
+        <button type="button" class="sheet-tg-btn" id="sheetTelegramBtn" onclick="openTelegramChat()">Telegramga yozish</button>
       </div>
     </div>
     <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
@@ -816,6 +824,7 @@ let map = null;
 let driverLocationMarker = null;
 const orderMapMarkers = [];
 const orders = [];
+let activeSheetOrder = null;
 
 function getCurrentPosition(){
   return new Promise((resolve, reject) => {
@@ -891,10 +900,17 @@ function refreshOrderMarkers(){
 }
 
 function openOrderSheet(order){
+  activeSheetOrder = order;
   document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
   document.getElementById('sheetOrderDest').textContent = order.dest || '';
-  document.getElementById('sheetOrderPhone').textContent = order.phone || '';
+  const tgBtn = document.getElementById('sheetTelegramBtn');
+  if (tgBtn) tgBtn.disabled = !order.telegramId;
   document.getElementById('sheetOverlay').classList.add('open');
+}
+
+function openTelegramChat(){
+  if (!activeSheetOrder?.telegramId) return;
+  window.open('tg://user?id=' + activeSheetOrder.telegramId);
 }
 
 function switchView(v){
@@ -916,6 +932,7 @@ function switchView(v){
 
 function closeSheet(){
   document.getElementById('sheetOverlay').classList.remove('open');
+  activeSheetOrder = null;
 }
 function acceptOrder(){
   closeSheet();
@@ -1272,8 +1289,8 @@ function submitOrder(e){
       status: 'Aktiv',
       lat: coords ? coords.latitude : null,
       lng: coords ? coords.longitude : null,
-      telegramId: telegramUser.id,
-      telegramName: getTelegramName()
+      telegramId: window.Telegram?.WebApp?.initDataUnsafe?.user?.id ?? null,
+      telegramName: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || ''
     };
     shipments.unshift(order);
     orders.unshift(order);
