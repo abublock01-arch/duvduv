@@ -162,16 +162,26 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   background:rgba(22,163,74,.12);padding:4px 10px;border-radius:100px;
 }
 .shipment-actions{
-  display:flex;flex-direction:column;gap:5px;flex-shrink:0;
+  display:flex;flex-direction:row;gap:8px;flex-shrink:0;align-items:center;
 }
-.shipment-action-btn{
-  padding:5px 10px;border-radius:100px;border:none;
-  background:#D35400;color:#fff;font-size:10px;font-weight:700;
-  cursor:pointer;font-family:inherit;white-space:nowrap;
-  box-shadow:0 3px 8px rgba(211,84,0,.2);
+.shipment-icon-btn{
+  width:40px;height:40px;border-radius:50%;border:none;padding:0;flex-shrink:0;
+  background:linear-gradient(160deg,#fff 0%,#f6f6f7 55%,#ececed 100%);
+  border:1px solid rgba(255,255,255,.95);
+  box-shadow:
+    0 6px 14px rgba(0,0,0,.08),
+    0 2px 6px rgba(211,84,0,.1),
+    inset 0 3px 6px rgba(255,255,255,.95),
+    inset 0 -3px 6px rgba(0,0,0,.05);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
 }
-.shipment-action-btn:active{transform:scale(.96)}
-.shipment-action-btn:disabled{opacity:.4;cursor:not-allowed}
+.shipment-icon-btn svg{width:18px;height:18px;stroke:#D35400;stroke-width:2;fill:none;pointer-events:none}
+.shipment-icon-btn:active{
+  transform:scale(.92);
+  box-shadow:0 3px 8px rgba(0,0,0,.08),inset 0 2px 4px rgba(0,0,0,.06);
+}
+.shipment-icon-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
 .sheet-overlay--edit{z-index:212}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 
@@ -215,14 +225,86 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 }
 #map{width:100%;height:100%;z-index:1;border-radius:40px}
 .mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-bottom-left{display:none}
+@keyframes markerPulse{
+  0%{transform:scale(.6);opacity:.55}
+  70%{transform:scale(1.6);opacity:0}
+  100%{transform:scale(1.6);opacity:0}
+}
 .map-order-marker{
-  width:40px;height:40px;background:#D35400;border-radius:50% 50% 50% 4px;
-  transform:rotate(-45deg);border:3px solid #fff;cursor:pointer;
-  box-shadow:0 6px 16px rgba(211,84,0,.45);
+  width:48px;height:48px;position:relative;cursor:pointer;
+  background:transparent;border:none;padding:0;
+}
+.map-order-marker-pulse{
+  position:absolute;inset:2px;border-radius:50%;
+  background:radial-gradient(circle,rgba(211,84,0,.4) 0%,rgba(211,84,0,0) 70%);
+  animation:markerPulse 2.2s ease-out infinite;
+}
+.map-order-marker-dot{
+  position:absolute;inset:10px;border-radius:50%;
+  background:linear-gradient(155deg,#f07a2a 0%,#D35400 50%,#a84300 100%);
+  border:3px solid #fff;
+  box-shadow:0 8px 22px rgba(211,84,0,.5),0 2px 6px rgba(0,0,0,.18);
 }
 .map-driver-marker{
   width:18px;height:18px;background:#2563eb;border:3px solid #fff;
   border-radius:50%;box-shadow:0 2px 10px rgba(37,99,235,.5);
+}
+.map-controls{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  z-index:5;display:flex;flex-direction:column;gap:8px;
+}
+.map-ctrl-btn{
+  width:44px;height:44px;border-radius:50%;border:none;padding:0;
+  background:linear-gradient(160deg,#fff 0%,#f4f4f5 100%);
+  box-shadow:0 6px 16px rgba(0,0,0,.12),inset 0 2px 4px rgba(255,255,255,.9);
+  font-size:22px;font-weight:700;color:#D35400;cursor:pointer;font-family:inherit;
+  display:flex;align-items:center;justify-content:center;line-height:1;
+}
+.map-ctrl-btn:active{transform:scale(.94)}
+.map-my-loc{
+  position:absolute;right:14px;bottom:14px;z-index:5;
+  width:48px;height:48px;border-radius:50%;border:none;padding:0;cursor:pointer;
+  background:linear-gradient(160deg,#fff 0%,#f4f4f5 100%);
+  box-shadow:0 6px 18px rgba(0,0,0,.14),inset 0 2px 4px rgba(255,255,255,.9);
+  display:flex;align-items:center;justify-content:center;
+}
+.map-my-loc svg{width:22px;height:22px;stroke:#D35400;stroke-width:2.2;fill:none}
+.loc-picker-overlay{
+  position:fixed;inset:0;z-index:320;background:#fff;
+  display:none;flex-direction:column;
+}
+.loc-picker-overlay.open{display:flex}
+.loc-picker-header{
+  position:relative;
+  padding:max(14px,env(safe-area-inset-top)) 20px 12px;
+  font-size:17px;font-weight:800;color:#111;text-align:center;flex-shrink:0;
+}
+.loc-picker-close{
+  position:absolute;left:16px;top:max(14px,env(safe-area-inset-top));
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:#F4F4F5;cursor:pointer;font-size:20px;color:#666;font-family:inherit;
+}
+#locPickerMap{flex:1;min-height:0;width:100%}
+.loc-picker-footer{
+  padding:14px 20px max(18px,env(safe-area-inset-bottom));
+  background:#fff;border-top:1px solid #f0f0f0;flex-shrink:0;
+}
+.loc-picker-save{
+  width:100%;padding:18px;border:none;border-radius:100px;
+  background:#D35400;color:#fff;font-size:16px;font-weight:700;
+  font-family:inherit;cursor:pointer;
+  box-shadow:0 10px 24px rgba(211,84,0,.28);
+}
+.loc-picker-save:disabled{opacity:.45;cursor:not-allowed}
+.loc-picker-hint{
+  text-align:center;font-size:12px;color:#888;font-weight:600;
+  margin-bottom:10px;
+}
+.loc-picker-pin{
+  width:36px;height:36px;border-radius:50% 50% 50% 4px;
+  transform:rotate(-45deg);
+  background:linear-gradient(155deg,#f07a2a,#D35400);
+  border:3px solid #fff;box-shadow:0 8px 20px rgba(211,84,0,.45);
 }
 .sheet-order-thumb{
   width:88px;height:88px;border-radius:16px;object-fit:cover;
@@ -495,9 +577,11 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .shipment-status{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
-.theme-telegram .shipment-action-btn{
-  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;box-shadow:none!important;
-}
+.theme-telegram .shipment-icon-btn svg{stroke:var(--tg-btn)!important}
+.theme-telegram .map-ctrl-btn,
+.theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
+.theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
+.theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram .cta-wrap{background:var(--tg-bg)!important}
 .theme-telegram .cta-btn{
   background:var(--tg-btn)!important;border-color:var(--tg-btn)!important;
@@ -633,10 +717,30 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
+          <div class="map-controls">
+            <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
+            <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
+          </div>
+          <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </button>
         </div>
       </div>
 
     </div>
+</div>
+
+<!-- LOKATSIYA TANLASH -->
+<div class="loc-picker-overlay" id="locPickerOverlay">
+  <div class="loc-picker-header">
+    <button type="button" class="loc-picker-close" onclick="closeLocationPicker()" aria-label="Yopish">×</button>
+    Lokatsiyani tanlang
+  </div>
+  <div id="locPickerMap"></div>
+  <div class="loc-picker-footer">
+    <p class="loc-picker-hint">Xaritaga bosing — pin qo'yiladi</p>
+    <button type="button" class="loc-picker-save" id="locPickerSaveBtn" onclick="saveLocationPicker()" disabled>Saqlash</button>
+  </div>
 </div>
 
 <!-- RASM YUKLASH -->
@@ -871,6 +975,77 @@ let driverLocationMarker = null;
 const orderMapMarkers = [];
 const orders = [];
 let activeSheetOrder = null;
+let locationPickerMap = null;
+let locationPickerMarker = null;
+let locationPickerFirestoreId = null;
+let locationPickerPin = null;
+let driverRadiusDrawn = false;
+
+const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>';
+const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+
+function createGeoJSONCircle(center, radiusKm, points){
+  const coords = [];
+  const kmPerDegLat = 110.574;
+  const kmPerDegLng = 111.32 * Math.cos(center[1] * Math.PI / 180);
+  for (let i = 0; i <= points; i++) {
+    const theta = (i / points) * 2 * Math.PI;
+    coords.push([
+      center[0] + (radiusKm / kmPerDegLng) * Math.cos(theta),
+      center[1] + (radiusKm / kmPerDegLat) * Math.sin(theta)
+    ]);
+  }
+  return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] } };
+}
+
+function updateDriverRadiusCircle(lng, lat){
+  if (!map || !map.isStyleLoaded()) return;
+  const feature = createGeoJSONCircle([lng, lat], 20, 64);
+  if (map.getSource('driver-radius')) {
+    map.getSource('driver-radius').setData(feature);
+  } else {
+    map.addSource('driver-radius', { type: 'geojson', data: feature });
+    map.addLayer({
+      id: 'driver-radius-fill',
+      type: 'fill',
+      source: 'driver-radius',
+      paint: { 'fill-color': '#D35400', 'fill-opacity': 0.12 }
+    });
+    map.addLayer({
+      id: 'driver-radius-line',
+      type: 'line',
+      source: 'driver-radius',
+      paint: { 'line-color': '#D35400', 'line-opacity': 0.35, 'line-width': 2 }
+    });
+    const layers = map.getStyle().layers;
+    const beforeId = layers.find(l => l.type === 'symbol')?.id || layers.find(l => l.type === 'line')?.id;
+    if (beforeId) {
+      map.moveLayer('driver-radius-fill', beforeId);
+      map.moveLayer('driver-radius-line', beforeId);
+    }
+  }
+  driverRadiusDrawn = true;
+}
+
+function mapZoomIn(){
+  if (map) map.zoomIn({ duration: 280 });
+}
+function mapZoomOut(){
+  if (map) map.zoomOut({ duration: 280 });
+}
+function flyToMyLocation(){
+  if (!map) return;
+  getCurrentPosition()
+    .then(coords => {
+      map.flyTo({ center: [coords.longitude, coords.latitude], zoom: 14, essential: true });
+      updateDriverRadiusCircle(coords.longitude, coords.latitude);
+      if (driverLocationMarker) {
+        driverLocationMarker.setLngLat([coords.longitude, coords.latitude]);
+      }
+    })
+    .catch(() => showToast('Lokatsiya olinmadi'));
+}
 
 function getCurrentPosition(){
   return new Promise((resolve, reject) => {
@@ -904,6 +1079,13 @@ function initDriverMap(){
   });
 }
 
+function createOrderMarkerElement(){
+  const el = document.createElement('div');
+  el.className = 'map-order-marker';
+  el.innerHTML = '<div class="map-order-marker-pulse"></div><div class="map-order-marker-dot"></div>';
+  return el;
+}
+
 function centerMapOnDriver(){
   if (!map) return;
   getCurrentPosition()
@@ -911,6 +1093,7 @@ function centerMapOnDriver(){
       const lng = coords.longitude;
       const lat = coords.latitude;
       map.flyTo({ center: [lng, lat], zoom: 13, essential: true });
+      updateDriverRadiusCircle(lng, lat);
       if (!driverLocationMarker) {
         const el = document.createElement('div');
         el.className = 'map-driver-marker';
@@ -932,8 +1115,7 @@ function refreshOrderMarkers(){
   orderMapMarkers.length = 0;
   orders.forEach(order => {
     if (order.lat == null || order.lng == null) return;
-    const el = document.createElement('div');
-    el.className = 'map-order-marker';
+    const el = createOrderMarkerElement();
     const marker = new mapboxgl.Marker({ element: el })
       .setLngLat([order.lng, order.lat])
       .addTo(map);
@@ -975,6 +1157,90 @@ function switchView(v){
       }, 200);
     }
   }
+}
+
+function setLocationPickerPin(lng, lat){
+  locationPickerPin = { lng, lat };
+  const btn = document.getElementById('locPickerSaveBtn');
+  if (btn) btn.disabled = false;
+  if (!locationPickerMarker) {
+    const el = document.createElement('div');
+    el.className = 'loc-picker-pin';
+    locationPickerMarker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+      .setLngLat([lng, lat])
+      .addTo(locationPickerMap);
+  } else {
+    locationPickerMarker.setLngLat([lng, lat]);
+  }
+}
+
+function initLocationPickerMap(centerLng, centerLat){
+  if (locationPickerMap) {
+    locationPickerMap.resize();
+    locationPickerMap.flyTo({ center: [centerLng, centerLat], zoom: 14, essential: true });
+    return;
+  }
+  locationPickerMap = new mapboxgl.Map({
+    container: 'locPickerMap',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [centerLng, centerLat],
+    zoom: 14
+  });
+  locationPickerMap.on('load', () => locationPickerMap.resize());
+  locationPickerMap.on('click', e => setLocationPickerPin(e.lngLat.lng, e.lngLat.lat));
+}
+
+async function openLocationPicker(firestoreId){
+  const s = findShipmentByFirestoreId(firestoreId);
+  if (!s?.firestoreId) return;
+  locationPickerFirestoreId = firestoreId;
+  locationPickerPin = null;
+  if (locationPickerMarker) {
+    locationPickerMarker.remove();
+    locationPickerMarker = null;
+  }
+  document.getElementById('locPickerSaveBtn').disabled = true;
+  document.getElementById('locPickerOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  let lng = s.lng;
+  let lat = s.lat;
+  if (lng == null || lat == null) {
+    try {
+      const coords = await getCurrentPosition();
+      lng = coords.longitude;
+      lat = coords.latitude;
+    } catch {
+      lng = 69.2401;
+      lat = 41.2991;
+    }
+  }
+  setTimeout(() => {
+    initLocationPickerMap(lng, lat);
+    if (s.lng != null && s.lat != null) {
+      setLocationPickerPin(s.lng, s.lat);
+    }
+  }, 80);
+}
+
+function closeLocationPicker(){
+  document.getElementById('locPickerOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  locationPickerFirestoreId = null;
+  locationPickerPin = null;
+}
+
+async function saveLocationPicker(){
+  const s = findShipmentByFirestoreId(locationPickerFirestoreId);
+  if (!s?.firestoreId || !locationPickerPin) return;
+  s.lat = locationPickerPin.lat;
+  s.lng = locationPickerPin.lng;
+  await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
+  syncOrderFromShipment(s);
+  persistData();
+  renderShipments();
+  if (map) refreshOrderMarkers();
+  closeLocationPicker();
+  showToast('📍 Lokatsiya saqlandi');
 }
 
 function closeSheet(){
@@ -1132,9 +1398,9 @@ function renderShipments(){
         <span class="shipment-status">${escapeHtml(s.status)}</span>
       </div>
       <div class="shipment-actions">
-        <button type="button" class="shipment-action-btn" data-id="${fid}" onclick="editShipment(this.dataset.id)" ${hasFs ? '' : 'disabled'}>✏️ Tahrirlash</button>
-        <button type="button" class="shipment-action-btn" data-id="${fid}" onclick="updateShipmentLocation(this.dataset.id)" ${hasFs ? '' : 'disabled'}>📍 Lokatsiya</button>
-        <button type="button" class="shipment-action-btn" data-id="${fid}" onclick="deleteShipment(this.dataset.id)" ${hasFs ? '' : 'disabled'}>🗑 O'chirish</button>
+        <button type="button" class="shipment-icon-btn" data-id="${fid}" onclick="editShipment(this.dataset.id)" aria-label="Tahrirlash" ${hasFs ? '' : 'disabled'}>${SHIPMENT_ICON_EDIT}</button>
+        <button type="button" class="shipment-icon-btn" data-id="${fid}" onclick="openLocationPicker(this.dataset.id)" aria-label="Lokatsiya" ${hasFs ? '' : 'disabled'}>${SHIPMENT_ICON_PIN}</button>
+        <button type="button" class="shipment-icon-btn" data-id="${fid}" onclick="deleteShipment(this.dataset.id)" aria-label="O'chirish" ${hasFs ? '' : 'disabled'}>${SHIPMENT_ICON_TRASH}</button>
       </div>
     </div>`;
   }).join('');
@@ -1175,22 +1441,6 @@ async function saveEditShipment(e){
   showToast('✅ Saqlandi');
 }
 
-async function updateShipmentLocation(firestoreId){
-  const s = findShipmentByFirestoreId(firestoreId);
-  if (!s?.firestoreId) return;
-  try {
-    const coords = await getCurrentPosition();
-    s.lat = coords.latitude;
-    s.lng = coords.longitude;
-    await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
-    syncOrderFromShipment(s);
-    persistData();
-    renderShipments();
-    if (map) refreshOrderMarkers();
-    showToast('📍 Lokatsiya yangilandi');
-  } catch {
-    showToast('Lokatsiya olinmadi');
-  }
 }
 
 function removeShipmentLocal(firestoreId){
