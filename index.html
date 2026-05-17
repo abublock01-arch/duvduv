@@ -1441,8 +1441,6 @@ async function saveEditShipment(e){
   showToast('✅ Saqlandi');
 }
 
-}
-
 function removeShipmentLocal(firestoreId){
   const si = shipments.findIndex(s => s.firestoreId === firestoreId);
   if (si !== -1) shipments.splice(si, 1);
