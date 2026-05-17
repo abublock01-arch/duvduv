@@ -436,6 +436,95 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   .capture-btn-inner{width:48px;height:48px}
   .gallery-btn,.flip-btn{width:44px;height:44px}
 }
+
+/* ── Telegram tema (faqat .theme-telegram yoqilganda) ── */
+.theme-btn{
+  position:absolute;top:max(12px,env(safe-area-inset-top));right:20px;
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:#F4F4F5;color:#111;cursor:pointer;z-index:30;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,color .2s,transform .15s;
+  font-family:inherit;
+}
+.theme-btn:active{transform:scale(.92)}
+.theme-btn svg{width:20px;height:20px;fill:currentColor}
+.theme-btn.active{background:#D35400;color:#fff}
+
+.theme-telegram,
+.theme-telegram body{background:var(--tg-bg)!important}
+.theme-telegram .app{background:var(--tg-bg)!important}
+.theme-telegram .header{background:var(--tg-bg)!important}
+.theme-telegram .logo span{color:var(--tg-text)!important}
+.theme-telegram .logo-dot{background:var(--tg-btn)!important}
+.theme-telegram .toggle{background:var(--tg-secondary)!important}
+.theme-telegram .toggle-btn{color:var(--tg-hint)!important}
+.theme-telegram .toggle-btn.active{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
+  box-shadow:none!important;
+}
+.theme-telegram .theme-btn{background:var(--tg-secondary)!important;color:var(--tg-text)!important}
+.theme-telegram .theme-btn.active{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
+.theme-telegram .sender-title,
+.theme-telegram .driver-title{color:var(--tg-text)!important}
+.theme-telegram .shipments-head{color:var(--tg-btn)!important}
+.theme-telegram .shipment-card{
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
+}
+.theme-telegram .shipment-dest{color:var(--tg-text)!important}
+.theme-telegram .shipment-status{
+  color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
+}
+.theme-telegram .cta-wrap{background:var(--tg-bg)!important}
+.theme-telegram .cta-btn{
+  background:var(--tg-btn)!important;border-color:var(--tg-btn)!important;
+  box-shadow:none!important;
+}
+.theme-telegram .cta-text{color:var(--tg-btn-text)!important;text-shadow:none!important}
+.theme-telegram .cta-icon{background:color-mix(in srgb,var(--tg-btn-text) 15%,transparent)!important;border-color:color-mix(in srgb,var(--tg-btn-text) 25%,transparent)!important}
+.theme-telegram .cta-icon svg{stroke:var(--tg-btn-text)!important}
+.theme-telegram .map-wrap{
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
+  box-shadow:none!important;
+}
+.theme-telegram .sheet{background:var(--tg-bg)!important;border-top-color:var(--tg-secondary)!important}
+.theme-telegram .sheet-drag{background:var(--tg-hint)!important}
+.theme-telegram .sheet-field{
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;box-shadow:none!important;
+}
+.theme-telegram .sheet-field-lbl,
+.theme-telegram .send-label{color:var(--tg-hint)!important}
+.theme-telegram .sheet-field-val,
+.theme-telegram .send-input,
+.theme-telegram .send-textarea{color:var(--tg-text)!important}
+.theme-telegram .send-input,
+.theme-telegram .send-textarea{border-bottom-color:var(--tg-secondary)!important}
+.theme-telegram .send-input:focus,
+.theme-telegram .send-textarea:focus{border-bottom-color:var(--tg-btn)!important}
+.theme-telegram .send-input::placeholder,
+.theme-telegram .send-textarea::placeholder{color:var(--tg-hint)!important}
+.theme-telegram .sheet-accept,
+.theme-telegram .send-submit,
+.theme-telegram .zone-placeholder-btn,
+.theme-telegram .camera-fallback button{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;box-shadow:none!important;
+}
+.theme-telegram .upload-panel{background:var(--tg-bg)!important}
+.theme-telegram .upload-title{color:var(--tg-text)!important}
+.theme-telegram .upload-sub{color:var(--tg-hint)!important}
+.theme-telegram .upload-close{background:var(--tg-secondary)!important}
+.theme-telegram .upload-close svg{stroke:var(--tg-text)!important}
+.theme-telegram .upload-actions{background:var(--tg-bg)!important;border-top-color:var(--tg-secondary)!important}
+.theme-telegram .gallery-btn,
+.theme-telegram .flip-btn{background:var(--tg-secondary)!important;border-color:var(--tg-secondary)!important}
+.theme-telegram .gallery-btn svg,
+.theme-telegram .flip-btn svg{stroke:var(--tg-text)!important}
+.theme-telegram .capture-btn{border-color:var(--tg-secondary)!important;background:var(--tg-bg)!important}
+.theme-telegram .capture-btn-inner{background:var(--tg-btn)!important}
+.theme-telegram .zone-placeholder,
+.theme-telegram .camera-fallback{background:var(--tg-section)!important}
+.theme-telegram .zone-placeholder span,
+.theme-telegram .camera-fallback p{color:var(--tg-hint)!important}
+.theme-telegram .zone-placeholder svg{stroke:var(--tg-btn)!important}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -445,6 +534,9 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
     <!-- Header -->
     <div class="header">
+      <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram tema" title="Telegram tema">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.12.27z"/></svg>
+      </button>
       <div class="logo">
         <span>duv</span>
         <div class="logo-dot"></div>
@@ -606,6 +698,50 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 <script>
 const STORAGE_KEY = 'duvduv_data_v1';
 mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
+
+const TG_THEME_VARS = ['--tg-bg','--tg-secondary','--tg-text','--tg-hint','--tg-btn','--tg-btn-text','--tg-section'];
+
+function applyTelegramThemeVars(){
+  const tp = (window.Telegram && Telegram.WebApp && Telegram.WebApp.themeParams) || {};
+  const root = document.documentElement;
+  const pick = (key, fb) => (tp[key] && String(tp[key]).trim()) || fb;
+  root.style.setProperty('--tg-bg', pick('bg_color', '#ffffff'));
+  root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#f4f4f5'));
+  root.style.setProperty('--tg-text', pick('text_color', '#000000'));
+  root.style.setProperty('--tg-hint', pick('hint_color', '#999999'));
+  root.style.setProperty('--tg-btn', pick('button_color', '#3390ec'));
+  root.style.setProperty('--tg-btn-text', pick('button_text_color', '#ffffff'));
+  root.style.setProperty('--tg-section', pick('section_bg_color', '#ffffff'));
+}
+
+function clearTelegramThemeVars(){
+  TG_THEME_VARS.forEach(v => document.documentElement.style.removeProperty(v));
+}
+
+function toggleTelegramTheme(){
+  const root = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  const on = root.classList.toggle('theme-telegram');
+  if (on) {
+    applyTelegramThemeVars();
+    btn.classList.add('active');
+  } else {
+    clearTelegramThemeVars();
+    btn.classList.remove('active');
+  }
+}
+
+if (window.Telegram && Telegram.WebApp) {
+  try {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+    Telegram.WebApp.onEvent('themeChanged', () => {
+      if (document.documentElement.classList.contains('theme-telegram')) {
+        applyTelegramThemeVars();
+      }
+    });
+  } catch (_) {}
+}
 
 let map = null;
 let driverLocationMarker = null;
