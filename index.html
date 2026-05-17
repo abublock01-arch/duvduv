@@ -161,6 +161,18 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   display:inline-block;font-size:12px;font-weight:700;color:#16a34a;
   background:rgba(22,163,74,.12);padding:4px 10px;border-radius:100px;
 }
+.shipment-actions{
+  display:flex;flex-direction:column;gap:6px;flex-shrink:0;
+}
+.shipment-action-btn{
+  padding:6px 12px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:11px;font-weight:700;
+  cursor:pointer;font-family:inherit;white-space:nowrap;
+  box-shadow:0 4px 10px rgba(211,84,0,.22);
+  transition:transform .15s;
+}
+.shipment-action-btn:active{transform:scale(.96)}
+.shipment-action-btn--delete{background:#fff;color:#D35400;border:1px solid #D35400;box-shadow:none}
 
 /* CTA */
 .cta-wrap{
@@ -271,6 +283,10 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 }
 .send-submit:active{transform:scale(.98)}
 .send-submit:disabled{opacity:.45;cursor:not-allowed}
+
+/* Tahrirlash sheet */
+.sheet-overlay--edit{z-index:212}
+.sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 
 /* ══ RASM YUKLASH — KONTENT MAYDONI (qizil ramka o'lchami) ══ */
 .upload-overlay{
@@ -525,6 +541,12 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .zone-placeholder span,
 .theme-telegram .camera-fallback p{color:var(--tg-hint)!important}
 .theme-telegram .zone-placeholder svg{stroke:var(--tg-btn)!important}
+.theme-telegram .shipment-action-btn{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;box-shadow:none!important;
+}
+.theme-telegram .shipment-action-btn--delete{
+  background:var(--tg-bg)!important;color:var(--tg-btn)!important;border-color:var(--tg-btn)!important;
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
@@ -672,6 +694,31 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
       </div>
       <button type="submit" class="send-submit" id="sendSubmitBtn">Yuborish</button>
+    </form>
+  </div>
+</div>
+
+<!-- TAHRIRLASH SHEET -->
+<div class="sheet-overlay sheet-overlay--edit" id="editSheetOverlay" onclick="if(event.target===this)closeEditSheet()">
+  <div class="sheet sheet--edit" onclick="event.stopPropagation()">
+    <div class="sheet-drag"></div>
+    <div class="send-thumb-wrap">
+      <img class="send-thumb" id="editThumb" alt="Jo'natma rasmi">
+    </div>
+    <form class="send-form" id="editForm" onsubmit="saveEditShipment(event)">
+      <div class="send-field">
+        <label class="send-label" for="editPhone">Telefon raqam</label>
+        <input class="send-input" type="tel" id="editPhone" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="editDest">Qayerga</label>
+        <input class="send-input" type="text" id="editDest" placeholder="Shahar, manzil" required>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="editNote">Izoh</label>
+        <textarea class="send-textarea" id="editNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
+      </div>
+      <button type="submit" class="send-submit" id="editSubmitBtn">Saqlash</button>
     </form>
   </div>
 </div>
@@ -858,6 +905,7 @@ function acceptOrder(){
 }
 
 const shipments = [];
+let editingShipmentId = null;
 let cameraStream = null;
 let facingMode = 'environment';
 let previewObjectUrl = null;
@@ -909,7 +957,18 @@ function showCameraFallback(msg){
   }
 }
 
+function syncOrderFromShipment(shipment){
+  const order = orders.find(o => o.id === shipment.id);
+  if (!order) return;
+  order.thumbUrl = shipment.thumbUrl;
+  order.dest = shipment.dest;
+  order.phone = shipment.phone;
+  order.note = shipment.note;
+  order.status = shipment.status;
+}
+
 function persistData(){
+  shipments.forEach(syncOrderFromShipment);
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ shipments, orders }));
   } catch (e) {
@@ -975,8 +1034,90 @@ function renderShipments(){
         <div class="shipment-dest">${escapeHtml(s.dest)}</div>
         <span class="shipment-status">${escapeHtml(s.status)}</span>
       </div>
+      <div class="shipment-actions">
+        <button type="button" class="shipment-action-btn" onclick="editShipment(${s.id})">✏️ O'zgartirish</button>
+        <button type="button" class="shipment-action-btn shipment-action-btn--delete" onclick="deleteShipment(${s.id})">🗑 O'chirish</button>
+      </div>
     </div>
   `).join('');
+}
+
+function editShipment(id){
+  const s = shipments.find(x => x.id === id);
+  if (!s) return;
+  editingShipmentId = id;
+  document.getElementById('editThumb').src = s.thumbUrl || '';
+  document.getElementById('editPhone').value = s.phone || '';
+  document.getElementById('editDest').value = s.dest || '';
+  document.getElementById('editNote').value = s.note || '';
+  document.getElementById('editSheetOverlay').classList.add('open');
+}
+
+function closeEditSheet(){
+  document.getElementById('editSheetOverlay').classList.remove('open');
+  editingShipmentId = null;
+}
+
+function saveEditShipment(e){
+  e.preventDefault();
+  const s = shipments.find(x => x.id === editingShipmentId);
+  if (!s) return;
+  const phone = document.getElementById('editPhone').value.trim();
+  const dest = document.getElementById('editDest').value.trim();
+  const note = document.getElementById('editNote').value.trim();
+  if (!phone || !dest) {
+    showToast('Telefon va manzilni to\'ldiring');
+    return;
+  }
+  s.phone = phone;
+  s.dest = dest;
+  s.note = note;
+  syncOrderFromShipment(s);
+  persistData();
+  renderShipments();
+  if (map) refreshOrderMarkers();
+  closeEditSheet();
+  showToast('✅ Saqlandi!');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+}
+
+function removeShipmentById(id){
+  const si = shipments.findIndex(x => x.id === id);
+  if (si !== -1) shipments.splice(si, 1);
+  const oi = orders.findIndex(x => x.id === id);
+  if (oi !== -1) orders.splice(oi, 1);
+}
+
+function confirmDeleteShipment(id){
+  removeShipmentById(id);
+  persistData();
+  renderShipments();
+  if (map) refreshOrderMarkers();
+  showToast('Jo\'natma o\'chirildi');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+  }
+}
+
+function deleteShipment(id){
+  if (!shipments.some(x => x.id === id)) return;
+  const tg = window.Telegram?.WebApp;
+  if (tg?.showPopup) {
+    tg.showPopup({
+      title: 'O\'chirish',
+      message: 'O\'chirilsinmi?',
+      buttons: [
+        { id: 'yes', type: 'destructive', text: 'Ha' },
+        { id: 'cancel', type: 'cancel', text: 'Yo\'q' }
+      ]
+    }, buttonId => {
+      if (buttonId === 'yes') confirmDeleteShipment(id);
+    });
+    return;
+  }
+  if (confirm('O\'chirilsinmi?')) confirmDeleteShipment(id);
 }
 
 function openOrder(){
