@@ -161,6 +161,19 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   display:inline-block;font-size:12px;font-weight:700;color:#16a34a;
   background:rgba(22,163,74,.12);padding:4px 10px;border-radius:100px;
 }
+.shipment-actions{
+  display:flex;flex-direction:column;gap:5px;flex-shrink:0;
+}
+.shipment-action-btn{
+  padding:5px 10px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:10px;font-weight:700;
+  cursor:pointer;font-family:inherit;white-space:nowrap;
+  box-shadow:0 3px 8px rgba(211,84,0,.2);
+}
+.shipment-action-btn:active{transform:scale(.96)}
+.shipment-action-btn:disabled{opacity:.4;cursor:not-allowed}
+.sheet-overlay--edit{z-index:212}
+.sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 
 /* CTA */
 .cta-wrap{
@@ -482,6 +495,9 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .shipment-status{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
+.theme-telegram .shipment-action-btn{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;box-shadow:none!important;
+}
 .theme-telegram .cta-wrap{background:var(--tg-bg)!important}
 .theme-telegram .cta-btn{
   background:var(--tg-btn)!important;border-color:var(--tg-btn)!important;
@@ -683,6 +699,24 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   </div>
 </div>
 
+<!-- TAHRIRLASH SHEET -->
+<div class="sheet-overlay sheet-overlay--edit" id="editSheetOverlay" onclick="if(event.target===this)closeEditSheet()">
+  <div class="sheet sheet--edit" onclick="event.stopPropagation()">
+    <div class="sheet-drag"></div>
+    <form class="send-form" id="editForm" onsubmit="saveEditShipment(event)">
+      <div class="send-field">
+        <label class="send-label" for="editDest">Qayerga</label>
+        <input class="send-input" type="text" id="editDest" placeholder="Shahar, manzil" required>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="editNote">Izoh</label>
+        <textarea class="send-textarea" id="editNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
+      </div>
+      <button type="submit" class="send-submit" id="editSubmitBtn">Saqlash</button>
+    </form>
+  </div>
+</div>
+
 <!-- BUYURTMA SHEET (haydovchi) -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
   <div class="sheet sheet--order" onclick="event.stopPropagation()">
@@ -720,19 +754,37 @@ function initFirebase(){
   } catch(e){ console.warn('Firebase init xatosi:', e); }
 }
 async function saveOrderToFirestore(order){
-  if (!db) return;
+  if (!db) return null;
   try {
     const doc = {
       dest: order.dest || '',
       note: order.note || '',
+      thumbUrl: order.thumbUrl || '',
       status: order.status || 'Aktiv',
-      lat: order.lat || null,
-      lng: order.lng || null,
+      lat: order.lat ?? null,
+      lng: order.lng ?? null,
+      telegramId: order.telegramId ?? null,
       telegramUsername: order.telegramUsername || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    await db.collection('orders').add(doc);
-  } catch(e){ console.warn('Firestore saqlash xatosi:', e); }
+    const ref = await db.collection('orders').add(doc);
+    return ref.id;
+  } catch(e){
+    console.warn('Firestore saqlash xatosi:', e);
+    return null;
+  }
+}
+async function updateOrderInFirestore(firestoreId, fields){
+  if (!db || !firestoreId) return;
+  try {
+    await db.collection('orders').doc(firestoreId).update(fields);
+  } catch(e){ console.warn('Firestore yangilash xatosi:', e); }
+}
+async function deleteOrderFromFirestore(firestoreId){
+  if (!db || !firestoreId) return;
+  try {
+    await db.collection('orders').doc(firestoreId).delete();
+  } catch(e){ console.warn('Firestore o\'chirish xatosi:', e); }
 }
 function subscribeFirestoreOrders(){
   if (!db) return;
@@ -740,7 +792,7 @@ function subscribeFirestoreOrders(){
     orders.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
-      orders.push({ id: doc.id, ...d });
+      orders.push({ id: doc.id, firestoreId: doc.id, ...d });
     });
     if (map) refreshOrderMarkers();
   }, err => console.warn('Firestore snapshot xatosi:', err));
@@ -939,6 +991,7 @@ function acceptOrder(){
 }
 
 const shipments = [];
+let editingFirestoreId = null;
 let cameraStream = null;
 let facingMode = 'environment';
 let previewObjectUrl = null;
@@ -1036,12 +1089,31 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
+function getMyShipments(){
+  if (telegramUser.id == null) return [];
+  return shipments.filter(s => s.telegramId === telegramUser.id);
+}
+
+function findShipmentByFirestoreId(firestoreId){
+  return shipments.find(s => s.firestoreId === firestoreId);
+}
+
+function syncOrderFromShipment(s){
+  const o = orders.find(x => x.id === s.firestoreId || x.firestoreId === s.firestoreId);
+  if (!o) return;
+  o.dest = s.dest;
+  o.note = s.note;
+  o.lat = s.lat;
+  o.lng = s.lng;
+}
+
 function renderShipments(){
   const empty = document.getElementById('senderEmpty');
   const wrap = document.getElementById('shipmentsWrap');
   const list = document.getElementById('shipmentsList');
   if (!empty || !wrap || !list) return;
-  if (!shipments.length) {
+  const mine = getMyShipments();
+  if (!mine.length) {
     empty.classList.remove('hidden');
     wrap.classList.remove('visible');
     list.innerHTML = '';
@@ -1049,15 +1121,111 @@ function renderShipments(){
   }
   empty.classList.add('hidden');
   wrap.classList.add('visible');
-  list.innerHTML = shipments.map(s => `
+  list.innerHTML = mine.map(s => {
+    const fid = escapeHtml(s.firestoreId || '');
+    const hasFs = !!s.firestoreId;
+    return `
     <div class="shipment-card">
       <img class="shipment-thumb" src="${escapeHtml(s.thumbUrl)}" alt="">
       <div class="shipment-body">
         <div class="shipment-dest">${escapeHtml(s.dest)}</div>
         <span class="shipment-status">${escapeHtml(s.status)}</span>
       </div>
-    </div>
-  `).join('');
+      <div class="shipment-actions">
+        <button type="button" class="shipment-action-btn" data-id="${fid}" onclick="editShipment(this.dataset.id)" ${hasFs ? '' : 'disabled'}>✏️ Tahrirlash</button>
+        <button type="button" class="shipment-action-btn" data-id="${fid}" onclick="updateShipmentLocation(this.dataset.id)" ${hasFs ? '' : 'disabled'}>📍 Lokatsiya</button>
+        <button type="button" class="shipment-action-btn" data-id="${fid}" onclick="deleteShipment(this.dataset.id)" ${hasFs ? '' : 'disabled'}>🗑 O'chirish</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editShipment(firestoreId){
+  const s = findShipmentByFirestoreId(firestoreId);
+  if (!s) return;
+  editingFirestoreId = firestoreId;
+  document.getElementById('editDest').value = s.dest || '';
+  document.getElementById('editNote').value = s.note || '';
+  document.getElementById('editSheetOverlay').classList.add('open');
+}
+
+function closeEditSheet(){
+  document.getElementById('editSheetOverlay').classList.remove('open');
+  editingFirestoreId = null;
+}
+
+async function saveEditShipment(e){
+  e.preventDefault();
+  const s = findShipmentByFirestoreId(editingFirestoreId);
+  if (!s) return;
+  const dest = document.getElementById('editDest').value.trim();
+  const note = document.getElementById('editNote').value.trim();
+  if (!dest) {
+    showToast('Manzilni to\'ldiring');
+    return;
+  }
+  s.dest = dest;
+  s.note = note;
+  await updateOrderInFirestore(s.firestoreId, { dest, note });
+  syncOrderFromShipment(s);
+  persistData();
+  renderShipments();
+  if (map) refreshOrderMarkers();
+  closeEditSheet();
+  showToast('✅ Saqlandi');
+}
+
+async function updateShipmentLocation(firestoreId){
+  const s = findShipmentByFirestoreId(firestoreId);
+  if (!s?.firestoreId) return;
+  try {
+    const coords = await getCurrentPosition();
+    s.lat = coords.latitude;
+    s.lng = coords.longitude;
+    await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
+    syncOrderFromShipment(s);
+    persistData();
+    renderShipments();
+    if (map) refreshOrderMarkers();
+    showToast('📍 Lokatsiya yangilandi');
+  } catch {
+    showToast('Lokatsiya olinmadi');
+  }
+}
+
+function removeShipmentLocal(firestoreId){
+  const si = shipments.findIndex(s => s.firestoreId === firestoreId);
+  if (si !== -1) shipments.splice(si, 1);
+  const oi = orders.findIndex(o => o.id === firestoreId || o.firestoreId === firestoreId);
+  if (oi !== -1) orders.splice(oi, 1);
+}
+
+async function confirmDeleteShipment(firestoreId){
+  await deleteOrderFromFirestore(firestoreId);
+  removeShipmentLocal(firestoreId);
+  persistData();
+  renderShipments();
+  if (map) refreshOrderMarkers();
+  showAlert('Jo\'natma o\'chirildi');
+}
+
+function deleteShipment(firestoreId){
+  if (!findShipmentByFirestoreId(firestoreId)?.firestoreId) return;
+  const tg = window.Telegram?.WebApp;
+  if (tg?.showPopup) {
+    tg.showPopup({
+      title: 'O\'chirish',
+      message: 'O\'chirilsinmi?',
+      buttons: [
+        { id: 'yes', type: 'destructive', text: 'Ha' },
+        { id: 'cancel', type: 'cancel', text: 'Yo\'q' }
+      ]
+    }, buttonId => {
+      if (buttonId === 'yes') confirmDeleteShipment(firestoreId);
+    });
+    return;
+  }
+  if (confirm('O\'chirilsinmi?')) confirmDeleteShipment(firestoreId);
 }
 
 function openOrder(){
@@ -1282,12 +1450,14 @@ function submitOrder(e){
       status: 'Aktiv',
       lat: coords ? coords.latitude : null,
       lng: coords ? coords.longitude : null,
+      telegramId: telegramUser.id,
       telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
     };
+    const firestoreId = await saveOrderToFirestore(order);
+    if (firestoreId) order.firestoreId = firestoreId;
     shipments.unshift(order);
-    orders.unshift(order);
+    orders.unshift({ id: firestoreId || String(order.id), firestoreId: firestoreId || null, ...order });
     persistData();
-    saveOrderToFirestore(order);
     previewObjectUrl = null;
     selectedPhotoFile = null;
     renderShipments();
