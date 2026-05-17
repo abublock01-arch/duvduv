@@ -671,10 +671,6 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
     </div>
     <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
       <div class="send-field">
-        <label class="send-label" for="sendPhone">Telefon raqam</label>
-        <input class="send-input" type="tel" id="sendPhone" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required>
-      </div>
-      <div class="send-field">
         <label class="send-label" for="sendDest">Qayerga</label>
         <input class="send-input" type="text" id="sendDest" placeholder="Shahar, manzil" required>
       </div>
@@ -698,7 +694,7 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         <div class="sheet-field-val" id="sheetOrderDest"></div>
       </div>
       <div class="sheet-field">
-        <button type="button" class="sheet-tg-btn" id="sheetTelegramBtn" onclick="openTelegramChat()">Telegramga yozish</button>
+        <button type="button" class="sheet-tg-btn" id="sheetTelegramBtn" onclick="openTelegramChat()">Telegramda yozish</button>
       </div>
     </div>
     <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
@@ -728,13 +724,11 @@ async function saveOrderToFirestore(order){
   try {
     const doc = {
       dest: order.dest || '',
-      phone: order.phone || '',
       note: order.note || '',
       status: order.status || 'Aktiv',
       lat: order.lat || null,
       lng: order.lng || null,
-      telegramId: order.telegramId || null,
-      telegramName: order.telegramName || '',
+      telegramUsername: order.telegramUsername || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     await db.collection('orders').add(doc);
@@ -904,13 +898,14 @@ function openOrderSheet(order){
   document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
   document.getElementById('sheetOrderDest').textContent = order.dest || '';
   const tgBtn = document.getElementById('sheetTelegramBtn');
-  if (tgBtn) tgBtn.disabled = !order.telegramId;
+  if (tgBtn) tgBtn.disabled = !order.telegramUsername || order.telegramUsername === '@';
   document.getElementById('sheetOverlay').classList.add('open');
 }
 
 function openTelegramChat(){
-  if (!activeSheetOrder?.telegramId) return;
-  window.open('tg://user?id=' + activeSheetOrder.telegramId);
+  const uname = activeSheetOrder?.telegramUsername;
+  if (!uname || uname === '@') return;
+  window.open('https://t.me/' + uname.replace('@', ''));
 }
 
 function switchView(v){
@@ -1263,10 +1258,9 @@ function submitOrder(e){
     showToast('Avval rasm oling');
     return;
   }
-  const phone = document.getElementById('sendPhone').value.trim();
   const dest = document.getElementById('sendDest').value.trim();
-  if (!phone || !dest) {
-    showToast('Telefon va manzilni to\'ldiring');
+  if (!dest) {
+    showToast('Manzilni to\'ldiring');
     return;
   }
   const thumbUrl = previewObjectUrl;
@@ -1284,13 +1278,11 @@ function submitOrder(e){
       id: Date.now(),
       thumbUrl: storedThumb,
       dest,
-      phone,
       note,
       status: 'Aktiv',
       lat: coords ? coords.latitude : null,
       lng: coords ? coords.longitude : null,
-      telegramId: window.Telegram?.WebApp?.initDataUnsafe?.user?.id ?? null,
-      telegramName: window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || ''
+      telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
     };
     shipments.unshift(order);
     orders.unshift(order);
