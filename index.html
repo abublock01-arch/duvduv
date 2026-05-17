@@ -711,6 +711,22 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4c
 
 let db = null;
 let ordersUnsubscribe = null;
+const telegramUser = { id: null, first_name: '', username: '' };
+
+function initTelegramUser(){
+  const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  if (!user) return;
+  telegramUser.id = user.id ?? null;
+  telegramUser.first_name = user.first_name || '';
+  telegramUser.username = user.username || '';
+}
+
+function getTelegramName(){
+  const name = telegramUser.first_name || '';
+  const uname = telegramUser.username ? `@${telegramUser.username}` : '';
+  if (name && uname) return `${name} (${uname})`;
+  return name || uname || '';
+}
 
 function initFirebase(){
   if (!window.firebase) throw new Error('Firebase SDK yuklanmadi');
@@ -730,7 +746,9 @@ function docToOrder(doc){
     note: data.note || '',
     status: data.status || 'Aktiv',
     lat: data.lat != null ? data.lat : null,
-    lng: data.lng != null ? data.lng : null
+    lng: data.lng != null ? data.lng : null,
+    telegramId: data.telegramId ?? null,
+    telegramName: data.telegramName || ''
   };
 }
 
@@ -745,6 +763,8 @@ async function saveOrderToFirestore(order){
     status: order.status,
     lat: order.lat,
     lng: order.lng,
+    telegramId: order.telegramId ?? null,
+    telegramName: order.telegramName || '',
     createdAt: firebase.firestore.FieldValue.serverTimestamp()
   };
   await db.collection('orders').doc(String(order.id)).set(payload);
@@ -800,6 +820,10 @@ if (window.Telegram && Telegram.WebApp) {
   try {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
+    if (typeof Telegram.WebApp.requestWriteAccess === 'function') {
+      Telegram.WebApp.requestWriteAccess();
+    }
+    initTelegramUser();
     Telegram.WebApp.onEvent('themeChanged', () => {
       if (document.documentElement.classList.contains('theme-telegram')) {
         applyTelegramThemeVars();
@@ -1185,7 +1209,7 @@ function capturePhoto(){
     captureBtn.classList.add('captured');
     stopCamera();
     document.getElementById('zonePlaceholder').classList.add('hidden');
-    showToast('✅ Rasm olindi!');
+    showAlert('✅ Rasm olindi!');
     if (window.Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
@@ -1279,7 +1303,9 @@ function submitOrder(e){
       note,
       status: 'Aktiv',
       lat: coords ? coords.latitude : null,
-      lng: coords ? coords.longitude : null
+      lng: coords ? coords.longitude : null,
+      telegramId: telegramUser.id,
+      telegramName: getTelegramName()
     };
     shipments.unshift(order);
     orders.unshift(order);
@@ -1297,7 +1323,7 @@ function submitOrder(e){
     closeSendSheet();
     closeUpload();
     btn.disabled = false;
-    showToast('✅ Jo\'natma yuborildi!');
+    showAlert('✅ Jo\'natma yuborildi!');
     if (window.Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
@@ -1306,6 +1332,15 @@ function submitOrder(e){
   getCurrentPosition()
     .then(coords => saveOrder(coords))
     .catch(() => saveOrder(null));
+}
+
+function showAlert(msg){
+  const tg = window.Telegram?.WebApp;
+  if (tg?.showAlert) {
+    tg.showAlert(msg);
+    return;
+  }
+  showToast(msg);
 }
 
 function showToast(msg){
