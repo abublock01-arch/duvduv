@@ -527,6 +527,8 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .zone-placeholder svg{stroke:var(--tg-btn)!important}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -696,6 +698,52 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 </div>
 
 <script>
+
+const FIREBASE_CONFIG = {
+  apiKey: 'AIzaSyB2SyqLQIPfwW9Kax4fQNeQBoogAaQ8CzA',
+  authDomain: 'yolcar-30649.firebaseapp.com',
+  projectId: 'yolcar-30649',
+  storageBucket: 'yolcar-30649.firebasestorage.app',
+  messagingSenderId: '491905484776',
+  appId: '1:491905484776:web:8cd64ce484bf5b06aa865d'
+};
+let db = null;
+function initFirebase(){
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    subscribeFirestoreOrders();
+  } catch(e){ console.warn('Firebase init xatosi:', e); }
+}
+async function saveOrderToFirestore(order){
+  if (!db) return;
+  try {
+    const doc = {
+      dest: order.dest || '',
+      phone: order.phone || '',
+      note: order.note || '',
+      status: order.status || 'Aktiv',
+      lat: order.lat || null,
+      lng: order.lng || null,
+      telegramId: order.telegramId || null,
+      telegramName: order.telegramName || '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    await db.collection('orders').add(doc);
+  } catch(e){ console.warn('Firestore saqlash xatosi:', e); }
+}
+function subscribeFirestoreOrders(){
+  if (!db) return;
+  db.collection('orders').orderBy('createdAt','desc').onSnapshot(snap => {
+    orders.length = 0;
+    snap.forEach(doc => {
+      const d = doc.data();
+      orders.push({ id: doc.id, ...d });
+    });
+    if (map) refreshOrderMarkers();
+  }, err => console.warn('Firestore snapshot xatosi:', err));
+}
+
 const STORAGE_KEY = 'duvduv_data_v1';
 mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
 
@@ -1230,6 +1278,7 @@ function submitOrder(e){
     shipments.unshift(order);
     orders.unshift(order);
     persistData();
+    saveOrderToFirestore(order);
     previewObjectUrl = null;
     selectedPhotoFile = null;
     renderShipments();
@@ -1265,6 +1314,7 @@ function showToast(msg){
   setTimeout(() => t.remove(), 2500);
 }
 
+initFirebase();
 loadPersistedData();
 </script>
 </body>
