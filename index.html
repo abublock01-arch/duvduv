@@ -4,152 +4,664 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>duv•duv</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
-.app{position:fixed;inset:0;display:flex;flex-direction:column;background:#fff;overflow:hidden}
-.header{padding:max(12px,env(safe-area-inset-top)) 24px 12px;background:#fff;z-index:20;flex-shrink:0}
-.logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:16px;height:32px}
-.logo span{color:#111;line-height:1}
-.logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0}
+
+/* ── FULL SCREEN APP ── */
+.app{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  background:#fff;overflow:hidden;
+}
+
+/* HEADER */
+.header{
+  padding:max(12px,env(safe-area-inset-top)) 24px 16px;
+  background:#fff;z-index:20;position:relative;flex-shrink:0;
+}
+.logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:20px;height:32px}
+.logo span{color:#111;line-height:1;transform:translateY(2px)}
+.logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0;transform:translateY(3px)}
+
+/* TOGGLE */
 .toggle{background:#F4F4F5;border-radius:100px;padding:4px;display:flex;gap:4px}
-.toggle-btn{flex:1;padding:10px;border-radius:100px;border:none;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s;font-family:inherit;background:transparent;color:#888}
-.toggle-btn.active{background:#D35400;color:#fff;box-shadow:0 8px 16px rgba(211,84,0,.25)}
-.content{flex:1;overflow:hidden;display:flex;flex-direction:column;min-height:0}
-#senderView{display:flex;flex-direction:column;height:100%;overflow:hidden}
-.sender-empty{flex:1;display:flex;flex-direction:column;align-items:center;padding:0 24px;overflow:hidden}
-.sender-empty.hidden{display:none}
-.scene{width:100%;height:280px;position:relative;display:flex;align-items:center;justify-content:center;margin-top:4px;flex-shrink:0;pointer-events:none}
+.toggle-btn{
+  flex:1;padding:10px;border-radius:100px;border:none;font-size:14px;font-weight:700;
+  cursor:pointer;transition:all .25s;font-family:inherit;letter-spacing:-.01em;
+  background:transparent;color:#888;
+}
+.toggle-btn.active{
+  background:#D35400;color:#fff;
+  box-shadow:0 8px 16px rgba(211,84,0,.25),inset 0 2px 4px rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.1);
+}
+
+/* CONTENT */
+.content{flex:1;overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+/* ══ SENDER VIEW ══ */
+#senderView{
+  display:flex;flex-direction:column;align-items:center;
+  padding:0 24px;height:100%;overflow:hidden;
+}
+
+/* 3D SCENE */
+.scene{
+  width:100%;height:320px;position:relative;display:flex;
+  align-items:center;justify-content:center;margin-top:8px;
+  perspective:1000px;flex-shrink:0;pointer-events:none;
+}
+
 @keyframes floatSlow{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(-4deg)}}
+@keyframes floatFast{0%,100%{transform:translateY(0) rotate(8deg)}50%{transform:translateY(-12px) rotate(12deg)}}
 @keyframes floatOpp{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(8px) scale(.95)}}
-.road{position:absolute;top:170px;width:240px;height:65px;background:#F8F8F9;border-radius:2rem;border:1px solid #eeeef0;transform:rotate(-12deg);animation:floatOpp 6s ease-in-out infinite;display:flex;align-items:center;justify-content:center}
+@keyframes floatEnv{0%,100%{transform:translateY(0) rotate(-8deg)}50%{transform:translateY(-14px) rotate(-12deg)}}
+
+.clay{box-shadow:0 20px 40px rgba(0,0,0,.08),inset 0 4px 8px rgba(255,255,255,.8),inset 0 -4px 8px rgba(0,0,0,.05)}
+
+/* Road */
+.road{
+  position:absolute;top:195px;width:240px;height:65px;
+  background:#F8F8F9;border-radius:2rem;border:1px solid #eeeef0;
+  transform:rotate(-12deg);animation:floatOpp 6s ease-in-out infinite;
+  display:flex;align-items:center;justify-content:center;
+}
 .road-line{width:80%;height:3px;border-top:3px dashed #111;opacity:.15}
-.camera{position:absolute;z-index:30;width:110px;height:75px;background:#EBEBEC;border-radius:24px;animation:floatSlow 5s ease-in-out infinite;transform:translateY(-32px);display:flex;align-items:center;justify-content:center;box-shadow:0 20px 40px rgba(0,0,0,.12)}
-.cam-lens{width:50px;height:50px;background:#111;border-radius:50%;border:4px solid #D35400;display:flex;align-items:center;justify-content:center}
-.cam-inner{width:22px;height:22px;background:#222;border-radius:50%}
-.sender-title{text-align:center;font-size:32px;font-weight:900;color:#111;line-height:1.05;letter-spacing:-.03em;margin-top:8px;flex-shrink:0}
-.shipments-wrap{flex:1;display:none;flex-direction:column;padding:0 20px;min-height:0;overflow:hidden}
+
+/* Camera */
+.camera{
+  position:absolute;z-index:30;width:110px;height:75px;
+  background:#EBEBEC;border-radius:24px;border:1px solid #fff;
+  animation:floatSlow 5s ease-in-out infinite;
+  transform:translateY(-32px);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 20px 40px rgba(0,0,0,.12);
+}
+.cam-shutter{position:absolute;top:-8px;right:16px;width:18px;height:8px;background:#D35400;border-radius:4px 4px 0 0;box-shadow:inset 0 2px 4px rgba(255,255,255,.4),0 4px 8px rgba(211,84,0,.4)}
+.cam-flash{position:absolute;top:10px;right:12px;width:12px;height:10px;background:#fff;border-radius:50%;box-shadow:inset 0 1px 2px rgba(0,0,0,.1)}
+.cam-lens{width:50px;height:50px;background:#111;border-radius:50%;border:4px solid #D35400;box-shadow:0 6px 12px rgba(0,0,0,.2),inset 0 3px 8px rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.cam-lens::before{content:'';position:absolute;top:4px;left:6px;width:16px;height:16px;background:#fff;border-radius:50%;opacity:.2;filter:blur(1px)}
+.cam-inner{width:22px;height:22px;background:#222;border-radius:50%;border:1px solid #333;box-shadow:inset 0 2px 4px rgba(0,0,0,1);display:flex;align-items:center;justify-content:center}
+.cam-dot{width:6px;height:6px;background:rgba(255,255,255,.3);border-radius:50%;filter:blur(1px)}
+
+/* Box */
+.box{
+  position:absolute;z-index:20;width:70px;height:70px;
+  background:#fff;border-radius:16px;border:1px solid #f4f4f5;
+  animation:floatFast 4.5s ease-in-out infinite;
+  transform:translateY(64px) translateX(-64px);
+  box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden;
+}
+.box-tape{position:absolute;top:0;bottom:0;left:20px;width:14px;background:#D35400;box-shadow:0 2px 8px rgba(0,0,0,.1);opacity:.95}
+.box-line1{position:absolute;top:25px;left:10px;width:8px;height:2px;background:#111;opacity:.2;border-radius:2px}
+.box-line2{position:absolute;top:32px;left:10px;width:6px;height:2px;background:#111;opacity:.2;border-radius:2px}
+
+/* Envelope */
+.env{
+  position:absolute;z-index:10;width:75px;height:55px;
+  background:#fff;border-radius:12px;border:1px solid #f4f4f5;
+  animation:floatEnv 5.5s ease-in-out infinite;
+  transform:translateY(40px) translateX(64px) rotate(12deg);
+  box-shadow:0 20px 40px rgba(0,0,0,.08);overflow:hidden;
+}
+.env-top{position:absolute;top:0;left:0;width:100%;height:28px;background:#fafafa;border-bottom:1px solid #eee;clip-path:polygon(0 0,100% 0,50% 100%)}
+.env-seal{position:absolute;top:16px;left:50%;transform:translateX(-50%);width:14px;height:14px;background:#D35400;border-radius:50%;box-shadow:inset 0 1px 2px rgba(255,255,255,.4),0 2px 4px rgba(211,84,0,.3)}
+
+/* Cloud */
+.cloud{position:absolute;z-index:0;top:55px;right:20px;animation:floatSlow 6s ease-in-out infinite reverse}
+.cloud-body{width:60px;height:28px;background:#fff;border-radius:100px;border:1px solid #f9f9f9;box-shadow:0 20px 40px rgba(0,0,0,.08),inset 0 4px 8px rgba(255,255,255,.8)}
+.cloud-puff{position:absolute;top:-12px;left:10px;width:30px;height:30px;background:#fff;border-radius:50%;border-top:1px solid #f9f9f9}
+
+/* Cube */
+.cube{position:absolute;z-index:0;bottom:100px;left:40px;width:24px;height:24px;background:#D35400;border-radius:8px;border:1px solid #e66210;animation:floatFast 4s ease-in-out infinite reverse;transform:rotate(24deg);box-shadow:0 20px 40px rgba(0,0,0,.08)}
+
+/* TITLE */
+.sender-title{
+  text-align:center;font-size:34px;font-weight:900;color:#111;
+  line-height:1.05;letter-spacing:-.03em;margin-top:8px;z-index:10;
+  text-shadow:0 1px 2px rgba(0,0,0,.05);flex-shrink:0;
+}
+
+/* Jo'natmalar ro'yxati */
+.sender-empty{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  width:100%;min-height:0;overflow:hidden;
+}
+.sender-empty.hidden{display:none}
+.shipments-wrap{
+  flex:1;display:none;flex-direction:column;
+  width:100%;min-height:0;overflow:hidden;padding-top:4px;
+}
 .shipments-wrap.visible{display:flex}
-.shipments-head{font-size:13px;font-weight:700;color:#D35400;text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px;padding-top:4px}
-.shipments-list{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding-bottom:12px;-webkit-overflow-scrolling:touch}
+.shipments-head{
+  font-size:13px;font-weight:700;color:#D35400;
+  text-transform:uppercase;letter-spacing:.06em;
+  margin-bottom:12px;flex-shrink:0;
+}
+.shipments-list{
+  flex:1;overflow-y:auto;display:flex;flex-direction:column;
+  gap:10px;padding-bottom:8px;-webkit-overflow-scrolling:touch;
+}
 .shipment-card{
   display:flex;align-items:center;gap:14px;padding:12px 14px;
   background:#fff;border:1px solid #F0F0F0;border-radius:16px;
   box-shadow:0 2px 12px rgba(0,0,0,.04);
 }
-.shipment-card:active{background:#FAFAFA}
-.shipment-thumb{width:56px;height:56px;border-radius:12px;object-fit:cover;border:1px solid #EEE;flex-shrink:0}
-.shipment-body{flex:1;min-width:0}
-.shipment-dest{font-size:16px;font-weight:700;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px}
-.shipment-status{
-  display:inline-block;font-size:12px;font-weight:700;color:#D35400;
-  background:rgba(211,84,0,.1);padding:4px 10px;border-radius:100px;
+.shipment-thumb{
+  width:56px;height:56px;border-radius:12px;object-fit:cover;
+  border:1px solid #EEE;flex-shrink:0;
 }
-.cta-wrap{flex-shrink:0;padding:12px 24px max(20px,env(safe-area-inset-bottom));width:100%;background:#fff}
-.cta-btn{width:100%;height:60px;background:linear-gradient(to bottom,#2A2A2A,#111);border:1px solid #333;border-radius:100px;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;outline:none}
-.cta-btn:active{transform:scale(.98)}
+.shipment-body{flex:1;min-width:0}
+.shipment-dest{
+  font-size:16px;font-weight:700;color:#111;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;
+}
+.shipment-status{
+  display:inline-block;font-size:12px;font-weight:700;color:#16a34a;
+  background:rgba(22,163,74,.12);padding:4px 10px;border-radius:100px;
+}
+
+/* CTA */
+.cta-wrap{
+  flex-shrink:0;width:100%;
+  padding:12px 0 max(24px,env(safe-area-inset-bottom));
+  background:#fff;
+}
+.cta-btn{
+  width:100%;height:64px;
+  background:linear-gradient(to bottom,#2A2A2A,#111);
+  border:1px solid #333;border-radius:100px;
+  display:flex;align-items:center;justify-content:center;gap:12px;padding:0 24px;
+  box-shadow:0 20px 40px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.15),inset 0 -2px 4px rgba(0,0,0,.4);
+  cursor:pointer;transition:all .3s;position:relative;overflow:hidden;outline:none;
+}
+.cta-btn:active{transform:scale(.98);box-shadow:0 10px 20px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.1),inset 0 -2px 4px rgba(0,0,0,.6)}
+.cta-shine{position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(to bottom,rgba(255,255,255,.1),transparent);pointer-events:none}
+.cta-icon{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 2px rgba(255,255,255,.2)}
 .cta-icon svg{width:20px;height:20px;stroke:#fff;stroke-width:3;fill:none}
-.cta-text{color:#fff;font-size:17px;font-weight:700}
-#driverView{display:none;flex-direction:column;align-items:center;padding:0 24px;height:100%}
-.driver-title{text-align:center;font-size:34px;font-weight:900;color:#111;margin-top:40px;margin-bottom:28px}
-.map-wrap{width:100%;flex:1;margin-bottom:36px;background:#F9F9FA;border-radius:40px;border:1px solid #eeeef0;overflow:hidden;position:relative}
-.map-grid{position:absolute;inset:0;opacity:.5;background-image:linear-gradient(#E8E8EB 2px,transparent 2px),linear-gradient(90deg,#E8E8EB 2px,transparent 2px);background-size:40px 40px;pointer-events:none}
-.marker{position:absolute;display:flex;flex-direction:column;align-items:center;cursor:pointer;z-index:10}
-.marker-price{position:absolute;bottom:68px;background:#fff;color:#111;padding:8px 18px;border-radius:16px;font-weight:700;font-size:15px;box-shadow:0 12px 24px rgba(0,0,0,.08);white-space:nowrap;border:1px solid #f5f5f5}
-.marker-pin{width:56px;height:56px;background:#D35400;border-radius:16px;display:flex;align-items:center;justify-content:center;box-shadow:0 12px 24px rgba(211,84,0,.3)}
-.marker-pin svg{width:24px;height:24px;stroke:#fff;stroke-width:2.5;fill:none}
-.sheet-overlay{position:fixed;inset:0;background:rgba(17,17,17,.3);backdrop-filter:blur(6px);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.cta-text{color:#fff;font-size:17px;font-weight:700;letter-spacing:.02em;position:relative;z-index:1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+
+/* ══ DRIVER VIEW ══ */
+#driverView{
+  display:none;flex-direction:column;align-items:center;
+  padding:0 24px;height:100%;min-height:0;flex:1;
+}
+.driver-title{
+  text-align:center;font-size:34px;font-weight:900;color:#111;
+  line-height:1.05;letter-spacing:-.03em;margin-top:24px;margin-bottom:16px;
+  text-shadow:0 1px 2px rgba(0,0,0,.05);flex-shrink:0;
+}
+
+/* MAP */
+.map-wrap{
+  width:100%;height:100%;flex:1;min-height:0;
+  background:#F9F9FA;border-radius:40px;
+  box-shadow:inset 0 4px 16px rgba(0,0,0,.03),0 2px 0 #fff;
+  border:1px solid #eeeef0;overflow:hidden;position:relative;
+}
+#map{width:100%;height:100%;z-index:1;border-radius:40px}
+.mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-bottom-left{display:none}
+.map-order-marker{
+  width:40px;height:40px;background:#D35400;border-radius:50% 50% 50% 4px;
+  transform:rotate(-45deg);border:3px solid #fff;cursor:pointer;
+  box-shadow:0 6px 16px rgba(211,84,0,.45);
+}
+.map-driver-marker{
+  width:18px;height:18px;background:#2563eb;border:3px solid #fff;
+  border-radius:50%;box-shadow:0 2px 10px rgba(37,99,235,.5);
+}
+.sheet-order-thumb{
+  width:88px;height:88px;border-radius:16px;object-fit:cover;
+  border:1px solid #EEE;display:block;margin:0 auto 24px;
+}
+.sheet--order .sheet-fields{margin-bottom:28px}
+
+/* BOTTOM SHEET */
+.sheet-overlay{
+  position:fixed;inset:0;background:rgba(17,17,17,.3);
+  backdrop-filter:blur(6px);z-index:100;
+  display:none;align-items:flex-end;justify-content:center;
+}
 .sheet-overlay.open{display:flex}
-.sheet{background:#fff;border-radius:32px 32px 0 0;width:100%;padding:24px;padding-bottom:max(28px,env(safe-area-inset-bottom));box-shadow:0 -20px 40px rgba(0,0,0,.1);animation:sheetUp .3s cubic-bezier(.4,0,.2,1)}
+.sheet{
+  background:#fff;border-radius:40px 40px 0 0;width:100%;
+  padding:32px;padding-bottom:max(40px,env(safe-area-inset-bottom));
+  box-shadow:0 -20px 40px rgba(0,0,0,.1);border-top:1px solid #f0f0f0;
+  animation:sheetUp .3s cubic-bezier(.4,0,.2,1);
+}
 @keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-drag{width:48px;height:6px;background:#E5E5E5;border-radius:100px;margin:0 auto 20px}
+.sheet-drag{width:48px;height:6px;background:#E5E5E5;border-radius:100px;margin:0 auto 32px}
 .sheet-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .sheet-amount-lbl{font-size:12px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
-.sheet-amount{font-size:42px;font-weight:900;color:#111}
-.sheet-icon-wrap{width:56px;height:56px;border-radius:16px;background:#F4F4F5;display:flex;align-items:center;justify-content:center}
+.sheet-amount{font-size:42px;font-weight:900;color:#111;letter-spacing:-.03em;line-height:1}
+.sheet-icon-wrap{width:56px;height:56px;border-radius:16px;background:#F4F4F5;border:1px solid #fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 16px rgba(0,0,0,.05),inset 0 2px 4px #fff}
 .sheet-icon-wrap svg{width:24px;height:24px;stroke:#D35400;stroke-width:2.5;fill:none}
-.sheet-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:28px}
-.sheet-field{background:#F9F9FA;padding:20px 24px;border-radius:20px;border:1px solid #eeeef0}
-.sheet-field-lbl{font-size:11px;font-weight:700;color:#A1A1AA;text-transform:uppercase;margin-bottom:4px}
+.sheet-fields{display:flex;flex-direction:column;gap:12px;margin-bottom:36px}
+.sheet-field{background:#F9F9FA;padding:20px 24px;border-radius:20px;border:1px solid #eeeef0;box-shadow:inset 0 2px 4px rgba(0,0,0,.02),0 2px 0 #fff}
+.sheet-field-lbl{font-size:11px;font-weight:700;color:#A1A1AA;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}
 .sheet-field-val{font-size:18px;font-weight:700;color:#111}
-.sheet-accept{width:100%;background:#D35400;color:#fff;padding:20px;border-radius:100px;font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit}
-.sheet--send{padding-top:12px}
+.sheet-accept{
+  width:100%;background:#D35400;color:#fff;padding:20px;border-radius:100px;
+  font-size:16px;font-weight:700;border:none;cursor:pointer;font-family:inherit;
+  box-shadow:0 12px 24px rgba(211,84,0,.3),inset 0 4px 8px rgba(255,255,255,.3),inset 0 -4px 8px rgba(0,0,0,.15);
+  transition:transform .15s,box-shadow .15s;
+}
+.sheet-accept:active{transform:scale(.97)}
+
+/* Jo'natma formasi sheet */
+.sheet-overlay--send{z-index:210}
+.sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .send-thumb-wrap{display:flex;justify-content:center;margin-bottom:20px}
 .send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
 .send-form{display:flex;flex-direction:column;gap:14px}
 .send-field{display:flex;flex-direction:column;gap:6px}
 .send-label{font-size:12px;font-weight:600;color:#888}
-.send-input,.send-textarea{width:100%;padding:14px 0;border:none;border-bottom:1px solid #E8E8E8;background:transparent;font-size:17px;color:#111;font-family:inherit;outline:none}
+.send-input,.send-textarea{
+  width:100%;padding:14px 0;border:none;border-bottom:1px solid #E8E8E8;
+  background:transparent;font-size:17px;color:#111;font-family:inherit;outline:none;
+}
 .send-input:focus,.send-textarea:focus{border-bottom-color:#D35400}
 .send-input::placeholder,.send-textarea::placeholder{color:#C4C4C4}
-.send-textarea{min-height:60px;resize:none}
-.send-submit{width:100%;margin-top:6px;padding:18px;border:none;border-radius:100px;background:#D35400;color:#fff;font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;box-shadow:0 10px 24px rgba(211,84,0,.28)}
-.send-submit:disabled{opacity:.45}
-.upload-overlay{position:fixed;inset:0;z-index:150;pointer-events:none;visibility:hidden}
-.upload-overlay.open,.upload-overlay.closing{visibility:visible;pointer-events:auto}
-.upload-backdrop{position:absolute;inset:0;background:rgba(17,17,17,0);transition:background .4s ease}
+.send-textarea{min-height:60px;resize:none;line-height:1.4}
+.send-submit{
+  width:100%;margin-top:6px;padding:18px;border:none;border-radius:100px;
+  background:#D35400;color:#fff;font-size:16px;font-weight:700;font-family:inherit;
+  cursor:pointer;box-shadow:0 10px 24px rgba(211,84,0,.28);
+}
+.send-submit:active{transform:scale(.98)}
+.send-submit:disabled{opacity:.45;cursor:not-allowed}
+
+/* ══ RASM YUKLASH — KONTENT MAYDONI (qizil ramka o'lchami) ══ */
+.upload-overlay{
+  position:fixed;inset:0;z-index:200;
+  pointer-events:none;
+}
+.upload-overlay.open,
+.upload-overlay.closing{pointer-events:auto}
+.upload-backdrop{
+  position:absolute;inset:0;
+  background:rgba(0,0,0,0);
+  transition:background .4s cubic-bezier(.4,0,.2,1);
+}
 .upload-overlay.open .upload-backdrop{background:rgba(17,17,17,.35)}
 .upload-overlay.closing .upload-backdrop{background:rgba(0,0,0,0)}
+.upload-panel{
+  position:fixed;
+  left:16px;right:16px;
+  top:max(112px,calc(env(safe-area-inset-top) + 96px));
+  bottom:max(124px,calc(env(safe-area-inset-bottom) + 108px));
+  border-radius:36px;
+  background:#fff;
+  box-shadow:0 24px 64px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);
+  transform:scale(.15);
+  opacity:0;
+  transform-origin:center center;
+  transition:transform .5s cubic-bezier(.32,.72,0,1),opacity .35s ease;
+  display:flex;flex-direction:column;
+  overflow:hidden;
+  will-change:transform,opacity;
+  z-index:1;
+}
+.upload-overlay.open .upload-panel{
+  transform:scale(1);
+  opacity:1;
+}
+.upload-overlay.closing .upload-panel{
+  transform:scale(.15);
+  opacity:0;
+  transition:transform .4s cubic-bezier(.4,0,.2,1),opacity .25s ease;
+}
+.upload-inner{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  padding:16px 16px 8px;
+  min-height:0;
+  overflow:hidden;
+  opacity:0;
+  transition:opacity .25s ease .15s;
+}
+.upload-overlay.open .upload-inner{opacity:1}
+.upload-overlay.closing .upload-inner{opacity:0;transition-delay:0s}
+.upload-close{
+  position:absolute;top:14px;right:14px;
+  width:40px;height:40px;border-radius:50%;
+  background:#F4F4F5;border:none;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;z-index:10;
+  transition:background .2s,transform .15s;
+}
+.upload-close:active{transform:scale(.92);background:#E8E8EB}
+.upload-close svg{width:20px;height:20px;stroke:#666;stroke-width:2.5;fill:none}
+.upload-title{
+  color:#111;font-size:20px;font-weight:800;
+  letter-spacing:-.03em;margin-bottom:6px;text-align:center;
+  padding-right:36px;padding-left:36px;
+}
+.upload-sub{
+  color:#888;font-size:13px;font-weight:600;
+  margin-bottom:10px;text-align:center;
+  flex-shrink:0;
+}
+.upload-zone{
+  width:100%;flex:1;min-height:120px;
+  border:2px dashed #D4D4D8;
+  border-radius:28px;
+  position:relative;
+  overflow:hidden;
+  background:#111;
+}
+.upload-zone video{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.upload-zone video.active{display:block}
+.upload-preview{
+  position:absolute;inset:0;width:100%;height:100%;
+  object-fit:cover;display:none;
+}
+.upload-preview.visible{display:block}
+.camera-fallback{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:12px;padding:20px;
+  background:#FAFAFA;text-align:center;
+}
+.camera-fallback[hidden]{display:none}
+.camera-fallback p{color:#666;font-size:13px;font-weight:600}
+.camera-fallback button{
+  padding:10px 18px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+}
+.zone-placeholder{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:10px;
+  background:#FAFAFA;
+}
+.zone-placeholder.hidden{display:none}
+.zone-placeholder svg{width:28px;height:28px;stroke:#D35400;stroke-width:2;fill:none}
+.zone-placeholder span{color:#A1A1AA;font-size:12px;font-weight:600}
+.zone-placeholder-btn{
+  margin-top:4px;padding:10px 18px;border-radius:100px;border:none;
+  background:#D35400;color:#fff;font-size:13px;font-weight:700;
+  cursor:pointer;font-family:inherit;pointer-events:auto;
+}
+.upload-actions{
+  width:100%;display:flex;align-items:center;justify-content:center;
+  gap:28px;
+  padding:12px 16px max(14px,env(safe-area-inset-bottom));
+  flex-shrink:0;
+  background:#fff;
+  border-top:1px solid #F0F0F0;
+  position:relative;
+  z-index:5;
+}
+.gallery-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.gallery-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.capture-btn{
+  width:72px;height:72px;border-radius:50%;
+  border:5px solid #E5E5E5;background:#fff;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;padding:0;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+  transition:transform .15s;
+}
+.capture-btn:active{transform:scale(.92)}
+.capture-btn-inner{
+  width:56px;height:56px;border-radius:50%;background:#D35400;
+  transition:background .2s;
+}
+.capture-btn.captured .capture-btn-inner{background:#111}
+.flip-btn{
+  width:48px;height:48px;border-radius:50%;
+  background:#F4F4F5;border:1px solid #E8E8EB;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border:none;
+}
+.flip-btn svg{width:22px;height:22px;stroke:#666;stroke-width:2;fill:none}
+.upload-file-input{display:none}
+
+@media (max-height:740px){
+  .upload-panel{
+    top:max(100px,calc(env(safe-area-inset-top) + 88px));
+    bottom:max(118px,calc(env(safe-area-inset-bottom) + 102px));
+  }
+  .upload-title{font-size:18px;margin-bottom:4px}
+  .upload-sub{font-size:12px;margin-bottom:8px}
+  .capture-btn{width:64px;height:64px;border-width:4px}
+  .capture-btn-inner{width:48px;height:48px}
+  .gallery-btn,.flip-btn{width:44px;height:44px}
+}
+
+/* ── Telegram tema (faqat .theme-telegram yoqilganda) ── */
+.theme-btn{
+  position:absolute;top:max(12px,env(safe-area-inset-top));right:20px;
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:#F4F4F5;color:#111;cursor:pointer;z-index:30;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,color .2s,transform .15s;
+  font-family:inherit;
+}
+.theme-btn:active{transform:scale(.92)}
+.theme-btn svg{width:20px;height:20px;fill:currentColor}
+.theme-btn.active{background:#D35400;color:#fff}
+
+.theme-telegram,
+.theme-telegram body{background:var(--tg-bg)!important}
+.theme-telegram .app{background:var(--tg-bg)!important}
+.theme-telegram .header{background:var(--tg-bg)!important}
+.theme-telegram .logo span{color:var(--tg-text)!important}
+.theme-telegram .logo-dot{background:var(--tg-btn)!important}
+.theme-telegram .toggle{background:var(--tg-secondary)!important}
+.theme-telegram .toggle-btn{color:var(--tg-hint)!important}
+.theme-telegram .toggle-btn.active{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
+  box-shadow:none!important;
+}
+.theme-telegram .theme-btn{background:var(--tg-secondary)!important;color:var(--tg-text)!important}
+.theme-telegram .theme-btn.active{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
+.theme-telegram .sender-title,
+.theme-telegram .driver-title{color:var(--tg-text)!important}
+.theme-telegram .shipments-head{color:var(--tg-btn)!important}
+.theme-telegram .shipment-card{
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
+}
+.theme-telegram .shipment-dest{color:var(--tg-text)!important}
+.theme-telegram .shipment-status{
+  color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
+}
+.theme-telegram .cta-wrap{background:var(--tg-bg)!important}
+.theme-telegram .cta-btn{
+  background:var(--tg-btn)!important;border-color:var(--tg-btn)!important;
+  box-shadow:none!important;
+}
+.theme-telegram .cta-text{color:var(--tg-btn-text)!important;text-shadow:none!important}
+.theme-telegram .cta-icon{background:color-mix(in srgb,var(--tg-btn-text) 15%,transparent)!important;border-color:color-mix(in srgb,var(--tg-btn-text) 25%,transparent)!important}
+.theme-telegram .cta-icon svg{stroke:var(--tg-btn-text)!important}
+.theme-telegram .map-wrap{
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
+  box-shadow:none!important;
+}
+.theme-telegram .sheet{background:var(--tg-bg)!important;border-top-color:var(--tg-secondary)!important}
+.theme-telegram .sheet-drag{background:var(--tg-hint)!important}
+.theme-telegram .sheet-field{
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;box-shadow:none!important;
+}
+.theme-telegram .sheet-field-lbl,
+.theme-telegram .send-label{color:var(--tg-hint)!important}
+.theme-telegram .sheet-field-val,
+.theme-telegram .send-input,
+.theme-telegram .send-textarea{color:var(--tg-text)!important}
+.theme-telegram .send-input,
+.theme-telegram .send-textarea{border-bottom-color:var(--tg-secondary)!important}
+.theme-telegram .send-input:focus,
+.theme-telegram .send-textarea:focus{border-bottom-color:var(--tg-btn)!important}
+.theme-telegram .send-input::placeholder,
+.theme-telegram .send-textarea::placeholder{color:var(--tg-hint)!important}
+.theme-telegram .sheet-accept,
+.theme-telegram .send-submit,
+.theme-telegram .zone-placeholder-btn,
+.theme-telegram .camera-fallback button{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;box-shadow:none!important;
+}
+.theme-telegram .upload-panel{background:var(--tg-bg)!important}
+.theme-telegram .upload-title{color:var(--tg-text)!important}
+.theme-telegram .upload-sub{color:var(--tg-hint)!important}
+.theme-telegram .upload-close{background:var(--tg-secondary)!important}
+.theme-telegram .upload-close svg{stroke:var(--tg-text)!important}
+.theme-telegram .upload-actions{background:var(--tg-bg)!important;border-top-color:var(--tg-secondary)!important}
+.theme-telegram .gallery-btn,
+.theme-telegram .flip-btn{background:var(--tg-secondary)!important;border-color:var(--tg-secondary)!important}
+.theme-telegram .gallery-btn svg,
+.theme-telegram .flip-btn svg{stroke:var(--tg-text)!important}
+.theme-telegram .capture-btn{border-color:var(--tg-secondary)!important;background:var(--tg-bg)!important}
+.theme-telegram .capture-btn-inner{background:var(--tg-btn)!important}
+.theme-telegram .zone-placeholder,
+.theme-telegram .camera-fallback{background:var(--tg-section)!important}
+.theme-telegram .zone-placeholder span,
+.theme-telegram .camera-fallback p{color:var(--tg-hint)!important}
+.theme-telegram .zone-placeholder svg{stroke:var(--tg-btn)!important}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 <body>
+
 <div class="app">
-  <div class="header">
-    <div class="logo"><span>duv</span><div class="logo-dot"></div><span>duv</span></div>
-    <div class="toggle">
-      <button class="toggle-btn active" id="btnSender" onclick="switchView('sender')">Jo'natuvchi</button>
-      <button class="toggle-btn" id="btnDriver" onclick="switchView('driver')">Haydovchi</button>
+
+    <!-- Header -->
+    <div class="header">
+      <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram tema" title="Telegram tema">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.12.27z"/></svg>
+      </button>
+      <div class="logo">
+        <span>duv</span>
+        <div class="logo-dot"></div>
+        <span>duv</span>
+      </div>
+      <div class="toggle">
+        <button class="toggle-btn active" id="btnSender" onclick="switchView('sender')">Jo'natuvchi</button>
+        <button class="toggle-btn" id="btnDriver" onclick="switchView('driver')">Haydovchi</button>
+      </div>
     </div>
-  </div>
-  <div class="content">
-    <div id="senderView">
-      <div class="sender-empty" id="senderEmpty">
+
+    <!-- Content -->
+    <div class="content">
+
+      <!-- SENDER -->
+      <div id="senderView">
+        <div class="sender-empty" id="senderEmpty">
         <div class="scene">
           <div class="road"><div class="road-line"></div></div>
-          <div class="camera"><div class="cam-lens"><div class="cam-inner"></div></div></div>
+          <div class="camera">
+            <div class="cam-shutter"></div>
+            <div class="cam-flash"></div>
+            <div class="cam-lens">
+              <div class="cam-inner"><div class="cam-dot"></div></div>
+            </div>
+          </div>
+          <div class="box">
+            <div class="box-tape"></div>
+            <div class="box-line1"></div>
+            <div class="box-line2"></div>
+          </div>
+          <div class="env">
+            <div class="env-top"></div>
+            <div class="env-seal"></div>
+          </div>
+          <div class="cloud">
+            <div class="cloud-body"></div>
+            <div class="cloud-puff"></div>
+          </div>
+          <div class="cube"></div>
         </div>
-        <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
+
+        <h2 class="sender-title">
+          RASMGA OLING<br>VA JO'NATING
+        </h2>
+        </div>
+
+        <div class="shipments-wrap" id="shipmentsWrap">
+          <div class="shipments-head">Jo'natmalarim</div>
+          <div class="shipments-list" id="shipmentsList"></div>
+        </div>
+
+        <div class="cta-wrap">
+          <button class="cta-btn" onclick="openOrder()">
+            <div class="cta-shine"></div>
+            <div class="cta-icon">
+              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </div>
+            <span class="cta-text">Jo'natma yuborish</span>
+          </button>
+        </div>
       </div>
-      <div class="shipments-wrap" id="shipmentsWrap">
-        <div class="shipments-head">Jo'natmalarim</div>
-        <div class="shipments-list" id="shipmentsList"></div>
+
+      <!-- DRIVER -->
+      <div id="driverView">
+        <h2 class="driver-title">YUKLAR XARITASI</h2>
+
+        <div class="map-wrap" id="mapWrap">
+          <div id="map"></div>
+        </div>
       </div>
-      <div class="cta-wrap">
-        <button type="button" class="cta-btn" onclick="document.getElementById('photoInput').click()">
-          <div class="cta-icon"><svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></div>
-          <span class="cta-text">Jo'natma yuborish</span>
-        </button>
-      </div>
+
     </div>
-    <div id="driverView">
-      <h2 class="driver-title">YUKLAR XARITASI</h2>
-      <div class="map-wrap">
-        <div class="map-grid"></div>
-        <div class="marker" style="top:28%;left:22%" onclick="openSheet('Toshkent','Samarqand','150 000')"><div class="marker-price">150 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
-        <div class="marker" style="top:55%;left:58%" onclick="openSheet('Buxoro','Xiva','85 000')"><div class="marker-price">85 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
-        <div class="marker" style="top:70%;left:30%" onclick="openSheet('Farg\'ona','Toshkent','120 000')"><div class="marker-price">120 000 so'm</div><div class="marker-pin"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div></div>
+</div>
+
+<!-- RASM YUKLASH -->
+<div class="upload-overlay" id="uploadOverlay">
+  <div class="upload-backdrop" onclick="closeUpload()"></div>
+  <div class="upload-panel">
+    <button class="upload-close" type="button" onclick="closeUpload()" aria-label="Yopish">
+      <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="upload-inner">
+      <h2 class="upload-title">Jo'natma rasmi</h2>
+      <p class="upload-sub">Qutini ramka ichida ko'ring va rasm oling</p>
+      <div class="upload-zone" id="uploadZone">
+        <video id="cameraVideo" autoplay playsinline muted></video>
+        <img class="upload-preview" id="photoPreview" alt="Olingan rasm">
+        <div class="zone-placeholder" id="zonePlaceholder">
+          <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          <span id="zonePlaceholderText">Kamera yuklanmoqda…</span>
+          <button type="button" class="zone-placeholder-btn" onclick="openGallery()">Galereyadan tanlash</button>
+        </div>
+        <div class="camera-fallback" id="cameraFallback" hidden>
+          <p>Kameraga ruxsat bering yoki galereyadan tanlang</p>
+          <button type="button" onclick="openGallery()">Galereyadan tanlash</button>
+        </div>
       </div>
+      <input type="file" accept="image/*" capture="environment" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
+    </div>
+    <div class="upload-actions">
+      <button type="button" class="gallery-btn" onclick="openGallery()" aria-label="Galereya">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+      </button>
+      <button type="button" class="capture-btn" id="captureBtn" onclick="capturePhoto()" aria-label="Rasm olish">
+        <div class="capture-btn-inner"></div>
+      </button>
+      <button type="button" class="flip-btn" onclick="flipCamera()" aria-label="Kamerani almashtirish">
+        <svg viewBox="0 0 24 24"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><polyline points="8 12 11 15 8 18"/><polyline points="16 6 13 9 16 12"/></svg>
+      </button>
     </div>
   </div>
 </div>
 
-<input type="file" accept="image/*" capture="environment" id="photoInput" style="position:fixed;left:-9999px;width:1px;height:1px;opacity:0" onchange="onPhotoSelected(event)">
-
-<div class="upload-overlay" id="uploadOverlay">
-  <div class="upload-backdrop" onclick="closeAllSendUI()"></div>
-</div>
-
-<div class="sheet-overlay" id="sendSheetOverlay" onclick="if(event.target===this)closeAllSendUI()">
+<!-- JO'NATMA FORMASI SHEET -->
+<div class="sheet-overlay sheet-overlay--send" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
   <div class="sheet sheet--send" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
     <div class="send-thumb-wrap">
-      <img class="send-thumb" id="sendThumb" alt="">
+      <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
     </div>
     <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
       <div class="send-field">
         <label class="send-label" for="sendPhone">Telefon raqam</label>
-        <input class="send-input" type="tel" id="sendPhone" inputmode="tel" placeholder="+998 90 123 45 67" required>
+        <input class="send-input" type="tel" id="sendPhone" inputmode="tel" autocomplete="tel" placeholder="+998 90 123 45 67" required>
       </div>
       <div class="send-field">
         <label class="send-label" for="sendDest">Qayerga</label>
@@ -164,134 +676,564 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   </div>
 </div>
 
+<!-- BUYURTMA SHEET (haydovchi) -->
 <div class="sheet-overlay" id="sheetOverlay" onclick="if(event.target===this)closeSheet()">
-  <div class="sheet">
+  <div class="sheet sheet--order" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <div class="sheet-row">
-      <div><div class="sheet-amount-lbl">To'lov miqdori</div><div class="sheet-amount" id="sheetPrice">150 000</div></div>
-      <div class="sheet-icon-wrap"><svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
-    </div>
+    <img class="sheet-order-thumb" id="sheetOrderThumb" alt="Jo'natma">
     <div class="sheet-fields">
-      <div class="sheet-field"><div class="sheet-field-lbl">Olib ketish</div><div class="sheet-field-val" id="sheetFrom">Toshkent</div></div>
-      <div class="sheet-field"><div class="sheet-field-lbl">Yetkazish</div><div class="sheet-field-val" id="sheetTo">Samarqand</div></div>
+      <div class="sheet-field">
+        <div class="sheet-field-lbl">Qayerga</div>
+        <div class="sheet-field-val" id="sheetOrderDest"></div>
+      </div>
+      <div class="sheet-field">
+        <div class="sheet-field-lbl">Telefon</div>
+        <div class="sheet-field-val" id="sheetOrderPhone"></div>
+      </div>
     </div>
     <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
   </div>
 </div>
 
 <script>
-let previewObjectUrl = null;
-let selectedPhotoFile = null;
-const shipments = [];
+const STORAGE_KEY = 'duvduv_data_v1';
+mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
 
-if(window.Telegram?.WebApp){try{const tg=Telegram.WebApp;tg.ready();tg.expand();tg.setHeaderColor('#ffffff');tg.setBackgroundColor('#ffffff')}catch(_){}}
+const TG_THEME_VARS = ['--tg-bg','--tg-secondary','--tg-text','--tg-hint','--tg-btn','--tg-btn-text','--tg-section'];
 
-function switchView(v){
-  document.getElementById('senderView').style.display=v==='sender'?'flex':'none';
-  document.getElementById('driverView').style.display=v==='driver'?'flex':'none';
-  document.getElementById('btnSender').className='toggle-btn'+(v==='sender'?' active':'');
-  document.getElementById('btnDriver').className='toggle-btn'+(v==='driver'?' active':'');
+function applyTelegramThemeVars(){
+  const tp = (window.Telegram && Telegram.WebApp && Telegram.WebApp.themeParams) || {};
+  const root = document.documentElement;
+  const pick = (key, fb) => (tp[key] && String(tp[key]).trim()) || fb;
+  root.style.setProperty('--tg-bg', pick('bg_color', '#ffffff'));
+  root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#f4f4f5'));
+  root.style.setProperty('--tg-text', pick('text_color', '#000000'));
+  root.style.setProperty('--tg-hint', pick('hint_color', '#999999'));
+  root.style.setProperty('--tg-btn', pick('button_color', '#3390ec'));
+  root.style.setProperty('--tg-btn-text', pick('button_text_color', '#ffffff'));
+  root.style.setProperty('--tg-section', pick('section_bg_color', '#ffffff'));
 }
-function openSheet(from,to,price){
-  document.getElementById('sheetFrom').textContent=from;
-  document.getElementById('sheetTo').textContent=to;
-  document.getElementById('sheetPrice').textContent=price+" so'm";
+
+function clearTelegramThemeVars(){
+  TG_THEME_VARS.forEach(v => document.documentElement.style.removeProperty(v));
+}
+
+function toggleTelegramTheme(){
+  const root = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  const on = root.classList.toggle('theme-telegram');
+  if (on) {
+    applyTelegramThemeVars();
+    btn.classList.add('active');
+  } else {
+    clearTelegramThemeVars();
+    btn.classList.remove('active');
+  }
+}
+
+if (window.Telegram && Telegram.WebApp) {
+  try {
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+    Telegram.WebApp.onEvent('themeChanged', () => {
+      if (document.documentElement.classList.contains('theme-telegram')) {
+        applyTelegramThemeVars();
+      }
+    });
+  } catch (_) {}
+}
+
+let map = null;
+let driverLocationMarker = null;
+const orderMapMarkers = [];
+const orders = [];
+
+function getCurrentPosition(){
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Geolocation unavailable'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve(pos.coords),
+      err => reject(err),
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 }
+    );
+  });
+}
+
+function initDriverMap(){
+  if (map) return;
+  if (!window.mapboxgl) {
+    showToast('Mapbox kutubxonasi yuklanmadi');
+    return;
+  }
+  map = new mapboxgl.Map({
+    container: 'map',
+    style: 'mapbox://styles/mapbox/streets-v12',
+    center: [69.2401, 41.2991],
+    zoom: 12
+  });
+  map.on('load', () => {
+    refreshOrderMarkers();
+    centerMapOnDriver();
+  });
+}
+
+function centerMapOnDriver(){
+  if (!map) return;
+  getCurrentPosition()
+    .then(coords => {
+      const lng = coords.longitude;
+      const lat = coords.latitude;
+      map.flyTo({ center: [lng, lat], zoom: 13, essential: true });
+      if (!driverLocationMarker) {
+        const el = document.createElement('div');
+        el.className = 'map-driver-marker';
+        driverLocationMarker = new mapboxgl.Marker({ element: el })
+          .setLngLat([lng, lat])
+          .addTo(map);
+      } else {
+        driverLocationMarker.setLngLat([lng, lat]);
+      }
+    })
+    .catch(() => {
+      map.flyTo({ center: [69.2401, 41.2991], zoom: 13, essential: true });
+    });
+}
+
+function refreshOrderMarkers(){
+  if (!map) return;
+  orderMapMarkers.forEach(m => m.remove());
+  orderMapMarkers.length = 0;
+  orders.forEach(order => {
+    if (order.lat == null || order.lng == null) return;
+    const el = document.createElement('div');
+    el.className = 'map-order-marker';
+    const marker = new mapboxgl.Marker({ element: el })
+      .setLngLat([order.lng, order.lat])
+      .addTo(map);
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      openOrderSheet(order);
+    });
+    orderMapMarkers.push(marker);
+  });
+}
+
+function openOrderSheet(order){
+  document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
+  document.getElementById('sheetOrderDest').textContent = order.dest || '';
+  document.getElementById('sheetOrderPhone').textContent = order.phone || '';
   document.getElementById('sheetOverlay').classList.add('open');
 }
-function closeSheet(){document.getElementById('sheetOverlay').classList.remove('open')}
-function acceptOrder(){closeSheet();showToast('✅ Buyurtma qabul qilindi!')}
 
-function onPhotoSelected(e){
-  const file=e.target.files?.[0];
-  if(!file)return;
-  e.target.value='';
-  if(previewObjectUrl)URL.revokeObjectURL(previewObjectUrl);
-  selectedPhotoFile=file;
-  previewObjectUrl=URL.createObjectURL(file);
-  document.getElementById('sendThumb').src=previewObjectUrl;
-  document.getElementById('sendForm').reset();
-  document.getElementById('uploadOverlay').classList.remove('closing');
-  document.getElementById('uploadOverlay').classList.add('open');
-  document.getElementById('sendSheetOverlay').classList.add('open');
-  document.body.style.overflow='hidden';
-  if(window.Telegram?.WebApp?.HapticFeedback)Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+function switchView(v){
+  document.getElementById('senderView').style.display = v==='sender'?'flex':'none';
+  document.getElementById('driverView').style.display = v==='driver'?'flex':'none';
+  document.getElementById('btnSender').className = 'toggle-btn'+(v==='sender'?' active':'');
+  document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
+  if (v === 'driver') {
+    if (!map) initDriverMap();
+    else {
+      setTimeout(() => {
+        map.resize();
+        centerMapOnDriver();
+        refreshOrderMarkers();
+      }, 200);
+    }
+  }
 }
 
-function closeUploadOverlay(){
-  const overlay=document.getElementById('uploadOverlay');
-  if(!overlay.classList.contains('open'))return;
+function closeSheet(){
+  document.getElementById('sheetOverlay').classList.remove('open');
+}
+function acceptOrder(){
+  closeSheet();
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
+  t.textContent='✅ Buyurtma qabul qilindi!';
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+
+const shipments = [];
+let cameraStream = null;
+let facingMode = 'environment';
+let previewObjectUrl = null;
+let selectedPhotoFile = null;
+let cameraSession = 0;
+
+function getUserMediaWithTimeout(constraints, ms){
+  return new Promise((resolve, reject) => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      reject(new Error('unsupported'));
+      return;
+    }
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('timeout'));
+    }, ms);
+    navigator.mediaDevices.getUserMedia(constraints)
+      .then(stream => {
+        if (settled) {
+          stream.getTracks().forEach(t => t.stop());
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        resolve(stream);
+      })
+      .catch(err => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+}
+
+function showCameraFallback(msg){
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  const video = document.getElementById('cameraVideo');
+  stopCamera();
+  video.classList.remove('active');
+  placeholder.classList.add('hidden');
+  fallback.hidden = false;
+  if (msg) {
+    const p = fallback.querySelector('p');
+    if (p) p.textContent = msg;
+  }
+}
+
+function persistData(){
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shipments, orders }));
+  } catch (e) {
+    console.warn('Saqlash xatosi:', e);
+  }
+}
+
+function loadPersistedData(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    shipments.length = 0;
+    orders.length = 0;
+    (data.shipments || []).forEach(s => shipments.push(s));
+    (data.orders || []).forEach(o => orders.push(o));
+    renderShipments();
+    if (map) refreshOrderMarkers();
+  } catch (e) {
+    console.warn('Yuklash xatosi:', e);
+  }
+}
+
+async function thumbToStorable(url){
+  if (!url || url.startsWith('data:')) return url;
+  try {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const r = new FileReader();
+      r.onload = () => resolve(r.result);
+      r.onerror = reject;
+      r.readAsDataURL(blob);
+    });
+  } catch {
+    return url;
+  }
+}
+
+function escapeHtml(s){
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function renderShipments(){
+  const empty = document.getElementById('senderEmpty');
+  const wrap = document.getElementById('shipmentsWrap');
+  const list = document.getElementById('shipmentsList');
+  if (!empty || !wrap || !list) return;
+  if (!shipments.length) {
+    empty.classList.remove('hidden');
+    wrap.classList.remove('visible');
+    list.innerHTML = '';
+    return;
+  }
+  empty.classList.add('hidden');
+  wrap.classList.add('visible');
+  list.innerHTML = shipments.map(s => `
+    <div class="shipment-card">
+      <img class="shipment-thumb" src="${escapeHtml(s.thumbUrl)}" alt="">
+      <div class="shipment-body">
+        <div class="shipment-dest">${escapeHtml(s.dest)}</div>
+        <span class="shipment-status">${escapeHtml(s.status)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openOrder(){
+  const overlay = document.getElementById('uploadOverlay');
+  overlay.classList.remove('closing');
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  startCamera();
+}
+
+function closeUpload(){
+  const overlay = document.getElementById('uploadOverlay');
+  if (!overlay.classList.contains('open')) return;
+  cameraSession++;
   overlay.classList.remove('open');
   overlay.classList.add('closing');
-  setTimeout(()=>overlay.classList.remove('closing'),450);
+  stopCamera();
+  setTimeout(() => {
+    overlay.classList.remove('closing');
+    document.body.style.overflow = '';
+    resetUpload();
+  }, 550);
+}
+
+async function startCamera(){
+  const video = document.getElementById('cameraVideo');
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  const placeholderText = document.getElementById('zonePlaceholderText');
+  const preview = document.getElementById('photoPreview');
+  if (preview.classList.contains('visible')) return;
+
+  const session = ++cameraSession;
+  stopCamera();
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+  if (placeholderText) placeholderText.textContent = 'Kamera yuklanmoqda…';
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    showCameraFallback('Kamera qo\'llab-quvvatlanmaydi — galereyadan tanlang');
+    return;
+  }
+
+  const constraintsList = [
+    { video: { facingMode: { exact: facingMode } }, audio: false },
+    { video: { facingMode: { ideal: facingMode } }, audio: false },
+    { video: true, audio: false }
+  ];
+
+  try {
+    let stream = null;
+    for (const constraints of constraintsList) {
+      if (session !== cameraSession) return;
+      try {
+        stream = await getUserMediaWithTimeout(constraints, 8000);
+        break;
+      } catch (_) {}
+    }
+    if (!stream) throw new Error('no stream');
+    if (session !== cameraSession) {
+      stream.getTracks().forEach(t => t.stop());
+      return;
+    }
+    cameraStream = stream;
+    video.srcObject = cameraStream;
+    await Promise.race([
+      video.play(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('play timeout')), 5000))
+    ]);
+    if (session !== cameraSession) return;
+    video.classList.add('active');
+    placeholder.classList.add('hidden');
+  } catch (err) {
+    console.warn('Camera error:', err);
+    if (session !== cameraSession) return;
+    const msg = err && err.message === 'timeout'
+      ? 'Kamera javob bermadi — galereyadan tanlang'
+      : 'Kameraga ruxsat bering yoki galereyadan tanlang';
+    showCameraFallback(msg);
+  }
+}
+
+function stopCamera(){
+  if (cameraStream) {
+    cameraStream.getTracks().forEach(t => t.stop());
+    cameraStream = null;
+  }
+  const video = document.getElementById('cameraVideo');
+  video.srcObject = null;
+  video.classList.remove('active');
+}
+
+function flipCamera(){
+  facingMode = facingMode === 'environment' ? 'user' : 'environment';
+  if (document.getElementById('uploadOverlay').classList.contains('open')) {
+    startCamera();
+  }
+}
+
+function capturePhoto(){
+  const video = document.getElementById('cameraVideo');
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+
+  if (preview.classList.contains('visible')) {
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    preview.src = '';
+    preview.classList.remove('visible');
+    captureBtn.classList.remove('captured');
+    startCamera();
+    return;
+  }
+
+  if (!cameraStream || !video.videoWidth) {
+    showToast('Kamera tayyor emas');
+    return;
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  canvas.toBlob(blob => {
+    if (!blob) return;
+    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+    previewObjectUrl = URL.createObjectURL(blob);
+    preview.src = previewObjectUrl;
+    preview.classList.add('visible');
+    captureBtn.classList.add('captured');
+    stopCamera();
+    document.getElementById('zonePlaceholder').classList.add('hidden');
+    showToast('✅ Rasm olindi!');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+    selectedPhotoFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    document.getElementById('sendThumb').src = previewObjectUrl;
+    document.getElementById('sendForm').reset();
+    document.getElementById('sendSheetOverlay').classList.add('open');
+  }, 'image/jpeg', 0.9);
+}
+
+function openGallery(){
+  document.getElementById('photoInput').click();
+}
+
+function resetUpload(){
+  stopCamera();
+  const input = document.getElementById('photoInput');
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  input.value = '';
+  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl) && !orders.some(o => o.thumbUrl === previewObjectUrl)) {
+    URL.revokeObjectURL(previewObjectUrl);
+  }
+  previewObjectUrl = null;
+  preview.src = '';
+  preview.classList.remove('visible');
+  captureBtn.classList.remove('captured');
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+}
+
+function onPhotoSelected(e){
+  const file = e.target.files?.[0];
+  if (!file) return;
+  stopCamera();
+  const preview = document.getElementById('photoPreview');
+  const captureBtn = document.getElementById('captureBtn');
+  const placeholder = document.getElementById('zonePlaceholder');
+  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+  previewObjectUrl = URL.createObjectURL(file);
+  preview.src = previewObjectUrl;
+  preview.classList.add('visible');
+  captureBtn.classList.add('captured');
+  placeholder.classList.add('hidden');
+  document.getElementById('cameraFallback').hidden = true;
+  document.getElementById('cameraVideo').classList.remove('active');
+  showToast('✅ Rasm yuklandi!');
+  selectedPhotoFile = file;
+  document.getElementById('sendThumb').src = previewObjectUrl;
+  document.getElementById('sendForm').reset();
+  document.getElementById('sendSheetOverlay').classList.add('open');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
 }
 
 function closeSendSheet(){
   document.getElementById('sendSheetOverlay').classList.remove('open');
-  document.body.style.overflow='';
-  document.getElementById('sendForm').reset();
-  if(previewObjectUrl && !shipments.some(s=>s.thumbUrl===previewObjectUrl)){
-    URL.revokeObjectURL(previewObjectUrl);
-    previewObjectUrl=null;
-  }
-  selectedPhotoFile=null;
-  document.getElementById('sendThumb').removeAttribute('src');
-}
-
-function closeAllSendUI(){
-  closeSendSheet();
-  closeUploadOverlay();
-}
-
-function renderShipments(){
-  const list=document.getElementById('shipmentsList');
-  list.innerHTML='';
-  shipments.forEach(s=>{
-    const card=document.createElement('div');
-    card.className='shipment-card';
-    card.innerHTML=`
-      <img class="shipment-thumb" src="${s.thumbUrl}" alt="">
-      <div class="shipment-body">
-        <div class="shipment-dest">${escapeHtml(s.dest)}</div>
-        <span class="shipment-status">Kutilmoqda</span>
-      </div>`;
-    list.appendChild(card);
-  });
-  document.getElementById('senderEmpty').classList.toggle('hidden',shipments.length>0);
-  document.getElementById('shipmentsWrap').classList.toggle('visible',shipments.length>0);
-}
-
-function escapeHtml(str){
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 function submitOrder(e){
   e.preventDefault();
-  if(!selectedPhotoFile||!previewObjectUrl){showToast('Avval rasm oling');return}
-  const phone=document.getElementById('sendPhone').value.trim();
-  const dest=document.getElementById('sendDest').value.trim();
-  if(!phone||!dest){showToast('Telefon va manzilni to\'ldiring');return}
-  const btn=document.getElementById('sendSubmitBtn');
-  btn.disabled=true;
-  const thumbUrl=previewObjectUrl;
-  shipments.unshift({thumbUrl,dest,phone,status:'Kutilmoqda'});
-  previewObjectUrl=null;
-  selectedPhotoFile=null;
-  renderShipments();
-  closeSendSheet();
-  const upload=document.getElementById('uploadOverlay');
-  upload.classList.remove('open');
-  upload.classList.add('closing');
-  setTimeout(()=>upload.classList.remove('closing'),450);
-  btn.disabled=false;
-  showToast('✅ Jo\'natma yuborildi!');
-  if(window.Telegram?.WebApp?.HapticFeedback)Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  if (!selectedPhotoFile && !previewObjectUrl) {
+    showToast('Avval rasm oling');
+    return;
+  }
+  const phone = document.getElementById('sendPhone').value.trim();
+  const dest = document.getElementById('sendDest').value.trim();
+  if (!phone || !dest) {
+    showToast('Telefon va manzilni to\'ldiring');
+    return;
+  }
+  const thumbUrl = previewObjectUrl;
+  if (!thumbUrl) {
+    showToast('Avval rasm oling');
+    return;
+  }
+  const btn = document.getElementById('sendSubmitBtn');
+  const note = document.getElementById('sendNote').value.trim();
+  btn.disabled = true;
+
+  async function saveOrder(coords){
+    const storedThumb = await thumbToStorable(thumbUrl);
+    const order = {
+      id: Date.now(),
+      thumbUrl: storedThumb,
+      dest,
+      phone,
+      note,
+      status: 'Aktiv',
+      lat: coords ? coords.latitude : null,
+      lng: coords ? coords.longitude : null
+    };
+    shipments.unshift(order);
+    orders.unshift(order);
+    persistData();
+    previewObjectUrl = null;
+    selectedPhotoFile = null;
+    renderShipments();
+    if (map) refreshOrderMarkers();
+    closeSendSheet();
+    closeUpload();
+    btn.disabled = false;
+    showToast('✅ Jo\'natma yuborildi!');
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  }
+
+  getCurrentPosition()
+    .then(coords => saveOrder(coords))
+    .catch(() => saveOrder(null));
 }
 
 function showToast(msg){
-  const t=document.createElement('div');
-  t.style.cssText='position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
-  t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),2500);
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2500);
 }
+
+loadPersistedData();
 </script>
 </body>
 </html>
