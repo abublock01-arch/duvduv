@@ -279,10 +279,11 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 
 /* ══ DRIVER VIEW ══ */
 #driverView{
-  display:none;flex-direction:column;align-items:center;
-  padding:0 24px;height:100%;min-height:0;flex:1;
+  display:none;flex-direction:column;align-items:stretch;
+  padding:0 16px;height:100%;min-height:0;flex:1;
   background:var(--app-bg);
 }
+#driverView .region-picker{width:100%}
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
   position:relative;width:100%;flex-shrink:0;
@@ -320,14 +321,21 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   opacity:.62;transform:scale(.9);
 }
 .region-picker-item.is-center{
-  font-size:22px;font-weight:900;color:#111;
+  font-size:22px;font-weight:900;color:#0B5CAD;
   opacity:1;transform:scale(1);letter-spacing:-.02em;
 }
 .region-picker--horizontal-drum{
-  height:58px;margin:12px 0 10px;
+  height:64px;min-height:64px;margin:10px 0 8px;flex-shrink:0;
+  width:100%;z-index:4;position:relative;
 }
 .region-picker--horizontal-drum .region-picker-track{
-  height:58px;padding:10px 0;
+  height:64px;min-height:64px;padding:12px 0;align-items:center;
+}
+.region-picker--horizontal-drum .region-picker-item{
+  display:flex;align-items:center;justify-content:center;min-height:40px;
+}
+.region-picker--horizontal-drum .script-morph--region{
+  min-width:auto;width:auto;display:inline-block;
 }
 .region-picker--horizontal-drum .region-picker-item{
   transition:color .4s ease,opacity .2s ease,transform .2s ease,font-size .2s ease;
@@ -560,11 +568,21 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .sheet-overlay--send{z-index:210}
 .sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .send-sheet-head{text-align:center;padding:4px 0 10px}
+.send-step-hint{
+  text-align:center;font-size:14px;font-weight:600;color:#0B5CAD;
+  margin:0 0 8px;letter-spacing:-.02em;
+}
 .send-thumb-wrap{display:flex;justify-content:center;margin-bottom:12px}
 .script-morph--label{
   --script-morph-h:18px;display:inline-block;text-align:left;
 }
 .script-morph--label .script-morph-layer{text-align:left}
+.toggle-btn .script-morph,.cta-text .script-morph,.send-submit .script-morph,.sheet-accept .script-morph,.sheet-tg-btn .script-morph,.loc-picker-save .script-morph,.zone-placeholder-btn .script-morph{
+  --script-morph-h:1.25em;display:inline-block;vertical-align:middle;
+}
+.shipments-head .script-morph,.upload-title .script-morph{--script-morph-h:1.2em;display:inline-block}
+.shipment-dest .script-morph,.shipment-date .script-morph,.shipment-status .script-morph{--script-morph-h:1.15em;display:inline-block}
+.toast .script-morph{--script-morph-h:1.2em;display:inline-block}
 .send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
 .send-form{display:flex;flex-direction:column;gap:14px}
 .send-field{display:flex;flex-direction:column;gap:6px}
@@ -951,7 +969,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
               </div>
             </div>
           </div>
-          <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
+          <h2 class="sender-title"><span id="senderTitleLine1">RASMGA OLING</span><br><span id="senderTitleLine2">VA JO'NATING</span></h2>
         </div>
 
         <div class="sender-body">
@@ -965,12 +983,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
           <button type="button" class="cta-btn" onclick="openTravelSheet()">
             <div class="cta-shine"></div>
             <div class="cta-icon" id="ctaTravelIcon"></div>
-            <span class="cta-text">Yo'l olish</span>
+            <span class="cta-text" id="ctaTravelText">Yo'l olish</span>
           </button>
           <button type="button" class="cta-btn" onclick="openOrder()">
             <div class="cta-shine"></div>
             <div class="cta-icon" id="ctaOrderIcon"></div>
-            <span class="cta-text">Jo'natma yuborish</span>
+            <span class="cta-text" id="ctaOrderText">Jo'natma yuborish</span>
           </button>
         </div>
       </div>
@@ -1000,7 +1018,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 <div class="loc-picker-overlay" id="locPickerOverlay">
   <div class="loc-picker-header">
     <button type="button" class="loc-picker-close" onclick="closeLocationPicker()" aria-label="Yopish">×</button>
-    Lokatsiyani tanlang
+    <span id="locPickerTitle">Lokatsiyani tanlang</span>
   </div>
   <div id="locPickerMap"></div>
   <div class="loc-picker-footer">
@@ -1017,15 +1035,15 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
       <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="upload-inner">
-      <h2 class="upload-title">Jo'natma rasmi</h2>
-      <p class="upload-sub">Qutini ramka ichida ko'ring va rasm oling</p>
+      <h2 class="upload-title" id="uploadTitle">Jo'natma rasmi</h2>
+      <p class="upload-sub" id="uploadSub">Qutini ramka ichida ko'ring va rasm oling</p>
       <div class="upload-zone" id="uploadZone">
         <video id="cameraVideo" autoplay playsinline muted></video>
         <img class="upload-preview" id="photoPreview" alt="Olingan rasm">
         <div class="zone-placeholder" id="zonePlaceholder">
           <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
           <span id="zonePlaceholderText">Kamera yuklanmoqda…</span>
-          <button type="button" class="zone-placeholder-btn" onclick="openGallery()">Galereyadan tanlash</button>
+          <button type="button" class="zone-placeholder-btn" id="zoneGalleryBtn" onclick="openGallery()">Galereyadan tanlash</button>
         </div>
         <div class="camera-fallback" id="cameraFallback" hidden>
           <p>Kameraga ruxsat bering yoki galereyadan tanlang</p>
@@ -1052,22 +1070,32 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 <div class="sheet-overlay sheet-overlay--send" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
   <div class="sheet sheet--send" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
+    <form class="send-form" id="sendForm" onsubmit="onSendFormSubmit(event)">
       <div class="travel-sheet-head send-sheet-head">
         <h2 class="travel-dest-title" id="sendDestTitle">Qayerga</h2>
       </div>
       <div class="send-thumb-wrap">
         <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
       </div>
-      <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
-        <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+      <div id="sendStepRegion">
+        <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
+          <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+        </div>
+      </div>
+      <div id="sendStepDistrict" hidden>
+        <p class="send-step-hint" id="sendDistrictHint"></p>
+        <div class="region-picker region-picker--vertical" id="sendDistrictPicker" aria-label="Tuman tanlash">
+          <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
+        </div>
       </div>
       <input type="hidden" id="sendDest" value="">
-      <div class="send-field">
+      <input type="hidden" id="sendRegion" value="">
+      <input type="hidden" id="sendDistrict" value="">
+      <div class="send-field" id="sendNoteField" hidden>
         <label class="send-label" for="sendNote" id="sendNoteLabel">Izoh</label>
         <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
       </div>
-      <button type="submit" class="send-submit" id="sendSubmitBtn">Yuborish</button>
+      <button type="button" class="send-submit" id="sendActionBtn" onclick="sendSheetNext()">Keyingi</button>
     </form>
   </div>
 </div>
@@ -1076,15 +1104,25 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 <div class="sheet-overlay sheet-overlay--travel" id="travelSheetOverlay" onclick="if(event.target===this)closeTravelSheet()">
   <div class="sheet sheet--travel" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <form class="send-form" id="travelForm" onsubmit="submitTravel(event)">
+    <form class="send-form" id="travelForm" onsubmit="onTravelFormSubmit(event)">
       <div class="travel-sheet-head">
         <h2 class="travel-dest-title" id="travelDestTitle">Qayerga borasiz?</h2>
       </div>
-      <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
-        <div class="region-picker-track" id="travelRegionPickerTrack"></div>
+      <div id="travelStepRegion">
+        <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
+          <div class="region-picker-track" id="travelRegionPickerTrack"></div>
+        </div>
+      </div>
+      <div id="travelStepDistrict" hidden>
+        <p class="send-step-hint" id="travelDistrictHint"></p>
+        <div class="region-picker region-picker--vertical" id="travelDistrictPicker" aria-label="Tuman tanlash">
+          <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
+        </div>
       </div>
       <input type="hidden" id="travelTo" value="">
-      <button type="submit" class="send-submit" id="travelSubmitBtn">Yuborish</button>
+      <input type="hidden" id="travelRegion" value="">
+      <input type="hidden" id="travelDistrict" value="">
+      <button type="button" class="send-submit" id="travelActionBtn" onclick="travelSheetNext()">Keyingi</button>
     </form>
   </div>
 </div>
@@ -1095,11 +1133,11 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
     <div class="sheet-drag"></div>
     <form class="send-form" id="editForm" onsubmit="saveEditShipment(event)">
       <div class="send-field">
-        <label class="send-label" for="editDest">Qayerga</label>
+        <label class="send-label" for="editDest" id="editDestLabel">Qayerga</label>
         <select class="send-input send-select" id="editDest" required></select>
       </div>
       <div class="send-field">
-        <label class="send-label" for="editNote">Izoh</label>
+        <label class="send-label" for="editNote" id="editNoteLabel">Izoh</label>
         <textarea class="send-textarea" id="editNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
       </div>
       <button type="submit" class="send-submit" id="editSubmitBtn">Saqlash</button>
@@ -1114,14 +1152,14 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
     <img class="sheet-order-thumb" id="sheetOrderThumb" alt="Jo'natma">
     <div class="sheet-fields">
       <div class="sheet-field">
-        <div class="sheet-field-lbl">Qayerga</div>
+        <div class="sheet-field-lbl" id="sheetDestLabel">Qayerga</div>
         <div class="sheet-field-val" id="sheetOrderDest"></div>
       </div>
       <div class="sheet-field">
-        <button type="button" class="sheet-tg-btn" id="sheetTelegramBtn" onclick="openTelegramChat()">Telegramda yozish</button>
+        <button type="button" class="sheet-tg-btn" id="sheetTelegramBtn" onclick="openTelegramChat()"><span id="sheetTelegramBtnText">Telegramda yozish</span></button>
       </div>
     </div>
-    <button class="sheet-accept" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
+    <button class="sheet-accept" id="sheetAcceptBtn" onclick="acceptOrder()">Buyurtmani Qabul Qilish</button>
   </div>
 </div>
 
@@ -1353,8 +1391,16 @@ let selectedTravelRegion = '';
 let travelRegionPickerBuilt = false;
 let lastTravelPickerKey = '';
 let selectedSendRegion = '';
+let selectedSendDistrict = '';
+let sendSheetStep = 1;
 let sendRegionPickerBuilt = false;
+let sendDistrictPickerBuilt = false;
 let lastSendPickerKey = '';
+let lastSendDistrictKey = '';
+let selectedTravelDistrict = '';
+let travelSheetStep = 1;
+let travelDistrictPickerBuilt = false;
+let lastTravelDistrictKey = '';
 let refreshMarkersTimer = null;
 const orders = [];
 const mapTestOrders = [];
@@ -1380,6 +1426,23 @@ const REGION_CYRILLIC = {
   'Sirdaryo': 'Сирдарё', 'Jizzax': 'Жиззах', 'Navoiy': 'Навоий',
   "Qoraqalpog'iston": 'Қорақалпоғистон'
 };
+
+const REGION_DISTRICTS = {
+  'Toshkent': ['Bektemir', 'Chilonzor', 'Mirobod', 'Olmazor', 'Sergeli', 'Shayxontohur', 'Uchtepa', 'Yashnobod', 'Yunusobod', 'Qibray', 'Zangiota', 'Parkent', 'Bekobod'],
+  'Samarqand': ['Samarqand', 'Urgut', 'Bulungur', 'Ishtixon', 'Kattaqorgon', 'Narpay', 'Pastdargom', 'Paxtachi', 'Payariq', 'Toyloq'],
+  "Farg'ona": ['Fargona', 'Qo\'qon', 'Marg\'ilon', 'Rishton', 'Beshariq', 'Bog\'dod', 'Buvayda', 'Dang\'ara', 'Furqat', 'O\'zbekiston', 'Quva', 'So\'x', 'Toshloq', 'Uchko\'prik', 'Yozyovon'],
+  'Andijon': ['Andijon', 'Asaka', 'Baliqchi', 'Bo\'z', 'Buloqboshi', 'Izboskan', 'Jalaquduq', 'Marhamat', 'Oltinko\'l', 'Paxtaobod', 'Shahrixon', 'Ulug\'nor', 'Xonobod'],
+  'Namangan': ['Namangan', 'Chortoq', 'Chust', 'Kosonsoy', 'Mingbuloq', 'Norin', 'Pop', 'To\'raqo\'rg\'on', 'Uchqo\'rg\'on', 'Uychi', 'Yangiqo\'rg\'on'],
+  'Buxoro': ['Buxoro', 'G\'ijduvon', 'Jondor', 'Kogon', 'Olot', 'Peshku', 'Qorako\'l', 'Qorovulbozor', 'Romitan', 'Shofirkon', 'Vobkent'],
+  'Xorazm': ['Urganch', 'Xiva', 'Gurlan', 'Xonqa', 'Hazorasp', 'Shovot', 'Yangiariq', 'Yangibozor', 'Bog\'ot', 'Qoshko\'pir'],
+  'Surxondaryo': ['Termiz', 'Angor', 'Bandixon', 'Boysun', 'Denov', 'Jarqo\'rg\'on', 'Muzrabot', 'Oltinsoy', 'Qiziriq', 'Qumqo\'rg\'on', 'Sariosiyo', 'Sherobod', 'Sho\'rchi', 'Uzun'],
+  "Qashqadaryo": ['Qarshi', 'Chiroqchi', 'Dehqonobod', 'G\'uzor', 'Kasbi', 'Kitob', 'Koson', 'Mirishkor', 'Muborak', 'Nishon', 'Qamashi', 'Shahrisabz', 'Yakkabog\''],
+  'Sirdaryo': ['Guliston', 'Boyovut', 'Guliston', 'Mirzaobod', 'Oqoltin', 'Sardoba', 'Sayxunobod', 'Sirdaryo', 'Xovos'],
+  'Jizzax': ['Jizzax', 'Arnasoy', 'Baxmal', 'Do\'stlik', 'Forish', 'G\'allaorol', 'Mirzacho\'l', 'Paxtakor', 'Yangiobod', 'Zafarobod', 'Zomin'],
+  'Navoiy': ['Navoiy', 'Karmana', 'Konimex', 'Navbahor', 'Nurota', 'Qiziltepa', 'Tomdi', 'Uchquduq', 'Xatirchi', 'Zarafshon'],
+  "Qoraqalpog'iston": ['Nukus', 'Amudaryo', 'Beruniy', 'Chimboy', 'Ellikqala', 'Kegeyli', 'Mo\'ynoq', 'Qonliko\'l', 'Qo\'ng\'irot', 'Shumanay', 'Taxtako\'pir', 'To\'rtko\'l', 'Xo\'jayli']
+};
+
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
 const TRAVEL_TITLE_CYRILLIC = 'Қаерга борасиз?';
 const SEND_TITLE_LATIN = 'Qayerga';
@@ -1429,6 +1492,26 @@ function getPickerRegions(){
   return UZ_REGIONS.filter(r => r !== userLocationRegion);
 }
 
+function getDistrictsForRegion(region){
+  const list = REGION_DISTRICTS[region];
+  return list ? [...list] : [region];
+}
+
+function formatDest(region, district){
+  return district ? `${region} — ${district}` : region;
+}
+
+function destToRegion(dest){
+  if (!dest) return '';
+  const sep = dest.indexOf(' — ');
+  return sep >= 0 ? dest.slice(0, sep) : dest;
+}
+
+function destMatchesDriverRegion(dest){
+  if (!selectedDriverRegion || !dest) return false;
+  return dest === selectedDriverRegion || dest.startsWith(selectedDriverRegion + ' —');
+}
+
 async function refreshUserLocationRegion(){
   try {
     const coords = await getCurrentPosition();
@@ -1447,6 +1530,8 @@ function fillRegionSelect(el, placeholder, regions){
   el.innerHTML = `<option value="" disabled selected>${ph}</option>` +
     list.map(r => `<option value="${r}">${r}</option>`).join('');
   el.dataset.filled = '1';
+  morphSelectOptions(el);
+  applyAllScriptMorphs(scriptLatin);
 }
 
 function initRegionSelects(){
@@ -1557,7 +1642,8 @@ function refreshOrderMarkersDebounced(){
   refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 80);
 }
 
-function initRegionPicker(){
+function ensureDriverRegionPicker(){
+  if (!document.body.classList.contains('view-driver')) return;
   const track = document.getElementById('regionPickerTrack');
   if (!track) return;
   const regions = getPickerRegions();
@@ -1579,7 +1665,16 @@ function initRegionPicker(){
     });
   }
   scrollPickerToRegion(track, selectedDriverRegion, false);
-  updateRegionPickerVisuals(false, track);
+  updateRegionPickerVisuals(true, track, region => {
+    if (region && region !== selectedDriverRegion) {
+      selectedDriverRegion = region;
+      refreshOrderMarkersDebounced();
+    }
+  });
+}
+
+function initRegionPicker(){
+  ensureDriverRegionPicker();
 }
 
 const SCRIPT_MORPH_MS = 650;
@@ -1616,24 +1711,203 @@ function scriptMorphSwap(container, newText){
   });
 }
 
-function ensureTitleMorph(elId, latin){
-  const el = document.getElementById(elId);
-  if (!el || el.dataset.morphReady) return;
-  el.innerHTML =
-    `<span class="script-morph travel-dest-title-morph" aria-live="polite">` +
-    `<span class="script-morph-layer is-shown">${latin}</span>` +
-    `<span class="script-morph-layer"></span></span>`;
-  el.dataset.morphReady = '1';
+const UI_PHRASE_CYRILLIC = {
+  "Jo'natuvchi": 'Жўнатувчи', 'Haydovchi': 'Ҳайдовчи',
+  'RASMGA OLING': 'РАСМГА ОЛИНГ', "VA JO'NATING": 'ВА ЖЎНАТИНГ',
+  "Jo'natmalarim": 'Жўнатмаларим', "Yo'l olish": 'Йўл олиш',
+  "Jo'natma yuborish": 'Жўнатма юбориш', "Jo'natma rasmi": 'Жўнатма расми',
+  "Qutini ramka ichida ko'ring va rasm oling": 'Қутини рамка ичида кўринг ва расм олинг',
+  'Galereyadan tanlash': 'Галереядан танлаш', 'Kamera yuklanmoqda…': 'Камера юкланмоқда…',
+  'Lokatsiyani tanlang': 'Локацияни танлаш', 'Xaritaga bosing — pin qo\'yiladi': 'Харитага босинг — пин қўйилади',
+  'Saqlash': 'Сақлаш', 'Izoh': 'Изоҳ', 'Yuborish': 'Юбориш', 'Saqlash': 'Сақлаш',
+  'Telegramda yozish': 'Телеграмда ёзиш', 'Buyurtmani Qabul Qilish': 'Буюртмани қабул қилиш',
+  "Hali jo'natmalar yo'q": 'Ҳали жўнатмалар йўқ',
+  "Birinchi jo'natmangizni yuboring!": 'Биринчи жўнатмангизни юборинг!',
+  "Yo'lovchi": 'Йўловчи', 'Aktiv': 'Актив', 'Bugun': 'Бугун',
+  'Viloyatni tanlang': 'Вилоятни танлаш', 'Viloyat tanlash': 'Вилоят танлаш',
+  "Buyurtmalarni ko'rsatish": 'Буюртмаларни кўрсатиш',
+  "Buyurtmalarni yashirish": 'Буюртмаларни яшириш',
+  'Yopish': 'Ёпиш', 'Kattalashtirish': 'Катталаштириш', 'Kichiklashtirish': 'Кичиклаштириш',
+  'Mening joylashuvim': 'Менинг жойлашувим', 'Tahrirlash': 'Таҳрирлаш', 'Lokatsiya': 'Локация',
+  "O'chirish": 'Ўчириш', 'Lokatsiya olinmadi': 'Локация олинмади',
+  'Mapbox kutubxonasi yuklanmadi': 'Mapbox кутубхонаси юкланмади',
+  'Lokatsiya saqlandi': 'Локация сақланди', 'Buyurtma qabul qilindi!': 'Буюртма қабул қилинди!',
+  'Xatolik yuz berdi': 'Хатолик юз берди', 'Kamera tayyor emas': 'Камера тайёр эмас',
+  'Rasm olindi!': 'Расм олинди!', 'Rasm yuklandi!': 'Расм юкланди!',
+  'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
+  'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
+  'Tuman tanlang': 'Туман танланг'
+};
+
+const LATIN_CYR_CHAR = {
+  A:'А',B:'Б',D:'Д',E:'Е',F:'Ф',G:'Г',H:'Ҳ',I:'И',J:'Ж',K:'К',L:'Л',M:'М',N:'Н',
+  O:'О',P:'П',Q:'Қ',R:'Р',S:'С',T:'Т',U:'У',V:'В',Y:'Й',Z:'З',
+  a:'а',b:'б',d:'д',e:'е',f:'ф',g:'г',h:'ҳ',i:'и',j:'ж',k:'к',l:'л',m:'м',n:'н',
+  o:'о',p:'п',q:'қ',r:'р',s:'с',t:'т',u:'у',v:'в',y:'й',z:'з'
+};
+
+const MORPH_MULTI = [
+  ["O'", 'Ў'], ["o'", 'ў'], ["G'", 'Ғ'], ["g'", 'ғ'],
+  ['Sh', 'Ш'], ['SH', 'Ш'], ['sh', 'ш'],
+  ['Ch', 'Ч'], ['CH', 'Ч'], ['ch', 'ч']
+];
+
+const MORPH_UI_ENTRIES = [
+  ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
+  ['#senderTitleLine1', 'RASMGA OLING'], ['#senderTitleLine2', "VA JO'NATING"],
+  ['.shipments-head', "Jo'natmalarim"],
+  ['#ctaTravelText', "Yo'l olish"], ['#ctaOrderText', "Jo'natma yuborish"],
+  ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
+  ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
+  ['#locPickerTitle', 'Lokatsiyani tanlang'], ['.loc-picker-hint', 'Xaritaga bosing — pin qo\'yiladi'],
+  ['#locPickerSaveBtn', 'Saqlash'],
+  ['#travelDestTitle', TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC, 'travel-dest-title-morph'],
+  ['#sendDestTitle', SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC, 'travel-dest-title-morph'],
+  ['#sendNoteLabel', SEND_NOTE_LABEL_LATIN, SEND_NOTE_LABEL_CYRILLIC, 'script-morph--label'],
+  ['#editDestLabel', 'Qayerga'], ['#editNoteLabel', 'Izoh'],
+  ['#travelActionBtn', 'Keyingi'], ['#sendActionBtn', 'Keyingi'], ['#editSubmitBtn', 'Saqlash'],
+  ['#sheetDestLabel', 'Qayerga'], ['#sheetTelegramBtnText', 'Telegramda yozish'],
+  ['#sheetAcceptBtn', 'Buyurtmani Qabul Qilish']
+];
+
+function latinToCyrillic(text){
+  if (text == null || text === '') return text;
+  const exact = String(text);
+  if (UI_PHRASE_CYRILLIC[exact]) return UI_PHRASE_CYRILLIC[exact];
+  if (REGION_CYRILLIC[exact]) return REGION_CYRILLIC[exact];
+
+  let s = exact.replace(/\u02BB|\u2018|\u2019|ʻ/g, "'");
+  const regions = [...UZ_REGIONS].sort((a, b) => b.length - a.length);
+  for (const r of regions) {
+    const cyr = REGION_CYRILLIC[r];
+    if (cyr) s = s.split(r).join(cyr);
+  }
+
+  let out = '';
+  for (let i = 0; i < s.length;) {
+    let matched = false;
+    for (const [lat, cyr] of MORPH_MULTI) {
+      if (s.startsWith(lat, i)) {
+        out += cyr;
+        i += lat.length;
+        matched = true;
+        break;
+      }
+    }
+    if (matched) continue;
+    const ch = s[i++];
+    out += LATIN_CYR_CHAR[ch] ?? ch;
+  }
+  return out;
 }
 
-function ensureSendNoteLabelMorph(){
-  const el = document.getElementById('sendNoteLabel');
-  if (!el || el.dataset.morphReady) return;
+function registerMorph(el, latin, cyrillic, extraClass){
+  if (!el || el.dataset.morphRoot) return;
+  const lat = latin ?? el.textContent.trim();
+  const cyr = cyrillic ?? latinToCyrillic(lat);
+  el.dataset.morphRoot = '1';
+  el.dataset.morphLatin = lat;
+  el.dataset.morphCyrillic = cyr;
+  const cls = extraClass ? ` script-morph ${extraClass}` : ' script-morph';
   el.innerHTML =
-    `<span class="script-morph script-morph--label" aria-live="polite">` +
-    `<span class="script-morph-layer is-shown">${SEND_NOTE_LABEL_LATIN}</span>` +
+    `<span class="${cls.trim()}" aria-live="polite">` +
+    `<span class="script-morph-layer is-shown"></span>` +
     `<span class="script-morph-layer"></span></span>`;
-  el.dataset.morphReady = '1';
+  const layers = el.querySelectorAll('.script-morph-layer');
+  layers[0].textContent = lat;
+  layers[1].textContent = cyr;
+}
+
+function registerMorphAttr(el, attr, latin, cyrillic){
+  if (!el) return;
+  const lat = latin ?? el.getAttribute(attr) ?? '';
+  const cyr = cyrillic ?? latinToCyrillic(lat);
+  el.dataset.morphAttr = attr;
+  el.dataset.morphAttrLatin = lat;
+  el.dataset.morphAttrCyrillic = cyr;
+}
+
+function applyMorphAttr(el, useLatin){
+  if (!el?.dataset.morphAttr) return;
+  const val = useLatin ? el.dataset.morphAttrLatin : el.dataset.morphAttrCyrillic;
+  const attr = el.dataset.morphAttr;
+  if (attr === 'placeholder') el.placeholder = val;
+  else if (el.id === 'mapLayersBtn') {
+    el.setAttribute('aria-label', val);
+    el.title = val;
+  } else el.setAttribute(attr, val);
+}
+
+function applyMorphElement(el, useLatin){
+  if (!el?.dataset.morphRoot) return;
+  const morph = el.querySelector('.script-morph');
+  if (!morph) return;
+  scriptMorphSwap(morph, useLatin ? el.dataset.morphLatin : el.dataset.morphCyrillic);
+}
+
+function initMorphInContainer(root){
+  if (!root) return;
+  root.querySelectorAll('.morph-auto').forEach(el => {
+    if (!el.dataset.morphRoot) registerMorph(el);
+  });
+  root.querySelectorAll('[aria-label]').forEach(el => {
+    if (!el.dataset.morphAttr) registerMorphAttr(el, 'aria-label');
+  });
+}
+
+function initAllMorphTexts(){
+  MORPH_UI_ENTRIES.forEach(entry => {
+    const [sel, latin, cyrillic, extra] = entry;
+    const el = document.querySelector(sel);
+    if (el) registerMorph(el, latin, cyrillic, extra);
+  });
+
+  registerMorphAttr(document.getElementById('sendNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
+  registerMorphAttr(document.getElementById('editNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
+  registerMorphAttr(document.getElementById('headerCloseBtn'), 'aria-label', 'Yopish');
+  registerMorphAttr(document.getElementById('mapLayersBtn'), 'aria-label', "Buyurtmalarni ko'rsatish");
+  [
+    ['regionPicker', 'Viloyat tanlash'],
+    ['sendRegionPicker', 'Qayerga'],
+    ['travelRegionPicker', 'Qayerga borasiz']
+  ].forEach(([id, label]) => {
+    const el = document.getElementById(id);
+    if (el) registerMorphAttr(el, 'aria-label', label);
+  });
+
+  const editDest = document.getElementById('editDest');
+  if (editDest) morphSelectOptions(editDest);
+
+  document.querySelectorAll(
+    '.header [aria-label], .upload-overlay [aria-label], .loc-picker-overlay [aria-label], #driverView [aria-label]'
+  ).forEach(el => {
+    if (!el.dataset.morphAttr) registerMorphAttr(el, 'aria-label');
+  });
+}
+
+function morphSelectOptions(select){
+  if (!select) return;
+  [...select.options].forEach(opt => {
+    if (!opt.value) {
+      const lat = opt.textContent.trim();
+      opt.dataset.morphLatin = lat;
+      opt.dataset.morphCyrillic = latinToCyrillic(lat);
+      return;
+    }
+    opt.dataset.morphLatin = opt.value;
+    opt.dataset.morphCyrillic = REGION_CYRILLIC[opt.value] || latinToCyrillic(opt.value);
+  });
+}
+
+function setMorphText(el, latin, cyrillic){
+  if (!el) return;
+  const cyr = cyrillic ?? REGION_CYRILLIC[latin] ?? latinToCyrillic(latin);
+  if (!el.dataset.morphRoot) registerMorph(el, latin, cyr);
+  else {
+    el.dataset.morphLatin = latin;
+    el.dataset.morphCyrillic = cyr;
+    applyMorphElement(el, scriptLatin);
+  }
 }
 
 function morphPickerTrack(trackSelector, useLatin){
@@ -1647,48 +1921,24 @@ function morphPickerTrack(trackSelector, useLatin){
 
 function applyAllScriptMorphs(useLatin){
   scriptLatin = useLatin;
-  const travelOpen = document.getElementById('travelSheetOverlay')?.classList.contains('open');
-  const sendOpen = document.getElementById('sendSheetOverlay')?.classList.contains('open');
-  const driver = document.body.classList.contains('view-driver');
 
-  if (travelOpen) {
-    ensureTitleMorph('travelDestTitle', TRAVEL_TITLE_LATIN);
-    scriptMorphSwap(
-      document.querySelector('#travelDestTitle .script-morph'),
-      useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC
-    );
-    morphPickerTrack('#travelRegionPickerTrack', useLatin);
-  }
-  if (sendOpen) {
-    ensureTitleMorph('sendDestTitle', SEND_TITLE_LATIN);
-    scriptMorphSwap(
-      document.querySelector('#sendDestTitle .script-morph'),
-      useLatin ? SEND_TITLE_LATIN : SEND_TITLE_CYRILLIC
-    );
-    morphPickerTrack('#sendRegionPickerTrack', useLatin);
-    ensureSendNoteLabelMorph();
-    scriptMorphSwap(
-      document.querySelector('#sendNoteLabel .script-morph'),
-      useLatin ? SEND_NOTE_LABEL_LATIN : SEND_NOTE_LABEL_CYRILLIC
-    );
-    const note = document.getElementById('sendNote');
-    if (note) note.placeholder = useLatin ? SEND_NOTE_PH_LATIN : SEND_NOTE_PH_CYRILLIC;
-  }
-  if (driver) morphPickerTrack('#regionPickerTrack', useLatin);
+  document.querySelectorAll('[data-morph-root]').forEach(el => applyMorphElement(el, useLatin));
+  document.querySelectorAll('[data-morph-attr]').forEach(el => applyMorphAttr(el, useLatin));
+
+  document.querySelectorAll('select option[data-morph-latin]').forEach(opt => {
+    opt.textContent = useLatin ? opt.dataset.morphLatin : opt.dataset.morphCyrillic;
+  });
+
+  morphPickerTrack('#travelRegionPickerTrack', useLatin);
+  morphPickerTrack('#sendRegionPickerTrack', useLatin);
+  morphPickerTrack('#travelDistrictPickerTrack', useLatin);
+  morphPickerTrack('#sendDistrictPickerTrack', useLatin);
+  morphPickerTrack('#regionPickerTrack', useLatin);
+
+  document.querySelectorAll('.toast.show [data-morph-root]').forEach(el => applyMorphElement(el, useLatin));
 }
 
 function refreshScriptMorphLoop(){
-  const active =
-    document.getElementById('travelSheetOverlay')?.classList.contains('open') ||
-    document.getElementById('sendSheetOverlay')?.classList.contains('open') ||
-    document.body.classList.contains('view-driver');
-  if (!active) {
-    if (scriptMorphTimer) {
-      clearInterval(scriptMorphTimer);
-      scriptMorphTimer = null;
-    }
-    return;
-  }
   applyAllScriptMorphs(scriptLatin);
   if (!scriptMorphTimer) {
     scriptMorphTimer = setInterval(() => applyAllScriptMorphs(!scriptLatin), SCRIPT_MORPH_INTERVAL);
@@ -1727,6 +1977,7 @@ function initSendRegionPicker(){
 
 async function prepareSendSheet(){
   await refreshUserLocationRegion();
+  resetSendSheetSteps();
   lastSendPickerKey = '';
   initSendRegionPicker();
 }
@@ -1761,9 +2012,170 @@ function initTravelRegionPicker(){
   if (hidden) hidden.value = selectedTravelRegion;
 }
 
+function initSendDistrictPicker(){
+  const track = document.getElementById('sendDistrictPickerTrack');
+  if (!track || !selectedSendRegion) return;
+  const districts = getDistrictsForRegion(selectedSendRegion);
+  if (!selectedSendDistrict || !districts.includes(selectedSendDistrict)) {
+    selectedSendDistrict = districts[0];
+  }
+  const key = selectedSendRegion + '|' + districts.join('|');
+  if (!sendDistrictPickerBuilt || lastSendDistrictKey !== key) {
+    lastSendDistrictKey = key;
+    sendDistrictPickerBuilt = true;
+    delete track.dataset.pickerBound;
+    buildRegionPickerTrack(track, districts);
+    bindRegionPickerScroll(track, district => {
+      selectedSendDistrict = district;
+      const el = document.getElementById('sendDistrict');
+      if (el) el.value = district;
+    });
+  }
+  scrollPickerToRegion(track, selectedSendDistrict, false);
+  updateRegionPickerVisuals(true, track, district => {
+    selectedSendDistrict = district;
+    const el = document.getElementById('sendDistrict');
+    if (el) el.value = district;
+  });
+  const el = document.getElementById('sendDistrict');
+  if (el) el.value = selectedSendDistrict;
+}
+
+function initTravelDistrictPicker(){
+  const track = document.getElementById('travelDistrictPickerTrack');
+  if (!track || !selectedTravelRegion) return;
+  const districts = getDistrictsForRegion(selectedTravelRegion);
+  if (!selectedTravelDistrict || !districts.includes(selectedTravelDistrict)) {
+    selectedTravelDistrict = districts[0];
+  }
+  const key = selectedTravelRegion + '|' + districts.join('|');
+  if (!travelDistrictPickerBuilt || lastTravelDistrictKey !== key) {
+    lastTravelDistrictKey = key;
+    travelDistrictPickerBuilt = true;
+    delete track.dataset.pickerBound;
+    buildRegionPickerTrack(track, districts);
+    bindRegionPickerScroll(track, district => {
+      selectedTravelDistrict = district;
+      const el = document.getElementById('travelDistrict');
+      if (el) el.value = district;
+    });
+  }
+  scrollPickerToRegion(track, selectedTravelDistrict, false);
+  updateRegionPickerVisuals(true, track, district => {
+    selectedTravelDistrict = district;
+    const el = document.getElementById('travelDistrict');
+    if (el) el.value = district;
+  });
+  const el = document.getElementById('travelDistrict');
+  if (el) el.value = selectedTravelDistrict;
+}
+
+function resetSendSheetSteps(){
+  sendSheetStep = 1;
+  sendDistrictPickerBuilt = false;
+  lastSendDistrictKey = '';
+  selectedSendDistrict = '';
+  const r = document.getElementById('sendStepRegion');
+  const d = document.getElementById('sendStepDistrict');
+  const n = document.getElementById('sendNoteField');
+  const btn = document.getElementById('sendActionBtn');
+  if (r) r.hidden = false;
+  if (d) d.hidden = true;
+  if (n) n.hidden = true;
+  if (btn) {
+    btn.type = 'button';
+    btn.setAttribute('onclick', 'sendSheetNext()');
+    setMorphText(btn, 'Keyingi');
+  }
+  ['sendRegion', 'sendDistrict', 'sendDest'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function resetTravelSheetSteps(){
+  travelSheetStep = 1;
+  travelDistrictPickerBuilt = false;
+  lastTravelDistrictKey = '';
+  selectedTravelDistrict = '';
+  const r = document.getElementById('travelStepRegion');
+  const d = document.getElementById('travelStepDistrict');
+  const btn = document.getElementById('travelActionBtn');
+  if (r) r.hidden = false;
+  if (d) d.hidden = true;
+  if (btn) {
+    btn.type = 'button';
+    btn.setAttribute('onclick', 'travelSheetNext()');
+    setMorphText(btn, 'Keyingi');
+  }
+  ['travelRegion', 'travelDistrict', 'travelTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function sendSheetNext(){
+  const region = selectedSendRegion || document.getElementById('sendDest')?.value;
+  if (!region) {
+    showToast('Viloyatni tanlang');
+    return;
+  }
+  sendSheetStep = 2;
+  document.getElementById('sendStepRegion').hidden = true;
+  document.getElementById('sendStepDistrict').hidden = false;
+  document.getElementById('sendNoteField').hidden = false;
+  document.getElementById('sendRegion').value = region;
+  const hint = document.getElementById('sendDistrictHint');
+  if (hint) setMorphText(hint, region + ' — tuman tanlang');
+  initSendDistrictPicker();
+  const btn = document.getElementById('sendActionBtn');
+  btn.type = 'submit';
+  btn.removeAttribute('onclick');
+  setMorphText(btn, 'Yuborish');
+  refreshScriptMorphLoop();
+}
+
+function travelSheetNext(){
+  const region = selectedTravelRegion || document.getElementById('travelTo')?.value;
+  if (!region) {
+    showToast('Viloyatni tanlang');
+    return;
+  }
+  travelSheetStep = 2;
+  document.getElementById('travelStepRegion').hidden = true;
+  document.getElementById('travelStepDistrict').hidden = false;
+  document.getElementById('travelRegion').value = region;
+  const hint = document.getElementById('travelDistrictHint');
+  if (hint) setMorphText(hint, region + ' — tuman tanlang');
+  initTravelDistrictPicker();
+  const btn = document.getElementById('travelActionBtn');
+  btn.type = 'submit';
+  btn.removeAttribute('onclick');
+  setMorphText(btn, 'Yuborish');
+  refreshScriptMorphLoop();
+}
+
+function onSendFormSubmit(e){
+  e.preventDefault();
+  if (sendSheetStep === 1) {
+    sendSheetNext();
+    return;
+  }
+  submitOrder(e);
+}
+
+function onTravelFormSubmit(e){
+  e.preventDefault();
+  if (travelSheetStep === 1) {
+    travelSheetNext();
+    return;
+  }
+  submitTravel(e);
+}
+
 function travelMapCoords(t){
   if (t.lng != null && t.lat != null) return { lng: t.lng, lat: t.lat };
-  const region = t.to || t.dest || '';
+  const region = destToRegion(t.to || t.dest || '');
   const center = REGION_CENTERS[region];
   if (!center) return null;
   const [lng, lat] = center;
@@ -1785,7 +2197,7 @@ function ordersToGeoJSON(){
     .filter(o => {
       if (o.lat == null || o.lng == null) return false;
       if (!selectedDriverRegion) return true;
-      return (o.dest || '') === selectedDriverRegion;
+      return destMatchesDriverRegion(o.dest || '');
     })
     .map(o => ({
       type: 'Feature',
@@ -1797,7 +2209,7 @@ function ordersToGeoJSON(){
     .filter(t => {
       const dest = t.to || t.dest || '';
       if (!selectedDriverRegion) return true;
-      return dest === selectedDriverRegion;
+      return destMatchesDriverRegion(dest);
     })
     .map(t => {
       const coords = travelMapCoords(t);
@@ -1988,8 +2400,10 @@ function toggleOrderMapLayers(){
   const btn = document.getElementById('mapLayersBtn');
   if (btn) {
     btn.classList.toggle('off', !orderLayersVisible);
-    btn.setAttribute('aria-label', orderLayersVisible ? 'Buyurtmalarni yashirish' : 'Buyurtmalarni ko\'rsatish');
-    btn.title = orderLayersVisible ? 'Buyurtmalarni yashirish' : 'Buyurtmalarni ko\'rsatish';
+    const lat = orderLayersVisible ? 'Buyurtmalarni yashirish' : "Buyurtmalarni ko'rsatish";
+    btn.dataset.morphAttrLatin = lat;
+    btn.dataset.morphAttrCyrillic = latinToCyrillic(lat);
+    applyMorphAttr(btn, scriptLatin);
   }
 }
 
@@ -2043,7 +2457,7 @@ function initDriverMap(){
     setupOrderClusterLayers();
     refreshOrderMarkers();
     centerMapOnDriver();
-    initRegionPicker();
+    ensureDriverRegionPicker();
   });
 }
 
@@ -2111,7 +2525,7 @@ window.adminDeleteAllOrders = adminDeleteAllOrders;
 function openOrderSheet(order){
   activeSheetOrder = order;
   document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
-  document.getElementById('sheetOrderDest').textContent = order.dest || '';
+  setMorphText(document.getElementById('sheetOrderDest'), order.dest || '');
   const tgBtn = document.getElementById('sheetTelegramBtn');
   if (tgBtn) tgBtn.disabled = !order.telegramUsername || order.telegramUsername === '@';
   document.getElementById('sheetOverlay').classList.add('open');
@@ -2144,11 +2558,13 @@ function switchView(v){
       setTimeout(() => {
         map.resize();
         refreshOrderMarkers();
-      }, 200);
+        ensureDriverRegionPicker();
+      }, 280);
     }
     refreshUserLocationRegion().then(() => {
       lastDriverPickerKey = '';
-      initRegionPicker();
+      regionPickerBuilt = false;
+      setTimeout(() => ensureDriverRegionPicker(), 80);
       refreshScriptMorphLoop();
     });
   } else {
@@ -2321,7 +2737,7 @@ function showCameraFallback(msg){
   fallback.hidden = false;
   if (msg) {
     const p = fallback.querySelector('p');
-    if (p) p.textContent = msg;
+    if (p) setMorphText(p, msg);
   }
 }
 
@@ -2470,9 +2886,11 @@ function renderShipments(){
     wrap.classList.add('visible');
     list.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;padding:40px 20px;text-align:center;opacity:.6">
     <svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="#9CA3AF" stroke-width="2"><rect x="8" y="20" width="48" height="36" rx="6"/><path d="M20 20V16a12 12 0 0 1 24 0v4"/><line x1="32" y1="34" x2="32" y2="42"/><line x1="28" y1="38" x2="36" y2="38"/></svg>
-    <p style="font-size:17px;font-weight:700;color:#374151;margin:0">Hali jo'natmalar yo'q</p>
-    <span style="font-size:13px;color:#9CA3AF">Birinchi jo'natmangizni yuboring!</span>
+    <p class="morph-auto" style="font-size:17px;font-weight:700;color:#374151;margin:0">Hali jo'natmalar yo'q</p>
+    <span class="morph-auto" style="font-size:13px;color:#9CA3AF">Birinchi jo'natmangizni yuboring!</span>
   </div>`;
+    initMorphInContainer(list);
+    applyAllScriptMorphs(scriptLatin);
     return;
   }
   wrap.classList.add('visible');
@@ -2482,9 +2900,9 @@ function renderShipments(){
     <div class="shipment-card">
       <div class="shipment-type-icon shipment-type-icon--${s.type === 'travel' ? 'travel' : 'order'}">${s.type === 'travel' ? ICON_AVATAR : ICON_BOX_SMALL}</div>
       <div class="shipment-body">
-        <div class="shipment-dest">${s.type === 'travel' ? escapeHtml(s.to || s.dest || '') : escapeHtml(s.dest || '')}</div>
-        <div class="shipment-date">${formatDate(s.createdAt)}</div>
-        <span class="${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
+        <div class="shipment-dest morph-auto">${s.type === 'travel' ? escapeHtml(s.to || s.dest || '') : escapeHtml(s.dest || '')}</div>
+        <div class="shipment-date morph-auto">${formatDate(s.createdAt)}</div>
+        <span class="morph-auto ${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
       </div>
       <div class="shipment-actions">
         <button type="button" class="shipment-icon-btn shipment-icon-btn--edit" data-action="edit" data-id="${key}" aria-label="Tahrirlash">${SHIPMENT_ICON_EDIT}</button>
@@ -2493,6 +2911,8 @@ function renderShipments(){
       </div>
     </div>`;
   }).join('');
+  initMorphInContainer(list);
+  applyAllScriptMorphs(scriptLatin);
   setupShipmentsListEvents();
 }
 
@@ -2500,7 +2920,8 @@ function editShipment(key){
   const s = findShipment(key);
   if (!s) return;
   editingShipmentKey = key;
-  document.getElementById('editDest').value = s.type === 'travel' ? (s.to || s.dest || '') : (s.dest || '');
+  const raw = s.type === 'travel' ? (s.to || s.dest || '') : (s.dest || '');
+  document.getElementById('editDest').value = destToRegion(raw);
   document.getElementById('editNote').value = s.note || '';
   document.getElementById('editSheetOverlay').classList.add('open');
 }
@@ -2623,7 +3044,7 @@ async function startCamera(){
   stopCamera();
   fallback.hidden = true;
   placeholder.classList.remove('hidden');
-  if (placeholderText) placeholderText.textContent = 'Kamera yuklanmoqda…';
+  if (placeholderText) setMorphText(placeholderText, 'Kamera yuklanmoqda…');
 
   if (!navigator.mediaDevices?.getUserMedia) {
     showCameraFallback('Kamera qo\'llab-quvvatlanmaydi — galereyadan tanlang');
@@ -2807,11 +3228,13 @@ async function onPhotoSelected(e){
 
 function closeSendSheet(){
   document.getElementById('sendSheetOverlay').classList.remove('open');
+  resetSendSheetSteps();
   refreshScriptMorphLoop();
 }
 
 async function openTravelSheet(){
   await refreshUserLocationRegion();
+  resetTravelSheetSteps();
   lastTravelPickerKey = '';
   initTravelRegionPicker();
   document.getElementById('travelSheetOverlay').classList.add('open');
@@ -2820,16 +3243,24 @@ async function openTravelSheet(){
 
 function closeTravelSheet(){
   document.getElementById('travelSheetOverlay').classList.remove('open');
+  resetTravelSheetSteps();
   refreshScriptMorphLoop();
 }
 
 async function submitTravel(e){
   e.preventDefault();
-  const to = selectedTravelRegion || document.getElementById('travelTo')?.value;
-  if (!to) {
+  const region = document.getElementById('travelRegion')?.value || selectedTravelRegion;
+  const district = selectedTravelDistrict || document.getElementById('travelDistrict')?.value;
+  if (!region) {
     showToast('Viloyatni tanlang');
     return;
   }
+  if (!district) {
+    showToast('Tuman tanlang');
+    return;
+  }
+  const to = formatDest(region, district);
+  document.getElementById('travelTo').value = to;
   let coords = userCoords;
   if (!coords) {
     try {
@@ -2841,7 +3272,7 @@ async function submitTravel(e){
   }
   const from = userLocationRegion || (coords ? detectRegionFromCoords(coords.longitude, coords.latitude) : '');
   const note = '';
-  const btn = document.getElementById('travelSubmitBtn');
+  const btn = document.getElementById('travelActionBtn');
   btn.disabled = true;
   const travel = {
     id: Date.now(),
@@ -2874,17 +3305,24 @@ function submitOrder(e){
     showToast('Avval rasm oling');
     return;
   }
-  const dest = selectedSendRegion || document.getElementById('sendDest')?.value;
-  if (!dest) {
+  const region = document.getElementById('sendRegion')?.value || selectedSendRegion;
+  const district = selectedSendDistrict || document.getElementById('sendDistrict')?.value;
+  if (!region) {
     showToast('Viloyatni tanlang');
     return;
   }
+  if (!district) {
+    showToast('Tuman tanlang');
+    return;
+  }
+  const dest = formatDest(region, district);
+  document.getElementById('sendDest').value = dest;
   const thumbUrl = previewObjectUrl;
   if (!thumbUrl) {
     showToast('Avval rasm oling');
     return;
   }
-  const btn = document.getElementById('sendSubmitBtn');
+  const btn = document.getElementById('sendActionBtn');
   const note = document.getElementById('sendNote').value.trim();
   btn.disabled = true;
 
@@ -2942,9 +3380,11 @@ function showAlert(msg){
 }
 
 function showToast(msg, type='info'){
+  const clean = String(msg).replace(/^✅\s*/, '');
   const t = document.createElement('div');
   t.className = 'toast toast--' + type;
-  t.textContent = msg;
+  registerMorph(t, clean);
+  applyMorphElement(t, scriptLatin);
   document.body.appendChild(t);
   requestAnimationFrame(() => {
     requestAnimationFrame(() => t.classList.add('show'));
@@ -2958,6 +3398,8 @@ function showToast(msg, type='info'){
 initFirebase();
 initRegionSelects();
 initCtaIcons();
+initAllMorphTexts();
+refreshScriptMorphLoop();
 refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
