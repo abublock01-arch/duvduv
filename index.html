@@ -345,32 +345,59 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 }
 .region-picker--vertical .region-picker-item{
   width:100%;text-align:center;padding:10px 12px;
-  transition:color .4s ease,opacity .9s cubic-bezier(.45,.05,.55,.95),
-    filter .9s cubic-bezier(.45,.05,.55,.95),transform .2s ease,font-size .2s ease;
+  transition:color .4s ease,opacity .2s ease,transform .2s ease,font-size .2s ease;
 }
 .region-picker--vertical .region-picker-item.is-adjacent{
   font-size:17px;font-weight:700;color:#6b7280;
-  opacity:.55;transform:scale(.92);filter:blur(0);
+  opacity:.55;transform:scale(.92);
 }
 .region-picker--vertical .region-picker-item.is-center{
   font-size:24px;font-weight:900;color:#0B5CAD;
-  opacity:1;transform:scale(1);letter-spacing:-.02em;filter:blur(0);
+  opacity:1;transform:scale(1);letter-spacing:-.02em;
+}
+.region-picker--vertical .region-picker-item .script-morph--region{
+  --script-morph-h:28px;
+}
+.region-picker--vertical .region-picker-item.is-center .script-morph--region{
+  --script-morph-h:36px;
 }
 .travel-sheet-head{text-align:center;padding:8px 0 12px}
 .travel-dest-title{
-  position:relative;display:flex;justify-content:center;align-items:center;
-  min-height:1.15em;
   font-size:clamp(32px,10vw,44px);font-weight:800;color:var(--navy);
   letter-spacing:-.04em;line-height:1.1;margin:0;
 }
-.travel-script-line{
-  position:absolute;left:0;right:0;text-align:center;
-  opacity:0;filter:blur(3px);
-  transition:opacity .95s cubic-bezier(.45,.05,.55,.95),filter .95s cubic-bezier(.45,.05,.55,.95);
+.travel-dest-title-morph{
+  --script-morph-h:52px;width:100%;max-width:100%;
+}
+.script-morph{
+  position:relative;display:block;
+  height:var(--script-morph-h);
+  filter:blur(.6px);
+  overflow:hidden;
+}
+.script-morph-layer{
+  position:absolute;left:0;right:0;top:50%;
+  transform:translateY(-50%);
+  text-align:center;white-space:nowrap;
+  opacity:0;filter:blur(10px);
+  will-change:opacity,filter;
+  transition:opacity .65s cubic-bezier(.4,0,.2,1),filter .65s cubic-bezier(.4,0,.2,1);
   pointer-events:none;
 }
-.travel-script-line--active{
-  position:relative;opacity:1;filter:blur(0);
+.script-morph-layer.is-visible{
+  opacity:1;filter:blur(0);
+}
+.script-morph--region{
+  display:inline-block;vertical-align:middle;min-width:100%;
+}
+@media (prefers-reduced-motion:reduce){
+  .script-morph{filter:none;height:var(--script-morph-h)}
+  .script-morph-layer{
+    filter:none!important;
+    will-change:opacity;
+    transition:opacity .2s ease;
+  }
+  .script-morph-layer.is-visible{filter:none!important}
 }
 .region-picker--vertical{margin:0 0 20px}
 
@@ -1384,12 +1411,16 @@ function removeDriverRadiusLayers(){
   if (map.getSource('driver-radius')) map.removeSource('driver-radius');
 }
 
+function scriptMorphHtml(label){
+  return `<span class="script-morph script-morph--region"><span class="script-morph-layer is-visible">${label}</span><span class="script-morph-layer"></span></span>`;
+}
+
 function buildRegionPickerTrack(track, regions){
   const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
   track.innerHTML = spacer + regions.map(r => {
     const cyr = REGION_CYRILLIC[r] || r;
     const label = travelScriptLatin ? r : cyr;
-    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${label}</button>`;
+    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${scriptMorphHtml(label)}</button>`;
   }).join('') + spacer;
 }
 
@@ -1486,79 +1517,71 @@ function initRegionPicker(){
   updateRegionPickerVisuals(false, track);
 }
 
-const SCRIPT_CROSSFADE_MS = 480;
-const SCRIPT_CROSSFADE_EASE = 'cubic-bezier(0.45, 0.05, 0.55, 0.95)';
+const SCRIPT_MORPH_MS = 650;
+const SCRIPT_MORPH_INTERVAL = 5000;
 
-function clearScriptInlineStyles(el){
-  el.style.transition = '';
-  el.style.opacity = '';
-  el.style.filter = '';
+function prefersReducedMotion(){
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function crossfadeText(el, newText, subtle){
-  if (!el) return;
+function scriptMorphSwap(container, newText){
+  if (!container) return;
+  const layers = container.querySelectorAll('.script-morph-layer');
+  if (layers.length < 2) return;
+  const a = layers[0];
+  const b = layers[1];
+  const visible = a.classList.contains('is-visible') ? a : b;
+  const hidden = visible === a ? b : a;
   const next = String(newText);
-  if (el.textContent === next) return;
-  const ms = subtle ? 360 : SCRIPT_CROSSFADE_MS;
-  el.style.transition = subtle
-    ? `filter ${ms}ms ${SCRIPT_CROSSFADE_EASE}`
-    : `opacity ${ms}ms ${SCRIPT_CROSSFADE_EASE}, filter ${ms}ms ${SCRIPT_CROSSFADE_EASE}`;
-  if (!subtle) el.style.opacity = '0.38';
-  el.style.filter = subtle ? 'blur(1.2px)' : 'blur(2.5px)';
-  setTimeout(() => {
-    el.textContent = next;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (!subtle) el.style.opacity = '1';
-        el.style.filter = 'blur(0)';
-        setTimeout(() => clearScriptInlineStyles(el), ms + 40);
-      });
-    });
-  }, ms);
-}
+  if (visible.textContent.trim() === next) return;
 
-function ensureTravelTitleLayers(){
-  const el = document.getElementById('travelDestTitle');
-  if (!el || el.dataset.layersReady) return;
-  const t = el.textContent.trim() || TRAVEL_TITLE_LATIN;
-  el.innerHTML =
-    `<span class="travel-script-line travel-script-line--active">${t}</span>` +
-  `<span class="travel-script-line"></span>`;
-  el.dataset.layersReady = '1';
-}
-
-function crossfadeTitle(newText){
-  const el = document.getElementById('travelDestTitle');
-  if (!el) return;
-  ensureTravelTitleLayers();
-  const lines = el.querySelectorAll('.travel-script-line');
-  if (lines.length < 2) {
-    crossfadeText(el, newText);
+  hidden.textContent = next;
+  if (prefersReducedMotion()) {
+    visible.classList.remove('is-visible');
+    hidden.classList.add('is-visible');
     return;
   }
-  const active = el.querySelector('.travel-script-line--active');
-  const next = active === lines[0] ? lines[1] : lines[0];
-  if (next.textContent === newText && next.classList.contains('travel-script-line--active')) return;
-  next.textContent = newText;
-  next.classList.add('travel-script-line--active');
-  if (active) active.classList.remove('travel-script-line--active');
+  visible.classList.remove('is-visible');
+  setTimeout(() => hidden.classList.add('is-visible'), SCRIPT_MORPH_MS);
+}
+
+function ensureTravelTitleMorph(){
+  const el = document.getElementById('travelDestTitle');
+  if (!el || el.dataset.morphReady) return;
+  el.innerHTML =
+    `<span class="script-morph travel-dest-title-morph" aria-live="polite">` +
+    `<span class="script-morph-layer is-visible">${TRAVEL_TITLE_LATIN}</span>` +
+    `<span class="script-morph-layer"></span></span>`;
+  el.dataset.morphReady = '1';
 }
 
 function applyTravelScript(useLatin){
   travelScriptLatin = useLatin;
-  crossfadeTitle(useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC);
+  ensureTravelTitleMorph();
+  const titleMorph = document.querySelector('#travelDestTitle .script-morph');
+  scriptMorphSwap(titleMorph, useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC);
   document.querySelectorAll('#travelRegionPickerTrack .region-picker-item').forEach(btn => {
+    const morph = btn.querySelector('.script-morph');
     const latin = btn.dataset.regionLatin || btn.dataset.region;
     const cyr = btn.dataset.regionCyrillic || latin;
-    const subtle = !btn.classList.contains('is-center');
-    crossfadeText(btn, useLatin ? latin : cyr, subtle);
+    scriptMorphSwap(morph, useLatin ? latin : cyr);
   });
 }
 
 function startTravelScriptToggle(){
   stopTravelScriptToggle();
-  applyTravelScript(true);
-  travelScriptTimer = setInterval(() => applyTravelScript(!travelScriptLatin), 3000);
+  ensureTravelTitleMorph();
+  travelScriptLatin = true;
+  const titleMorph = document.querySelector('#travelDestTitle .script-morph');
+  const a = titleMorph?.querySelector('.script-morph-layer');
+  const b = titleMorph?.querySelectorAll('.script-morph-layer')[1];
+  if (a && b) {
+    a.textContent = TRAVEL_TITLE_LATIN;
+    b.textContent = TRAVEL_TITLE_CYRILLIC;
+    a.classList.add('is-visible');
+    b.classList.remove('is-visible');
+  }
+  travelScriptTimer = setInterval(() => applyTravelScript(!travelScriptLatin), SCRIPT_MORPH_INTERVAL);
 }
 
 function stopTravelScriptToggle(){
@@ -1596,7 +1619,6 @@ function initTravelRegionPicker(){
   });
   const hidden = document.getElementById('travelTo');
   if (hidden) hidden.value = selectedTravelRegion;
-  applyTravelScript(travelScriptLatin);
 }
 
 function travelMapCoords(t){
