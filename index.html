@@ -345,20 +345,32 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 }
 .region-picker--vertical .region-picker-item{
   width:100%;text-align:center;padding:10px 12px;
+  transition:color .4s ease,opacity .9s cubic-bezier(.45,.05,.55,.95),
+    filter .9s cubic-bezier(.45,.05,.55,.95),transform .2s ease,font-size .2s ease;
 }
 .region-picker--vertical .region-picker-item.is-adjacent{
   font-size:17px;font-weight:700;color:#6b7280;
-  opacity:.55;transform:scale(.92);
+  opacity:.55;transform:scale(.92);filter:blur(0);
 }
 .region-picker--vertical .region-picker-item.is-center{
-  font-size:24px;font-weight:900;color:var(--tg-blue);
-  opacity:1;transform:scale(1);letter-spacing:-.02em;
+  font-size:24px;font-weight:900;color:#0B5CAD;
+  opacity:1;transform:scale(1);letter-spacing:-.02em;filter:blur(0);
 }
 .travel-sheet-head{text-align:center;padding:8px 0 12px}
 .travel-dest-title{
+  position:relative;display:flex;justify-content:center;align-items:center;
+  min-height:1.15em;
   font-size:clamp(32px,10vw,44px);font-weight:800;color:var(--navy);
   letter-spacing:-.04em;line-height:1.1;margin:0;
-  transition:opacity .25s ease;
+}
+.travel-script-line{
+  position:absolute;left:0;right:0;text-align:center;
+  opacity:0;filter:blur(3px);
+  transition:opacity .95s cubic-bezier(.45,.05,.55,.95),filter .95s cubic-bezier(.45,.05,.55,.95);
+  pointer-events:none;
+}
+.travel-script-line--active{
+  position:relative;opacity:1;filter:blur(0);
 }
 .region-picker--vertical{margin:0 0 20px}
 
@@ -1474,14 +1486,72 @@ function initRegionPicker(){
   updateRegionPickerVisuals(false, track);
 }
 
+const SCRIPT_CROSSFADE_MS = 480;
+const SCRIPT_CROSSFADE_EASE = 'cubic-bezier(0.45, 0.05, 0.55, 0.95)';
+
+function clearScriptInlineStyles(el){
+  el.style.transition = '';
+  el.style.opacity = '';
+  el.style.filter = '';
+}
+
+function crossfadeText(el, newText, subtle){
+  if (!el) return;
+  const next = String(newText);
+  if (el.textContent === next) return;
+  const ms = subtle ? 360 : SCRIPT_CROSSFADE_MS;
+  el.style.transition = subtle
+    ? `filter ${ms}ms ${SCRIPT_CROSSFADE_EASE}`
+    : `opacity ${ms}ms ${SCRIPT_CROSSFADE_EASE}, filter ${ms}ms ${SCRIPT_CROSSFADE_EASE}`;
+  if (!subtle) el.style.opacity = '0.38';
+  el.style.filter = subtle ? 'blur(1.2px)' : 'blur(2.5px)';
+  setTimeout(() => {
+    el.textContent = next;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (!subtle) el.style.opacity = '1';
+        el.style.filter = 'blur(0)';
+        setTimeout(() => clearScriptInlineStyles(el), ms + 40);
+      });
+    });
+  }, ms);
+}
+
+function ensureTravelTitleLayers(){
+  const el = document.getElementById('travelDestTitle');
+  if (!el || el.dataset.layersReady) return;
+  const t = el.textContent.trim() || TRAVEL_TITLE_LATIN;
+  el.innerHTML =
+    `<span class="travel-script-line travel-script-line--active">${t}</span>` +
+  `<span class="travel-script-line"></span>`;
+  el.dataset.layersReady = '1';
+}
+
+function crossfadeTitle(newText){
+  const el = document.getElementById('travelDestTitle');
+  if (!el) return;
+  ensureTravelTitleLayers();
+  const lines = el.querySelectorAll('.travel-script-line');
+  if (lines.length < 2) {
+    crossfadeText(el, newText);
+    return;
+  }
+  const active = el.querySelector('.travel-script-line--active');
+  const next = active === lines[0] ? lines[1] : lines[0];
+  if (next.textContent === newText && next.classList.contains('travel-script-line--active')) return;
+  next.textContent = newText;
+  next.classList.add('travel-script-line--active');
+  if (active) active.classList.remove('travel-script-line--active');
+}
+
 function applyTravelScript(useLatin){
   travelScriptLatin = useLatin;
-  const title = document.getElementById('travelDestTitle');
-  if (title) title.textContent = useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC;
+  crossfadeTitle(useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC);
   document.querySelectorAll('#travelRegionPickerTrack .region-picker-item').forEach(btn => {
     const latin = btn.dataset.regionLatin || btn.dataset.region;
     const cyr = btn.dataset.regionCyrillic || latin;
-    btn.textContent = useLatin ? latin : cyr;
+    const subtle = !btn.classList.contains('is-center');
+    crossfadeText(btn, useLatin ? latin : cyr, subtle);
   });
 }
 
