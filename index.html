@@ -540,7 +540,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 /* Jo'natma formasi sheet */
 .sheet-overlay--send{z-index:210}
 .sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:20px}
+.send-sheet-head{text-align:center;padding:0 0 4px}
+.send-dest-label{
+  font-size:15px;font-weight:700;color:#9ca3af;margin:0;
+  letter-spacing:.02em;text-transform:uppercase;
+}
+.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:16px}
 .send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
 .send-form{display:flex;flex-direction:column;gap:14px}
 .send-field{display:flex;flex-direction:column;gap:6px}
@@ -627,14 +632,14 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .upload-close:active{transform:scale(.92);background:#E8E8EB}
 .upload-close svg{width:20px;height:20px;stroke:#666;stroke-width:2.5;fill:none}
 .upload-title{
-  color:#111;font-size:20px;font-weight:800;
-  letter-spacing:-.03em;margin-bottom:6px;text-align:center;
-  padding-right:36px;padding-left:36px;
+  color:#111;font-size:clamp(28px,8vw,36px);font-weight:800;
+  letter-spacing:-.04em;line-height:1.15;margin-bottom:8px;text-align:center;
+  padding-right:44px;padding-left:44px;
 }
 .upload-sub{
-  color:#888;font-size:13px;font-weight:600;
-  margin-bottom:10px;text-align:center;
-  flex-shrink:0;
+  color:#888;font-size:14px;font-weight:600;
+  margin-bottom:12px;text-align:center;
+  flex-shrink:0;line-height:1.35;
 }
 .upload-zone{
   width:100%;flex:1;min-height:120px;
@@ -724,8 +729,8 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
     top:max(100px,calc(env(safe-area-inset-top) + 88px));
     bottom:max(118px,calc(env(safe-area-inset-bottom) + 102px));
   }
-  .upload-title{font-size:18px;margin-bottom:4px}
-  .upload-sub{font-size:12px;margin-bottom:8px}
+  .upload-title{font-size:26px;margin-bottom:6px}
+  .upload-sub{font-size:13px;margin-bottom:10px}
   .capture-btn{width:64px;height:64px;border-width:4px}
   .capture-btn-inner{width:48px;height:48px}
   .gallery-btn,.flip-btn{width:44px;height:44px}
@@ -841,6 +846,32 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .toast--success{background:#22c55e;color:#fff}
 .toast--error{background:#ef4444;color:#fff}
 .toast--info{background:#D35400;color:#fff}
+
+.tg-success-overlay{
+  position:fixed;inset:0;z-index:10000;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,.22);
+  opacity:0;pointer-events:none;
+  transition:opacity .25s ease;
+}
+.tg-success-overlay.show{opacity:1;pointer-events:auto}
+.tg-success-bubble{
+  width:88px;height:88px;transform:scale(0);
+  transition:transform .45s cubic-bezier(.34,1.56,.64,1);
+}
+.tg-success-overlay.show .tg-success-bubble{transform:scale(1)}
+.tg-success-bubble svg{width:88px;height:88px;display:block}
+.tg-success-bubble .tg-check-bg{fill:var(--tg-blue)}
+.tg-success-bubble .tg-check-mark{
+  fill:none;stroke:#fff;stroke-width:3.5;stroke-linecap:round;stroke-linejoin:round;
+  stroke-dasharray:48;stroke-dashoffset:48;
+  transition:stroke-dashoffset .4s ease .28s;
+}
+.tg-success-overlay.show .tg-check-mark{stroke-dashoffset:0}
+@media (prefers-reduced-motion:reduce){
+  .tg-success-bubble{transition:transform .2s ease}
+  .tg-check-mark{transition:stroke-dashoffset .2s ease .1s}
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1006,10 +1037,13 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
       <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
     </div>
     <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
-      <div class="send-field">
-        <label class="send-label" for="sendDest">Qayerga</label>
-        <select class="send-input send-select" id="sendDest" required></select>
+      <div class="send-sheet-head">
+        <p class="send-dest-label">Qayerga</p>
       </div>
+      <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
+        <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+      </div>
+      <input type="hidden" id="sendDest" value="">
       <div class="send-field">
         <label class="send-label" for="sendNote">Izoh</label>
         <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
@@ -1299,6 +1333,9 @@ let userCoords = null;
 let selectedTravelRegion = '';
 let travelRegionPickerBuilt = false;
 let lastTravelPickerKey = '';
+let selectedSendRegion = '';
+let sendRegionPickerBuilt = false;
+let lastSendPickerKey = '';
 let refreshMarkersTimer = null;
 const orders = [];
 const mapTestOrders = [];
@@ -1388,10 +1425,8 @@ function fillRegionSelect(el, placeholder, regions){
 }
 
 function initRegionSelects(){
-  ['sendDest','editDest'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) fillRegionSelect(el);
-  });
+  const editDest = document.getElementById('editDest');
+  if (editDest) fillRegionSelect(editDest);
 }
 
 function initCtaIcons(){
@@ -1411,6 +1446,13 @@ function removeDriverRadiusLayers(){
 
 function scriptMorphHtml(label){
   return `<span class="script-morph script-morph--region"><span class="script-morph-layer is-shown">${label}</span><span class="script-morph-layer"></span></span>`;
+}
+
+function buildRegionPickerTrackPlain(track, regions){
+  const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
+  track.innerHTML = spacer + regions.map(r =>
+    `<button type="button" class="region-picker-item" data-region="${r}">${r}</button>`
+  ).join('') + spacer;
 }
 
 function buildRegionPickerTrack(track, regions){
@@ -1593,6 +1635,42 @@ function stopTravelScriptToggle(){
     clearInterval(travelScriptTimer);
     travelScriptTimer = null;
   }
+}
+
+function initSendRegionPicker(){
+  const track = document.getElementById('sendRegionPickerTrack');
+  if (!track) return;
+  const regions = getPickerRegions();
+  if (!regions.length) return;
+  if (!selectedSendRegion || !regions.includes(selectedSendRegion)) {
+    selectedSendRegion = regions[0];
+  }
+  const key = regions.join('|');
+  if (!sendRegionPickerBuilt || lastSendPickerKey !== key) {
+    lastSendPickerKey = key;
+    sendRegionPickerBuilt = true;
+    delete track.dataset.pickerBound;
+    buildRegionPickerTrackPlain(track, regions);
+    bindRegionPickerScroll(track, region => {
+      selectedSendRegion = region;
+      const hidden = document.getElementById('sendDest');
+      if (hidden) hidden.value = region;
+    });
+  }
+  scrollPickerToRegion(track, selectedSendRegion, false);
+  updateRegionPickerVisuals(false, track, region => {
+    selectedSendRegion = region;
+    const hidden = document.getElementById('sendDest');
+    if (hidden) hidden.value = region;
+  });
+  const hidden = document.getElementById('sendDest');
+  if (hidden) hidden.value = selectedSendRegion;
+}
+
+async function prepareSendSheet(){
+  await refreshUserLocationRegion();
+  lastSendPickerKey = '';
+  initSendRegionPicker();
 }
 
 function initTravelRegionPicker(){
@@ -2609,6 +2687,7 @@ function capturePhoto(){
     selectedPhotoFile = compressed;
     document.getElementById('sendThumb').src = previewObjectUrl;
     document.getElementById('sendForm').reset();
+    await prepareSendSheet();
     document.getElementById('sendSheetOverlay').classList.add('open');
   }, 'image/jpeg', 0.9);
 }
@@ -2656,6 +2735,7 @@ async function onPhotoSelected(e){
   selectedPhotoFile = compressed;
   document.getElementById('sendThumb').src = previewObjectUrl;
   document.getElementById('sendForm').reset();
+  await prepareSendSheet();
   document.getElementById('sendSheetOverlay').classList.add('open');
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.notificationOccurred('success');
@@ -2721,10 +2801,7 @@ async function submitTravel(e){
   if (map) refreshOrderMarkers();
   closeTravelSheet();
   btn.disabled = false;
-  showAlert('✅ Yo\'l so\'rovi yuborildi!');
-  if (window.Telegram?.WebApp?.HapticFeedback) {
-    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-  }
+  showSuccessCheck();
 }
 
 function submitOrder(e){
@@ -2733,7 +2810,7 @@ function submitOrder(e){
     showToast('Avval rasm oling');
     return;
   }
-  const dest = document.getElementById('sendDest').value;
+  const dest = selectedSendRegion || document.getElementById('sendDest')?.value;
   if (!dest) {
     showToast('Viloyatni tanlang');
     return;
@@ -2773,10 +2850,7 @@ function submitOrder(e){
     closeSendSheet();
     closeUpload();
     btn.disabled = false;
-    showAlert('✅ Jo\'natma yuborildi!');
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-    }
+    showSuccessCheck();
   }
 
   getCurrentPosition()
@@ -2784,14 +2858,23 @@ function submitOrder(e){
     .catch(() => saveOrder(null));
 }
 
-function showAlert(msg){
-  const tg = window.Telegram?.WebApp;
-  if (tg?.showAlert) {
-    tg.showAlert(msg);
-    return;
+function showSuccessCheck(){
+  const el = document.getElementById('tgSuccessOverlay');
+  if (!el) return;
+  el.classList.add('show');
+  el.setAttribute('aria-hidden', 'false');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   }
+  setTimeout(() => {
+    el.classList.remove('show');
+    el.setAttribute('aria-hidden', 'true');
+  }, 1500);
+}
+
+function showAlert(msg){
   const type = msg.includes('✅') ? 'success' : 'info';
-  showToast(msg, type);
+  showToast(msg.replace(/^✅\s*/, ''), type);
 }
 
 function showToast(msg, type='info'){
@@ -2816,5 +2899,16 @@ loadPersistedData();
 setupShipmentsListEvents();
 document.body.classList.add('view-sender');
 </script>
+
+<!-- Telegram uslubidagi muvaffaqiyat -->
+<div class="tg-success-overlay" id="tgSuccessOverlay" aria-hidden="true">
+  <div class="tg-success-bubble">
+    <svg viewBox="0 0 88 88" aria-hidden="true">
+      <circle class="tg-check-bg" cx="44" cy="44" r="44"/>
+      <path class="tg-check-mark" d="M26 46 L38 58 L62 32"/>
+    </svg>
+  </div>
+</div>
+
 </body>
 </html>
