@@ -42,16 +42,32 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
 /* ══ SENDER VIEW ══ */
 #senderView{
-  display:flex;flex-direction:column;align-items:center;
+  display:flex;flex-direction:column;align-items:stretch;
   padding:0 24px;height:100%;overflow:hidden;
+}
+.sender-top{
+  flex-shrink:0;width:100%;display:flex;flex-direction:column;align-items:center;
+}
+.sender-body{
+  flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
 }
 
 /* 3D SCENE */
 .scene{
-  width:100%;height:320px;position:relative;display:flex;
-  align-items:center;justify-content:center;margin-top:8px;
-  perspective:1000px;flex-shrink:0;pointer-events:none;
+  width:100%;height:220px;position:relative;overflow:hidden;
+  margin-top:4px;flex-shrink:0;pointer-events:none;
 }
+.scene-inner{
+  position:absolute;left:50%;top:50%;width:280px;height:300px;
+  transform:translate(-50%,-52%) scale(.68);
+  perspective:1000px;transform-origin:center center;
+}
+.scene-inner .road,
+.scene-inner .camera,
+.scene-inner .box,
+.scene-inner .env,
+.scene-inner .cloud,
+.scene-inner .cube{position:absolute}
 
 @keyframes floatSlow{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-10px) rotate(-4deg)}}
 @keyframes floatFast{0%,100%{transform:translateY(0) rotate(8deg)}50%{transform:translateY(-12px) rotate(12deg)}}
@@ -118,20 +134,17 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
 /* TITLE */
 .sender-title{
-  text-align:center;font-size:34px;font-weight:900;color:#111;
-  line-height:1.05;letter-spacing:-.03em;margin-top:8px;z-index:10;
+  text-align:center;font-size:28px;font-weight:900;color:#111;
+  line-height:1.08;letter-spacing:-.03em;
+  margin:6px 0 10px;padding:0 4px;z-index:10;
   text-shadow:0 1px 2px rgba(0,0,0,.05);flex-shrink:0;
+  width:100%;
 }
 
 /* Jo'natmalar ro'yxati */
-.sender-empty{
-  flex:1;display:flex;flex-direction:column;align-items:center;
-  width:100%;min-height:0;overflow:hidden;
-}
-.sender-empty.hidden{display:none}
 .shipments-wrap{
   flex:1;display:none;flex-direction:column;
-  width:100%;min-height:0;overflow:hidden;padding-top:4px;
+  width:100%;min-height:0;overflow:hidden;
 }
 .shipments-wrap.visible{display:flex}
 .shipments-head{
@@ -220,35 +233,35 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .travel-hero-title{
   font-size:18px;font-weight:800;color:#111;letter-spacing:-.02em;
 }
-.edit-travel-fields{display:none}
-.edit-travel-fields.visible{display:flex;flex-direction:column;gap:20px}
-.edit-order-field.hidden{display:none}
-
 /* CTA */
 .cta-wrap{
   flex-shrink:0;width:100%;
-  padding:12px 0 max(24px,env(safe-area-inset-bottom));
+  padding:10px 0 max(20px,env(safe-area-inset-bottom));
   background:#fff;
-  display:flex;flex-direction:column;gap:10px;
+  display:flex;flex-direction:row;gap:10px;
 }
-.cta-btn--travel .cta-icon{
-  background:rgba(211,84,0,.15);border-color:rgba(211,84,0,.35);
-  box-shadow:inset 0 2px 4px rgba(255,255,255,.4);
-}
-.cta-btn--travel .cta-icon svg{width:22px;height:22px;stroke:none}
 .cta-btn{
-  width:100%;height:64px;
+  flex:1;min-width:0;height:56px;
   background:linear-gradient(to bottom,#2A2A2A,#111);
   border:1px solid #333;border-radius:100px;
-  display:flex;align-items:center;justify-content:center;gap:12px;padding:0 24px;
+  display:flex;align-items:center;justify-content:center;gap:8px;padding:0 14px;
   box-shadow:0 20px 40px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.15),inset 0 -2px 4px rgba(0,0,0,.4);
   cursor:pointer;transition:all .3s;position:relative;overflow:hidden;outline:none;
 }
 .cta-btn:active{transform:scale(.98);box-shadow:0 10px 20px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.1),inset 0 -2px 4px rgba(0,0,0,.6)}
 .cta-shine{position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(to bottom,rgba(255,255,255,.1),transparent);pointer-events:none}
-.cta-icon{width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 2px rgba(255,255,255,.2)}
-.cta-icon svg{width:20px;height:20px;stroke:#fff;stroke-width:3;fill:none}
-.cta-text{color:#fff;font-size:17px;font-weight:700;letter-spacing:.02em;position:relative;z-index:1;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.cta-icon{
+  width:34px;height:34px;border-radius:50%;flex-shrink:0;
+  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 2px 4px rgba(255,255,255,.25);
+}
+.cta-icon svg{width:26px;height:26px;display:block}
+.cta-text{
+  color:#fff;font-size:13px;font-weight:700;letter-spacing:.01em;
+  position:relative;z-index:1;text-shadow:0 2px 4px rgba(0,0,0,.5);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
 
 /* ══ DRIVER VIEW ══ */
 #driverView{
@@ -735,53 +748,52 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
       <!-- SENDER -->
       <div id="senderView">
-        <div class="sender-empty" id="senderEmpty">
-        <div class="scene">
-          <div class="road"><div class="road-line"></div></div>
-          <div class="camera">
-            <div class="cam-shutter"></div>
-            <div class="cam-flash"></div>
-            <div class="cam-lens">
-              <div class="cam-inner"><div class="cam-dot"></div></div>
+        <div class="sender-top">
+          <div class="scene">
+            <div class="scene-inner">
+              <div class="road"><div class="road-line"></div></div>
+              <div class="camera">
+                <div class="cam-shutter"></div>
+                <div class="cam-flash"></div>
+                <div class="cam-lens">
+                  <div class="cam-inner"><div class="cam-dot"></div></div>
+                </div>
+              </div>
+              <div class="box">
+                <div class="box-tape"></div>
+                <div class="box-line1"></div>
+                <div class="box-line2"></div>
+              </div>
+              <div class="env">
+                <div class="env-top"></div>
+                <div class="env-seal"></div>
+              </div>
+              <div class="cloud">
+                <div class="cloud-body"></div>
+                <div class="cloud-puff"></div>
+              </div>
+              <div class="cube"></div>
             </div>
           </div>
-          <div class="box">
-            <div class="box-tape"></div>
-            <div class="box-line1"></div>
-            <div class="box-line2"></div>
-          </div>
-          <div class="env">
-            <div class="env-top"></div>
-            <div class="env-seal"></div>
-          </div>
-          <div class="cloud">
-            <div class="cloud-body"></div>
-            <div class="cloud-puff"></div>
-          </div>
-          <div class="cube"></div>
+          <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
         </div>
 
-        <h2 class="sender-title">
-          RASMGA OLING<br>VA JO'NATING
-        </h2>
-        </div>
-
-        <div class="shipments-wrap" id="shipmentsWrap">
-          <div class="shipments-head">Jo'natmalarim</div>
-          <div class="shipments-list" id="shipmentsList"></div>
+        <div class="sender-body">
+          <div class="shipments-wrap" id="shipmentsWrap">
+            <div class="shipments-head">Jo'natmalarim</div>
+            <div class="shipments-list" id="shipmentsList"></div>
+          </div>
         </div>
 
         <div class="cta-wrap">
-          <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
+          <button type="button" class="cta-btn" onclick="openTravelSheet()">
             <div class="cta-shine"></div>
             <div class="cta-icon" id="ctaTravelIcon"></div>
             <span class="cta-text">Yo'l olish</span>
           </button>
           <button type="button" class="cta-btn" onclick="openOrder()">
             <div class="cta-shine"></div>
-            <div class="cta-icon">
-              <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            </div>
+            <div class="cta-icon" id="ctaOrderIcon"></div>
             <span class="cta-text">Jo'natma yuborish</span>
           </button>
         </div>
@@ -889,10 +901,6 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
     </div>
     <form class="send-form" id="travelForm" onsubmit="submitTravel(event)">
       <div class="send-field">
-        <label class="send-label" for="travelFrom">Qayerdan</label>
-        <select class="send-input send-select" id="travelFrom" required></select>
-      </div>
-      <div class="send-field">
         <label class="send-label" for="travelTo">Qayerga</label>
         <select class="send-input send-select" id="travelTo" required></select>
       </div>
@@ -910,19 +918,9 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   <div class="sheet sheet--edit" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
     <form class="send-form" id="editForm" onsubmit="saveEditShipment(event)">
-      <div class="send-field edit-order-field" id="editOrderField">
+      <div class="send-field">
         <label class="send-label" for="editDest">Qayerga</label>
         <select class="send-input send-select" id="editDest" required></select>
-      </div>
-      <div class="edit-travel-fields" id="editTravelFields">
-        <div class="send-field">
-          <label class="send-label" for="editFrom">Qayerdan</label>
-          <select class="send-input send-select" id="editFrom"></select>
-        </div>
-        <div class="send-field">
-          <label class="send-label" for="editTo">Qayerga</label>
-          <select class="send-input send-select" id="editTo"></select>
-        </div>
       </div>
       <div class="send-field">
         <label class="send-label" for="editNote">Izoh</label>
@@ -1123,6 +1121,9 @@ if (window.Telegram && Telegram.WebApp) {
       Telegram.WebApp.requestWriteAccess();
     }
     initTelegramUser();
+    if (!document.documentElement.classList.contains('theme-telegram')) {
+      toggleTelegramTheme();
+    }
     Telegram.WebApp.onEvent('themeChanged', () => {
       if (document.documentElement.classList.contains('theme-telegram')) {
         applyTelegramThemeVars();
@@ -1157,6 +1158,10 @@ const ICON_PASSENGER_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><li
 
 const ICON_PACKAGE_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="bx1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5F6F8"/><stop offset="100%" stop-color="#C8CDD4"/></linearGradient><linearGradient id="bx2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E8EAED"/><stop offset="100%" stop-color="#A8B0BA"/></linearGradient></defs><ellipse cx="24" cy="42" rx="13" ry="3" fill="rgba(0,0,0,.12)"/><path d="M10 22 L24 14 L38 22 L38 36 L24 44 L10 36 Z" fill="url(#bx2)"/><path d="M10 22 L24 30 L38 22 L24 14 Z" fill="url(#bx1)"/><path d="M24 14 L24 30" stroke="#D35400" stroke-width="2.2" opacity=".85"/><path d="M10 22 L24 30 L38 22" stroke="#B8BFC8" stroke-width="1.2" fill="none"/></svg>`;
 
+const ICON_CTA_TRAVEL = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="ctg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9F5A"/><stop offset="100%" stop-color="#D35400"/></linearGradient><linearGradient id="ctg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFB87A"/><stop offset="100%" stop-color="#E67E22"/></linearGradient><linearGradient id="ctg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F8F8F9"/><stop offset="100%" stop-color="#E8EAED"/></linearGradient></defs><ellipse cx="24" cy="43" rx="14" ry="3" fill="rgba(211,84,0,.2)"/><path d="M6 38 Q24 32 42 38 L40 42 Q24 38 8 42 Z" fill="url(#ctg3)" stroke="#eee" stroke-width=".8"/><path d="M8 38 L40 38" stroke="#D35400" stroke-width="2.5" stroke-dasharray="4 3" opacity=".7"/><circle cx="24" cy="16" r="8" fill="url(#ctg1)"/><circle cx="21.5" cy="14.5" r="1.8" fill="#fff" opacity=".5"/><rect x="18" y="24" width="12" height="14" rx="4" fill="url(#ctg2)"/><path d="M13 27 Q18 24 24 25 Q30 24 35 27 L33 32 Q24 29 15 32 Z" fill="url(#ctg2)"/></svg>`;
+
+const ICON_CTA_ORDER = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="cog1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#ECEEF1"/></linearGradient><linearGradient id="cog2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5F6F8"/><stop offset="100%" stop-color="#C8CDD4"/></linearGradient></defs><ellipse cx="24" cy="43" rx="13" ry="3" fill="rgba(0,0,0,.1)"/><path d="M11 24 L24 16 L37 24 L37 37 L24 44 L11 37 Z" fill="url(#cog2)"/><path d="M11 24 L24 31 L37 24 L24 16 Z" fill="url(#cog1)"/><rect x="20" y="8" width="8" height="10" rx="2" fill="#D35400" opacity=".95"/><path d="M24 16 L24 31" stroke="#D35400" stroke-width="2.2"/><path d="M14 26 L24 31 L34 26" stroke="#B8BFC8" stroke-width="1" fill="none"/></svg>`;
+
 function fillRegionSelect(el, placeholder){
   if (!el || el.dataset.filled) return;
   const ph = placeholder || 'Viloyatni tanlang';
@@ -1166,17 +1171,19 @@ function fillRegionSelect(el, placeholder){
 }
 
 function initRegionSelects(){
-  ['sendDest','editDest','editFrom','editTo','travelFrom','travelTo'].forEach(id => {
+  ['sendDest','editDest','travelTo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) fillRegionSelect(el);
   });
 }
 
-function initTravelIcons(){
-  const cta = document.getElementById('ctaTravelIcon');
+function initCtaIcons(){
+  const travel = document.getElementById('ctaTravelIcon');
+  const order = document.getElementById('ctaOrderIcon');
   const hero = document.getElementById('travelHeroIcon');
-  if (cta) cta.innerHTML = ICON_PASSENGER_3D;
-  if (hero) hero.innerHTML = ICON_PASSENGER_3D;
+  if (travel) travel.innerHTML = ICON_CTA_TRAVEL;
+  if (order) order.innerHTML = ICON_CTA_ORDER;
+  if (hero) hero.innerHTML = ICON_CTA_TRAVEL;
 }
 
 function removeDriverRadiusLayers(){
@@ -1785,18 +1792,15 @@ function syncOrderFromShipment(s){
 }
 
 function renderShipments(){
-  const empty = document.getElementById('senderEmpty');
   const wrap = document.getElementById('shipmentsWrap');
   const list = document.getElementById('shipmentsList');
-  if (!empty || !wrap || !list) return;
+  if (!wrap || !list) return;
   const mine = getMyShipments();
   if (!mine.length) {
-    empty.classList.remove('hidden');
     wrap.classList.remove('visible');
     list.innerHTML = '';
     return;
   }
-  empty.classList.add('hidden');
   wrap.classList.add('visible');
   list.innerHTML = mine.map(s => {
     const key = escapeHtml(getShipmentKey(s));
@@ -1806,7 +1810,7 @@ function renderShipments(){
         ? `<div class="shipment-type-icon shipment-type-icon--travel">${ICON_PASSENGER_3D}</div>`
         : `<div class="shipment-type-icon shipment-type-icon--order">${ICON_PACKAGE_3D}</div>`)}
       <div class="shipment-body">
-        <div class="shipment-dest">${s.type === 'travel' ? `${escapeHtml(s.from || '')} → ${escapeHtml(s.to || s.dest || '')}` : escapeHtml(s.dest || '')}</div>
+        <div class="shipment-dest">${s.type === 'travel' ? escapeHtml(s.to || s.dest || '') : escapeHtml(s.dest || '')}</div>
         <span class="${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
       </div>
       <div class="shipment-actions">
@@ -1823,21 +1827,7 @@ function editShipment(key){
   const s = findShipment(key);
   if (!s) return;
   editingShipmentKey = key;
-  const orderField = document.getElementById('editOrderField');
-  const travelFields = document.getElementById('editTravelFields');
-  const editDest = document.getElementById('editDest');
-  if (s.type === 'travel') {
-    orderField.classList.add('hidden');
-    travelFields.classList.add('visible');
-    editDest.removeAttribute('required');
-    document.getElementById('editFrom').value = s.from || '';
-    document.getElementById('editTo').value = s.to || s.dest || '';
-  } else {
-    orderField.classList.remove('hidden');
-    travelFields.classList.remove('visible');
-    editDest.setAttribute('required', '');
-    editDest.value = s.dest || '';
-  }
+  document.getElementById('editDest').value = s.type === 'travel' ? (s.to || s.dest || '') : (s.dest || '');
   document.getElementById('editNote').value = s.note || '';
   document.getElementById('editSheetOverlay').classList.add('open');
 }
@@ -1845,9 +1835,6 @@ function editShipment(key){
 function closeEditSheet(){
   document.getElementById('editSheetOverlay').classList.remove('open');
   editingShipmentKey = null;
-  document.getElementById('editOrderField').classList.remove('hidden');
-  document.getElementById('editTravelFields').classList.remove('visible');
-  document.getElementById('editDest').setAttribute('required', '');
 }
 
 async function saveEditShipment(e){
@@ -1855,24 +1842,17 @@ async function saveEditShipment(e){
   const s = findShipment(editingShipmentKey);
   if (!s) return;
   const note = document.getElementById('editNote').value.trim();
+  const dest = document.getElementById('editDest').value.trim();
+  if (!dest) {
+    showToast('Viloyatni tanlang');
+    return;
+  }
   if (s.type === 'travel') {
-    const from = document.getElementById('editFrom').value;
-    const to = document.getElementById('editTo').value;
-    if (!from || !to) {
-      showToast('Viloyatlarni tanlang');
-      return;
-    }
-    s.from = from;
-    s.to = to;
-    s.dest = to;
+    s.to = dest;
+    s.dest = dest;
     s.note = note;
-    if (s.firestoreId) await updateTravelInFirestore(s.firestoreId, { from, to, note });
+    if (s.firestoreId) await updateTravelInFirestore(s.firestoreId, { to: dest, dest, note });
   } else {
-    const dest = document.getElementById('editDest').value.trim();
-    if (!dest) {
-      showToast('Viloyatni tanlang');
-      return;
-    }
     s.dest = dest;
     s.note = note;
     if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { dest, note });
@@ -2140,14 +2120,9 @@ function closeTravelSheet(){
 
 async function submitTravel(e){
   e.preventDefault();
-  const from = document.getElementById('travelFrom').value;
   const to = document.getElementById('travelTo').value;
-  if (!from || !to) {
-    showToast('Viloyatlarni tanlang');
-    return;
-  }
-  if (from === to) {
-    showToast('Turli viloyatlar tanlang');
+  if (!to) {
+    showToast('Viloyatni tanlang');
     return;
   }
   const note = document.getElementById('travelNote').value.trim();
@@ -2156,7 +2131,6 @@ async function submitTravel(e){
   const travel = {
     id: Date.now(),
     type: 'travel',
-    from,
     to,
     dest: to,
     note,
@@ -2254,7 +2228,7 @@ function showToast(msg){
 
 initFirebase();
 initRegionSelects();
-initTravelIcons();
+initCtaIcons();
 loadPersistedData();
 setupShipmentsListEvents();
 </script>
