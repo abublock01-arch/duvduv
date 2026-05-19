@@ -594,17 +594,23 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 }
 
 /* ── Telegram tema (faqat .theme-telegram yoqilganda) ── */
-.theme-btn{
+.header-actions{
   position:absolute;top:max(12px,env(safe-area-inset-top));right:20px;
-  width:40px;height:40px;border-radius:50%;border:none;
-  background:#F4F4F5;color:#111;cursor:pointer;z-index:30;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .2s,color .2s,transform .15s;
-  font-family:inherit;
+  display:flex;gap:8px;z-index:30;
 }
-.theme-btn:active{transform:scale(.92)}
+.theme-btn,.map-layers-btn{
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:#F4F4F5;color:#111;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:background .2s,color .2s,transform .15s,opacity .2s;
+  font-family:inherit;flex-shrink:0;
+}
+.theme-btn:active,.map-layers-btn:active{transform:scale(.92)}
 .theme-btn svg{width:20px;height:20px;fill:currentColor}
+.map-layers-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
 .theme-btn.active{background:#D35400;color:#fff}
+.map-layers-btn.off{opacity:.45}
+.map-layers-btn.off svg{stroke-dasharray:3 2}
 
 .theme-telegram,
 .theme-telegram body{background:var(--tg-bg)!important}
@@ -618,7 +624,8 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
   box-shadow:none!important;
 }
-.theme-telegram .theme-btn{background:var(--tg-secondary)!important;color:var(--tg-text)!important}
+.theme-telegram .theme-btn,
+.theme-telegram .map-layers-btn{background:var(--tg-secondary)!important;color:var(--tg-text)!important}
 .theme-telegram .theme-btn.active{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram .sender-title,
 .theme-telegram .driver-title{color:var(--tg-text)!important}
@@ -704,9 +711,14 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
     <!-- Header -->
     <div class="header">
-      <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram tema" title="Telegram tema">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.12.27z"/></svg>
-      </button>
+      <div class="header-actions">
+        <button type="button" class="map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+        <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram tema" title="Telegram tema">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.12.27z"/></svg>
+        </button>
+      </div>
       <div class="logo">
         <span>duv</span>
         <div class="logo-dot"></div>
@@ -1121,8 +1133,11 @@ if (window.Telegram && Telegram.WebApp) {
 
 let map = null;
 let driverLocationMarker = null;
-const orderMapMarkers = [];
+let orderLayersVisible = true;
+let orderClusterLayersReady = false;
+const ORDER_MAP_LAYER_IDS = ['orders-clusters', 'orders-cluster-count', 'orders-unclustered-point', 'orders-unclustered-label'];
 const orders = [];
+const mapTestOrders = [];
 let activeSheetOrder = null;
 let locationPickerMap = null;
 let locationPickerMarker = null;
@@ -1172,18 +1187,175 @@ function removeDriverRadiusLayers(){
   if (map.getSource('driver-radius')) map.removeSource('driver-radius');
 }
 
-function getOrderMarkerScale(zoom){
-  const z = Math.max(10, Math.min(14, zoom ?? (map ? map.getZoom() : 12)));
-  return 0.55 + ((z - 10) / 4) * 0.45;
+function ordersToGeoJSON(){
+  const points = [...orders, ...mapTestOrders];
+  return {
+    type: 'FeatureCollection',
+    features: points
+      .filter(o => o.lat != null && o.lng != null)
+      .map(o => ({
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
+        properties: {
+          orderId: String(o.firestoreId || o.id || ''),
+          dest: o.dest || '',
+          thumbUrl: o.thumbUrl || '',
+          telegramUsername: o.telegramUsername || ''
+        }
+      }))
+  };
 }
 
-function applyOrderMarkerScales(){
-  if (!map) return;
-  const scale = getOrderMarkerScale();
-  orderMapMarkers.forEach(marker => {
-    const el = marker.getElement();
-    if (el) el.style.transform = `scale(${scale})`;
+function findOrderByMapId(orderId){
+  return orders.find(o => String(o.firestoreId || o.id) === String(orderId))
+    || mapTestOrders.find(o => String(o.id) === String(orderId));
+}
+
+function addTestOrders(){
+  if (mapTestOrders.length) return;
+  for (let i = 0; i < 100; i++) {
+    mapTestOrders.push({
+      id: 'test-' + i,
+      type: 'order',
+      dest: UZ_REGIONS[i % UZ_REGIONS.length],
+      note: 'Test buyurtma',
+      thumbUrl: '',
+      status: 'Aktiv',
+      lat: 41.2 + Math.random() * 0.2,
+      lng: 69.1 + Math.random() * 0.4,
+      telegramUsername: '@test'
+    });
+  }
+}
+
+function setupOrderClusterLayers(){
+  if (!map || orderClusterLayersReady) return;
+  map.addSource('orders', {
+    type: 'geojson',
+    data: ordersToGeoJSON(),
+    cluster: true,
+    clusterMaxZoom: 14,
+    clusterRadius: 50
   });
+  map.addLayer({
+    id: 'orders-clusters',
+    type: 'circle',
+    source: 'orders',
+    filter: ['has', 'point_count'],
+    paint: {
+      'circle-color': '#D35400',
+      'circle-radius': [
+        'interpolate', ['linear'], ['zoom'],
+        8, ['step', ['get', 'point_count'], 16, 5, 20, 20, 26, 50, 32],
+        11, ['step', ['get', 'point_count'], 20, 5, 26, 20, 32, 50, 40],
+        14, ['step', ['get', 'point_count'], 24, 5, 30, 20, 38, 50, 46]
+      ],
+      'circle-stroke-width': 2,
+      'circle-stroke-color': '#ffffff',
+      'circle-opacity': 0.92
+    }
+  });
+  map.addLayer({
+    id: 'orders-cluster-count',
+    type: 'symbol',
+    source: 'orders',
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': ['get', 'point_count_abbreviated'],
+      'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 12, 14, 16]
+    },
+    paint: { 'text-color': '#ffffff' }
+  });
+  map.addLayer({
+    id: 'orders-unclustered-point',
+    type: 'circle',
+    source: 'orders',
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-color': '#D35400',
+      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 8, 14, 11, 16, 13],
+      'circle-stroke-width': 3,
+      'circle-stroke-color': '#ffffff',
+      'circle-opacity': 1
+    }
+  });
+  map.addLayer({
+    id: 'orders-unclustered-label',
+    type: 'symbol',
+    source: 'orders',
+    filter: ['!', ['has', 'point_count']],
+    layout: {
+      'text-field': ['get', 'dest'],
+      'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+      'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
+      'text-offset': [0, 1.35],
+      'text-anchor': 'top',
+      'text-max-width': 12,
+      'text-allow-overlap': false
+    },
+    paint: {
+      'text-color': '#111111',
+      'text-halo-color': '#ffffff',
+      'text-halo-width': 1.5
+    }
+  });
+  bindOrderMapEvents();
+  if (!orderLayersVisible) {
+    ORDER_MAP_LAYER_IDS.forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+    });
+  }
+  orderClusterLayersReady = true;
+}
+
+function bindOrderMapEvents(){
+  if (!map || map._orderClusterEventsBound) return;
+  map._orderClusterEventsBound = true;
+
+  map.on('click', 'orders-clusters', e => {
+    const features = map.queryRenderedFeatures(e.point, { layers: ['orders-clusters'] });
+    if (!features.length) return;
+    const clusterId = features[0].properties.cluster_id;
+    const coords = features[0].geometry.coordinates;
+    map.getSource('orders').getClusterExpansionZoom(clusterId, (err, zoom) => {
+      if (err) return;
+      map.easeTo({
+        center: coords,
+        zoom: Math.min(zoom + 0.5, 16),
+        duration: 650,
+        easing: t => t * (2 - t)
+      });
+    });
+  });
+
+  map.on('click', 'orders-unclustered-point', e => {
+    const feat = e.features?.[0];
+    if (!feat) return;
+    const order = findOrderByMapId(feat.properties.orderId);
+    if (order) openOrderSheet(order);
+  });
+
+  ['orders-clusters', 'orders-unclustered-point'].forEach(layerId => {
+    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
+  });
+}
+
+function toggleOrderMapLayers(){
+  orderLayersVisible = !orderLayersVisible;
+  const vis = orderLayersVisible ? 'visible' : 'none';
+  if (map) {
+    ORDER_MAP_LAYER_IDS.forEach(id => {
+      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', vis);
+    });
+  }
+  const btn = document.getElementById('mapLayersBtn');
+  if (btn) {
+    btn.classList.toggle('off', !orderLayersVisible);
+    btn.setAttribute('aria-label', orderLayersVisible ? 'Buyurtmalarni yashirish' : 'Buyurtmalarni ko\'rsatish');
+    btn.title = orderLayersVisible ? 'Buyurtmalarni yashirish' : 'Buyurtmalarni ko\'rsatish';
+  }
 }
 
 function mapZoomIn(){
@@ -1230,20 +1402,15 @@ function initDriverMap(){
     center: [69.2401, 41.2991],
     zoom: 10
   });
-  map.on('zoom', applyOrderMarkerScales);
   map.on('load', () => {
     removeDriverRadiusLayers();
+    addTestOrders();
+    setupOrderClusterLayers();
     refreshOrderMarkers();
     centerMapOnDriver();
   });
 }
 
-function createOrderMarkerElement(){
-  const el = document.createElement('div');
-  el.className = 'map-order-marker';
-  el.innerHTML = '<div class="map-order-marker-pulse"></div><div class="map-order-marker-dot"></div>';
-  return el;
-}
 
 function centerMapOnDriver(){
   if (!map) return;
@@ -1271,21 +1438,11 @@ function centerMapOnDriver(){
 
 function refreshOrderMarkers(){
   if (!map) return;
-  orderMapMarkers.forEach(m => m.remove());
-  orderMapMarkers.length = 0;
-  orders.forEach(order => {
-    if (order.lat == null || order.lng == null) return;
-    const el = createOrderMarkerElement();
-    const marker = new mapboxgl.Marker({ element: el })
-      .setLngLat([order.lng, order.lat])
-      .addTo(map);
-    el.addEventListener('click', e => {
-      e.stopPropagation();
-      openOrderSheet(order);
-    });
-    orderMapMarkers.push(marker);
-  });
-  applyOrderMarkerScales();
+  if (!map.getSource('orders')) {
+    if (map.isStyleLoaded()) setupOrderClusterLayers();
+    else return;
+  }
+  map.getSource('orders').setData(ordersToGeoJSON());
 }
 
 async function adminDeleteAllOrders(){
