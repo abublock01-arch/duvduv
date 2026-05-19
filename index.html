@@ -165,23 +165,27 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   display:flex;flex-direction:row;gap:8px;flex-shrink:0;align-items:center;
 }
 .shipment-icon-btn{
-  width:40px;height:40px;border-radius:50%;border:none;padding:0;flex-shrink:0;
-  background:linear-gradient(160deg,#fff 0%,#f6f6f7 55%,#ececed 100%);
-  border:1px solid rgba(255,255,255,.95);
+  width:44px;height:44px;border-radius:50%;border:none;padding:0;flex-shrink:0;
+  background:linear-gradient(165deg,#fff 0%,#f8f8f9 45%,#ebebec 100%);
+  border:1px solid rgba(255,255,255,.98);
   box-shadow:
-    0 6px 14px rgba(0,0,0,.08),
-    0 2px 6px rgba(211,84,0,.1),
-    inset 0 3px 6px rgba(255,255,255,.95),
-    inset 0 -3px 6px rgba(0,0,0,.05);
+    0 8px 18px rgba(0,0,0,.1),
+    0 2px 8px rgba(211,84,0,.15),
+    inset 0 3px 7px rgba(255,255,255,.98),
+    inset 0 -3px 7px rgba(0,0,0,.06);
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;transition:transform .15s,box-shadow .15s;
+  -webkit-tap-highlight-color:transparent;
 }
-.shipment-icon-btn svg{width:18px;height:18px;stroke:#D35400;stroke-width:2;fill:none;pointer-events:none}
-.shipment-icon-btn:active{
-  transform:scale(.92);
-  box-shadow:0 3px 8px rgba(0,0,0,.08),inset 0 2px 4px rgba(0,0,0,.06);
+.shipment-icon-btn svg{width:22px;height:22px;pointer-events:none}
+.shipment-icon-btn--edit svg{stroke:#D35400;stroke-width:2.4;fill:none}
+.shipment-icon-btn--location svg{fill:#D35400;stroke:#B84700;stroke-width:1.2}
+.shipment-icon-btn--delete{
+  background:linear-gradient(165deg,#fff8f6 0%,#ffece8 55%,#ffddd6 100%);
+  box-shadow:0 8px 18px rgba(231,76,60,.15),inset 0 3px 7px rgba(255,255,255,.95);
 }
-.shipment-icon-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.shipment-icon-btn--delete svg{stroke:#E74C3C;stroke-width:2.4;fill:none}
+.shipment-icon-btn:active{transform:scale(.9)}
 .sheet-overlay--edit{z-index:212}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 
@@ -579,7 +583,9 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .shipment-status{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
-.theme-telegram .shipment-icon-btn svg{stroke:var(--tg-btn)!important}
+.theme-telegram .shipment-icon-btn--edit svg{stroke:var(--tg-btn)!important}
+.theme-telegram .shipment-icon-btn--location svg{fill:var(--tg-btn)!important;stroke:var(--tg-btn)!important}
+.theme-telegram .shipment-icon-btn--delete svg{stroke:#E74C3C!important}
 .theme-telegram .map-ctrl-btn,
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
@@ -900,6 +906,7 @@ function subscribeFirestoreOrders(){
       const d = doc.data();
       orders.push({ id: doc.id, firestoreId: doc.id, ...d });
     });
+    syncShipmentsFromFirestore();
     if (map) refreshOrderMarkers();
   }, err => console.warn('Firestore snapshot xatosi:', err));
 }
@@ -982,9 +989,9 @@ let locationPickerMarker = null;
 let locationPickerFirestoreId = null;
 let locationPickerPin = null;
 
-const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>';
-const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
+const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 6.5-6.5z"/></svg>';
+const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.8"/></svg>';
+const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></svg>';
 
 function removeDriverRadiusLayers(){
   if (!map) return;
@@ -1200,10 +1207,10 @@ function initLocationPickerMap(centerLng, centerLat){
   locationPickerMap.on('click', e => setLocationPickerPin(e.lngLat.lng, e.lngLat.lat));
 }
 
-async function openLocationPicker(firestoreId){
-  const s = findShipmentByFirestoreId(firestoreId);
-  if (!s?.firestoreId) return;
-  locationPickerFirestoreId = firestoreId;
+async function openLocationPicker(key){
+  const s = findShipment(key);
+  if (!s) return;
+  locationPickerFirestoreId = key;
   locationPickerPin = null;
   if (locationPickerMarker) {
     locationPickerMarker.remove();
@@ -1240,11 +1247,11 @@ function closeLocationPicker(){
 }
 
 async function saveLocationPicker(){
-  const s = findShipmentByFirestoreId(locationPickerFirestoreId);
-  if (!s?.firestoreId || !locationPickerPin) return;
+  const s = findShipment(locationPickerFirestoreId);
+  if (!s || !locationPickerPin) return;
   s.lat = locationPickerPin.lat;
   s.lng = locationPickerPin.lng;
-  await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
+  if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
   syncOrderFromShipment(s);
   persistData();
   renderShipments();
@@ -1267,7 +1274,8 @@ function acceptOrder(){
 }
 
 const shipments = [];
-let editingFirestoreId = null;
+let editingShipmentKey = null;
+let shipmentsListBound = false;
 let cameraStream = null;
 let facingMode = 'environment';
 let previewObjectUrl = null;
@@ -1336,6 +1344,15 @@ function loadPersistedData(){
     orders.length = 0;
     (data.shipments || []).forEach(s => shipments.push(s));
     (data.orders || []).forEach(o => orders.push(o));
+    shipments.forEach(s => {
+      if (!s.firestoreId) {
+        const match = orders.find(o =>
+          o.telegramId === s.telegramId &&
+          (String(o.id) === String(s.id) || (o.dest === s.dest && o.thumbUrl === s.thumbUrl))
+        );
+        if (match) s.firestoreId = match.firestoreId || match.id;
+      }
+    });
     renderShipments();
     if (map) refreshOrderMarkers();
   } catch (e) {
@@ -1370,8 +1387,51 @@ function getMyShipments(){
   return shipments.filter(s => s.telegramId === telegramUser.id);
 }
 
-function findShipmentByFirestoreId(firestoreId){
-  return shipments.find(s => s.firestoreId === firestoreId);
+function getShipmentKey(s){
+  return String(s.firestoreId || s.id || '');
+}
+
+function findShipment(key){
+  if (!key) return null;
+  return shipments.find(s => getShipmentKey(s) === String(key));
+}
+
+function syncShipmentsFromFirestore(){
+  if (telegramUser.id == null) return;
+  const mine = orders.filter(o => o.telegramId === telegramUser.id);
+  mine.forEach(o => {
+    const fsId = o.firestoreId || o.id;
+    const idx = shipments.findIndex(s =>
+      (s.firestoreId && s.firestoreId === fsId) ||
+      String(s.id) === String(o.id) ||
+      (o.createdAt && s.dest === o.dest && s.phone === o.phone)
+    );
+    const item = {
+      ...o,
+      id: o.id || (idx >= 0 ? shipments[idx].id : Date.now()),
+      firestoreId: fsId
+    };
+    if (idx >= 0) shipments[idx] = { ...shipments[idx], ...item };
+    else shipments.push(item);
+  });
+  persistData();
+  renderShipments();
+}
+
+function setupShipmentsListEvents(){
+  if (shipmentsListBound) return;
+  const list = document.getElementById('shipmentsList');
+  if (!list) return;
+  shipmentsListBound = true;
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]');
+    if (!btn) return;
+    const key = btn.dataset.id;
+    const action = btn.dataset.action;
+    if (action === 'edit') editShipment(key);
+    else if (action === 'location') openLocationPicker(key);
+    else if (action === 'delete') deleteShipment(key);
+  });
 }
 
 function syncOrderFromShipment(s){
@@ -1398,28 +1458,28 @@ function renderShipments(){
   empty.classList.add('hidden');
   wrap.classList.add('visible');
   list.innerHTML = mine.map(s => {
-    const fid = escapeHtml(s.firestoreId || '');
-    const hasFs = !!s.firestoreId;
+    const key = escapeHtml(getShipmentKey(s));
     return `
     <div class="shipment-card">
       <img class="shipment-thumb" src="${escapeHtml(s.thumbUrl)}" alt="">
       <div class="shipment-body">
         <div class="shipment-dest">${escapeHtml(s.dest)}</div>
-        <span class="shipment-status">${escapeHtml(s.status)}</span>
+        <span class="shipment-status">${escapeHtml(s.status || 'Aktiv')}</span>
       </div>
       <div class="shipment-actions">
-        <button type="button" class="shipment-icon-btn" data-id="${fid}" onclick="editShipment(this.dataset.id)" aria-label="Tahrirlash" ${hasFs ? '' : 'disabled'}>${SHIPMENT_ICON_EDIT}</button>
-        <button type="button" class="shipment-icon-btn" data-id="${fid}" onclick="openLocationPicker(this.dataset.id)" aria-label="Lokatsiya" ${hasFs ? '' : 'disabled'}>${SHIPMENT_ICON_PIN}</button>
-        <button type="button" class="shipment-icon-btn" data-id="${fid}" onclick="deleteShipment(this.dataset.id)" aria-label="O'chirish" ${hasFs ? '' : 'disabled'}>${SHIPMENT_ICON_TRASH}</button>
+        <button type="button" class="shipment-icon-btn shipment-icon-btn--edit" data-action="edit" data-id="${key}" aria-label="Tahrirlash">${SHIPMENT_ICON_EDIT}</button>
+        <button type="button" class="shipment-icon-btn shipment-icon-btn--location" data-action="location" data-id="${key}" aria-label="Lokatsiya">${SHIPMENT_ICON_PIN}</button>
+        <button type="button" class="shipment-icon-btn shipment-icon-btn--delete" data-action="delete" data-id="${key}" aria-label="O'chirish">${SHIPMENT_ICON_TRASH}</button>
       </div>
     </div>`;
   }).join('');
+  setupShipmentsListEvents();
 }
 
-function editShipment(firestoreId){
-  const s = findShipmentByFirestoreId(firestoreId);
+function editShipment(key){
+  const s = findShipment(key);
   if (!s) return;
-  editingFirestoreId = firestoreId;
+  editingShipmentKey = key;
   document.getElementById('editDest').value = s.dest || '';
   document.getElementById('editNote').value = s.note || '';
   document.getElementById('editSheetOverlay').classList.add('open');
@@ -1427,12 +1487,12 @@ function editShipment(firestoreId){
 
 function closeEditSheet(){
   document.getElementById('editSheetOverlay').classList.remove('open');
-  editingFirestoreId = null;
+  editingShipmentKey = null;
 }
 
 async function saveEditShipment(e){
   e.preventDefault();
-  const s = findShipmentByFirestoreId(editingFirestoreId);
+  const s = findShipment(editingShipmentKey);
   if (!s) return;
   const dest = document.getElementById('editDest').value.trim();
   const note = document.getElementById('editNote').value.trim();
@@ -1442,7 +1502,7 @@ async function saveEditShipment(e){
   }
   s.dest = dest;
   s.note = note;
-  await updateOrderInFirestore(s.firestoreId, { dest, note });
+  if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { dest, note });
   syncOrderFromShipment(s);
   persistData();
   renderShipments();
@@ -1451,25 +1511,33 @@ async function saveEditShipment(e){
   showToast('✅ Saqlandi');
 }
 
-function removeShipmentLocal(firestoreId){
-  const si = shipments.findIndex(s => s.firestoreId === firestoreId);
+function removeShipmentLocal(key){
+  const si = shipments.findIndex(s => getShipmentKey(s) === String(key));
   if (si !== -1) shipments.splice(si, 1);
-  const oi = orders.findIndex(o => o.id === firestoreId || o.firestoreId === firestoreId);
+  const oi = orders.findIndex(o => o.id === key || o.firestoreId === key || String(o.id) === key);
   if (oi !== -1) orders.splice(oi, 1);
 }
 
-async function confirmDeleteShipment(firestoreId){
-  await deleteOrderFromFirestore(firestoreId);
-  removeShipmentLocal(firestoreId);
+async function confirmDeleteShipment(key){
+  const s = findShipment(key);
+  if (!s) return;
+  if (s.firestoreId) await deleteOrderFromFirestore(s.firestoreId);
+  removeShipmentLocal(key);
   persistData();
   renderShipments();
   if (map) refreshOrderMarkers();
   showAlert('Jo\'natma o\'chirildi');
 }
 
-function deleteShipment(firestoreId){
-  if (!findShipmentByFirestoreId(firestoreId)?.firestoreId) return;
+function deleteShipment(key){
+  const s = findShipment(key);
+  if (!s) return;
+  const run = () => confirmDeleteShipment(key);
   const tg = window.Telegram?.WebApp;
+  if (tg?.showConfirm) {
+    tg.showConfirm('O\'chirilsinmi?', ok => { if (ok) run(); });
+    return;
+  }
   if (tg?.showPopup) {
     tg.showPopup({
       title: 'O\'chirish',
@@ -1479,11 +1547,11 @@ function deleteShipment(firestoreId){
         { id: 'cancel', type: 'cancel', text: 'Yo\'q' }
       ]
     }, buttonId => {
-      if (buttonId === 'yes') confirmDeleteShipment(firestoreId);
+      if (buttonId === 'yes') run();
     });
     return;
   }
-  if (confirm('O\'chirilsinmi?')) confirmDeleteShipment(firestoreId);
+  if (confirm('O\'chirilsinmi?')) run();
 }
 
 function openOrder(){
@@ -1753,6 +1821,7 @@ function showToast(msg){
 
 initFirebase();
 loadPersistedData();
+setupShipmentsListEvents();
 </script>
 </body>
 </html>
