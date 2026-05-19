@@ -8,33 +8,39 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;overflow:hidden}
+:root{
+  --tg-blue:#2AABEE;
+  --app-bg:#E1F0FA;
+  --navy:#0f172a;
+  --card-bg:#fff;
+}
+html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro Display','Segoe UI',Roboto,sans-serif;overflow:hidden}
 
 /* ── FULL SCREEN APP ── */
 .app{
   position:fixed;inset:0;display:flex;flex-direction:column;
-  background:#fff;overflow:hidden;
+  background:var(--app-bg);overflow:hidden;
 }
 
 /* HEADER */
 .header{
-  padding:max(12px,env(safe-area-inset-top)) 24px 16px;
-  background:#fff;z-index:20;position:relative;flex-shrink:0;
+  padding:max(10px,env(safe-area-inset-top)) 20px 14px;
+  background:var(--app-bg);z-index:20;position:relative;flex-shrink:0;
 }
-.logo{display:flex;justify-content:center;align-items:center;font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:20px;height:32px}
-.logo span{color:#111;line-height:1;transform:translateY(2px)}
-.logo-dot{width:10px;height:10px;background:#D35400;border-radius:50%;margin:0 6px;flex-shrink:0;transform:translateY(3px)}
+.logo{display:flex;justify-content:center;align-items:center;font-size:26px;font-weight:800;letter-spacing:-.02em;margin-bottom:16px;height:32px}
+.logo span{color:var(--navy);line-height:1;text-transform:lowercase}
+.logo-dot{width:6px;height:6px;background:var(--navy);border-radius:50%;margin:0 7px;flex-shrink:0;opacity:.85}
 
 /* TOGGLE */
-.toggle{background:#F4F4F5;border-radius:100px;padding:4px;display:flex;gap:4px}
+.toggle{background:#fff;border-radius:100px;padding:4px;display:flex;gap:4px;box-shadow:0 1px 4px rgba(15,23,42,.06)}
 .toggle-btn{
-  flex:1;padding:10px;border-radius:100px;border:none;font-size:14px;font-weight:700;
-  cursor:pointer;transition:all .25s;font-family:inherit;letter-spacing:-.01em;
-  background:transparent;color:#888;
+  flex:1;padding:11px 12px;border-radius:100px;border:none;font-size:14px;font-weight:600;
+  cursor:pointer;transition:all .22s;font-family:inherit;letter-spacing:-.01em;
+  background:transparent;color:#8e8e93;
 }
 .toggle-btn.active{
-  background:#D35400;color:#fff;
-  box-shadow:0 8px 16px rgba(211,84,0,.25),inset 0 2px 4px rgba(255,255,255,.3),inset 0 -2px 4px rgba(0,0,0,.1);
+  background:var(--tg-blue);color:#fff;
+  box-shadow:0 2px 8px rgba(42,171,238,.35);
 }
 
 /* CONTENT */
@@ -54,19 +60,12 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 
 /* 3D SCENE (SVG) */
 .scene{
-  width:100%;height:260px;position:relative;overflow:hidden;
-  margin-top:2px;flex-shrink:0;pointer-events:none;
+  width:100%;height:280px;position:relative;overflow:visible;
+  margin:0;flex-shrink:0;pointer-events:none;
 }
-.scene-svg{display:block;width:100%;height:260px}
+.scene-svg{display:block;width:100%;height:280px}
 
-/* TITLE */
-.sender-title{
-  text-align:center;font-size:26px;font-weight:900;color:#111;
-  line-height:1.08;letter-spacing:-.03em;
-  margin:4px 0 8px;padding:0 4px;z-index:10;
-  text-shadow:0 1px 2px rgba(0,0,0,.05);flex-shrink:0;
-  width:100%;
-}
+.sender-title{display:none}
 
 /* Jo'natmalar ro'yxati */
 .shipments-wrap{
@@ -74,72 +73,53 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   width:100%;min-height:0;overflow:hidden;
 }
 .shipments-wrap.visible{display:flex}
-.shipments-head{
-  font-size:13px;font-weight:700;color:#D35400;
-  text-transform:uppercase;letter-spacing:.06em;
-  margin-bottom:12px;flex-shrink:0;
-}
+.shipments-head{display:none}
 .shipments-list{
   flex:1;overflow-y:auto;display:flex;flex-direction:column;
-  gap:10px;padding-bottom:8px;-webkit-overflow-scrolling:touch;
+  gap:12px;padding-bottom:8px;-webkit-overflow-scrolling:touch;
 }
 .shipment-card{
-  display:flex;align-items:center;gap:14px;padding:12px 14px;
-  background:#fff;border:1px solid #F0F0F0;border-radius:16px;
-  box-shadow:0 2px 12px rgba(0,0,0,.04);
+  display:flex;align-items:center;gap:14px;padding:14px 16px;
+  background:var(--card-bg);border:none;border-radius:18px;
+  box-shadow:0 4px 20px rgba(15,23,42,.08),0 1px 3px rgba(15,23,42,.04);
 }
 .shipment-thumb{
   width:56px;height:56px;border-radius:12px;object-fit:cover;
   border:1px solid #EEE;flex-shrink:0;
 }
 .shipment-type-icon{
-  width:56px;height:56px;border-radius:12px;flex-shrink:0;
+  width:52px;height:52px;border-radius:14px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  border:1px solid #EEE;
-  box-shadow:inset 0 2px 6px rgba(255,255,255,.9),0 2px 8px rgba(0,0,0,.06);
+  background:#d4ebfa;border:none;
 }
-.shipment-type-icon--travel{
-  background:linear-gradient(165deg,#fff8f3 0%,#ffe8d6 55%,#ffd4b0 100%);
-}
-.shipment-type-icon--order{
-  background:linear-gradient(165deg,#f8f9fa 0%,#eceef1 55%,#dfe3e8 100%);
-}
-.shipment-type-icon svg{width:36px;height:36px}
-.shipment-status--travel{color:#D35400;background:rgba(211,84,0,.12)}
+.shipment-type-icon--travel{background:#d4ebfa}
+.shipment-type-icon--order{background:#d4ebfa}
+.shipment-type-icon svg{width:28px;height:28px}
+.shipment-status--travel{color:var(--tg-blue);background:rgba(42,171,238,.14)}
 .shipment-body{flex:1;min-width:0}
 .shipment-dest{
-  font-size:16px;font-weight:700;color:#111;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;
+  font-size:17px;font-weight:700;color:var(--navy);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;
 }
 .shipment-status{
-  display:inline-block;font-size:12px;font-weight:700;color:#16a34a;
-  background:rgba(22,163,74,.12);padding:4px 10px;border-radius:100px;
+  display:inline-block;font-size:12px;font-weight:600;color:var(--tg-blue);
+  background:rgba(42,171,238,.12);padding:4px 11px;border-radius:100px;
 }
 .shipment-actions{
-  display:flex;flex-direction:row;gap:8px;flex-shrink:0;align-items:center;
+  display:flex;flex-direction:row;gap:12px;flex-shrink:0;align-items:center;
 }
 .shipment-icon-btn{
-  width:44px;height:44px;border-radius:50%;border:none;padding:0;flex-shrink:0;
-  background:linear-gradient(165deg,#fff 0%,#f8f8f9 45%,#ebebec 100%);
-  border:1px solid rgba(255,255,255,.98);
-  box-shadow:
-    0 8px 18px rgba(0,0,0,.1),
-    0 2px 8px rgba(211,84,0,.15),
-    inset 0 3px 7px rgba(255,255,255,.98),
-    inset 0 -3px 7px rgba(0,0,0,.06);
+  width:40px;height:40px;border-radius:50%;border:none;padding:0;flex-shrink:0;
+  background:transparent;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:transform .15s,box-shadow .15s;
+  cursor:pointer;transition:transform .15s,opacity .15s;
   -webkit-tap-highlight-color:transparent;
 }
 .shipment-icon-btn svg{width:22px;height:22px;pointer-events:none}
-.shipment-icon-btn--edit svg{stroke:#D35400;stroke-width:2.4;fill:none}
-.shipment-icon-btn--location svg{fill:#D35400;stroke:#B84700;stroke-width:1.2}
-.shipment-icon-btn--delete{
-  background:linear-gradient(165deg,#fff8f6 0%,#ffece8 55%,#ffddd6 100%);
-  box-shadow:0 8px 18px rgba(231,76,60,.15),inset 0 3px 7px rgba(255,255,255,.95);
-}
-.shipment-icon-btn--delete svg{stroke:#E74C3C;stroke-width:2.4;fill:none}
-.shipment-icon-btn:active{transform:scale(.9)}
+.shipment-icon-btn--edit svg{stroke:var(--tg-blue);stroke-width:2;fill:none}
+.shipment-icon-btn--location svg{stroke:var(--tg-blue);fill:none;stroke-width:2}
+.shipment-icon-btn--delete svg{stroke:#E74C3C;stroke-width:2;fill:none}
+.shipment-icon-btn:active{transform:scale(.88);opacity:.7}
 .sheet-overlay--edit{z-index:212}
 .sheet-overlay--travel{z-index:213}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
@@ -163,30 +143,28 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 /* CTA */
 .cta-wrap{
   flex-shrink:0;width:100%;
-  padding:10px 0 max(20px,env(safe-area-inset-bottom));
-  background:#fff;
-  display:flex;flex-direction:column;gap:10px;
+  padding:12px 0 max(22px,env(safe-area-inset-bottom));
+  background:transparent;
+  display:flex;flex-direction:column;gap:12px;
 }
 .cta-btn{
-  width:100%;height:58px;flex-shrink:0;
-  background:linear-gradient(to bottom,#2A2A2A,#111);
-  border:1px solid #333;border-radius:100px;
-  display:flex;align-items:center;justify-content:center;gap:10px;padding:0 20px;
-  box-shadow:0 20px 40px rgba(0,0,0,.2),inset 0 2px 4px rgba(255,255,255,.15),inset 0 -2px 4px rgba(0,0,0,.4);
-  cursor:pointer;transition:all .3s;position:relative;overflow:hidden;outline:none;
+  width:100%;height:56px;flex-shrink:0;
+  background:var(--tg-blue);
+  border:none;border-radius:100px;
+  display:flex;align-items:center;justify-content:center;gap:12px;padding:0 22px;
+  box-shadow:0 4px 16px rgba(42,171,238,.35);
+  cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;outline:none;
 }
-.cta-btn:active{transform:scale(.98);box-shadow:0 10px 20px rgba(0,0,0,.2),inset 0 1px 2px rgba(255,255,255,.1),inset 0 -2px 4px rgba(0,0,0,.6)}
-.cta-shine{position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(to bottom,rgba(255,255,255,.1),transparent);pointer-events:none}
+.cta-btn:active{transform:scale(.98);box-shadow:0 2px 10px rgba(42,171,238,.3)}
+.cta-shine{display:none}
 .cta-icon{
-  width:34px;height:34px;border-radius:50%;flex-shrink:0;
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+  width:28px;height:28px;border-radius:0;flex-shrink:0;
+  background:transparent;border:none;
   display:flex;align-items:center;justify-content:center;
-  box-shadow:inset 0 2px 4px rgba(255,255,255,.25);
 }
-.cta-icon svg{width:26px;height:26px;display:block}
+.cta-icon svg{width:24px;height:24px;display:block}
 .cta-text{
-  color:#fff;font-size:15px;font-weight:700;letter-spacing:.01em;
-  position:relative;z-index:1;text-shadow:0 2px 4px rgba(0,0,0,.5);
+  color:#fff;font-size:16px;font-weight:600;letter-spacing:-.01em;
   white-space:nowrap;
 }
 
@@ -194,12 +172,13 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 #driverView{
   display:none;flex-direction:column;align-items:center;
   padding:0 24px;height:100%;min-height:0;flex:1;
+  background:var(--app-bg);
 }
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
   position:relative;width:100%;flex-shrink:0;
   margin:14px 0 12px;overflow:hidden;
-  --picker-fade:#fff;
+  --picker-fade:var(--app-bg);
 }
 .region-picker::before,
 .region-picker::after{
@@ -573,19 +552,26 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   position:absolute;top:max(12px,env(safe-area-inset-top));right:20px;
   display:flex;gap:8px;z-index:30;
 }
-.theme-btn,.map-layers-btn{
+.map-layers-btn{
   width:40px;height:40px;border-radius:50%;border:none;
-  background:#F4F4F5;color:#111;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:background .2s,color .2s,transform .15s,opacity .2s;
-  font-family:inherit;flex-shrink:0;
+  background:transparent;color:var(--navy);cursor:pointer;
+  display:none;align-items:center;justify-content:center;
+  transition:transform .15s,opacity .2s;font-family:inherit;flex-shrink:0;
 }
-.theme-btn:active,.map-layers-btn:active{transform:scale(.92)}
-.theme-btn svg{width:20px;height:20px;fill:currentColor}
-.map-layers-btn svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:2}
-.theme-btn.active{background:#D35400;color:#fff}
-.map-layers-btn.off{opacity:.45}
-.map-layers-btn.off svg{stroke-dasharray:3 2}
+body.view-driver .map-layers-btn{display:flex}
+.map-layers-btn:active{transform:scale(.92)}
+.map-layers-btn svg{width:22px;height:22px;stroke:var(--navy);fill:none;stroke-width:2}
+.map-layers-btn.off{opacity:.4}
+.theme-btn{
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:var(--tg-blue);color:#fff;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s,opacity .2s;flex-shrink:0;
+  box-shadow:0 2px 8px rgba(42,171,238,.35);
+}
+.theme-btn:active{transform:scale(.92)}
+.theme-btn svg{width:20px;height:20px;fill:#fff}
+.theme-btn.active{opacity:1}
 
 .theme-telegram,
 .theme-telegram body{background:var(--tg-bg)!important}
@@ -692,8 +678,8 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         <button type="button" class="map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
-        <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram tema" title="Telegram tema">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.12.27z"/></svg>
+        <button type="button" class="theme-btn" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram" title="Telegram">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M9.5 16.2 9.9 13l7.6-6.8c.3-.3-.1-.4-.4-.2L8.8 12.5 5.6 11.4c-.7-.2-.7-.8.1-1.2l12.6-4.9c.6-.2 1.1.1.9.9l-2 12.4c-.1.6-.5.8-1 .5l-3.5-2.6-1.7 1.6c-.2.2-.4.2-.6 0z"/></svg>
         </button>
       </div>
       <div class="logo">
@@ -714,106 +700,93 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
       <div id="senderView">
         <div class="sender-top">
           <div class="scene">
-            <svg class="scene-svg" width="100%" height="260" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <svg class="scene-svg" width="100%" height="280" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <defs>
-                <linearGradient id="sceneSky" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#e8f4fd"/>
-                  <stop offset="100%" stop-color="#d0eaf8"/>
+                <linearGradient id="carClay" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#6ec8f5"/>
+                  <stop offset="55%" stop-color="#2AABEE"/>
+                  <stop offset="100%" stop-color="#229ED9"/>
                 </linearGradient>
-                <linearGradient id="carPaint" x1="0" y1="0" x2="0" y2="1">
+                <linearGradient id="boxL" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#b8e4fa"/>
+                  <stop offset="100%" stop-color="#8fd4f7"/>
+                </linearGradient>
+                <linearGradient id="boxM" x1="0" y1="0" x2="1" y2="1">
                   <stop offset="0%" stop-color="#5ec4f7"/>
                   <stop offset="100%" stop-color="#2AABEE"/>
                 </linearGradient>
-                <linearGradient id="boxPaint" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#4eb8f0"/>
-                  <stop offset="100%" stop-color="#2AABEE"/>
+                <linearGradient id="boxD" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#3aa8e0"/>
+                  <stop offset="100%" stop-color="#1e8bc4"/>
                 </linearGradient>
+                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1a4a6e" flood-opacity=".12"/>
+                </filter>
               </defs>
-              <rect width="400" height="260" fill="url(#sceneSky)"/>
+              <rect width="400" height="280" fill="#E1F0FA"/>
 
-              <g transform="translate(3,3)">
-                <ellipse cx="58" cy="38" rx="34" ry="16" fill="rgba(0,0,0,.08)"/>
-                <ellipse cx="42" cy="36" rx="22" ry="13" fill="rgba(0,0,0,.06)"/>
-              </g>
-              <g>
-                <ellipse cx="55" cy="35" rx="32" ry="15" fill="#f5f9fc"/>
-                <ellipse cx="38" cy="33" rx="20" ry="12" fill="#fff"/>
-                <ellipse cx="62" cy="30" rx="18" ry="11" fill="#fff"/>
-                <ellipse cx="48" cy="28" rx="14" ry="10" fill="#fff"/>
-              </g>
-
-              <g transform="translate(3,3)">
-                <ellipse cx="318" cy="32" rx="38" ry="17" fill="rgba(0,0,0,.08)"/>
-                <ellipse cx="332" cy="30" rx="24" ry="12" fill="rgba(0,0,0,.06)"/>
-              </g>
-              <g>
-                <ellipse cx="315" cy="29" rx="36" ry="16" fill="#f5f9fc"/>
-                <ellipse cx="330" cy="27" rx="22" ry="11" fill="#fff"/>
-                <ellipse cx="302" cy="26" rx="16" ry="10" fill="#fff"/>
-                <ellipse cx="322" cy="24" rx="13" ry="9" fill="#fff"/>
-              </g>
-
-              <g transform="translate(2,3)">
-                <path d="M108 260 L292 260 L228 108 L172 108 Z" fill="rgba(0,0,0,.12)"/>
-              </g>
-              <path d="M110 260 L290 260 L226 110 L174 110 Z" fill="#4a5568"/>
-              <path d="M198 250 L202 250 L208 130 L192 130 Z" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="10 12" stroke-linecap="round" opacity=".9"/>
-              <path d="M188 220 L212 220 L214 160 L186 160 Z" fill="none" stroke="#fff" stroke-width="2.5" stroke-dasharray="8 10" stroke-linecap="round" opacity=".75"/>
-
-              <g transform="translate(2,3)">
-                <ellipse cx="52" cy="218" rx="28" ry="6" fill="rgba(0,0,0,.14)"/>
-                <ellipse cx="38" cy="238" rx="22" ry="5" fill="rgba(0,0,0,.12)"/>
-                <ellipse cx="68" cy="248" rx="18" ry="4" fill="rgba(0,0,0,.1)"/>
-              </g>
-              <g>
-                <rect x="28" y="178" width="48" height="38" rx="6" fill="url(#boxPaint)" stroke="#1e96d6" stroke-width="1.5"/>
-                <path d="M40 188 L64 212 M64 188 L40 212" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".95"/>
-                <rect x="14" y="200" width="36" height="30" rx="5" fill="url(#boxPaint)" stroke="#1e96d6" stroke-width="1.5"/>
-                <path d="M24 208 L40 224 M40 208 L24 224" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".95"/>
-                <rect x="52" y="218" width="32" height="26" rx="5" fill="url(#boxPaint)" stroke="#1e96d6" stroke-width="1.5"/>
-                <path d="M60 225 L76 241 M76 225 L60 241" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".95"/>
-              </g>
-
-              <g transform="translate(2,3)">
-                <ellipse cx="200" cy="228" rx="52" ry="10" fill="rgba(0,0,0,.18)"/>
-              </g>
-              <g>
-                <rect x="158" y="188" width="84" height="32" rx="10" fill="url(#carPaint)" stroke="#1e96d6" stroke-width="1.5"/>
-                <path d="M172 188 Q200 162 228 188 Z" fill="#3aa0dc" stroke="#1e96d6" stroke-width="1.5"/>
-                <rect x="168" y="174" width="26" height="18" rx="4" fill="#d0eefa" stroke="#9fd4ef" stroke-width="1"/>
-                <rect x="206" y="174" width="26" height="18" rx="4" fill="#d0eefa" stroke="#9fd4ef" stroke-width="1"/>
-                <rect x="198" y="196" width="8" height="6" rx="2" fill="#1a8fd4" opacity=".5"/>
-                <circle cx="174" cy="222" r="11" fill="#1a1a1a"/>
-                <circle cx="174" cy="222" r="6" fill="#9ca3af"/>
-                <circle cx="226" cy="222" r="11" fill="#1a1a1a"/>
-                <circle cx="226" cy="222" r="6" fill="#9ca3af"/>
-                <rect x="162" y="200" width="6" height="4" rx="1" fill="#fff" opacity=".35"/>
-              </g>
-
-              <g transform="translate(2,3)">
-                <rect x="322" y="98" width="10" height="162" rx="3" fill="rgba(0,0,0,.15)"/>
-              </g>
-              <g>
-                <rect x="320" y="96" width="10" height="160" rx="3" fill="#8B5E3C" stroke="#6d4c31" stroke-width="1"/>
-                <rect x="318" y="94" width="14" height="8" rx="2" fill="#6d4c31"/>
-                <g transform="translate(2,3)">
-                  <rect x="248" y="108" width="72" height="26" rx="6" fill="rgba(0,0,0,.12)"/>
+              <!-- Yo'l (egri, o'ngdan chap pastga) -->
+              <g filter="url(#softShadow)">
+                <g transform="translate(3,4)">
+                  <path d="M320 275 C260 200 120 170 40 250 C20 268 0 280 0 280 L400 280 L400 200 C380 210 340 240 320 275 Z" fill="rgba(30,41,59,.15)"/>
                 </g>
-                <rect x="246" y="106" width="72" height="26" rx="6" fill="#2AABEE"/>
-                <text x="258" y="123" font-family="system-ui,sans-serif" font-size="11" font-weight="700" fill="#fff">Toshkent</text>
-                <path d="M308 118 L318 118 L314 114 M318 118 L314 122" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <g transform="translate(2,3)">
-                  <rect x="252" y="142" width="68" height="24" rx="6" fill="rgba(0,0,0,.12)"/>
+                <path d="M318 272 C258 198 125 168 48 246 C30 264 8 278 8 278 L392 278 L392 198 C372 208 335 238 318 272 Z" fill="#3d4554"/>
+                <path d="M318 272 C258 198 125 168 48 246" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="12 14" stroke-linecap="round" opacity=".92"/>
+              </g>
+
+              <!-- Yo'nalish ustuni + 3D o'qlar -->
+              <g transform="translate(268, 52)">
+                <g transform="translate(3,4)">
+                  <rect x="18" y="0" width="12" height="175" rx="6" fill="rgba(60,40,20,.2)"/>
                 </g>
-                <rect x="250" y="140" width="68" height="24" rx="6" fill="#22c55e"/>
-                <text x="258" y="156" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#fff">Samarqand</text>
-                <path d="M304 150 L314 150 L310 146 M314 150 L310 154" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <g transform="translate(2,3)">
-                  <rect x="256" y="174" width="64" height="24" rx="6" fill="rgba(0,0,0,.12)"/>
+                <rect x="16" y="0" width="12" height="172" rx="6" fill="#C4A574"/>
+                <rect x="14" y="-4" width="16" height="10" rx="4" fill="#A08050"/>
+                <g transform="translate(3,3)">
+                  <path d="M-8 18 h78 v28 rx14" fill="rgba(0,0,0,.1)"/>
                 </g>
-                <rect x="254" y="172" width="64" height="24" rx="6" fill="#eab308"/>
-                <text x="262" y="188" font-family="system-ui,sans-serif" font-size="10" font-weight="700" fill="#fff">Farg'ona</text>
-                <path d="M304 182 L314 182 L310 178 M314 182 L310 186" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M-5 15 h72 v26 rx13" fill="#2AABEE"/>
+                <path d="M62 28 L78 28 L70 20 M78 28 L70 36" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <g transform="translate(3,3)">
+                  <path d="M-4 58 h70 v26 rx13" fill="rgba(0,0,0,.1)"/>
+                </g>
+                <path d="M-1 55 h64 v24 rx12" fill="#7BC67E"/>
+                <path d="M-58 67 L-72 67 L-64 59 M-72 67 L-64 75" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                <g transform="translate(3,3)">
+                  <path d="M-8 98 h78 v28 rx14" fill="rgba(0,0,0,.1)"/>
+                </g>
+                <path d="M-5 95 h72 v26 rx13" fill="#F5A623"/>
+                <path d="M62 108 L78 108 L70 100 M78 108 L70 116" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              </g>
+
+              <!-- Yuk qutilari (mashina orqasida) -->
+              <g transform="translate(118, 168)" filter="url(#softShadow)">
+                <g transform="translate(2,3)">
+                  <ellipse cx="42" cy="52" rx="38" ry="8" fill="rgba(30,41,59,.14)"/>
+                </g>
+                <path d="M8 28 L52 28 L52 48 L8 48 Z" fill="url(#boxD)" stroke="#1e8bc4" stroke-width="1"/>
+                <path d="M8 28 L30 28" stroke="#fff" stroke-width="3" opacity=".85"/>
+                <path d="M22 12 L58 12 L58 32 L22 32 Z" fill="url(#boxM)" stroke="#229ED9" stroke-width="1"/>
+                <path d="M22 12 L42 12" stroke="#fff" stroke-width="3" opacity=".85"/>
+                <path d="M32 0 L68 0 L68 22 L32 22 Z" fill="url(#boxL)" stroke="#5ec4f7" stroke-width="1"/>
+                <path d="M32 0 L52 0" stroke="#fff" stroke-width="3" opacity=".85"/>
+              </g>
+
+              <!-- Mashina -->
+              <g transform="translate(155, 175)" filter="url(#softShadow)">
+                <g transform="translate(2,4)">
+                  <ellipse cx="45" cy="58" rx="48" ry="9" fill="rgba(30,41,59,.18)"/>
+                </g>
+                <rect x="8" y="22" width="74" height="28" rx="11" fill="url(#carClay)"/>
+                <path d="M18 22 Q45 4 72 22 Z" fill="#4eb8f0" stroke="#229ED9" stroke-width="1"/>
+                <rect x="14" y="10" width="22" height="16" rx="5" fill="#d0eefa" stroke="#a8daf0" stroke-width="1"/>
+                <ellipse cx="25" cy="18" rx="6" ry="8" fill="#fff"/>
+                <rect x="54" y="10" width="22" height="16" rx="5" fill="#d0eefa" stroke="#a8daf0" stroke-width="1"/>
+                <rect x="38" y="34" width="14" height="5" rx="2" fill="#229ED9" opacity=".4"/>
+                <circle cx="22" cy="52" r="10" fill="#374151"/>
+                <circle cx="22" cy="52" r="5.5" fill="#f3f4f6"/>
+                <circle cx="68" cy="52" r="10" fill="#374151"/>
+                <circle cx="68" cy="52" r="5.5" fill="#f3f4f6"/>
+                <rect x="12" y="38" width="5" height="3" rx="1" fill="#fff" opacity=".4"/>
               </g>
             </svg>
           </div>
@@ -1131,11 +1104,11 @@ function applyTelegramThemeVars(){
   const tp = (window.Telegram && Telegram.WebApp && Telegram.WebApp.themeParams) || {};
   const root = document.documentElement;
   const pick = (key, fb) => (tp[key] && String(tp[key]).trim()) || fb;
-  root.style.setProperty('--tg-bg', pick('bg_color', '#ffffff'));
-  root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#f4f4f5'));
+  root.style.setProperty('--tg-bg', pick('bg_color', '#E1F0FA'));
+  root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#ffffff'));
   root.style.setProperty('--tg-text', pick('text_color', '#000000'));
   root.style.setProperty('--tg-hint', pick('hint_color', '#999999'));
-  root.style.setProperty('--tg-btn', pick('button_color', '#3390ec'));
+  root.style.setProperty('--tg-btn', pick('button_color', '#2AABEE'));
   root.style.setProperty('--tg-btn-text', pick('button_text_color', '#ffffff'));
   root.style.setProperty('--tg-section', pick('section_bg_color', '#ffffff'));
 }
@@ -1209,6 +1182,11 @@ const ICON_CTA_TRAVEL = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><line
 
 const ICON_CTA_ORDER = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="cog1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#ECEEF1"/></linearGradient><linearGradient id="cog2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5F6F8"/><stop offset="100%" stop-color="#C8CDD4"/></linearGradient></defs><ellipse cx="24" cy="43" rx="13" ry="3" fill="rgba(0,0,0,.1)"/><path d="M11 24 L24 16 L37 24 L37 37 L24 44 L11 37 Z" fill="url(#cog2)"/><path d="M11 24 L24 31 L37 24 L24 16 Z" fill="url(#cog1)"/><rect x="20" y="8" width="8" height="10" rx="2" fill="#D35400" opacity=".95"/><path d="M24 16 L24 31" stroke="#D35400" stroke-width="2.2"/><path d="M14 26 L24 31 L34 26" stroke="#B8BFC8" stroke-width="1" fill="none"/></svg>`;
 
+const ICON_AVATAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5" fill="#2AABEE"/><path d="M4 20.5c0-3.8 3.4-6.5 8-6.5s8 2.7 8 6.5" fill="#2AABEE"/></svg>';
+const ICON_BOX_SMALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" fill="#2AABEE" opacity=".9"/><path d="M3 7l9 5 9-5" stroke="#fff" stroke-width="1.2" fill="none"/><path d="M12 12v10" stroke="#1e8bc4" stroke-width="1.5"/></svg>';
+const ICON_CTA_ROUTE_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a8 8 0 0 0-8 8c0 5.2 8 14 8 14s8-8.8 8-14a8 8 0 0 0-8-8z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="#fff"/><path d="M4 14h4l2 2.5 3-5 2 2.5h5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L4 6.5v11L12 22l8-4.5v-11L12 2z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M4 6.5l8 4.5 8-4.5M12 11v11" stroke="#fff" stroke-width="1.8"/></svg>';
+
 function fillRegionSelect(el, placeholder){
   if (!el || el.dataset.filled) return;
   const ph = placeholder || 'Viloyatni tanlang';
@@ -1228,9 +1206,9 @@ function initCtaIcons(){
   const travel = document.getElementById('ctaTravelIcon');
   const order = document.getElementById('ctaOrderIcon');
   const hero = document.getElementById('travelHeroIcon');
-  if (travel) travel.innerHTML = ICON_CTA_TRAVEL;
-  if (order) order.innerHTML = ICON_CTA_ORDER;
-  if (hero) hero.innerHTML = ICON_CTA_TRAVEL;
+  if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
+  if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
+  if (hero) hero.innerHTML = ICON_AVATAR;
 }
 
 function removeDriverRadiusLayers(){
@@ -1621,6 +1599,8 @@ function switchView(v){
   document.getElementById('driverView').style.display = v==='driver'?'flex':'none';
   document.getElementById('btnSender').className = 'toggle-btn'+(v==='sender'?' active':'');
   document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
+  document.body.classList.toggle('view-driver', v === 'driver');
+  document.body.classList.toggle('view-sender', v === 'sender');
   if (v === 'driver') {
     if (!map) initDriverMap();
     else {
