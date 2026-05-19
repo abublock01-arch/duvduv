@@ -58,12 +58,74 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
 }
 
-/* 3D SCENE (SVG) */
+/* SCENE (CSS + emoji) */
 .scene{
-  width:100%;height:280px;position:relative;overflow:visible;
+  width:100%;height:220px;padding:20px;
+  background:#e8f4fd;border-radius:20px;
+  position:relative;overflow:hidden;
   margin:0;flex-shrink:0;pointer-events:none;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 16px rgba(42,171,238,.08);
+  border:1px solid rgba(42,171,238,.12);
 }
-.scene-svg{display:block;width:100%;height:280px}
+.scene-stage{
+  position:relative;width:100%;height:100%;
+}
+.scene-cloud,
+.scene-boxes,
+.scene-car,
+.scene-map{
+  display:inline-block;
+}
+.scene-cloud{
+  position:absolute;top:0;font-size:30px;line-height:1;
+  filter:drop-shadow(0 3px 6px rgba(42,171,238,.18));
+  animation:sceneCloudFloat 4.2s ease-in-out infinite;
+}
+.scene-cloud--l{left:6%;animation-delay:0s}
+.scene-cloud--r{right:8%;animation-delay:1.4s;font-size:26px}
+.scene-boxes{
+  position:absolute;left:4%;bottom:18%;
+  font-size:34px;line-height:1;letter-spacing:2px;
+  filter:drop-shadow(0 4px 8px rgba(42,171,238,.2));
+  animation:sceneBoxesBob 3.6s ease-in-out infinite;
+}
+.scene-car{
+  position:absolute;left:50%;bottom:22%;
+  font-size:64px;line-height:1;
+  filter:drop-shadow(0 6px 14px rgba(42,171,238,.28));
+  animation:sceneCarDrive 5s ease-in-out infinite;
+}
+.scene-map{
+  position:absolute;right:6%;top:38%;
+  font-size:44px;line-height:1;
+  filter:drop-shadow(0 4px 10px rgba(42,171,238,.22));
+  animation:sceneMapPulse 3.2s ease-in-out infinite;
+}
+.scene-map::after{
+  content:'';position:absolute;inset:-6px;border-radius:50%;
+  border:2px solid rgba(42,171,238,.25);
+  animation:sceneRing 3.2s ease-in-out infinite;
+}
+@keyframes sceneCloudFloat{
+  0%,100%{transform:translateY(0) scale(1)}
+  50%{transform:translateY(-10px) scale(1.04)}
+}
+@keyframes sceneCarDrive{
+  0%,100%{transform:translateX(calc(-50% - 28px)) rotate(-2deg)}
+  50%{transform:translateX(calc(-50% + 28px)) rotate(2deg)}
+}
+@keyframes sceneBoxesBob{
+  0%,100%{transform:translateY(0) rotate(-3deg)}
+  50%{transform:translateY(-6px) rotate(3deg)}
+}
+@keyframes sceneMapPulse{
+  0%,100%{transform:scale(1);opacity:1}
+  50%{transform:scale(1.08);opacity:.92}
+}
+@keyframes sceneRing{
+  0%,100%{opacity:.35;transform:scale(1)}
+  50%{opacity:.65;transform:scale(1.12)}
+}
 
 .sender-title{display:none}
 
@@ -130,10 +192,10 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 }
 .travel-hero-icon{
   width:72px;height:72px;border-radius:20px;
-  background:linear-gradient(165deg,#fff8f3 0%,#ffe8d6 50%,#ffd4b0 100%);
-  border:1px solid rgba(211,84,0,.2);
+  background:#d4ebfa;
+  border:1px solid rgba(42,171,238,.2);
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 24px rgba(211,84,0,.15),inset 0 2px 6px rgba(255,255,255,.9);
+  box-shadow:0 8px 24px rgba(42,171,238,.12);
   margin-bottom:12px;
 }
 .travel-hero-icon svg{width:44px;height:44px}
@@ -700,95 +762,13 @@ body.view-driver .map-layers-btn{display:flex}
       <div id="senderView">
         <div class="sender-top">
           <div class="scene">
-            <svg class="scene-svg" width="100%" height="280" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <linearGradient id="carClay" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="#6ec8f5"/>
-                  <stop offset="55%" stop-color="#2AABEE"/>
-                  <stop offset="100%" stop-color="#229ED9"/>
-                </linearGradient>
-                <linearGradient id="boxL" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#b8e4fa"/>
-                  <stop offset="100%" stop-color="#8fd4f7"/>
-                </linearGradient>
-                <linearGradient id="boxM" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#5ec4f7"/>
-                  <stop offset="100%" stop-color="#2AABEE"/>
-                </linearGradient>
-                <linearGradient id="boxD" x1="0" y1="0" x2="1" y2="1">
-                  <stop offset="0%" stop-color="#3aa8e0"/>
-                  <stop offset="100%" stop-color="#1e8bc4"/>
-                </linearGradient>
-                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#1a4a6e" flood-opacity=".12"/>
-                </filter>
-              </defs>
-              <rect width="400" height="280" fill="#E1F0FA"/>
-
-              <!-- Yo'l (egri, o'ngdan chap pastga) -->
-              <g filter="url(#softShadow)">
-                <g transform="translate(3,4)">
-                  <path d="M320 275 C260 200 120 170 40 250 C20 268 0 280 0 280 L400 280 L400 200 C380 210 340 240 320 275 Z" fill="rgba(30,41,59,.15)"/>
-                </g>
-                <path d="M318 272 C258 198 125 168 48 246 C30 264 8 278 8 278 L392 278 L392 198 C372 208 335 238 318 272 Z" fill="#3d4554"/>
-                <path d="M318 272 C258 198 125 168 48 246" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="12 14" stroke-linecap="round" opacity=".92"/>
-              </g>
-
-              <!-- Yo'nalish ustuni + 3D o'qlar -->
-              <g transform="translate(268, 52)">
-                <g transform="translate(3,4)">
-                  <rect x="18" y="0" width="12" height="175" rx="6" fill="rgba(60,40,20,.2)"/>
-                </g>
-                <rect x="16" y="0" width="12" height="172" rx="6" fill="#C4A574"/>
-                <rect x="14" y="-4" width="16" height="10" rx="4" fill="#A08050"/>
-                <g transform="translate(3,3)">
-                  <path d="M-8 18 h78 v28 rx14" fill="rgba(0,0,0,.1)"/>
-                </g>
-                <path d="M-5 15 h72 v26 rx13" fill="#2AABEE"/>
-                <path d="M62 28 L78 28 L70 20 M78 28 L70 36" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <g transform="translate(3,3)">
-                  <path d="M-4 58 h70 v26 rx13" fill="rgba(0,0,0,.1)"/>
-                </g>
-                <path d="M-1 55 h64 v24 rx12" fill="#7BC67E"/>
-                <path d="M-58 67 L-72 67 L-64 59 M-72 67 L-64 75" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                <g transform="translate(3,3)">
-                  <path d="M-8 98 h78 v28 rx14" fill="rgba(0,0,0,.1)"/>
-                </g>
-                <path d="M-5 95 h72 v26 rx13" fill="#F5A623"/>
-                <path d="M62 108 L78 108 L70 100 M78 108 L70 116" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-              </g>
-
-              <!-- Yuk qutilari (mashina orqasida) -->
-              <g transform="translate(118, 168)" filter="url(#softShadow)">
-                <g transform="translate(2,3)">
-                  <ellipse cx="42" cy="52" rx="38" ry="8" fill="rgba(30,41,59,.14)"/>
-                </g>
-                <path d="M8 28 L52 28 L52 48 L8 48 Z" fill="url(#boxD)" stroke="#1e8bc4" stroke-width="1"/>
-                <path d="M8 28 L30 28" stroke="#fff" stroke-width="3" opacity=".85"/>
-                <path d="M22 12 L58 12 L58 32 L22 32 Z" fill="url(#boxM)" stroke="#229ED9" stroke-width="1"/>
-                <path d="M22 12 L42 12" stroke="#fff" stroke-width="3" opacity=".85"/>
-                <path d="M32 0 L68 0 L68 22 L32 22 Z" fill="url(#boxL)" stroke="#5ec4f7" stroke-width="1"/>
-                <path d="M32 0 L52 0" stroke="#fff" stroke-width="3" opacity=".85"/>
-              </g>
-
-              <!-- Mashina -->
-              <g transform="translate(155, 175)" filter="url(#softShadow)">
-                <g transform="translate(2,4)">
-                  <ellipse cx="45" cy="58" rx="48" ry="9" fill="rgba(30,41,59,.18)"/>
-                </g>
-                <rect x="8" y="22" width="74" height="28" rx="11" fill="url(#carClay)"/>
-                <path d="M18 22 Q45 4 72 22 Z" fill="#4eb8f0" stroke="#229ED9" stroke-width="1"/>
-                <rect x="14" y="10" width="22" height="16" rx="5" fill="#d0eefa" stroke="#a8daf0" stroke-width="1"/>
-                <ellipse cx="25" cy="18" rx="6" ry="8" fill="#fff"/>
-                <rect x="54" y="10" width="22" height="16" rx="5" fill="#d0eefa" stroke="#a8daf0" stroke-width="1"/>
-                <rect x="38" y="34" width="14" height="5" rx="2" fill="#229ED9" opacity=".4"/>
-                <circle cx="22" cy="52" r="10" fill="#374151"/>
-                <circle cx="22" cy="52" r="5.5" fill="#f3f4f6"/>
-                <circle cx="68" cy="52" r="10" fill="#374151"/>
-                <circle cx="68" cy="52" r="5.5" fill="#f3f4f6"/>
-                <rect x="12" y="38" width="5" height="3" rx="1" fill="#fff" opacity=".4"/>
-              </g>
-            </svg>
+            <div class="scene-stage">
+              <span class="scene-cloud scene-cloud--l" aria-hidden="true">🌥️</span>
+              <span class="scene-cloud scene-cloud--r" aria-hidden="true">🌥️</span>
+              <span class="scene-boxes" aria-hidden="true">📦📦</span>
+              <span class="scene-car" aria-hidden="true">🚗</span>
+              <span class="scene-map" aria-hidden="true">🗺️</span>
+            </div>
           </div>
           <h2 class="sender-title">RASMGA OLING<br>VA JO'NATING</h2>
         </div>
@@ -1909,9 +1889,7 @@ function renderShipments(){
     const key = escapeHtml(getShipmentKey(s));
     return `
     <div class="shipment-card">
-      ${(s.type === 'travel'
-        ? `<div class="shipment-type-icon shipment-type-icon--travel">${ICON_PASSENGER_3D}</div>`
-        : `<div class="shipment-type-icon shipment-type-icon--order">${ICON_PACKAGE_3D}</div>`)}
+      <div class="shipment-type-icon shipment-type-icon--${s.type === 'travel' ? 'travel' : 'order'}">${s.type === 'travel' ? ICON_AVATAR : ICON_BOX_SMALL}</div>
       <div class="shipment-body">
         <div class="shipment-dest">${s.type === 'travel' ? escapeHtml(s.to || s.dest || '') : escapeHtml(s.dest || '')}</div>
         <span class="${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
@@ -2334,6 +2312,7 @@ initRegionSelects();
 initCtaIcons();
 loadPersistedData();
 setupShipmentsListEvents();
+document.body.classList.add('view-sender');
 </script>
 </body>
 </html>
