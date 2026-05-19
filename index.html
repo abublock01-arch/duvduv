@@ -372,32 +372,30 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .script-morph{
   position:relative;display:block;
   height:var(--script-morph-h);
-  filter:blur(.6px);
   overflow:hidden;
 }
 .script-morph-layer{
   position:absolute;left:0;right:0;top:50%;
   transform:translateY(-50%);
   text-align:center;white-space:nowrap;
-  opacity:0;filter:blur(10px);
+  opacity:0;filter:blur(8px);
   will-change:opacity,filter;
-  transition:opacity .65s cubic-bezier(.4,0,.2,1),filter .65s cubic-bezier(.4,0,.2,1);
+  transition:opacity .65s ease,filter .65s ease;
   pointer-events:none;
 }
-.script-morph-layer.is-visible{
+.script-morph-layer.is-shown{
   opacity:1;filter:blur(0);
 }
 .script-morph--region{
   display:inline-block;vertical-align:middle;min-width:100%;
 }
 @media (prefers-reduced-motion:reduce){
-  .script-morph{filter:none;height:var(--script-morph-h)}
   .script-morph-layer{
-    filter:none!important;
+    filter:blur(0)!important;
     will-change:opacity;
     transition:opacity .2s ease;
   }
-  .script-morph-layer.is-visible{filter:none!important}
+  .script-morph-layer.is-shown{filter:blur(0)!important}
 }
 .region-picker--vertical{margin:0 0 20px}
 
@@ -1412,7 +1410,7 @@ function removeDriverRadiusLayers(){
 }
 
 function scriptMorphHtml(label){
-  return `<span class="script-morph script-morph--region"><span class="script-morph-layer is-visible">${label}</span><span class="script-morph-layer"></span></span>`;
+  return `<span class="script-morph script-morph--region"><span class="script-morph-layer is-shown">${label}</span><span class="script-morph-layer"></span></span>`;
 }
 
 function buildRegionPickerTrack(track, regions){
@@ -1530,19 +1528,25 @@ function scriptMorphSwap(container, newText){
   if (layers.length < 2) return;
   const a = layers[0];
   const b = layers[1];
-  const visible = a.classList.contains('is-visible') ? a : b;
-  const hidden = visible === a ? b : a;
+  const outgoing = a.classList.contains('is-shown') ? a : b;
+  const incoming = outgoing === a ? b : a;
   const next = String(newText);
-  if (visible.textContent.trim() === next) return;
+  if (outgoing.textContent.trim() === next) return;
 
-  hidden.textContent = next;
+  incoming.textContent = next;
   if (prefersReducedMotion()) {
-    visible.classList.remove('is-visible');
-    hidden.classList.add('is-visible');
+    outgoing.classList.remove('is-shown');
+    incoming.classList.add('is-shown');
     return;
   }
-  visible.classList.remove('is-visible');
-  setTimeout(() => hidden.classList.add('is-visible'), SCRIPT_MORPH_MS);
+
+  incoming.classList.remove('is-shown');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      outgoing.classList.remove('is-shown');
+      incoming.classList.add('is-shown');
+    });
+  });
 }
 
 function ensureTravelTitleMorph(){
@@ -1550,7 +1554,7 @@ function ensureTravelTitleMorph(){
   if (!el || el.dataset.morphReady) return;
   el.innerHTML =
     `<span class="script-morph travel-dest-title-morph" aria-live="polite">` +
-    `<span class="script-morph-layer is-visible">${TRAVEL_TITLE_LATIN}</span>` +
+    `<span class="script-morph-layer is-shown">${TRAVEL_TITLE_LATIN}</span>` +
     `<span class="script-morph-layer"></span></span>`;
   el.dataset.morphReady = '1';
 }
@@ -1578,8 +1582,8 @@ function startTravelScriptToggle(){
   if (a && b) {
     a.textContent = TRAVEL_TITLE_LATIN;
     b.textContent = TRAVEL_TITLE_CYRILLIC;
-    a.classList.add('is-visible');
-    b.classList.remove('is-visible');
+    a.classList.add('is-shown');
+    b.classList.remove('is-shown');
   }
   travelScriptTimer = setInterval(() => applyTravelScript(!travelScriptLatin), SCRIPT_MORPH_INTERVAL);
 }
