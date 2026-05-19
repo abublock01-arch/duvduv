@@ -324,31 +324,36 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   font-size:22px;font-weight:900;color:#0B5CAD;
   opacity:1;transform:scale(1);letter-spacing:-.02em;
 }
-.region-picker--horizontal-drum{
-  height:64px;min-height:64px;margin:10px 0 8px;flex-shrink:0;
+.region-picker--horizontal{
+  height:196px;margin:4px 0 12px;flex-shrink:0;
   width:100%;z-index:4;position:relative;
 }
-.region-picker--horizontal-drum .region-picker-track{
-  height:64px;min-height:64px;padding:12px 0;align-items:center;
+.region-picker--horizontal .region-picker-track{
+  flex-direction:row;overflow-x:auto;overflow-y:hidden;
+  scroll-snap-type:x mandatory;height:196px;width:100%;
+  align-items:center;padding:0;
 }
-.region-picker--horizontal-drum .region-picker-item{
-  display:flex;align-items:center;justify-content:center;min-height:40px;
+.region-picker--horizontal .region-picker-spacer{
+  flex:0 0 calc(50% - 72px);min-width:48px;min-height:0;width:auto;
 }
-.region-picker--horizontal-drum .script-morph--region{
-  min-width:auto;width:auto;display:inline-block;
-}
-.region-picker--horizontal-drum .region-picker-item{
+.region-picker--horizontal .region-picker-item{
+  display:flex;align-items:center;justify-content:center;
+  padding:10px 16px;white-space:nowrap;
   transition:color .4s ease,opacity .2s ease,transform .2s ease,font-size .2s ease;
 }
-.region-picker--horizontal-drum .region-picker-item.is-center{
-  font-size:22px;font-weight:900;color:#0B5CAD;
+.region-picker--horizontal .region-picker-item.is-adjacent{
+  font-size:17px;font-weight:700;color:#6b7280;
+  opacity:.55;transform:scale(.92);
+}
+.region-picker--horizontal .region-picker-item.is-center{
+  font-size:24px;font-weight:900;color:#0B5CAD;
   opacity:1;transform:scale(1);letter-spacing:-.02em;
 }
-.region-picker--horizontal-drum .region-picker-item .script-morph--region{
-  --script-morph-h:28px;
+.region-picker--horizontal .region-picker-item .script-morph--region{
+  --script-morph-h:28px;min-width:auto;width:auto;display:inline-block;
 }
-.region-picker--horizontal-drum .region-picker-item.is-center .script-morph--region{
-  --script-morph-h:34px;
+.region-picker--horizontal .region-picker-item.is-center .script-morph--region{
+  --script-morph-h:36px;
 }
 .region-picker--vertical{
   height:196px;margin:4px 0 16px;
@@ -405,6 +410,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   position:absolute;left:0;right:0;top:50%;
   transform:translateY(-50%);
   text-align:center;white-space:nowrap;
+  color:inherit;
   opacity:0;filter:blur(8px);
   will-change:opacity,filter;
   transition:opacity .65s ease,filter .65s ease;
@@ -796,7 +802,8 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .theme-telegram .scene{background:var(--tg-bg)!important}
 .theme-telegram .sender-title{color:var(--tg-text)!important}
 .theme-telegram .region-picker{--picker-fade:var(--tg-bg)!important}
-.theme-telegram .region-picker-item.is-center{color:var(--tg-text)!important}
+.theme-telegram .region-picker--vertical .region-picker-item.is-center,
+.theme-telegram .region-picker--horizontal .region-picker-item.is-center{color:#0B5CAD!important}
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
@@ -995,7 +1002,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 
       <!-- DRIVER -->
       <div id="driverView">
-        <div class="region-picker region-picker--horizontal-drum" id="regionPicker" aria-label="Viloyat tanlash">
+        <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
           <div class="region-picker-track" id="regionPickerTrack"></div>
         </div>
 
@@ -1690,18 +1697,17 @@ function scriptMorphSwap(container, newText){
   if (layers.length < 2) return;
   const a = layers[0];
   const b = layers[1];
-  const outgoing = a.classList.contains('is-shown') ? a : b;
-  const incoming = outgoing === a ? b : a;
+  const showA = a.textContent.trim() === String(newText).trim() || !b.classList.contains('is-shown');
+  const outgoing = showA ? b : a;
+  const incoming = showA ? a : b;
   const next = String(newText);
-  if (outgoing.textContent.trim() === next) return;
-
   incoming.textContent = next;
   if (prefersReducedMotion()) {
     outgoing.classList.remove('is-shown');
     incoming.classList.add('is-shown');
     return;
   }
-
+  if (outgoing.classList.contains('is-shown') && outgoing.textContent.trim() === next) return;
   incoming.classList.remove('is-shown');
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -1808,9 +1814,9 @@ function registerMorph(el, latin, cyrillic, extraClass){
   el.dataset.morphRoot = '1';
   el.dataset.morphLatin = lat;
   el.dataset.morphCyrillic = cyr;
-  const cls = extraClass ? ` script-morph ${extraClass}` : ' script-morph';
+  const cls = extraClass ? `script-morph ${extraClass}` : 'script-morph';
   el.innerHTML =
-    `<span class="${cls.trim()}" aria-live="polite">` +
+    `<span class="${cls}" aria-live="polite">` +
     `<span class="script-morph-layer is-shown"></span>` +
     `<span class="script-morph-layer"></span></span>`;
   const layers = el.querySelectorAll('.script-morph-layer');
@@ -1842,7 +1848,20 @@ function applyMorphElement(el, useLatin){
   if (!el?.dataset.morphRoot) return;
   const morph = el.querySelector('.script-morph');
   if (!morph) return;
-  scriptMorphSwap(morph, useLatin ? el.dataset.morphLatin : el.dataset.morphCyrillic);
+  const layers = morph.querySelectorAll('.script-morph-layer');
+  if (layers.length < 2) return;
+  layers[0].classList.toggle('is-shown', useLatin);
+  layers[1].classList.toggle('is-shown', !useLatin);
+}
+
+function applyMorphToContainer(morph, useLatin, latin, cyrillic){
+  if (!morph) return;
+  const layers = morph.querySelectorAll('.script-morph-layer');
+  if (layers.length < 2) return;
+  layers[0].textContent = latin;
+  layers[1].textContent = cyrillic;
+  layers[0].classList.toggle('is-shown', useLatin);
+  layers[1].classList.toggle('is-shown', !useLatin);
 }
 
 function initMorphInContainer(root){
@@ -1915,7 +1934,7 @@ function morphPickerTrack(trackSelector, useLatin){
     const morph = btn.querySelector('.script-morph');
     const latin = btn.dataset.regionLatin || btn.dataset.region;
     const cyr = btn.dataset.regionCyrillic || latin;
-    scriptMorphSwap(morph, useLatin ? latin : cyr);
+    applyMorphToContainer(morph, useLatin, latin, cyr);
   });
 }
 
@@ -1941,7 +1960,10 @@ function applyAllScriptMorphs(useLatin){
 function refreshScriptMorphLoop(){
   applyAllScriptMorphs(scriptLatin);
   if (!scriptMorphTimer) {
-    scriptMorphTimer = setInterval(() => applyAllScriptMorphs(!scriptLatin), SCRIPT_MORPH_INTERVAL);
+    scriptMorphTimer = setInterval(() => {
+      scriptLatin = !scriptLatin;
+      applyAllScriptMorphs(scriptLatin);
+    }, SCRIPT_MORPH_INTERVAL);
   }
 }
 
