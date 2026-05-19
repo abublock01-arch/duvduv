@@ -223,8 +223,9 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .shipment-body{flex:1;min-width:0}
 .shipment-dest{
   font-size:17px;font-weight:700;color:var(--navy);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;
 }
+.shipment-date{font-size:11px;color:#9CA3AF;font-weight:500;margin-top:3px}
 .shipment-status{
   display:inline-block;font-size:12px;font-weight:600;color:var(--tg-blue);
   background:rgba(42,171,238,.12);padding:4px 11px;border-radius:100px;
@@ -767,6 +768,20 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .theme-telegram .zone-placeholder span,
 .theme-telegram .camera-fallback p{color:var(--tg-hint)!important}
 .theme-telegram .zone-placeholder svg{stroke:var(--tg-btn)!important}
+
+.toast{
+  position:fixed;left:50%;top:max(20px,env(safe-area-inset-top));
+  transform:translateX(-50%) translateY(-60px);
+  padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;
+  z-index:9999;opacity:0;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),opacity .3s;
+  white-space:nowrap;font-family:inherit;pointer-events:none;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.toast--success{background:#22c55e;color:#fff}
+.toast--error{background:#ef4444;color:#fff}
+.toast--info{background:#D35400;color:#fff}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -954,6 +969,10 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
       <div class="travel-hero-title">Yo'l olish</div>
     </div>
     <form class="send-form" id="travelForm" onsubmit="submitTravel(event)">
+      <div class="send-field">
+        <label class="send-label" for="travelFrom">Qayerdan</label>
+        <select class="send-input send-select" id="travelFrom" required></select>
+      </div>
       <div class="send-field">
         <label class="send-label" for="travelTo">Qayerga</label>
         <select class="send-input send-select" id="travelTo" required></select>
@@ -1211,6 +1230,16 @@ const UZ_REGIONS = [
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
 
+const REGION_CENTERS = {
+  'Toshkent':[69.2401,41.2991],'Samarqand':[66.9750,39.6542],
+  "Farg'ona":[71.7864,40.3864],'Andijon':[72.3438,40.7826],
+  'Namangan':[71.6725,40.9983],'Buxoro':[64.4286,39.7675],
+  'Xorazm':[60.6322,41.5227],'Surxondaryo':[67.8500,37.9349],
+  'Qashqadaryo':[65.7880,38.8530],'Sirdaryo':[68.6800,40.8420],
+  'Jizzax':[67.8540,40.1158],'Navoiy':[65.3792,40.0841],
+  "Qoraqalpog'iston":[59.6040,42.4609]
+};
+
 const ICON_PASSENGER_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="pg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9F5A"/><stop offset="100%" stop-color="#D35400"/></linearGradient><linearGradient id="pg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFB87A"/><stop offset="100%" stop-color="#E67E22"/></linearGradient></defs><ellipse cx="24" cy="42" rx="12" ry="3" fill="rgba(211,84,0,.25)"/><path d="M16 40 Q24 36 32 40 L30 44 Q24 42 18 44 Z" fill="#C0392B" opacity=".35"/><rect x="17" y="24" width="14" height="16" rx="5" fill="url(#pg2)"/><path d="M12 28 Q17 24 24 26 Q31 24 36 28 L34 34 Q24 30 14 34 Z" fill="url(#pg2)"/><circle cx="24" cy="14" r="9" fill="url(#pg1)"/><circle cx="21" cy="12" r="2" fill="#fff" opacity=".45"/><circle cx="27" cy="12" r="1.2" fill="#fff" opacity=".25"/></svg>`;
 
 const ICON_PACKAGE_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="bx1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5F6F8"/><stop offset="100%" stop-color="#C8CDD4"/></linearGradient><linearGradient id="bx2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E8EAED"/><stop offset="100%" stop-color="#A8B0BA"/></linearGradient></defs><ellipse cx="24" cy="42" rx="13" ry="3" fill="rgba(0,0,0,.12)"/><path d="M10 22 L24 14 L38 22 L38 36 L24 44 L10 36 Z" fill="url(#bx2)"/><path d="M10 22 L24 30 L38 22 L24 14 Z" fill="url(#bx1)"/><path d="M24 14 L24 30" stroke="#D35400" stroke-width="2.2" opacity=".85"/><path d="M10 22 L24 30 L38 22" stroke="#B8BFC8" stroke-width="1.2" fill="none"/></svg>`;
@@ -1233,7 +1262,7 @@ function fillRegionSelect(el, placeholder){
 }
 
 function initRegionSelects(){
-  ['sendDest','editDest','travelTo'].forEach(id => {
+  ['sendDest','editDest','travelFrom','travelTo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) fillRegionSelect(el);
   });
@@ -1323,6 +1352,9 @@ function updateRegionPickerVisuals(commit){
   if (region && commit && region !== selectedDriverRegion) {
     selectedDriverRegion = region;
     refreshOrderMarkers();
+    if (map && REGION_CENTERS[region]) {
+      map.flyTo({ center: REGION_CENTERS[region], zoom: 10, essential: true, duration: 800 });
+    }
   }
 }
 
@@ -1357,15 +1389,18 @@ function findOrderByMapId(orderId){
 function addTestOrders(){
   if (mapTestOrders.length) return;
   for (let i = 0; i < 100; i++) {
+    const dest = UZ_REGIONS[i % UZ_REGIONS.length];
+    const center = REGION_CENTERS[dest] || REGION_CENTERS['Toshkent'];
+    const [lng, lat] = center;
     mapTestOrders.push({
       id: 'test-' + i,
       type: 'order',
-      dest: UZ_REGIONS[i % UZ_REGIONS.length],
+      dest,
       note: 'Test buyurtma',
       thumbUrl: '',
       status: 'Aktiv',
-      lat: 41.2 + Math.random() * 0.2,
-      lng: 69.1 + Math.random() * 0.4,
+      lat: lat + (Math.random() - 0.5) * 0.1,
+      lng: lng + (Math.random() - 0.5) * 0.1,
       telegramUsername: '@test'
     });
   }
@@ -1516,7 +1551,7 @@ function flyToMyLocation(){
         driverLocationMarker.setLngLat([coords.longitude, coords.latitude]);
       }
     })
-    .catch(() => showToast('Lokatsiya olinmadi'));
+    .catch(() => showToast('Lokatsiya olinmadi', 'error'));
 }
 
 function getCurrentPosition(){
@@ -1740,20 +1775,37 @@ async function saveLocationPicker(){
   renderShipments();
   if (map) refreshOrderMarkers();
   closeLocationPicker();
-  showToast('📍 Lokatsiya saqlandi');
+  showToast('📍 Lokatsiya saqlandi', 'success');
 }
 
 function closeSheet(){
   document.getElementById('sheetOverlay').classList.remove('open');
   activeSheetOrder = null;
 }
-function acceptOrder(){
+async function acceptOrder(){
+  const order = activeSheetOrder;
   closeSheet();
-  const t=document.createElement('div');
-  t.style.cssText='position:fixed;top:20px;left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
-  t.textContent='✅ Buyurtma qabul qilindi!';
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),3000);
+  if (!order?.firestoreId) {
+    showToast('✅ Buyurtma qabul qilindi!', 'success');
+    return;
+  }
+  const acceptedBy = telegramUser.username || '';
+  try {
+    await updateOrderInFirestore(order.firestoreId, {
+      status: 'Qabul qilindi',
+      acceptedBy,
+      acceptedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    const local = orders.find(o => o.firestoreId === order.firestoreId);
+    if (local) {
+      local.status = 'Qabul qilindi';
+      local.acceptedBy = acceptedBy;
+    }
+    showToast('✅ Buyurtma qabul qilindi!', 'success');
+  } catch (e) {
+    console.warn('acceptOrder xatosi:', e);
+    showToast('Xatolik yuz berdi', 'error');
+  }
 }
 
 const shipments = [];
@@ -1939,14 +1991,26 @@ function syncOrderFromShipment(s){
   o.lng = s.lng;
 }
 
+function formatDate(ts) {
+  if (!ts) return '';
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const now = new Date();
+  if (d.toDateString() === now.toDateString()) return 'Bugun ' + d.toLocaleTimeString('uz',{hour:'2-digit',minute:'2-digit'});
+  return d.toLocaleDateString('uz',{day:'numeric',month:'short'});
+}
+
 function renderShipments(){
   const wrap = document.getElementById('shipmentsWrap');
   const list = document.getElementById('shipmentsList');
   if (!wrap || !list) return;
   const mine = getMyShipments();
   if (!mine.length) {
-    wrap.classList.remove('visible');
-    list.innerHTML = '';
+    wrap.classList.add('visible');
+    list.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;padding:40px 20px;text-align:center;opacity:.6">
+    <svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="#9CA3AF" stroke-width="2"><rect x="8" y="20" width="48" height="36" rx="6"/><path d="M20 20V16a12 12 0 0 1 24 0v4"/><line x1="32" y1="34" x2="32" y2="42"/><line x1="28" y1="38" x2="36" y2="38"/></svg>
+    <p style="font-size:17px;font-weight:700;color:#374151;margin:0">Hali jo'natmalar yo'q</p>
+    <span style="font-size:13px;color:#9CA3AF">Birinchi jo'natmangizni yuboring!</span>
+  </div>`;
     return;
   }
   wrap.classList.add('visible');
@@ -1957,6 +2021,7 @@ function renderShipments(){
       <div class="shipment-type-icon shipment-type-icon--${s.type === 'travel' ? 'travel' : 'order'}">${s.type === 'travel' ? ICON_AVATAR : ICON_BOX_SMALL}</div>
       <div class="shipment-body">
         <div class="shipment-dest">${s.type === 'travel' ? escapeHtml(s.to || s.dest || '') : escapeHtml(s.dest || '')}</div>
+        <div class="shipment-date">${formatDate(s.createdAt)}</div>
         <span class="${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
       </div>
       <div class="shipment-actions">
@@ -2008,7 +2073,7 @@ async function saveEditShipment(e){
   renderShipments();
   if (map) refreshOrderMarkers();
   closeEditSheet();
-  showToast('✅ Saqlandi');
+  showToast('✅ Saqlandi', 'success');
 }
 
 function removeShipmentLocal(key, type){
@@ -2159,6 +2224,27 @@ function flipCamera(){
   }
 }
 
+
+async function compressImage(file, maxSize=800, quality=0.72) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let w = img.width, h = img.height;
+      if (w > maxSize || h > maxSize) {
+        if (w > h) { h = h * maxSize / w; w = maxSize; }
+        else { w = w * maxSize / h; h = maxSize; }
+      }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      canvas.toBlob(blob => resolve(new File([blob], file.name, {type:'image/jpeg'})), 'image/jpeg', quality);
+    };
+    img.src = url;
+  });
+}
+
 function capturePhoto(){
   const video = document.getElementById('cameraVideo');
   const preview = document.getElementById('photoPreview');
@@ -2182,20 +2268,22 @@ function capturePhoto(){
   canvas.width = video.videoWidth;
   canvas.height = video.videoHeight;
   canvas.getContext('2d').drawImage(video, 0, 0);
-  canvas.toBlob(blob => {
+  canvas.toBlob(async blob => {
     if (!blob) return;
+    const raw = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    const compressed = await compressImage(raw);
     if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
-    previewObjectUrl = URL.createObjectURL(blob);
+    previewObjectUrl = URL.createObjectURL(compressed);
     preview.src = previewObjectUrl;
     preview.classList.add('visible');
     captureBtn.classList.add('captured');
     stopCamera();
     document.getElementById('zonePlaceholder').classList.add('hidden');
-    showToast('✅ Rasm olindi!');
+    showToast('✅ Rasm olindi!', 'success');
     if (window.Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.notificationOccurred('success');
     }
-    selectedPhotoFile = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
+    selectedPhotoFile = compressed;
     document.getElementById('sendThumb').src = previewObjectUrl;
     document.getElementById('sendForm').reset();
     document.getElementById('sendSheetOverlay').classList.add('open');
@@ -2225,23 +2313,24 @@ function resetUpload(){
   placeholder.classList.remove('hidden');
 }
 
-function onPhotoSelected(e){
+async function onPhotoSelected(e){
   const file = e.target.files?.[0];
   if (!file) return;
   stopCamera();
   const preview = document.getElementById('photoPreview');
   const captureBtn = document.getElementById('captureBtn');
   const placeholder = document.getElementById('zonePlaceholder');
+  const compressed = await compressImage(file);
   if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
-  previewObjectUrl = URL.createObjectURL(file);
+  previewObjectUrl = URL.createObjectURL(compressed);
   preview.src = previewObjectUrl;
   preview.classList.add('visible');
   captureBtn.classList.add('captured');
   placeholder.classList.add('hidden');
   document.getElementById('cameraFallback').hidden = true;
   document.getElementById('cameraVideo').classList.remove('active');
-  showToast('✅ Rasm yuklandi!');
-  selectedPhotoFile = file;
+  showToast('✅ Rasm yuklandi!', 'success');
+  selectedPhotoFile = compressed;
   document.getElementById('sendThumb').src = previewObjectUrl;
   document.getElementById('sendForm').reset();
   document.getElementById('sendSheetOverlay').classList.add('open');
@@ -2266,8 +2355,9 @@ function closeTravelSheet(){
 
 async function submitTravel(e){
   e.preventDefault();
+  const from = document.getElementById('travelFrom').value;
   const to = document.getElementById('travelTo').value;
-  if (!to) {
+  if (!from || !to) {
     showToast('Viloyatni tanlang');
     return;
   }
@@ -2277,6 +2367,7 @@ async function submitTravel(e){
   const travel = {
     id: Date.now(),
     type: 'travel',
+    from,
     to,
     dest: to,
     note,
@@ -2361,15 +2452,22 @@ function showAlert(msg){
     tg.showAlert(msg);
     return;
   }
-  showToast(msg);
+  const type = msg.includes('✅') ? 'success' : 'info';
+  showToast(msg, type);
 }
 
-function showToast(msg){
+function showToast(msg, type='info'){
   const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;top:max(20px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);background:#D35400;color:#fff;padding:12px 20px;border-radius:100px;font-size:14px;font-weight:700;z-index:999;box-shadow:0 8px 24px rgba(211,84,0,.4);white-space:nowrap;font-family:inherit';
+  t.className = 'toast toast--' + type;
   t.textContent = msg;
   document.body.appendChild(t);
-  setTimeout(() => t.remove(), 2500);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => t.classList.add('show'));
+  });
+  setTimeout(() => {
+    t.classList.remove('show');
+    setTimeout(() => t.remove(), 350);
+  }, 2500);
 }
 
 initFirebase();
