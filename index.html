@@ -248,23 +248,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .sheet-overlay--edit{z-index:212}
 .sheet-overlay--travel{z-index:213}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-.sheet--travel{padding-top:8px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-.travel-hero{
-  display:flex;flex-direction:column;align-items:center;
-  padding:8px 0 20px;
-}
-.travel-hero-icon{
-  width:72px;height:72px;border-radius:20px;
-  background:#d4ebfa;
-  border:1px solid rgba(42,171,238,.2);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 8px 24px rgba(42,171,238,.12);
-  margin-bottom:12px;
-}
-.travel-hero-icon svg{width:44px;height:44px}
-.travel-hero-title{
-  font-size:18px;font-weight:800;color:#111;letter-spacing:-.02em;
-}
+.sheet--travel{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 /* CTA */
 .cta-wrap{
   flex-shrink:0;width:100%;
@@ -338,6 +322,38 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .region-picker-item.is-center{
   font-size:22px;font-weight:900;color:#111;
   opacity:1;transform:scale(1);letter-spacing:-.02em;
+}
+.region-picker--vertical{
+  height:196px;margin:4px 0 16px;
+}
+.region-picker--vertical::before,
+.region-picker--vertical::after{
+  left:0;right:0;width:100%;height:52px;
+}
+.region-picker--vertical::before{
+  top:0;background:linear-gradient(to bottom,var(--picker-fade) 30%,transparent);
+}
+.region-picker--vertical::after{
+  bottom:0;top:auto;background:linear-gradient(to top,var(--picker-fade) 30%,transparent);
+}
+.region-picker--vertical .region-picker-track{
+  flex-direction:column;overflow-x:hidden;overflow-y:auto;
+  scroll-snap-type:y mandatory;height:196px;width:100%;
+}
+.region-picker--vertical .region-picker-spacer{
+  flex:0 0 calc(50% - 28px);min-height:44px;min-width:0;width:100%;
+}
+.region-picker--vertical .region-picker-item{
+  width:100%;text-align:center;padding:8px 12px;
+}
+.travel-sheet-head{text-align:center;padding:4px 0 8px}
+.travel-dest-title{
+  font-size:22px;font-weight:800;color:var(--navy);
+  letter-spacing:-.03em;line-height:1.25;margin:0;
+}
+.travel-picker-label{
+  font-size:13px;font-weight:600;color:#9ca3af;
+  text-align:center;margin:0 0 6px;
 }
 
 /* MAP */
@@ -964,19 +980,15 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 <div class="sheet-overlay sheet-overlay--travel" id="travelSheetOverlay" onclick="if(event.target===this)closeTravelSheet()">
   <div class="sheet sheet--travel" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <div class="travel-hero">
-      <div class="travel-hero-icon" id="travelHeroIcon"></div>
-      <div class="travel-hero-title">Yo'l olish</div>
-    </div>
     <form class="send-form" id="travelForm" onsubmit="submitTravel(event)">
-      <div class="send-field">
-        <label class="send-label" for="travelFrom">Qayerdan</label>
-        <select class="send-input send-select" id="travelFrom" required></select>
+      <div class="travel-sheet-head">
+        <h2 class="travel-dest-title">Qayerga borasiz?</h2>
       </div>
-      <div class="send-field">
-        <label class="send-label" for="travelTo">Qayerga</label>
-        <select class="send-input send-select" id="travelTo" required></select>
+      <p class="travel-picker-label">Viloyatni tanlang</p>
+      <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
+        <div class="region-picker-track" id="travelRegionPickerTrack"></div>
       </div>
+      <input type="hidden" id="travelTo" value="">
       <div class="send-field">
         <label class="send-label" for="travelNote">Izoh</label>
         <textarea class="send-textarea" id="travelNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
@@ -1097,6 +1109,8 @@ async function saveTravelToFirestore(travel){
       dest: travel.to || '',
       note: travel.note || '',
       status: travel.status || 'Aktiv',
+      lat: travel.lat ?? null,
+      lng: travel.lng ?? null,
       telegramId: travel.telegramId ?? null,
       telegramUsername: travel.telegramUsername || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1217,17 +1231,15 @@ const MAP_ICON_PERSON = 'map-icon-person';
 
 const MAP_MARKER_BOX_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
   <defs>
-    <linearGradient id="bxTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE082"/><stop offset="100%" stop-color="#F5A623"/></linearGradient>
-    <linearGradient id="bxSide" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F0B429"/><stop offset="100%" stop-color="#D98900"/></linearGradient>
+    <linearGradient id="bxTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FF8A65"/><stop offset="100%" stop-color="#E53935"/></linearGradient>
+    <linearGradient id="bxSide" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F4511E"/><stop offset="100%" stop-color="#C62828"/></linearGradient>
   </defs>
-  <ellipse cx="32" cy="56" rx="20" ry="4.5" fill="rgba(0,0,0,.14)"/>
-  <path d="M12 30 L32 18 L52 30 L52 48 L32 56 L12 48 Z" fill="url(#bxSide)"/>
-  <path d="M12 30 L32 40 L52 30 L32 18 Z" fill="url(#bxTop)"/>
-  <path d="M16 26 L32 34 L48 26" stroke="#fff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
-  <circle cx="41" cy="38" r="8" fill="#2AABEE"/>
-  <polygon points="41,33.5 44.5,40 37.5,40" fill="#FFD54F"/>
-  <path d="M37 44 L45 44 L45 48 L37 48 Z" fill="#2AABEE" rx="1"/>
-  <rect x="38" y="45" width="1.5" height="2.5" fill="#fff" opacity=".9"/><rect x="40.5" y="45" width="1.5" height="2.5" fill="#fff" opacity=".9"/><rect x="43" y="45" width="1.5" height="2.5" fill="#fff" opacity=".9"/>
+  <ellipse cx="32" cy="56" rx="22" ry="5" fill="rgba(0,0,0,.28)"/>
+  <path d="M11 30 L32 17 L53 30 L53 49 L32 57 L11 49 Z" fill="url(#bxSide)" stroke="#fff" stroke-width="2"/>
+  <path d="M11 30 L32 41 L53 30 L32 17 Z" fill="url(#bxTop)" stroke="#fff" stroke-width="2"/>
+  <path d="M15 25 L32 33 L49 25" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none"/>
+  <rect x="34" y="36" width="14" height="10" rx="2" fill="#fff" opacity=".95"/>
+  <rect x="36" y="40" width="2" height="4" fill="#C62828"/><rect x="39" y="40" width="2" height="4" fill="#C62828"/><rect x="42" y="40" width="2" height="4" fill="#C62828"/>
 </svg>`;
 
 const MAP_MARKER_PERSON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
@@ -1241,8 +1253,15 @@ const MAP_MARKER_PERSON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="
   <path d="M14 34 Q20 30 26 32 L24 50 Q20 48 16 50 Z" fill="url(#pg)" opacity=".95"/>
   <path d="M50 34 Q44 30 38 32 L40 50 Q44 48 48 50 Z" fill="url(#pg)" opacity=".95"/>
 </svg>`;
-let selectedDriverRegion = 'Toshkent';
+let selectedDriverRegion = 'Samarqand';
 let regionPickerBuilt = false;
+let lastDriverPickerKey = '';
+let userLocationRegion = null;
+let userCoords = null;
+let selectedTravelRegion = '';
+let travelRegionPickerBuilt = false;
+let lastTravelPickerKey = '';
+let refreshMarkersTimer = null;
 const orders = [];
 const mapTestOrders = [];
 let activeSheetOrder = null;
@@ -1283,16 +1302,43 @@ const ICON_BOX_SMALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12
 const ICON_CTA_ROUTE_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a8 8 0 0 0-8 8c0 5.2 8 14 8 14s8-8.8 8-14a8 8 0 0 0-8-8z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="#fff"/><path d="M4 14h4l2 2.5 3-5 2 2.5h5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L4 6.5v11L12 22l8-4.5v-11L12 2z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M4 6.5l8 4.5 8-4.5M12 11v11" stroke="#fff" stroke-width="1.8"/></svg>';
 
-function fillRegionSelect(el, placeholder){
-  if (!el || el.dataset.filled) return;
+function detectRegionFromCoords(lng, lat){
+  let best = null;
+  let bestDist = Infinity;
+  for (const [name, [rlng, rlat]] of Object.entries(REGION_CENTERS)) {
+    const d = (lng - rlng) ** 2 + (lat - rlat) ** 2;
+    if (d < bestDist) { bestDist = d; best = name; }
+  }
+  return best;
+}
+
+function getPickerRegions(){
+  if (!userLocationRegion) return [...UZ_REGIONS];
+  return UZ_REGIONS.filter(r => r !== userLocationRegion);
+}
+
+async function refreshUserLocationRegion(){
+  try {
+    const coords = await getCurrentPosition();
+    userCoords = { latitude: coords.latitude, longitude: coords.longitude };
+    userLocationRegion = detectRegionFromCoords(coords.longitude, coords.latitude);
+  } catch (_) {
+    userCoords = null;
+    userLocationRegion = null;
+  }
+}
+
+function fillRegionSelect(el, placeholder, regions){
+  if (!el) return;
+  const list = regions || UZ_REGIONS;
   const ph = placeholder || 'Viloyatni tanlang';
   el.innerHTML = `<option value="" disabled selected>${ph}</option>` +
-    UZ_REGIONS.map(r => `<option value="${r}">${r}</option>`).join('');
+    list.map(r => `<option value="${r}">${r}</option>`).join('');
   el.dataset.filled = '1';
 }
 
 function initRegionSelects(){
-  ['sendDest','editDest','travelFrom','travelTo'].forEach(id => {
+  ['sendDest','editDest'].forEach(id => {
     const el = document.getElementById(id);
     if (el) fillRegionSelect(el);
   });
@@ -1301,10 +1347,8 @@ function initRegionSelects(){
 function initCtaIcons(){
   const travel = document.getElementById('ctaTravelIcon');
   const order = document.getElementById('ctaOrderIcon');
-  const hero = document.getElementById('travelHeroIcon');
   if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
   if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
-  if (hero) hero.innerHTML = ICON_AVATAR;
 }
 
 function removeDriverRadiusLayers(){
@@ -1315,55 +1359,58 @@ function removeDriverRadiusLayers(){
   if (map.getSource('driver-radius')) map.removeSource('driver-radius');
 }
 
-function initRegionPicker(){
-  const track = document.getElementById('regionPickerTrack');
-  if (!track) return;
+function buildRegionPickerTrack(track, regions){
+  const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
+  track.innerHTML = spacer + regions.map(r =>
+    `<button type="button" class="region-picker-item" data-region="${r}">${r}</button>`
+  ).join('') + spacer;
+}
 
-  if (!regionPickerBuilt) {
-    regionPickerBuilt = true;
-    const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
-    track.innerHTML = spacer + UZ_REGIONS.map(r =>
-      `<button type="button" class="region-picker-item" data-region="${r}">${r}</button>`
-    ).join('') + spacer;
-
-    track.querySelectorAll('.region-picker-item').forEach(btn => {
-      btn.addEventListener('click', () => {
-        btn.scrollIntoView({ inline: 'center', behavior: 'smooth' });
-      });
-    });
-
-    let scrollTimer;
-    const onScroll = () => {
-      updateRegionPickerVisuals(false);
-      clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => updateRegionPickerVisuals(true), 120);
-    };
-    track.addEventListener('scroll', onScroll, { passive: true });
-    track.addEventListener('scrollend', () => updateRegionPickerVisuals(true), { passive: true });
-  }
-
-  const start = track.querySelector(`[data-region="${selectedDriverRegion}"]`)
-    || track.querySelector('.region-picker-item');
-  if (start) {
-    requestAnimationFrame(() => {
-      start.scrollIntoView({ inline: 'center', behavior: 'instant' });
-      updateRegionPickerVisuals(true);
-    });
+function scrollPickerToRegion(track, region, smooth){
+  const el = track.querySelector(`[data-region="${region}"]`);
+  if (!el) return;
+  const vertical = track.closest('.region-picker--vertical');
+  if (vertical) {
+    const top = el.offsetTop - (track.clientHeight / 2) + (el.offsetHeight / 2);
+    track.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
+  } else {
+    const left = el.offsetLeft - (track.clientWidth / 2) + (el.offsetWidth / 2);
+    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'instant' });
   }
 }
 
-function updateRegionPickerVisuals(commit){
-  const track = document.getElementById('regionPickerTrack');
+function bindRegionPickerScroll(track, onCommit){
+  if (track.dataset.pickerBound) return;
+  track.dataset.pickerBound = '1';
+  track.querySelectorAll('.region-picker-item').forEach(btn => {
+    btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, true));
+  });
+  let scrollTimer;
+  const onScroll = () => {
+    updateRegionPickerVisuals(false, track, onCommit);
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), 120);
+  };
+  track.addEventListener('scroll', onScroll, { passive: true });
+  track.addEventListener('scrollend', () => updateRegionPickerVisuals(true, track, onCommit), { passive: true });
+}
+
+function updateRegionPickerVisuals(commit, trackEl, onCommit){
+  const track = trackEl || document.getElementById('regionPickerTrack');
   if (!track) return;
+  const vertical = !!track.closest('.region-picker--vertical');
   const trackRect = track.getBoundingClientRect();
   const centerX = trackRect.left + trackRect.width / 2;
+  const centerY = trackRect.top + trackRect.height / 2;
   const items = [...track.querySelectorAll('.region-picker-item')];
   let closest = null;
   let closestDist = Infinity;
 
   items.forEach(item => {
     const rect = item.getBoundingClientRect();
-    const dist = Math.abs(rect.left + rect.width / 2 - centerX);
+    const dist = vertical
+      ? Math.abs(rect.top + rect.height / 2 - centerY)
+      : Math.abs(rect.left + rect.width / 2 - centerX);
     if (dist < closestDist) {
       closestDist = dist;
       closest = item;
@@ -1379,25 +1426,76 @@ function updateRegionPickerVisuals(commit){
   if (items[idx + 1]) items[idx + 1].classList.add('is-adjacent');
 
   const region = closest.dataset.region;
-  if (region && commit && region !== selectedDriverRegion) {
-    selectedDriverRegion = region;
-    refreshOrderMarkers();
+  if (region && commit && onCommit) onCommit(region);
+}
+
+function refreshOrderMarkersDebounced(){
+  clearTimeout(refreshMarkersTimer);
+  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 80);
+}
+
+function initRegionPicker(){
+  const track = document.getElementById('regionPickerTrack');
+  if (!track) return;
+  const regions = getPickerRegions();
+  if (!regions.length) return;
+  if (!regions.includes(selectedDriverRegion)) {
+    selectedDriverRegion = regions[0];
   }
+  const key = regions.join('|');
+  if (!regionPickerBuilt || lastDriverPickerKey !== key) {
+    lastDriverPickerKey = key;
+    regionPickerBuilt = true;
+    delete track.dataset.pickerBound;
+    buildRegionPickerTrack(track, regions);
+    bindRegionPickerScroll(track, region => {
+      if (region !== selectedDriverRegion) {
+        selectedDriverRegion = region;
+        refreshOrderMarkersDebounced();
+      }
+    });
+  }
+  scrollPickerToRegion(track, selectedDriverRegion, false);
+  updateRegionPickerVisuals(false, track);
+}
+
+function initTravelRegionPicker(){
+  const track = document.getElementById('travelRegionPickerTrack');
+  if (!track) return;
+  const regions = getPickerRegions();
+  if (!regions.length) return;
+  if (!selectedTravelRegion || !regions.includes(selectedTravelRegion)) {
+    selectedTravelRegion = regions[0];
+  }
+  const key = regions.join('|');
+  if (!travelRegionPickerBuilt || lastTravelPickerKey !== key) {
+    lastTravelPickerKey = key;
+    travelRegionPickerBuilt = true;
+    delete track.dataset.pickerBound;
+    buildRegionPickerTrack(track, regions);
+    bindRegionPickerScroll(track, region => {
+      selectedTravelRegion = region;
+      const hidden = document.getElementById('travelTo');
+      if (hidden) hidden.value = region;
+    });
+  }
+  scrollPickerToRegion(track, selectedTravelRegion, false);
+  updateRegionPickerVisuals(false, track, region => {
+    selectedTravelRegion = region;
+    const hidden = document.getElementById('travelTo');
+    if (hidden) hidden.value = region;
+  });
+  const hidden = document.getElementById('travelTo');
+  if (hidden) hidden.value = selectedTravelRegion;
 }
 
 function travelMapCoords(t){
+  if (t.lng != null && t.lat != null) return { lng: t.lng, lat: t.lat };
   const region = t.to || t.dest || '';
   const center = REGION_CENTERS[region];
   if (!center) return null;
   const [lng, lat] = center;
-  const key = String(t.firestoreId || t.id || region);
-  let seed = 0;
-  for (let i = 0; i < key.length; i++) seed += key.charCodeAt(i);
-  const off = 0.04;
-  return {
-    lng: lng + ((seed % 100) / 100 - 0.5) * off * 2,
-    lat: lat + (((seed * 7) % 100) / 100 - 0.5) * off * 2
-  };
+  return { lng, lat };
 }
 
 function mapItemProps(item, itemType){
@@ -1773,11 +1871,13 @@ function switchView(v){
     else {
       setTimeout(() => {
         map.resize();
-        centerMapOnDriver();
         refreshOrderMarkers();
       }, 200);
     }
-    requestAnimationFrame(() => initRegionPicker());
+    refreshUserLocationRegion().then(() => {
+      lastDriverPickerKey = '';
+      initRegionPicker();
+    });
   }
 }
 
@@ -2430,9 +2530,11 @@ function closeSendSheet(){
   document.getElementById('sendSheetOverlay').classList.remove('open');
 }
 
-function openTravelSheet(){
-  initRegionSelects();
-  document.getElementById('travelForm').reset();
+async function openTravelSheet(){
+  await refreshUserLocationRegion();
+  lastTravelPickerKey = '';
+  document.getElementById('travelNote').value = '';
+  initTravelRegionPicker();
   document.getElementById('travelSheetOverlay').classList.add('open');
 }
 
@@ -2442,12 +2544,21 @@ function closeTravelSheet(){
 
 async function submitTravel(e){
   e.preventDefault();
-  const from = document.getElementById('travelFrom').value;
-  const to = document.getElementById('travelTo').value;
-  if (!from || !to) {
+  const to = selectedTravelRegion || document.getElementById('travelTo')?.value;
+  if (!to) {
     showToast('Viloyatni tanlang');
     return;
   }
+  let coords = userCoords;
+  if (!coords) {
+    try {
+      const c = await getCurrentPosition();
+      coords = { latitude: c.latitude, longitude: c.longitude };
+      userCoords = coords;
+      userLocationRegion = detectRegionFromCoords(c.longitude, c.latitude);
+    } catch (_) {}
+  }
+  const from = userLocationRegion || (coords ? detectRegionFromCoords(coords.longitude, coords.latitude) : '');
   const note = document.getElementById('travelNote').value.trim();
   const btn = document.getElementById('travelSubmitBtn');
   btn.disabled = true;
@@ -2459,6 +2570,8 @@ async function submitTravel(e){
     dest: to,
     note,
     status: 'Aktiv',
+    lat: coords?.latitude ?? null,
+    lng: coords?.longitude ?? null,
     telegramId: telegramUser.id,
     telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
   };
@@ -2561,6 +2674,7 @@ function showToast(msg, type='info'){
 initFirebase();
 initRegionSelects();
 initCtaIcons();
+refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
 document.body.classList.add('view-sender');
