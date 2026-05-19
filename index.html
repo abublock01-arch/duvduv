@@ -344,17 +344,23 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   flex:0 0 calc(50% - 28px);min-height:44px;min-width:0;width:100%;
 }
 .region-picker--vertical .region-picker-item{
-  width:100%;text-align:center;padding:8px 12px;
+  width:100%;text-align:center;padding:10px 12px;
 }
-.travel-sheet-head{text-align:center;padding:4px 0 8px}
+.region-picker--vertical .region-picker-item.is-adjacent{
+  font-size:17px;font-weight:700;color:#6b7280;
+  opacity:.55;transform:scale(.92);
+}
+.region-picker--vertical .region-picker-item.is-center{
+  font-size:24px;font-weight:900;color:var(--tg-blue);
+  opacity:1;transform:scale(1);letter-spacing:-.02em;
+}
+.travel-sheet-head{text-align:center;padding:8px 0 12px}
 .travel-dest-title{
-  font-size:22px;font-weight:800;color:var(--navy);
-  letter-spacing:-.03em;line-height:1.25;margin:0;
+  font-size:clamp(32px,10vw,44px);font-weight:800;color:var(--navy);
+  letter-spacing:-.04em;line-height:1.1;margin:0;
+  transition:opacity .25s ease;
 }
-.travel-picker-label{
-  font-size:13px;font-weight:600;color:#9ca3af;
-  text-align:center;margin:0 0 6px;
-}
+.region-picker--vertical{margin:0 0 20px}
 
 /* MAP */
 .map-wrap{
@@ -982,17 +988,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
     <div class="sheet-drag"></div>
     <form class="send-form" id="travelForm" onsubmit="submitTravel(event)">
       <div class="travel-sheet-head">
-        <h2 class="travel-dest-title">Qayerga borasiz?</h2>
+        <h2 class="travel-dest-title" id="travelDestTitle">Qayerga borasiz?</h2>
       </div>
-      <p class="travel-picker-label">Viloyatni tanlang</p>
       <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
         <div class="region-picker-track" id="travelRegionPickerTrack"></div>
       </div>
       <input type="hidden" id="travelTo" value="">
-      <div class="send-field">
-        <label class="send-label" for="travelNote">Izoh</label>
-        <textarea class="send-textarea" id="travelNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
-      </div>
       <button type="submit" class="send-submit" id="travelSubmitBtn">Yuborish</button>
     </form>
   </div>
@@ -1279,6 +1280,18 @@ const UZ_REGIONS = [
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
 
+const REGION_CYRILLIC = {
+  'Toshkent': 'Тошкент', 'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
+  'Andijon': 'Андижон', 'Namangan': 'Наманган', 'Buxoro': 'Бухоро',
+  'Xorazm': 'Хоразм', 'Surxondaryo': 'Сурхондарё', "Qashqadaryo": 'Қашқадарё',
+  'Sirdaryo': 'Сирдарё', 'Jizzax': 'Жиззах', 'Navoiy': 'Навоий',
+  "Qoraqalpog'iston": 'Қорақалпоғистон'
+};
+const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
+const TRAVEL_TITLE_CYRILLIC = 'Қаерга борасиз?';
+let travelScriptLatin = true;
+let travelScriptTimer = null;
+
 const REGION_CENTERS = {
   'Toshkent':[69.2401,41.2991],'Samarqand':[66.9750,39.6542],
   "Farg'ona":[71.7864,40.3864],'Andijon':[72.3438,40.7826],
@@ -1361,9 +1374,11 @@ function removeDriverRadiusLayers(){
 
 function buildRegionPickerTrack(track, regions){
   const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
-  track.innerHTML = spacer + regions.map(r =>
-    `<button type="button" class="region-picker-item" data-region="${r}">${r}</button>`
-  ).join('') + spacer;
+  track.innerHTML = spacer + regions.map(r => {
+    const cyr = REGION_CYRILLIC[r] || r;
+    const label = travelScriptLatin ? r : cyr;
+    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${label}</button>`;
+  }).join('') + spacer;
 }
 
 function scrollPickerToRegion(track, region, smooth){
@@ -1459,6 +1474,30 @@ function initRegionPicker(){
   updateRegionPickerVisuals(false, track);
 }
 
+function applyTravelScript(useLatin){
+  travelScriptLatin = useLatin;
+  const title = document.getElementById('travelDestTitle');
+  if (title) title.textContent = useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC;
+  document.querySelectorAll('#travelRegionPickerTrack .region-picker-item').forEach(btn => {
+    const latin = btn.dataset.regionLatin || btn.dataset.region;
+    const cyr = btn.dataset.regionCyrillic || latin;
+    btn.textContent = useLatin ? latin : cyr;
+  });
+}
+
+function startTravelScriptToggle(){
+  stopTravelScriptToggle();
+  applyTravelScript(true);
+  travelScriptTimer = setInterval(() => applyTravelScript(!travelScriptLatin), 3000);
+}
+
+function stopTravelScriptToggle(){
+  if (travelScriptTimer) {
+    clearInterval(travelScriptTimer);
+    travelScriptTimer = null;
+  }
+}
+
 function initTravelRegionPicker(){
   const track = document.getElementById('travelRegionPickerTrack');
   if (!track) return;
@@ -1487,6 +1526,7 @@ function initTravelRegionPicker(){
   });
   const hidden = document.getElementById('travelTo');
   if (hidden) hidden.value = selectedTravelRegion;
+  applyTravelScript(travelScriptLatin);
 }
 
 function travelMapCoords(t){
@@ -2533,12 +2573,13 @@ function closeSendSheet(){
 async function openTravelSheet(){
   await refreshUserLocationRegion();
   lastTravelPickerKey = '';
-  document.getElementById('travelNote').value = '';
   initTravelRegionPicker();
   document.getElementById('travelSheetOverlay').classList.add('open');
+  startTravelScriptToggle();
 }
 
 function closeTravelSheet(){
+  stopTravelScriptToggle();
   document.getElementById('travelSheetOverlay').classList.remove('open');
 }
 
@@ -2559,7 +2600,7 @@ async function submitTravel(e){
     } catch (_) {}
   }
   const from = userLocationRegion || (coords ? detectRegionFromCoords(coords.longitude, coords.latitude) : '');
-  const note = document.getElementById('travelNote').value.trim();
+  const note = '';
   const btn = document.getElementById('travelSubmitBtn');
   btn.disabled = true;
   const travel = {
