@@ -233,6 +233,8 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .map-order-marker{
   width:48px;height:48px;position:relative;cursor:pointer;
   background:transparent;border:none;padding:0;
+  transform-origin:center center;
+  transition:transform .15s ease-out;
 }
 .map-order-marker-pulse{
   position:absolute;inset:2px;border-radius:50%;
@@ -979,53 +981,31 @@ let locationPickerMap = null;
 let locationPickerMarker = null;
 let locationPickerFirestoreId = null;
 let locationPickerPin = null;
-let driverRadiusDrawn = false;
 
 const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
 const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24"><path d="M12 21s7-4.35 7-10a7 7 0 1 0-14 0c0 5.65 7 10 7 10z"/><circle cx="12" cy="11" r="2.5"/></svg>';
 const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>';
 
-function createGeoJSONCircle(center, radiusKm, points){
-  const coords = [];
-  const kmPerDegLat = 110.574;
-  const kmPerDegLng = 111.32 * Math.cos(center[1] * Math.PI / 180);
-  for (let i = 0; i <= points; i++) {
-    const theta = (i / points) * 2 * Math.PI;
-    coords.push([
-      center[0] + (radiusKm / kmPerDegLng) * Math.cos(theta),
-      center[1] + (radiusKm / kmPerDegLat) * Math.sin(theta)
-    ]);
-  }
-  return { type: 'Feature', geometry: { type: 'Polygon', coordinates: [coords] } };
+function removeDriverRadiusLayers(){
+  if (!map) return;
+  ['driver-radius-line', 'driver-radius-fill'].forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+  });
+  if (map.getSource('driver-radius')) map.removeSource('driver-radius');
 }
 
-function updateDriverRadiusCircle(lng, lat){
-  if (!map || !map.isStyleLoaded()) return;
-  const feature = createGeoJSONCircle([lng, lat], 20, 64);
-  if (map.getSource('driver-radius')) {
-    map.getSource('driver-radius').setData(feature);
-  } else {
-    map.addSource('driver-radius', { type: 'geojson', data: feature });
-    map.addLayer({
-      id: 'driver-radius-fill',
-      type: 'fill',
-      source: 'driver-radius',
-      paint: { 'fill-color': '#D35400', 'fill-opacity': 0.12 }
-    });
-    map.addLayer({
-      id: 'driver-radius-line',
-      type: 'line',
-      source: 'driver-radius',
-      paint: { 'line-color': '#D35400', 'line-opacity': 0.35, 'line-width': 2 }
-    });
-    const layers = map.getStyle().layers;
-    const beforeId = layers.find(l => l.type === 'symbol')?.id || layers.find(l => l.type === 'line')?.id;
-    if (beforeId) {
-      map.moveLayer('driver-radius-fill', beforeId);
-      map.moveLayer('driver-radius-line', beforeId);
-    }
-  }
-  driverRadiusDrawn = true;
+function getOrderMarkerScale(zoom){
+  const z = Math.max(10, Math.min(14, zoom ?? (map ? map.getZoom() : 12)));
+  return 0.55 + ((z - 10) / 4) * 0.45;
+}
+
+function applyOrderMarkerScales(){
+  if (!map) return;
+  const scale = getOrderMarkerScale();
+  orderMapMarkers.forEach(marker => {
+    const el = marker.getElement();
+    if (el) el.style.transform = `scale(${scale})`;
+  });
 }
 
 function mapZoomIn(){
@@ -1039,7 +1019,6 @@ function flyToMyLocation(){
   getCurrentPosition()
     .then(coords => {
       map.flyTo({ center: [coords.longitude, coords.latitude], zoom: 14, essential: true });
-      updateDriverRadiusCircle(coords.longitude, coords.latitude);
       if (driverLocationMarker) {
         driverLocationMarker.setLngLat([coords.longitude, coords.latitude]);
       }
@@ -1071,9 +1050,11 @@ function initDriverMap(){
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
     center: [69.2401, 41.2991],
-    zoom: 12
+    zoom: 10
   });
+  map.on('zoom', applyOrderMarkerScales);
   map.on('load', () => {
+    removeDriverRadiusLayers();
     refreshOrderMarkers();
     centerMapOnDriver();
   });
@@ -1092,8 +1073,8 @@ function centerMapOnDriver(){
     .then(coords => {
       const lng = coords.longitude;
       const lat = coords.latitude;
-      map.flyTo({ center: [lng, lat], zoom: 13, essential: true });
-      updateDriverRadiusCircle(lng, lat);
+      removeDriverRadiusLayers();
+      map.flyTo({ center: [lng, lat], zoom: 10, essential: true });
       if (!driverLocationMarker) {
         const el = document.createElement('div');
         el.className = 'map-driver-marker';
@@ -1105,7 +1086,8 @@ function centerMapOnDriver(){
       }
     })
     .catch(() => {
-      map.flyTo({ center: [69.2401, 41.2991], zoom: 13, essential: true });
+      removeDriverRadiusLayers();
+      map.flyTo({ center: [69.2401, 41.2991], zoom: 10, essential: true });
     });
 }
 
@@ -1125,7 +1107,35 @@ function refreshOrderMarkers(){
     });
     orderMapMarkers.push(marker);
   });
+  applyOrderMarkerScales();
 }
+
+async function adminDeleteAllOrders(){
+  if (!db) {
+    console.warn('Firebase ulanmagan. initFirebase() ishga tushganini tekshiring.');
+    return;
+  }
+  const snap = await db.collection('orders').get();
+  if (snap.empty) {
+    console.log('adminDeleteAllOrders: orders collection bo\'sh');
+    return;
+  }
+  const docs = snap.docs;
+  let deleted = 0;
+  for (let i = 0; i < docs.length; i += 500) {
+    const batch = db.batch();
+    docs.slice(i, i + 500).forEach(d => batch.delete(d.ref));
+    await batch.commit();
+    deleted += Math.min(500, docs.length - i);
+  }
+  orders.length = 0;
+  shipments.length = 0;
+  persistData();
+  renderShipments();
+  if (map) refreshOrderMarkers();
+  console.log(`adminDeleteAllOrders: ${deleted} ta hujjat o'chirildi`);
+}
+window.adminDeleteAllOrders = adminDeleteAllOrders;
 
 function openOrderSheet(order){
   activeSheetOrder = order;
