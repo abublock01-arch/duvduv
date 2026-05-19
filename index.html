@@ -1131,6 +1131,7 @@ function subscribeFirestoreTravels(){
       travels.push({ id: doc.id, firestoreId: doc.id, type: 'travel', ...d });
     });
     syncShipmentsFromFirestore();
+    if (map) refreshOrderMarkers();
   }, err => console.warn('Firestore travels snapshot xatosi:', err));
 }
 
@@ -1211,6 +1212,35 @@ let orderLayersVisible = true;
 let orderClusterLayersReady = false;
 const ORDER_MAP_LAYER_IDS = ['orders-clusters', 'orders-cluster-count', 'orders-unclustered-point', 'orders-unclustered-label'];
 const MAP_ORDER_COLOR = '#2563EB';
+const MAP_ICON_BOX = 'map-icon-box';
+const MAP_ICON_PERSON = 'map-icon-person';
+
+const MAP_MARKER_BOX_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="bxTop" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFE082"/><stop offset="100%" stop-color="#F5A623"/></linearGradient>
+    <linearGradient id="bxSide" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F0B429"/><stop offset="100%" stop-color="#D98900"/></linearGradient>
+  </defs>
+  <ellipse cx="32" cy="56" rx="20" ry="4.5" fill="rgba(0,0,0,.14)"/>
+  <path d="M12 30 L32 18 L52 30 L52 48 L32 56 L12 48 Z" fill="url(#bxSide)"/>
+  <path d="M12 30 L32 40 L52 30 L32 18 Z" fill="url(#bxTop)"/>
+  <path d="M16 26 L32 34 L48 26" stroke="#fff" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+  <circle cx="41" cy="38" r="8" fill="#2AABEE"/>
+  <polygon points="41,33.5 44.5,40 37.5,40" fill="#FFD54F"/>
+  <path d="M37 44 L45 44 L45 48 L37 48 Z" fill="#2AABEE" rx="1"/>
+  <rect x="38" y="45" width="1.5" height="2.5" fill="#fff" opacity=".9"/><rect x="40.5" y="45" width="1.5" height="2.5" fill="#fff" opacity=".9"/><rect x="43" y="45" width="1.5" height="2.5" fill="#fff" opacity=".9"/>
+</svg>`;
+
+const MAP_MARKER_PERSON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7ECBF7"/><stop offset="100%" stop-color="#2AABEE"/></linearGradient>
+  </defs>
+  <ellipse cx="32" cy="56" rx="14" ry="4" fill="rgba(42,171,238,.22)"/>
+  <circle cx="32" cy="18" r="11" fill="url(#pg)"/>
+  <circle cx="28" cy="16" r="2.2" fill="#fff" opacity=".45"/>
+  <path d="M18 32 Q32 26 46 32 L44 52 Q32 48 20 52 Z" fill="url(#pg)"/>
+  <path d="M14 34 Q20 30 26 32 L24 50 Q20 48 16 50 Z" fill="url(#pg)" opacity=".95"/>
+  <path d="M50 34 Q44 30 38 32 L40 50 Q44 48 48 50 Z" fill="url(#pg)" opacity=".95"/>
+</svg>`;
 let selectedDriverRegion = 'Toshkent';
 let regionPickerBuilt = false;
 const orders = [];
@@ -1352,55 +1382,105 @@ function updateRegionPickerVisuals(commit){
   if (region && commit && region !== selectedDriverRegion) {
     selectedDriverRegion = region;
     refreshOrderMarkers();
-    if (map && REGION_CENTERS[region]) {
-      map.flyTo({ center: REGION_CENTERS[region], zoom: 10, essential: true, duration: 800 });
-    }
   }
 }
 
-function ordersToGeoJSON(){
-  const points = [...orders, ...mapTestOrders];
+function travelMapCoords(t){
+  const region = t.to || t.dest || '';
+  const center = REGION_CENTERS[region];
+  if (!center) return null;
+  const [lng, lat] = center;
+  const key = String(t.firestoreId || t.id || region);
+  let seed = 0;
+  for (let i = 0; i < key.length; i++) seed += key.charCodeAt(i);
+  const off = 0.04;
   return {
-    type: 'FeatureCollection',
-    features: points
-      .filter(o => {
-        if (o.lat == null || o.lng == null) return false;
-        if (!selectedDriverRegion) return true;
-        return (o.dest || '') === selectedDriverRegion;
-      })
-      .map(o => ({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
-        properties: {
-          orderId: String(o.firestoreId || o.id || ''),
-          dest: o.dest || '',
-          thumbUrl: o.thumbUrl || '',
-          telegramUsername: o.telegramUsername || ''
-        }
-      }))
+    lng: lng + ((seed % 100) / 100 - 0.5) * off * 2,
+    lat: lat + (((seed * 7) % 100) / 100 - 0.5) * off * 2
   };
+}
+
+function mapItemProps(item, itemType){
+  return {
+    orderId: String(item.firestoreId || item.id || ''),
+    dest: item.dest || item.to || '',
+    itemType,
+    thumbUrl: item.thumbUrl || '',
+    telegramUsername: item.telegramUsername || ''
+  };
+}
+
+function ordersToGeoJSON(){
+  const orderFeatures = [...orders, ...mapTestOrders]
+    .filter(o => {
+      if (o.lat == null || o.lng == null) return false;
+      if (!selectedDriverRegion) return true;
+      return (o.dest || '') === selectedDriverRegion;
+    })
+    .map(o => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
+      properties: mapItemProps(o, 'order')
+    }));
+
+  const travelFeatures = travels
+    .filter(t => {
+      const dest = t.to || t.dest || '';
+      if (!selectedDriverRegion) return true;
+      return dest === selectedDriverRegion;
+    })
+    .map(t => {
+      const coords = travelMapCoords(t);
+      if (!coords) return null;
+      return {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [coords.lng, coords.lat] },
+        properties: mapItemProps(t, 'travel')
+      };
+    })
+    .filter(Boolean);
+
+  return { type: 'FeatureCollection', features: [...orderFeatures, ...travelFeatures] };
 }
 
 function findOrderByMapId(orderId){
   return orders.find(o => String(o.firestoreId || o.id) === String(orderId))
-    || mapTestOrders.find(o => String(o.id) === String(orderId));
+    || mapTestOrders.find(o => String(o.id) === String(orderId))
+    || travels.find(t => String(t.firestoreId || t.id) === String(orderId));
+}
+
+function loadMapMarkerImage(map, id, svg){
+  return new Promise((resolve, reject) => {
+    if (map.hasImage(id)) { resolve(); return; }
+    const img = new Image(64, 64);
+    img.onload = () => {
+      if (!map.hasImage(id)) map.addImage(id, img, { pixelRatio: 2 });
+      resolve();
+    };
+    img.onerror = reject;
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  });
+}
+
+function loadMapMarkerImages(map){
+  return Promise.all([
+    loadMapMarkerImage(map, MAP_ICON_BOX, MAP_MARKER_BOX_SVG),
+    loadMapMarkerImage(map, MAP_ICON_PERSON, MAP_MARKER_PERSON_SVG)
+  ]);
 }
 
 function addTestOrders(){
   if (mapTestOrders.length) return;
   for (let i = 0; i < 100; i++) {
-    const dest = UZ_REGIONS[i % UZ_REGIONS.length];
-    const center = REGION_CENTERS[dest] || REGION_CENTERS['Toshkent'];
-    const [lng, lat] = center;
     mapTestOrders.push({
       id: 'test-' + i,
       type: 'order',
-      dest,
+      dest: UZ_REGIONS[i % UZ_REGIONS.length],
       note: 'Test buyurtma',
       thumbUrl: '',
       status: 'Aktiv',
-      lat: lat + (Math.random() - 0.5) * 0.1,
-      lng: lng + (Math.random() - 0.5) * 0.1,
+      lat: 41.2 + Math.random() * 0.2,
+      lng: 69.1 + Math.random() * 0.4,
       telegramUsername: '@test'
     });
   }
@@ -1445,46 +1525,53 @@ function setupOrderClusterLayers(){
     },
     paint: { 'text-color': '#ffffff' }
   });
-  map.addLayer({
-    id: 'orders-unclustered-point',
-    type: 'circle',
-    source: 'orders',
-    filter: ['!', ['has', 'point_count']],
-    paint: {
-      'circle-color': MAP_ORDER_COLOR,
-      'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 8, 14, 11, 16, 13],
-      'circle-stroke-width': 3,
-      'circle-stroke-color': '#ffffff',
-      'circle-opacity': 1
+  loadMapMarkerImages(map).then(() => {
+    if (!map.getLayer('orders-unclustered-point')) {
+      map.addLayer({
+        id: 'orders-unclustered-point',
+        type: 'symbol',
+        source: 'orders',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'icon-image': [
+            'match', ['get', 'itemType'],
+            'travel', MAP_ICON_PERSON,
+            MAP_ICON_BOX
+          ],
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.5, 12, 0.72, 16, 0.9],
+          'icon-anchor': 'bottom',
+          'icon-allow-overlap': true
+        }
+      });
+      map.addLayer({
+        id: 'orders-unclustered-label',
+        type: 'symbol',
+        source: 'orders',
+        filter: ['!', ['has', 'point_count']],
+        layout: {
+          'text-field': ['get', 'dest'],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+          'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
+          'text-offset': [0, 0.6],
+          'text-anchor': 'top',
+          'text-max-width': 12,
+          'text-allow-overlap': false
+        },
+        paint: {
+          'text-color': '#111111',
+          'text-halo-color': '#ffffff',
+          'text-halo-width': 1.5
+        }
+      });
     }
-  });
-  map.addLayer({
-    id: 'orders-unclustered-label',
-    type: 'symbol',
-    source: 'orders',
-    filter: ['!', ['has', 'point_count']],
-    layout: {
-      'text-field': ['get', 'dest'],
-      'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
-      'text-offset': [0, 1.35],
-      'text-anchor': 'top',
-      'text-max-width': 12,
-      'text-allow-overlap': false
-    },
-    paint: {
-      'text-color': '#111111',
-      'text-halo-color': '#ffffff',
-      'text-halo-width': 1.5
+    bindOrderMapEvents();
+    if (!orderLayersVisible) {
+      ORDER_MAP_LAYER_IDS.forEach(id => {
+        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
+      });
     }
-  });
-  bindOrderMapEvents();
-  if (!orderLayersVisible) {
-    ORDER_MAP_LAYER_IDS.forEach(id => {
-      if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'none');
-    });
-  }
-  orderClusterLayersReady = true;
+    orderClusterLayersReady = true;
+  }).catch(err => console.warn('Map marker icons:', err));
 }
 
 function bindOrderMapEvents(){
@@ -2381,6 +2468,7 @@ async function submitTravel(e){
   travels.unshift({ id: firestoreId || String(travel.id), firestoreId: firestoreId || null, ...travel });
   persistData();
   renderShipments();
+  if (map) refreshOrderMarkers();
   closeTravelSheet();
   btn.disabled = false;
   showAlert('✅ Yo\'l so\'rovi yuborildi!');
