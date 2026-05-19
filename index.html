@@ -152,6 +152,20 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   width:56px;height:56px;border-radius:12px;object-fit:cover;
   border:1px solid #EEE;flex-shrink:0;
 }
+.shipment-type-icon{
+  width:56px;height:56px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1px solid #EEE;
+  box-shadow:inset 0 2px 6px rgba(255,255,255,.9),0 2px 8px rgba(0,0,0,.06);
+}
+.shipment-type-icon--travel{
+  background:linear-gradient(165deg,#fff8f3 0%,#ffe8d6 55%,#ffd4b0 100%);
+}
+.shipment-type-icon--order{
+  background:linear-gradient(165deg,#f8f9fa 0%,#eceef1 55%,#dfe3e8 100%);
+}
+.shipment-type-icon svg{width:36px;height:36px}
+.shipment-status--travel{color:#D35400;background:rgba(211,84,0,.12)}
 .shipment-body{flex:1;min-width:0}
 .shipment-dest{
   font-size:16px;font-weight:700;color:#111;
@@ -187,14 +201,41 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .shipment-icon-btn--delete svg{stroke:#E74C3C;stroke-width:2.4;fill:none}
 .shipment-icon-btn:active{transform:scale(.9)}
 .sheet-overlay--edit{z-index:212}
+.sheet-overlay--travel{z-index:213}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+.sheet--travel{padding-top:8px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+.travel-hero{
+  display:flex;flex-direction:column;align-items:center;
+  padding:8px 0 20px;
+}
+.travel-hero-icon{
+  width:72px;height:72px;border-radius:20px;
+  background:linear-gradient(165deg,#fff8f3 0%,#ffe8d6 50%,#ffd4b0 100%);
+  border:1px solid rgba(211,84,0,.2);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 24px rgba(211,84,0,.15),inset 0 2px 6px rgba(255,255,255,.9);
+  margin-bottom:12px;
+}
+.travel-hero-icon svg{width:44px;height:44px}
+.travel-hero-title{
+  font-size:18px;font-weight:800;color:#111;letter-spacing:-.02em;
+}
+.edit-travel-fields{display:none}
+.edit-travel-fields.visible{display:flex;flex-direction:column;gap:20px}
+.edit-order-field.hidden{display:none}
 
 /* CTA */
 .cta-wrap{
   flex-shrink:0;width:100%;
   padding:12px 0 max(24px,env(safe-area-inset-bottom));
   background:#fff;
+  display:flex;flex-direction:column;gap:10px;
 }
+.cta-btn--travel .cta-icon{
+  background:rgba(211,84,0,.15);border-color:rgba(211,84,0,.35);
+  box-shadow:inset 0 2px 4px rgba(255,255,255,.4);
+}
+.cta-btn--travel .cta-icon svg{width:22px;height:22px;stroke:none}
 .cta-btn{
   width:100%;height:64px;
   background:linear-gradient(to bottom,#2A2A2A,#111);
@@ -366,11 +407,17 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .send-form{display:flex;flex-direction:column;gap:14px}
 .send-field{display:flex;flex-direction:column;gap:6px}
 .send-label{font-size:12px;font-weight:600;color:#888}
-.send-input,.send-textarea{
+.send-select{
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23D35400' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 4px center;
+  padding-right:28px;cursor:pointer;
+}
+.send-input,.send-textarea,.send-select{
   width:100%;padding:14px 0;border:none;border-bottom:1px solid #E8E8E8;
   background:transparent;font-size:17px;color:#111;font-family:inherit;outline:none;
 }
-.send-input:focus,.send-textarea:focus{border-bottom-color:#D35400}
+.send-input:focus,.send-textarea:focus,.send-select:focus{border-bottom-color:#D35400}
 .send-input::placeholder,.send-textarea::placeholder{color:#C4C4C4}
 .send-textarea{min-height:60px;resize:none;line-height:1.4}
 .send-submit{
@@ -611,13 +658,17 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
 .theme-telegram .send-label{color:var(--tg-hint)!important}
 .theme-telegram .sheet-field-val,
 .theme-telegram .send-input,
-.theme-telegram .send-textarea{color:var(--tg-text)!important}
+.theme-telegram .send-textarea,
+.theme-telegram .send-select{color:var(--tg-text)!important}
 .theme-telegram .send-input,
-.theme-telegram .send-textarea{border-bottom-color:var(--tg-secondary)!important}
+.theme-telegram .send-textarea,
+.theme-telegram .send-select{border-bottom-color:var(--tg-secondary)!important}
 .theme-telegram .send-input:focus,
-.theme-telegram .send-textarea:focus{border-bottom-color:var(--tg-btn)!important}
+.theme-telegram .send-textarea:focus,
+.theme-telegram .send-select:focus{border-bottom-color:var(--tg-btn)!important}
 .theme-telegram .send-input::placeholder,
 .theme-telegram .send-textarea::placeholder{color:var(--tg-hint)!important}
+.theme-telegram .send-select{color:var(--tg-text)!important;background-color:transparent!important}
 .theme-telegram .sheet-accept,
 .theme-telegram .sheet-tg-btn,
 .theme-telegram .send-submit,
@@ -709,7 +760,12 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
         </div>
 
         <div class="cta-wrap">
-          <button class="cta-btn" onclick="openOrder()">
+          <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
+            <div class="cta-shine"></div>
+            <div class="cta-icon" id="ctaTravelIcon"></div>
+            <span class="cta-text">Yo'l olish</span>
+          </button>
+          <button type="button" class="cta-btn" onclick="openOrder()">
             <div class="cta-shine"></div>
             <div class="cta-icon">
               <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -800,7 +856,7 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
     <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
       <div class="send-field">
         <label class="send-label" for="sendDest">Qayerga</label>
-        <input class="send-input" type="text" id="sendDest" placeholder="Shahar, manzil" required>
+        <select class="send-input send-select" id="sendDest" required></select>
       </div>
       <div class="send-field">
         <label class="send-label" for="sendNote">Izoh</label>
@@ -811,14 +867,50 @@ html,body{height:100%;background:#fff;font-family:-apple-system,'SF Pro Display'
   </div>
 </div>
 
+<!-- YO'L OLISH SHEET -->
+<div class="sheet-overlay sheet-overlay--travel" id="travelSheetOverlay" onclick="if(event.target===this)closeTravelSheet()">
+  <div class="sheet sheet--travel" onclick="event.stopPropagation()">
+    <div class="sheet-drag"></div>
+    <div class="travel-hero">
+      <div class="travel-hero-icon" id="travelHeroIcon"></div>
+      <div class="travel-hero-title">Yo'l olish</div>
+    </div>
+    <form class="send-form" id="travelForm" onsubmit="submitTravel(event)">
+      <div class="send-field">
+        <label class="send-label" for="travelFrom">Qayerdan</label>
+        <select class="send-input send-select" id="travelFrom" required></select>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="travelTo">Qayerga</label>
+        <select class="send-input send-select" id="travelTo" required></select>
+      </div>
+      <div class="send-field">
+        <label class="send-label" for="travelNote">Izoh</label>
+        <textarea class="send-textarea" id="travelNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
+      </div>
+      <button type="submit" class="send-submit" id="travelSubmitBtn">Yuborish</button>
+    </form>
+  </div>
+</div>
+
 <!-- TAHRIRLASH SHEET -->
 <div class="sheet-overlay sheet-overlay--edit" id="editSheetOverlay" onclick="if(event.target===this)closeEditSheet()">
   <div class="sheet sheet--edit" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
     <form class="send-form" id="editForm" onsubmit="saveEditShipment(event)">
-      <div class="send-field">
+      <div class="send-field edit-order-field" id="editOrderField">
         <label class="send-label" for="editDest">Qayerga</label>
-        <input class="send-input" type="text" id="editDest" placeholder="Shahar, manzil" required>
+        <select class="send-input send-select" id="editDest" required></select>
+      </div>
+      <div class="edit-travel-fields" id="editTravelFields">
+        <div class="send-field">
+          <label class="send-label" for="editFrom">Qayerdan</label>
+          <select class="send-input send-select" id="editFrom"></select>
+        </div>
+        <div class="send-field">
+          <label class="send-label" for="editTo">Qayerga</label>
+          <select class="send-input send-select" id="editTo"></select>
+        </div>
       </div>
       <div class="send-field">
         <label class="send-label" for="editNote">Izoh</label>
@@ -863,12 +955,14 @@ function initFirebase(){
     if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
     db = firebase.firestore();
     subscribeFirestoreOrders();
+    subscribeFirestoreTravels();
   } catch(e){ console.warn('Firebase init xatosi:', e); }
 }
 async function saveOrderToFirestore(order){
   if (!db) return null;
   try {
     const doc = {
+      type: 'order',
       dest: order.dest || '',
       note: order.note || '',
       thumbUrl: order.thumbUrl || '',
@@ -904,11 +998,57 @@ function subscribeFirestoreOrders(){
     orders.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
-      orders.push({ id: doc.id, firestoreId: doc.id, ...d });
+      orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', ...d });
     });
     syncShipmentsFromFirestore();
     if (map) refreshOrderMarkers();
   }, err => console.warn('Firestore snapshot xatosi:', err));
+}
+async function saveTravelToFirestore(travel){
+  if (!db) return null;
+  try {
+    const doc = {
+      type: 'travel',
+      from: travel.from || '',
+      to: travel.to || '',
+      dest: travel.to || '',
+      note: travel.note || '',
+      status: travel.status || 'Aktiv',
+      telegramId: travel.telegramId ?? null,
+      telegramUsername: travel.telegramUsername || '',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    const ref = await db.collection('travels').add(doc);
+    return ref.id;
+  } catch(e){
+    console.warn('Firestore travel saqlash xatosi:', e);
+    return null;
+  }
+}
+async function updateTravelInFirestore(firestoreId, fields){
+  if (!db || !firestoreId) return;
+  try {
+    const patch = { ...fields };
+    if (patch.to) patch.dest = patch.to;
+    await db.collection('travels').doc(firestoreId).update(patch);
+  } catch(e){ console.warn('Firestore travel yangilash xatosi:', e); }
+}
+async function deleteTravelFromFirestore(firestoreId){
+  if (!db || !firestoreId) return;
+  try {
+    await db.collection('travels').doc(firestoreId).delete();
+  } catch(e){ console.warn('Firestore travel o\'chirish xatosi:', e); }
+}
+function subscribeFirestoreTravels(){
+  if (!db) return;
+  db.collection('travels').orderBy('createdAt','desc').onSnapshot(snap => {
+    travels.length = 0;
+    snap.forEach(doc => {
+      const d = doc.data();
+      travels.push({ id: doc.id, firestoreId: doc.id, type: 'travel', ...d });
+    });
+    syncShipmentsFromFirestore();
+  }, err => console.warn('Firestore travels snapshot xatosi:', err));
 }
 
 const STORAGE_KEY = 'duvduv_data_v1';
@@ -992,6 +1132,37 @@ let locationPickerPin = null;
 const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 6.5-6.5z"/></svg>';
 const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.8"/></svg>';
 const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></svg>';
+
+const UZ_REGIONS = [
+  'Toshkent', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
+  'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
+];
+
+const ICON_PASSENGER_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="pg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9F5A"/><stop offset="100%" stop-color="#D35400"/></linearGradient><linearGradient id="pg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFB87A"/><stop offset="100%" stop-color="#E67E22"/></linearGradient></defs><ellipse cx="24" cy="42" rx="12" ry="3" fill="rgba(211,84,0,.25)"/><path d="M16 40 Q24 36 32 40 L30 44 Q24 42 18 44 Z" fill="#C0392B" opacity=".35"/><rect x="17" y="24" width="14" height="16" rx="5" fill="url(#pg2)"/><path d="M12 28 Q17 24 24 26 Q31 24 36 28 L34 34 Q24 30 14 34 Z" fill="url(#pg2)"/><circle cx="24" cy="14" r="9" fill="url(#pg1)"/><circle cx="21" cy="12" r="2" fill="#fff" opacity=".45"/><circle cx="27" cy="12" r="1.2" fill="#fff" opacity=".25"/></svg>`;
+
+const ICON_PACKAGE_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="bx1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#F5F6F8"/><stop offset="100%" stop-color="#C8CDD4"/></linearGradient><linearGradient id="bx2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#E8EAED"/><stop offset="100%" stop-color="#A8B0BA"/></linearGradient></defs><ellipse cx="24" cy="42" rx="13" ry="3" fill="rgba(0,0,0,.12)"/><path d="M10 22 L24 14 L38 22 L38 36 L24 44 L10 36 Z" fill="url(#bx2)"/><path d="M10 22 L24 30 L38 22 L24 14 Z" fill="url(#bx1)"/><path d="M24 14 L24 30" stroke="#D35400" stroke-width="2.2" opacity=".85"/><path d="M10 22 L24 30 L38 22" stroke="#B8BFC8" stroke-width="1.2" fill="none"/></svg>`;
+
+function fillRegionSelect(el, placeholder){
+  if (!el || el.dataset.filled) return;
+  const ph = placeholder || 'Viloyatni tanlang';
+  el.innerHTML = `<option value="" disabled selected>${ph}</option>` +
+    UZ_REGIONS.map(r => `<option value="${r}">${r}</option>`).join('');
+  el.dataset.filled = '1';
+}
+
+function initRegionSelects(){
+  ['sendDest','editDest','editFrom','editTo','travelFrom','travelTo'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) fillRegionSelect(el);
+  });
+}
+
+function initTravelIcons(){
+  const cta = document.getElementById('ctaTravelIcon');
+  const hero = document.getElementById('travelHeroIcon');
+  if (cta) cta.innerHTML = ICON_PASSENGER_3D;
+  if (hero) hero.innerHTML = ICON_PASSENGER_3D;
+}
 
 function removeDriverRadiusLayers(){
   if (!map) return;
@@ -1209,7 +1380,7 @@ function initLocationPickerMap(centerLng, centerLat){
 
 async function openLocationPicker(key){
   const s = findShipment(key);
-  if (!s) return;
+  if (!s || s.type === 'travel') return;
   locationPickerFirestoreId = key;
   locationPickerPin = null;
   if (locationPickerMarker) {
@@ -1274,6 +1445,7 @@ function acceptOrder(){
 }
 
 const shipments = [];
+const travels = [];
 let editingShipmentKey = null;
 let shipmentsListBound = false;
 let cameraStream = null;
@@ -1329,7 +1501,7 @@ function showCameraFallback(msg){
 
 function persistData(){
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shipments, orders }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shipments, orders, travels }));
   } catch (e) {
     console.warn('Saqlash xatosi:', e);
   }
@@ -1342,8 +1514,10 @@ function loadPersistedData(){
     const data = JSON.parse(raw);
     shipments.length = 0;
     orders.length = 0;
+    travels.length = 0;
     (data.shipments || []).forEach(s => shipments.push(s));
     (data.orders || []).forEach(o => orders.push(o));
+    (data.travels || []).forEach(t => travels.push(t));
     shipments.forEach(s => {
       if (!s.firestoreId) {
         const match = orders.find(o =>
@@ -1396,24 +1570,34 @@ function findShipment(key){
   return shipments.find(s => getShipmentKey(s) === String(key));
 }
 
+function mergeFirestoreShipment(item, defaultType){
+  const fsId = item.firestoreId || item.id;
+  const type = item.type || defaultType;
+  const idx = shipments.findIndex(s =>
+    (s.firestoreId && s.firestoreId === fsId) ||
+    String(s.id) === String(item.id)
+  );
+  const normalized = {
+    ...item,
+    type,
+    id: item.id || (idx >= 0 ? shipments[idx].id : Date.now()),
+    firestoreId: fsId
+  };
+  if (type === 'travel') {
+    normalized.from = item.from || '';
+    normalized.to = item.to || item.dest || '';
+    normalized.dest = normalized.to;
+  }
+  if (idx >= 0) shipments[idx] = { ...shipments[idx], ...normalized };
+  else shipments.push(normalized);
+}
+
 function syncShipmentsFromFirestore(){
   if (telegramUser.id == null) return;
-  const mine = orders.filter(o => o.telegramId === telegramUser.id);
-  mine.forEach(o => {
-    const fsId = o.firestoreId || o.id;
-    const idx = shipments.findIndex(s =>
-      (s.firestoreId && s.firestoreId === fsId) ||
-      String(s.id) === String(o.id) ||
-      (o.createdAt && s.dest === o.dest && s.phone === o.phone)
-    );
-    const item = {
-      ...o,
-      id: o.id || (idx >= 0 ? shipments[idx].id : Date.now()),
-      firestoreId: fsId
-    };
-    if (idx >= 0) shipments[idx] = { ...shipments[idx], ...item };
-    else shipments.push(item);
-  });
+  orders.filter(o => o.telegramId === telegramUser.id)
+    .forEach(o => mergeFirestoreShipment(o, 'order'));
+  travels.filter(t => t.telegramId === telegramUser.id)
+    .forEach(t => mergeFirestoreShipment(t, 'travel'));
   persistData();
   renderShipments();
 }
@@ -1461,14 +1645,16 @@ function renderShipments(){
     const key = escapeHtml(getShipmentKey(s));
     return `
     <div class="shipment-card">
-      <img class="shipment-thumb" src="${escapeHtml(s.thumbUrl)}" alt="">
+      ${(s.type === 'travel'
+        ? `<div class="shipment-type-icon shipment-type-icon--travel">${ICON_PASSENGER_3D}</div>`
+        : `<div class="shipment-type-icon shipment-type-icon--order">${ICON_PACKAGE_3D}</div>`)}
       <div class="shipment-body">
-        <div class="shipment-dest">${escapeHtml(s.dest)}</div>
-        <span class="shipment-status">${escapeHtml(s.status || 'Aktiv')}</span>
+        <div class="shipment-dest">${s.type === 'travel' ? `${escapeHtml(s.from || '')} → ${escapeHtml(s.to || s.dest || '')}` : escapeHtml(s.dest || '')}</div>
+        <span class="${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
       </div>
       <div class="shipment-actions">
         <button type="button" class="shipment-icon-btn shipment-icon-btn--edit" data-action="edit" data-id="${key}" aria-label="Tahrirlash">${SHIPMENT_ICON_EDIT}</button>
-        <button type="button" class="shipment-icon-btn shipment-icon-btn--location" data-action="location" data-id="${key}" aria-label="Lokatsiya">${SHIPMENT_ICON_PIN}</button>
+        ${s.type === 'travel' ? '' : `<button type="button" class="shipment-icon-btn shipment-icon-btn--location" data-action="location" data-id="${key}" aria-label="Lokatsiya">${SHIPMENT_ICON_PIN}</button>`}
         <button type="button" class="shipment-icon-btn shipment-icon-btn--delete" data-action="delete" data-id="${key}" aria-label="O'chirish">${SHIPMENT_ICON_TRASH}</button>
       </div>
     </div>`;
@@ -1480,7 +1666,21 @@ function editShipment(key){
   const s = findShipment(key);
   if (!s) return;
   editingShipmentKey = key;
-  document.getElementById('editDest').value = s.dest || '';
+  const orderField = document.getElementById('editOrderField');
+  const travelFields = document.getElementById('editTravelFields');
+  const editDest = document.getElementById('editDest');
+  if (s.type === 'travel') {
+    orderField.classList.add('hidden');
+    travelFields.classList.add('visible');
+    editDest.removeAttribute('required');
+    document.getElementById('editFrom').value = s.from || '';
+    document.getElementById('editTo').value = s.to || s.dest || '';
+  } else {
+    orderField.classList.remove('hidden');
+    travelFields.classList.remove('visible');
+    editDest.setAttribute('required', '');
+    editDest.value = s.dest || '';
+  }
   document.getElementById('editNote').value = s.note || '';
   document.getElementById('editSheetOverlay').classList.add('open');
 }
@@ -1488,22 +1688,39 @@ function editShipment(key){
 function closeEditSheet(){
   document.getElementById('editSheetOverlay').classList.remove('open');
   editingShipmentKey = null;
+  document.getElementById('editOrderField').classList.remove('hidden');
+  document.getElementById('editTravelFields').classList.remove('visible');
+  document.getElementById('editDest').setAttribute('required', '');
 }
 
 async function saveEditShipment(e){
   e.preventDefault();
   const s = findShipment(editingShipmentKey);
   if (!s) return;
-  const dest = document.getElementById('editDest').value.trim();
   const note = document.getElementById('editNote').value.trim();
-  if (!dest) {
-    showToast('Manzilni to\'ldiring');
-    return;
+  if (s.type === 'travel') {
+    const from = document.getElementById('editFrom').value;
+    const to = document.getElementById('editTo').value;
+    if (!from || !to) {
+      showToast('Viloyatlarni tanlang');
+      return;
+    }
+    s.from = from;
+    s.to = to;
+    s.dest = to;
+    s.note = note;
+    if (s.firestoreId) await updateTravelInFirestore(s.firestoreId, { from, to, note });
+  } else {
+    const dest = document.getElementById('editDest').value.trim();
+    if (!dest) {
+      showToast('Viloyatni tanlang');
+      return;
+    }
+    s.dest = dest;
+    s.note = note;
+    if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { dest, note });
+    syncOrderFromShipment(s);
   }
-  s.dest = dest;
-  s.note = note;
-  if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { dest, note });
-  syncOrderFromShipment(s);
   persistData();
   renderShipments();
   if (map) refreshOrderMarkers();
@@ -1511,9 +1728,14 @@ async function saveEditShipment(e){
   showToast('✅ Saqlandi');
 }
 
-function removeShipmentLocal(key){
+function removeShipmentLocal(key, type){
   const si = shipments.findIndex(s => getShipmentKey(s) === String(key));
   if (si !== -1) shipments.splice(si, 1);
+  if (type === 'travel') {
+    const ti = travels.findIndex(t => t.id === key || t.firestoreId === key || String(t.id) === key);
+    if (ti !== -1) travels.splice(ti, 1);
+    return;
+  }
   const oi = orders.findIndex(o => o.id === key || o.firestoreId === key || String(o.id) === key);
   if (oi !== -1) orders.splice(oi, 1);
 }
@@ -1521,12 +1743,15 @@ function removeShipmentLocal(key){
 async function confirmDeleteShipment(key){
   const s = findShipment(key);
   if (!s) return;
-  if (s.firestoreId) await deleteOrderFromFirestore(s.firestoreId);
-  removeShipmentLocal(key);
+  if (s.firestoreId) {
+    if (s.type === 'travel') await deleteTravelFromFirestore(s.firestoreId);
+    else await deleteOrderFromFirestore(s.firestoreId);
+  }
+  removeShipmentLocal(key, s.type);
   persistData();
   renderShipments();
   if (map) refreshOrderMarkers();
-  showAlert('Jo\'natma o\'chirildi');
+  showAlert(s.type === 'travel' ? 'Yo\'l o\'chirildi' : 'Jo\'natma o\'chirildi');
 }
 
 function deleteShipment(key){
@@ -1746,15 +1971,65 @@ function closeSendSheet(){
   document.getElementById('sendSheetOverlay').classList.remove('open');
 }
 
+function openTravelSheet(){
+  initRegionSelects();
+  document.getElementById('travelForm').reset();
+  document.getElementById('travelSheetOverlay').classList.add('open');
+}
+
+function closeTravelSheet(){
+  document.getElementById('travelSheetOverlay').classList.remove('open');
+}
+
+async function submitTravel(e){
+  e.preventDefault();
+  const from = document.getElementById('travelFrom').value;
+  const to = document.getElementById('travelTo').value;
+  if (!from || !to) {
+    showToast('Viloyatlarni tanlang');
+    return;
+  }
+  if (from === to) {
+    showToast('Turli viloyatlar tanlang');
+    return;
+  }
+  const note = document.getElementById('travelNote').value.trim();
+  const btn = document.getElementById('travelSubmitBtn');
+  btn.disabled = true;
+  const travel = {
+    id: Date.now(),
+    type: 'travel',
+    from,
+    to,
+    dest: to,
+    note,
+    status: 'Aktiv',
+    telegramId: telegramUser.id,
+    telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
+  };
+  const firestoreId = await saveTravelToFirestore(travel);
+  if (firestoreId) travel.firestoreId = firestoreId;
+  shipments.unshift(travel);
+  travels.unshift({ id: firestoreId || String(travel.id), firestoreId: firestoreId || null, ...travel });
+  persistData();
+  renderShipments();
+  closeTravelSheet();
+  btn.disabled = false;
+  showAlert('✅ Yo\'l so\'rovi yuborildi!');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+}
+
 function submitOrder(e){
   e.preventDefault();
   if (!selectedPhotoFile && !previewObjectUrl) {
     showToast('Avval rasm oling');
     return;
   }
-  const dest = document.getElementById('sendDest').value.trim();
+  const dest = document.getElementById('sendDest').value;
   if (!dest) {
-    showToast('Manzilni to\'ldiring');
+    showToast('Viloyatni tanlang');
     return;
   }
   const thumbUrl = previewObjectUrl;
@@ -1770,6 +2045,7 @@ function submitOrder(e){
     const storedThumb = await thumbToStorable(thumbUrl);
     const order = {
       id: Date.now(),
+      type: 'order',
       thumbUrl: storedThumb,
       dest,
       note,
@@ -1820,6 +2096,8 @@ function showToast(msg){
 }
 
 initFirebase();
+initRegionSelects();
+initTravelIcons();
 loadPersistedData();
 setupShipmentsListEvents();
 </script>
