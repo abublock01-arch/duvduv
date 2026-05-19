@@ -254,10 +254,10 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   flex-shrink:0;width:100%;
   padding:8px 0 max(20px,env(safe-area-inset-bottom));
   background:transparent;
-  display:flex;flex-direction:row;gap:10px;
+  display:flex;flex-direction:column;gap:12px;
 }
 .cta-btn{
-  flex:1;min-width:0;height:52px;
+  flex:none;width:100%;height:56px;
   background:var(--tg-blue);
   border:none;border-radius:14px;
   display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;
@@ -267,13 +267,13 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .cta-btn:active{transform:scale(.98);box-shadow:0 2px 8px rgba(42,171,238,.28)}
 .cta-shine{display:none}
 .cta-icon{
-  width:24px;height:24px;border-radius:0;flex-shrink:0;
+  width:32px;height:32px;border-radius:0;flex-shrink:0;
   background:transparent;border:none;
   display:flex;align-items:center;justify-content:center;
 }
-.cta-icon svg{width:20px;height:20px;display:block;flex-shrink:0}
+.cta-icon svg{width:26px;height:26px;display:block;flex-shrink:0}
 .cta-text{
-  color:#fff;font-size:13px;font-weight:600;letter-spacing:-.02em;
+  color:#fff;font-size:15px;font-weight:700;letter-spacing:-.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
@@ -322,6 +322,25 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .region-picker-item.is-center{
   font-size:22px;font-weight:900;color:#111;
   opacity:1;transform:scale(1);letter-spacing:-.02em;
+}
+.region-picker--horizontal-drum{
+  height:58px;margin:12px 0 10px;
+}
+.region-picker--horizontal-drum .region-picker-track{
+  height:58px;padding:10px 0;
+}
+.region-picker--horizontal-drum .region-picker-item{
+  transition:color .4s ease,opacity .2s ease,transform .2s ease,font-size .2s ease;
+}
+.region-picker--horizontal-drum .region-picker-item.is-center{
+  font-size:22px;font-weight:900;color:#0B5CAD;
+  opacity:1;transform:scale(1);letter-spacing:-.02em;
+}
+.region-picker--horizontal-drum .region-picker-item .script-morph--region{
+  --script-morph-h:28px;
+}
+.region-picker--horizontal-drum .region-picker-item.is-center .script-morph--region{
+  --script-morph-h:34px;
 }
 .region-picker--vertical{
   height:196px;margin:4px 0 16px;
@@ -540,12 +559,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 /* Jo'natma formasi sheet */
 .sheet-overlay--send{z-index:210}
 .sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-.send-sheet-head{text-align:center;padding:0 0 4px}
-.send-dest-label{
-  font-size:15px;font-weight:700;color:#9ca3af;margin:0;
-  letter-spacing:.02em;text-transform:uppercase;
+.send-sheet-head{text-align:center;padding:4px 0 10px}
+.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:12px}
+.script-morph--label{
+  --script-morph-h:18px;display:inline-block;text-align:left;
 }
-.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:16px}
+.script-morph--label .script-morph-layer{text-align:left}
 .send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
 .send-form{display:flex;flex-direction:column;gap:14px}
 .send-field{display:flex;flex-direction:column;gap:6px}
@@ -958,7 +977,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 
       <!-- DRIVER -->
       <div id="driverView">
-        <div class="region-picker" id="regionPicker" aria-label="Viloyat tanlash">
+        <div class="region-picker region-picker--horizontal-drum" id="regionPicker" aria-label="Viloyat tanlash">
           <div class="region-picker-track" id="regionPickerTrack"></div>
         </div>
 
@@ -1033,19 +1052,19 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 <div class="sheet-overlay sheet-overlay--send" id="sendSheetOverlay" onclick="if(event.target===this)closeSendSheet()">
   <div class="sheet sheet--send" onclick="event.stopPropagation()">
     <div class="sheet-drag"></div>
-    <div class="send-thumb-wrap">
-      <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
-    </div>
     <form class="send-form" id="sendForm" onsubmit="submitOrder(event)">
-      <div class="send-sheet-head">
-        <p class="send-dest-label">Qayerga</p>
+      <div class="travel-sheet-head send-sheet-head">
+        <h2 class="travel-dest-title" id="sendDestTitle">Qayerga</h2>
+      </div>
+      <div class="send-thumb-wrap">
+        <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
       </div>
       <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
         <div class="region-picker-track" id="sendRegionPickerTrack"></div>
       </div>
       <input type="hidden" id="sendDest" value="">
       <div class="send-field">
-        <label class="send-label" for="sendNote">Izoh</label>
+        <label class="send-label" for="sendNote" id="sendNoteLabel">Izoh</label>
         <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
       </div>
       <button type="submit" class="send-submit" id="sendSubmitBtn">Yuborish</button>
@@ -1363,8 +1382,14 @@ const REGION_CYRILLIC = {
 };
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
 const TRAVEL_TITLE_CYRILLIC = 'Қаерга борасиз?';
-let travelScriptLatin = true;
-let travelScriptTimer = null;
+const SEND_TITLE_LATIN = 'Qayerga';
+const SEND_TITLE_CYRILLIC = 'Қаерга';
+const SEND_NOTE_LABEL_LATIN = 'Izoh';
+const SEND_NOTE_LABEL_CYRILLIC = 'Изоҳ';
+const SEND_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
+const SEND_NOTE_PH_CYRILLIC = "Қўшимча (ихтиёрий)";
+let scriptLatin = true;
+let scriptMorphTimer = null;
 
 const REGION_CENTERS = {
   'Toshkent':[69.2401,41.2991],'Samarqand':[66.9750,39.6542],
@@ -1386,8 +1411,8 @@ const ICON_CTA_ORDER = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linea
 
 const ICON_AVATAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5" fill="#2AABEE"/><path d="M4 20.5c0-3.8 3.4-6.5 8-6.5s8 2.7 8 6.5" fill="#2AABEE"/></svg>';
 const ICON_BOX_SMALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" fill="#2AABEE" opacity=".9"/><path d="M3 7l9 5 9-5" stroke="#fff" stroke-width="1.2" fill="none"/><path d="M12 12v10" stroke="#1e8bc4" stroke-width="1.5"/></svg>';
-const ICON_CTA_ROUTE_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a8 8 0 0 0-8 8c0 5.2 8 14 8 14s8-8.8 8-14a8 8 0 0 0-8-8z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="#fff"/><path d="M4 14h4l2 2.5 3-5 2 2.5h5" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L4 6.5v11L12 22l8-4.5v-11L12 2z" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round"/><path d="M4 6.5l8 4.5 8-4.5M12 11v11" stroke="#fff" stroke-width="1.8"/></svg>';
+const ICON_CTA_ROUTE_WHITE = '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 3c-4.1 0-7.5 3.2-7.5 7.3 0 4.8 7.5 13.7 7.5 13.7s7.5-8.9 7.5-13.7C21.5 6.2 18.1 3 14 3z" fill="#fff"/><circle cx="14" cy="10.2" r="3.2" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="1.6"/></svg>';
+const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 10l10-6 10 6v9l-10 6L4 19V10z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 4v21M4 10l10 6 10-6" stroke="#fff" stroke-width="1.9" fill="none"/><path d="M9 7.5h10" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/></svg>';
 
 function detectRegionFromCoords(lng, lat){
   let best = null;
@@ -1459,7 +1484,7 @@ function buildRegionPickerTrack(track, regions){
   const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
   track.innerHTML = spacer + regions.map(r => {
     const cyr = REGION_CYRILLIC[r] || r;
-    const label = travelScriptLatin ? r : cyr;
+    const label = scriptLatin ? r : cyr;
     return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${scriptMorphHtml(label)}</button>`;
   }).join('') + spacer;
 }
@@ -1591,22 +1616,28 @@ function scriptMorphSwap(container, newText){
   });
 }
 
-function ensureTravelTitleMorph(){
-  const el = document.getElementById('travelDestTitle');
+function ensureTitleMorph(elId, latin){
+  const el = document.getElementById(elId);
   if (!el || el.dataset.morphReady) return;
   el.innerHTML =
     `<span class="script-morph travel-dest-title-morph" aria-live="polite">` +
-    `<span class="script-morph-layer is-shown">${TRAVEL_TITLE_LATIN}</span>` +
+    `<span class="script-morph-layer is-shown">${latin}</span>` +
     `<span class="script-morph-layer"></span></span>`;
   el.dataset.morphReady = '1';
 }
 
-function applyTravelScript(useLatin){
-  travelScriptLatin = useLatin;
-  ensureTravelTitleMorph();
-  const titleMorph = document.querySelector('#travelDestTitle .script-morph');
-  scriptMorphSwap(titleMorph, useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC);
-  document.querySelectorAll('#travelRegionPickerTrack .region-picker-item').forEach(btn => {
+function ensureSendNoteLabelMorph(){
+  const el = document.getElementById('sendNoteLabel');
+  if (!el || el.dataset.morphReady) return;
+  el.innerHTML =
+    `<span class="script-morph script-morph--label" aria-live="polite">` +
+    `<span class="script-morph-layer is-shown">${SEND_NOTE_LABEL_LATIN}</span>` +
+    `<span class="script-morph-layer"></span></span>`;
+  el.dataset.morphReady = '1';
+}
+
+function morphPickerTrack(trackSelector, useLatin){
+  document.querySelectorAll(`${trackSelector} .region-picker-item`).forEach(btn => {
     const morph = btn.querySelector('.script-morph');
     const latin = btn.dataset.regionLatin || btn.dataset.region;
     const cyr = btn.dataset.regionCyrillic || latin;
@@ -1614,26 +1645,53 @@ function applyTravelScript(useLatin){
   });
 }
 
-function startTravelScriptToggle(){
-  stopTravelScriptToggle();
-  ensureTravelTitleMorph();
-  travelScriptLatin = true;
-  const titleMorph = document.querySelector('#travelDestTitle .script-morph');
-  const a = titleMorph?.querySelector('.script-morph-layer');
-  const b = titleMorph?.querySelectorAll('.script-morph-layer')[1];
-  if (a && b) {
-    a.textContent = TRAVEL_TITLE_LATIN;
-    b.textContent = TRAVEL_TITLE_CYRILLIC;
-    a.classList.add('is-shown');
-    b.classList.remove('is-shown');
+function applyAllScriptMorphs(useLatin){
+  scriptLatin = useLatin;
+  const travelOpen = document.getElementById('travelSheetOverlay')?.classList.contains('open');
+  const sendOpen = document.getElementById('sendSheetOverlay')?.classList.contains('open');
+  const driver = document.body.classList.contains('view-driver');
+
+  if (travelOpen) {
+    ensureTitleMorph('travelDestTitle', TRAVEL_TITLE_LATIN);
+    scriptMorphSwap(
+      document.querySelector('#travelDestTitle .script-morph'),
+      useLatin ? TRAVEL_TITLE_LATIN : TRAVEL_TITLE_CYRILLIC
+    );
+    morphPickerTrack('#travelRegionPickerTrack', useLatin);
   }
-  travelScriptTimer = setInterval(() => applyTravelScript(!travelScriptLatin), SCRIPT_MORPH_INTERVAL);
+  if (sendOpen) {
+    ensureTitleMorph('sendDestTitle', SEND_TITLE_LATIN);
+    scriptMorphSwap(
+      document.querySelector('#sendDestTitle .script-morph'),
+      useLatin ? SEND_TITLE_LATIN : SEND_TITLE_CYRILLIC
+    );
+    morphPickerTrack('#sendRegionPickerTrack', useLatin);
+    ensureSendNoteLabelMorph();
+    scriptMorphSwap(
+      document.querySelector('#sendNoteLabel .script-morph'),
+      useLatin ? SEND_NOTE_LABEL_LATIN : SEND_NOTE_LABEL_CYRILLIC
+    );
+    const note = document.getElementById('sendNote');
+    if (note) note.placeholder = useLatin ? SEND_NOTE_PH_LATIN : SEND_NOTE_PH_CYRILLIC;
+  }
+  if (driver) morphPickerTrack('#regionPickerTrack', useLatin);
 }
 
-function stopTravelScriptToggle(){
-  if (travelScriptTimer) {
-    clearInterval(travelScriptTimer);
-    travelScriptTimer = null;
+function refreshScriptMorphLoop(){
+  const active =
+    document.getElementById('travelSheetOverlay')?.classList.contains('open') ||
+    document.getElementById('sendSheetOverlay')?.classList.contains('open') ||
+    document.body.classList.contains('view-driver');
+  if (!active) {
+    if (scriptMorphTimer) {
+      clearInterval(scriptMorphTimer);
+      scriptMorphTimer = null;
+    }
+    return;
+  }
+  applyAllScriptMorphs(scriptLatin);
+  if (!scriptMorphTimer) {
+    scriptMorphTimer = setInterval(() => applyAllScriptMorphs(!scriptLatin), SCRIPT_MORPH_INTERVAL);
   }
 }
 
@@ -1650,7 +1708,7 @@ function initSendRegionPicker(){
     lastSendPickerKey = key;
     sendRegionPickerBuilt = true;
     delete track.dataset.pickerBound;
-    buildRegionPickerTrackPlain(track, regions);
+    buildRegionPickerTrack(track, regions);
     bindRegionPickerScroll(track, region => {
       selectedSendRegion = region;
       const hidden = document.getElementById('sendDest');
@@ -2091,7 +2149,10 @@ function switchView(v){
     refreshUserLocationRegion().then(() => {
       lastDriverPickerKey = '';
       initRegionPicker();
+      refreshScriptMorphLoop();
     });
+  } else {
+    refreshScriptMorphLoop();
   }
 }
 
@@ -2689,6 +2750,7 @@ function capturePhoto(){
     document.getElementById('sendForm').reset();
     await prepareSendSheet();
     document.getElementById('sendSheetOverlay').classList.add('open');
+    refreshScriptMorphLoop();
   }, 'image/jpeg', 0.9);
 }
 
@@ -2737,6 +2799,7 @@ async function onPhotoSelected(e){
   document.getElementById('sendForm').reset();
   await prepareSendSheet();
   document.getElementById('sendSheetOverlay').classList.add('open');
+  refreshScriptMorphLoop();
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   }
@@ -2744,6 +2807,7 @@ async function onPhotoSelected(e){
 
 function closeSendSheet(){
   document.getElementById('sendSheetOverlay').classList.remove('open');
+  refreshScriptMorphLoop();
 }
 
 async function openTravelSheet(){
@@ -2751,12 +2815,12 @@ async function openTravelSheet(){
   lastTravelPickerKey = '';
   initTravelRegionPicker();
   document.getElementById('travelSheetOverlay').classList.add('open');
-  startTravelScriptToggle();
+  refreshScriptMorphLoop();
 }
 
 function closeTravelSheet(){
-  stopTravelScriptToggle();
   document.getElementById('travelSheetOverlay').classList.remove('open');
+  refreshScriptMorphLoop();
 }
 
 async function submitTravel(e){
