@@ -222,11 +222,15 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 }
 #driverView .region-picker--horizontal .region-picker-track{
   height:64px;padding:0;
+  scroll-padding-inline:50%;
 }
 #driverView .region-picker--horizontal::before,
 #driverView .region-picker--horizontal::after{width:44px}
+#driverView .region-picker--horizontal .region-picker-spacer{
+  flex:0 0 calc(50% - 48px);min-width:20px;
+}
 #driverView .region-picker--horizontal .region-picker-item{
-  padding:4px 10px;font-size:13px;
+  padding:2px 8px;font-size:13px;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-adjacent{
   font-size:15px;opacity:.5;
@@ -1096,7 +1100,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
         <label class="send-label" for="sendNote" id="sendNoteLabel">Izoh</label>
         <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
       </div>
-      <button type="button" class="send-submit" id="sendActionBtn" onclick="sendSheetNext()">Keyingi</button>
+      <button type="button" class="send-submit" id="sendActionBtn" onclick="onSendActionClick()">Keyingi</button>
     </form>
   </div>
 </div>
@@ -1123,7 +1127,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
       <input type="hidden" id="travelTo" value="">
       <input type="hidden" id="travelRegion" value="">
       <input type="hidden" id="travelDistrict" value="">
-      <button type="button" class="send-submit" id="travelActionBtn" onclick="travelSheetNext()">Keyingi</button>
+      <button type="button" class="send-submit" id="travelActionBtn" onclick="onTravelActionClick()">Keyingi</button>
     </form>
   </div>
 </div>
@@ -1576,6 +1580,15 @@ function buildRegionPickerTrack(track, regions){
   }).join('') + spacer;
 }
 
+function syncHorizontalPickerSpacers(track){
+  if (!track || track.closest('.region-picker--vertical')) return;
+  const half = Math.max(20, Math.floor((track.clientWidth || 0) / 2));
+  track.querySelectorAll('.region-picker-spacer').forEach(sp => {
+    sp.style.flex = `0 0 ${half}px`;
+    sp.style.minWidth = `${half}px`;
+  });
+}
+
 function scrollPickerToRegion(track, region, smooth){
   const el = track.querySelector(`[data-region="${region}"]`);
   if (!el) return;
@@ -1584,6 +1597,7 @@ function scrollPickerToRegion(track, region, smooth){
     const top = el.offsetTop - (track.clientHeight / 2) + (el.offsetHeight / 2);
     track.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
   } else {
+    syncHorizontalPickerSpacers(track);
     const left = el.offsetLeft - (track.clientWidth / 2) + (el.offsetWidth / 2);
     track.scrollTo({ left, behavior: smooth ? 'smooth' : 'instant' });
   }
@@ -1597,6 +1611,7 @@ function bindRegionPickerScroll(track, onCommit){
   });
   let scrollTimer;
   const onScroll = () => {
+    syncHorizontalPickerSpacers(track);
     updateRegionPickerVisuals(false, track, onCommit);
     clearTimeout(scrollTimer);
     scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), 120);
@@ -1666,14 +1681,18 @@ function ensureDriverRegionPicker(){
       }
     });
   }
-  scrollPickerToRegion(track, selectedDriverRegion, false);
-  updateRegionPickerVisuals(true, track, region => {
-    if (region && region !== selectedDriverRegion) {
-      selectedDriverRegion = region;
-      refreshOrderMarkersDebounced();
-    }
-  });
   morphPickerTrack('#regionPickerTrack', scriptLatin);
+  syncHorizontalPickerSpacers(track);
+  requestAnimationFrame(() => {
+    scrollPickerToRegion(track, selectedDriverRegion, false);
+    updateRegionPickerVisuals(true, track, region => {
+      if (region && region !== selectedDriverRegion) {
+        selectedDriverRegion = region;
+        refreshOrderMarkersDebounced();
+      }
+    });
+    syncHorizontalPickerSpacers(track);
+  });
 }
 
 function initRegionPicker(){
@@ -1999,17 +2018,17 @@ function initTravelRegionPicker(){
     buildRegionPickerTrack(track, regions);
     bindRegionPickerScroll(track, region => {
       selectedTravelRegion = region;
-      const hidden = document.getElementById('travelTo');
+      const hidden = document.getElementById('travelRegion');
       if (hidden) hidden.value = region;
     });
   }
   scrollPickerToRegion(track, selectedTravelRegion, false);
   updateRegionPickerVisuals(false, track, region => {
     selectedTravelRegion = region;
-    const hidden = document.getElementById('travelTo');
+    const hidden = document.getElementById('travelRegion');
     if (hidden) hidden.value = region;
   });
-  const hidden = document.getElementById('travelTo');
+  const hidden = document.getElementById('travelRegion');
   if (hidden) hidden.value = selectedTravelRegion;
 }
 
@@ -2085,7 +2104,7 @@ function resetSendSheetSteps(){
   if (n) n.hidden = true;
   if (btn) {
     btn.type = 'button';
-    btn.setAttribute('onclick', 'sendSheetNext()');
+    btn.setAttribute('onclick', 'onSendActionClick()');
     setI18nText(btn, 'Keyingi');
   }
   ['sendRegion', 'sendDistrict', 'sendDest'].forEach(id => {
@@ -2106,7 +2125,7 @@ function resetTravelSheetSteps(){
   if (d) d.hidden = true;
   if (btn) {
     btn.type = 'button';
-    btn.setAttribute('onclick', 'travelSheetNext()');
+    btn.setAttribute('onclick', 'onTravelActionClick()');
     setI18nText(btn, 'Keyingi');
   }
   ['travelRegion', 'travelDistrict', 'travelTo'].forEach(id => {
@@ -2130,19 +2149,22 @@ function sendSheetNext(){
   if (hint) setI18nText(hint, region + ' — tuman tanlang');
   initSendDistrictPicker();
   const btn = document.getElementById('sendActionBtn');
-  btn.type = 'submit';
-  btn.removeAttribute('onclick');
+  btn.type = 'button';
+  btn.setAttribute('onclick', 'onSendActionClick()');
   setI18nText(btn, 'Yuborish');
   refreshScriptMorphLoop();
 }
 
 function travelSheetNext(){
-  const region = selectedTravelRegion || document.getElementById('travelTo')?.value;
+  const region = selectedTravelRegion || document.getElementById('travelRegion')?.value;
   if (!region) {
     showToast('Viloyatni tanlang');
     return;
   }
   travelSheetStep = 2;
+  selectedTravelDistrict = '';
+  const travelDistEl = document.getElementById('travelDistrict');
+  if (travelDistEl) travelDistEl.value = '';
   document.getElementById('travelStepRegion').hidden = true;
   document.getElementById('travelStepDistrict').hidden = false;
   document.getElementById('travelRegion').value = region;
@@ -2150,28 +2172,30 @@ function travelSheetNext(){
   if (hint) setI18nText(hint, region + ' — tuman tanlang');
   initTravelDistrictPicker();
   const btn = document.getElementById('travelActionBtn');
-  btn.type = 'submit';
-  btn.removeAttribute('onclick');
+  btn.type = 'button';
+  btn.setAttribute('onclick', 'onTravelActionClick()');
   setI18nText(btn, 'Yuborish');
   refreshScriptMorphLoop();
 }
 
+function onSendActionClick(){
+  if (sendSheetStep === 1) sendSheetNext();
+  else submitOrder({ preventDefault(){ } });
+}
+
+function onTravelActionClick(){
+  if (travelSheetStep === 1) travelSheetNext();
+  else submitTravel({ preventDefault(){ } });
+}
+
 function onSendFormSubmit(e){
   e.preventDefault();
-  if (sendSheetStep === 1) {
-    sendSheetNext();
-    return;
-  }
-  submitOrder(e);
+  onSendActionClick();
 }
 
 function onTravelFormSubmit(e){
   e.preventDefault();
-  if (travelSheetStep === 1) {
-    travelSheetNext();
-    return;
-  }
-  submitTravel(e);
+  onTravelActionClick();
 }
 
 function travelMapCoords(t){
