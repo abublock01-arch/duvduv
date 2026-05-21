@@ -402,7 +402,10 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   --script-morph-h:52px;width:100%;max-width:100%;
 }
 .script-morph{
-  position:relative;display:block;
+  --script-morph-h:1.25em;
+  position:relative;display:inline-block;
+  vertical-align:middle;
+  min-height:var(--script-morph-h);
   height:var(--script-morph-h);
   overflow:hidden;
 }
@@ -1807,21 +1810,29 @@ function latinToCyrillic(text){
   return out;
 }
 
-function registerMorph(el, latin, cyrillic, extraClass){
-  if (!el || el.dataset.morphRoot) return;
+function initI18nEl(el, latin, cyrillic){
+  if (!el) return;
   const lat = latin ?? el.textContent.trim();
   const cyr = cyrillic ?? latinToCyrillic(lat);
-  el.dataset.morphRoot = '1';
-  el.dataset.morphLatin = lat;
-  el.dataset.morphCyrillic = cyr;
-  const cls = extraClass ? `script-morph ${extraClass}` : 'script-morph';
-  el.innerHTML =
-    `<span class="${cls}" aria-live="polite">` +
-    `<span class="script-morph-layer is-shown"></span>` +
-    `<span class="script-morph-layer"></span></span>`;
-  const layers = el.querySelectorAll('.script-morph-layer');
-  layers[0].textContent = lat;
-  layers[1].textContent = cyr;
+  el.dataset.i18nLatin = lat;
+  el.dataset.i18nCyrillic = cyr;
+  el.textContent = lat;
+}
+
+function applyI18nEl(el, useLatin){
+  if (!el?.dataset.i18nLatin) return;
+  el.textContent = useLatin ? el.dataset.i18nLatin : el.dataset.i18nCyrillic;
+}
+
+function setI18nText(el, latin, cyrillic){
+  if (!el) return;
+  const cyr = cyrillic ?? REGION_CYRILLIC[latin] ?? latinToCyrillic(latin);
+  if (!el.dataset.i18nLatin) initI18nEl(el, latin, cyr);
+  else {
+    el.dataset.i18nLatin = latin;
+    el.dataset.i18nCyrillic = cyr;
+    applyI18nEl(el, scriptLatin);
+  }
 }
 
 function registerMorphAttr(el, attr, latin, cyrillic){
@@ -1844,16 +1855,6 @@ function applyMorphAttr(el, useLatin){
   } else el.setAttribute(attr, val);
 }
 
-function applyMorphElement(el, useLatin){
-  if (!el?.dataset.morphRoot) return;
-  const morph = el.querySelector('.script-morph');
-  if (!morph) return;
-  const layers = morph.querySelectorAll('.script-morph-layer');
-  if (layers.length < 2) return;
-  layers[0].classList.toggle('is-shown', useLatin);
-  layers[1].classList.toggle('is-shown', !useLatin);
-}
-
 function applyMorphToContainer(morph, useLatin, latin, cyrillic){
   if (!morph) return;
   const layers = morph.querySelectorAll('.script-morph-layer');
@@ -1867,7 +1868,7 @@ function applyMorphToContainer(morph, useLatin, latin, cyrillic){
 function initMorphInContainer(root){
   if (!root) return;
   root.querySelectorAll('.morph-auto').forEach(el => {
-    if (!el.dataset.morphRoot) registerMorph(el);
+    if (!el.dataset.i18nLatin) initI18nEl(el);
   });
   root.querySelectorAll('[aria-label]').forEach(el => {
     if (!el.dataset.morphAttr) registerMorphAttr(el, 'aria-label');
@@ -1876,9 +1877,9 @@ function initMorphInContainer(root){
 
 function initAllMorphTexts(){
   MORPH_UI_ENTRIES.forEach(entry => {
-    const [sel, latin, cyrillic, extra] = entry;
+    const [sel, latin, cyrillic] = entry;
     const el = document.querySelector(sel);
-    if (el) registerMorph(el, latin, cyrillic, extra);
+    if (el) initI18nEl(el, latin, cyrillic);
   });
 
   registerMorphAttr(document.getElementById('sendNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
@@ -1918,17 +1919,6 @@ function morphSelectOptions(select){
   });
 }
 
-function setMorphText(el, latin, cyrillic){
-  if (!el) return;
-  const cyr = cyrillic ?? REGION_CYRILLIC[latin] ?? latinToCyrillic(latin);
-  if (!el.dataset.morphRoot) registerMorph(el, latin, cyr);
-  else {
-    el.dataset.morphLatin = latin;
-    el.dataset.morphCyrillic = cyr;
-    applyMorphElement(el, scriptLatin);
-  }
-}
-
 function morphPickerTrack(trackSelector, useLatin){
   document.querySelectorAll(`${trackSelector} .region-picker-item`).forEach(btn => {
     const morph = btn.querySelector('.script-morph');
@@ -1941,7 +1931,7 @@ function morphPickerTrack(trackSelector, useLatin){
 function applyAllScriptMorphs(useLatin){
   scriptLatin = useLatin;
 
-  document.querySelectorAll('[data-morph-root]').forEach(el => applyMorphElement(el, useLatin));
+  document.querySelectorAll('[data-i18n-latin]').forEach(el => applyI18nEl(el, useLatin));
   document.querySelectorAll('[data-morph-attr]').forEach(el => applyMorphAttr(el, useLatin));
 
   document.querySelectorAll('select option[data-morph-latin]').forEach(opt => {
@@ -1953,8 +1943,6 @@ function applyAllScriptMorphs(useLatin){
   morphPickerTrack('#travelDistrictPickerTrack', useLatin);
   morphPickerTrack('#sendDistrictPickerTrack', useLatin);
   morphPickerTrack('#regionPickerTrack', useLatin);
-
-  document.querySelectorAll('.toast.show [data-morph-root]').forEach(el => applyMorphElement(el, useLatin));
 }
 
 function refreshScriptMorphLoop(){
@@ -2107,7 +2095,7 @@ function resetSendSheetSteps(){
   if (btn) {
     btn.type = 'button';
     btn.setAttribute('onclick', 'sendSheetNext()');
-    setMorphText(btn, 'Keyingi');
+    setI18nText(btn, 'Keyingi');
   }
   ['sendRegion', 'sendDistrict', 'sendDest'].forEach(id => {
     const el = document.getElementById(id);
@@ -2128,7 +2116,7 @@ function resetTravelSheetSteps(){
   if (btn) {
     btn.type = 'button';
     btn.setAttribute('onclick', 'travelSheetNext()');
-    setMorphText(btn, 'Keyingi');
+    setI18nText(btn, 'Keyingi');
   }
   ['travelRegion', 'travelDistrict', 'travelTo'].forEach(id => {
     const el = document.getElementById(id);
@@ -2148,12 +2136,12 @@ function sendSheetNext(){
   document.getElementById('sendNoteField').hidden = false;
   document.getElementById('sendRegion').value = region;
   const hint = document.getElementById('sendDistrictHint');
-  if (hint) setMorphText(hint, region + ' — tuman tanlang');
+  if (hint) setI18nText(hint, region + ' — tuman tanlang');
   initSendDistrictPicker();
   const btn = document.getElementById('sendActionBtn');
   btn.type = 'submit';
   btn.removeAttribute('onclick');
-  setMorphText(btn, 'Yuborish');
+  setI18nText(btn, 'Yuborish');
   refreshScriptMorphLoop();
 }
 
@@ -2168,12 +2156,12 @@ function travelSheetNext(){
   document.getElementById('travelStepDistrict').hidden = false;
   document.getElementById('travelRegion').value = region;
   const hint = document.getElementById('travelDistrictHint');
-  if (hint) setMorphText(hint, region + ' — tuman tanlang');
+  if (hint) setI18nText(hint, region + ' — tuman tanlang');
   initTravelDistrictPicker();
   const btn = document.getElementById('travelActionBtn');
   btn.type = 'submit';
   btn.removeAttribute('onclick');
-  setMorphText(btn, 'Yuborish');
+  setI18nText(btn, 'Yuborish');
   refreshScriptMorphLoop();
 }
 
@@ -2547,7 +2535,7 @@ window.adminDeleteAllOrders = adminDeleteAllOrders;
 function openOrderSheet(order){
   activeSheetOrder = order;
   document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
-  setMorphText(document.getElementById('sheetOrderDest'), order.dest || '');
+  setI18nText(document.getElementById('sheetOrderDest'), order.dest || '');
   const tgBtn = document.getElementById('sheetTelegramBtn');
   if (tgBtn) tgBtn.disabled = !order.telegramUsername || order.telegramUsername === '@';
   document.getElementById('sheetOverlay').classList.add('open');
@@ -2759,7 +2747,7 @@ function showCameraFallback(msg){
   fallback.hidden = false;
   if (msg) {
     const p = fallback.querySelector('p');
-    if (p) setMorphText(p, msg);
+    if (p) setI18nText(p, msg);
   }
 }
 
@@ -3066,7 +3054,7 @@ async function startCamera(){
   stopCamera();
   fallback.hidden = true;
   placeholder.classList.remove('hidden');
-  if (placeholderText) setMorphText(placeholderText, 'Kamera yuklanmoqda…');
+  if (placeholderText) setI18nText(placeholderText, 'Kamera yuklanmoqda…');
 
   if (!navigator.mediaDevices?.getUserMedia) {
     showCameraFallback('Kamera qo\'llab-quvvatlanmaydi — galereyadan tanlang');
@@ -3405,8 +3393,8 @@ function showToast(msg, type='info'){
   const clean = String(msg).replace(/^✅\s*/, '');
   const t = document.createElement('div');
   t.className = 'toast toast--' + type;
-  registerMorph(t, clean);
-  applyMorphElement(t, scriptLatin);
+  initI18nEl(t, clean);
+  applyI18nEl(t, scriptLatin);
   document.body.appendChild(t);
   requestAnimationFrame(() => {
     requestAnimationFrame(() => t.classList.add('show'));
