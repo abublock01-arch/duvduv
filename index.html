@@ -34,7 +34,7 @@ html,body{
 }
 .header-bar{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:12px;min-height:40px;gap:8px;
+  margin-bottom:8px;min-height:40px;gap:8px;
 }
 .header-close{
   width:40px;height:40px;border:none;background:transparent;
@@ -61,6 +61,9 @@ html,body{
 .logo-dot{display:none}
 
 /* TOGGLE */
+.header > .toggle{
+  margin-bottom:0;
+}
 .toggle{
   background:#fff;border-radius:20px;padding:6px;display:flex;gap:0;
   box-shadow:0 1px 3px rgba(15,23,42,.04);
@@ -245,7 +248,7 @@ html,body{
   padding:0 12px;
 }
 #driverView .driver-picker-zone{
-  order:2;flex:0 0 auto;width:100%;min-height:0;
+  order:2;flex:0 0 auto;width:100%;min-height:0;margin-top:auto;
 }
 #driverView .region-picker{width:100%;margin:0;--picker-fade:rgba(255,255,255,.92)}
 #driverView .region-picker--horizontal{
@@ -806,8 +809,7 @@ html,body{
 .theme-telegram .header-eye svg{stroke:var(--tg-text)!important}
 .theme-telegram .logo-sep{color:#FF9500!important}
 .theme-telegram .region-picker{--picker-fade:var(--tg-bg)!important}
-.theme-telegram .region-picker--vertical .region-picker-item.is-center,
-.theme-telegram .region-picker--horizontal .region-picker-item.is-center{color:#0B5CAD!important}
+.theme-telegram .region-picker--vertical .region-picker-item.is-center{color:#0B5CAD!important}
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
@@ -3767,6 +3769,7 @@ loadPersistedData();
 setupShipmentsListEvents();
 initTelegramUser();
 restoreUserPrefs();
+renderShipments();
 applySavedUserRole();
 </script>
 
