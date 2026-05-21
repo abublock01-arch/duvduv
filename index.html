@@ -1847,7 +1847,7 @@ const UI_PHRASE_CYRILLIC = {
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
   'Tuman tanlang': 'Туман танланг',
-  'Rasm olish tugmasini bosing': 'Расм олиш тугмасини босинг'
+  'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган'
 };
 
 const LATIN_CYR_CHAR = {
@@ -2626,10 +2626,6 @@ function getGeolocationPermissionState(){
   return queryPermissionState('geolocation');
 }
 
-function getCameraPermissionState(){
-  return queryPermissionState('camera');
-}
-
 function flyToDefaultMapCenter(){
   if (!map) return;
   removeDriverRadiusLayers();
@@ -2902,6 +2898,7 @@ let facingMode = 'environment';
 let previewObjectUrl = null;
 let selectedPhotoFile = null;
 let cameraSession = 0;
+let cameraPermWatcher = null;
 
 function getUserMediaWithTimeout(constraints, ms){
   return new Promise((resolve, reject) => {
@@ -2946,18 +2943,6 @@ function showCameraFallback(msg){
     const p = fallback.querySelector('p');
     if (p) setI18nText(p, msg);
   }
-}
-
-function showCameraPromptPlaceholder(){
-  const fallback = document.getElementById('cameraFallback');
-  const placeholder = document.getElementById('zonePlaceholder');
-  const placeholderText = document.getElementById('zonePlaceholderText');
-  const video = document.getElementById('cameraVideo');
-  stopCamera();
-  video.classList.remove('active');
-  fallback.hidden = true;
-  placeholder.classList.remove('hidden');
-  if (placeholderText) setI18nText(placeholderText, 'Rasm olish tugmasini bosing');
 }
 
 function persistData(){
@@ -3231,17 +3216,43 @@ function deleteShipment(key){
   if (confirm('O\'chirilsinmi?')) run();
 }
 
-function openOrder(){
+async function openOrder(){
   const overlay = document.getElementById('uploadOverlay');
   overlay.classList.remove('closing');
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
-  startCamera();
+
+  if (cameraPermWatcher) {
+    cameraPermWatcher.onchange = null;
+    cameraPermWatcher = null;
+  }
+
+  try {
+    const perm = await navigator.permissions.query({ name: 'camera' });
+    cameraPermWatcher = perm;
+    if (perm.state === 'granted') {
+      startCamera();
+    } else if (perm.state === 'prompt') {
+      startCamera();
+    } else {
+      showCameraFallback('Kameraga ruxsat berilmagan');
+    }
+    perm.onchange = () => {
+      if (perm.state === 'granted') startCamera();
+      else if (perm.state === 'denied') showCameraFallback('Kameraga ruxsat berilmagan');
+    };
+  } catch (_) {
+    startCamera();
+  }
 }
 
 function closeUpload(){
   const overlay = document.getElementById('uploadOverlay');
   if (!overlay.classList.contains('open')) return;
+  if (cameraPermWatcher) {
+    cameraPermWatcher.onchange = null;
+    cameraPermWatcher = null;
+  }
   cameraSession++;
   overlay.classList.remove('open');
   overlay.classList.add('closing');
@@ -3253,8 +3264,7 @@ function closeUpload(){
   }, 550);
 }
 
-async function startCamera(opts = {}){
-  const userGesture = !!opts.userGesture;
+async function startCamera(){
   const video = document.getElementById('cameraVideo');
   const fallback = document.getElementById('cameraFallback');
   const placeholder = document.getElementById('zonePlaceholder');
@@ -3268,20 +3278,6 @@ async function startCamera(opts = {}){
 
   if (!navigator.mediaDevices?.getUserMedia) {
     showCameraFallback('Kamera qo\'llab-quvvatlanmaydi — galereyadan tanlang');
-    return;
-  }
-
-  const camPerm = await getCameraPermissionState();
-  if (camPerm === 'denied') {
-    showCameraFallback('Kameraga ruxsat bering yoki galereyadan tanlang');
-    return;
-  }
-  if (camPerm === 'prompt' && !userGesture) {
-    showCameraPromptPlaceholder();
-    return;
-  }
-  if (camPerm === null && !userGesture) {
-    showCameraPromptPlaceholder();
     return;
   }
 
@@ -3340,7 +3336,7 @@ function stopCamera(){
 function flipCamera(){
   facingMode = facingMode === 'environment' ? 'user' : 'environment';
   if (document.getElementById('uploadOverlay').classList.contains('open')) {
-    startCamera({ userGesture: true });
+    startCamera();
   }
 }
 
@@ -3375,12 +3371,12 @@ async function capturePhoto(){
     preview.src = '';
     preview.classList.remove('visible');
     captureBtn.classList.remove('captured');
-    startCamera({ userGesture: true });
+    startCamera();
     return;
   }
 
   if (!cameraStream || !video.videoWidth) {
-    await startCamera({ userGesture: true });
+    await startCamera();
     if (!cameraStream || !video.videoWidth) return;
   }
 
