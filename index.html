@@ -24,12 +24,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 
 /* HEADER */
 .header{
-  padding:max(10px,env(safe-area-inset-top)) 20px 14px;
+  padding:max(12px,env(safe-area-inset-top)) 20px 8px;
   background:var(--app-bg);z-index:20;position:relative;flex-shrink:0;
 }
 .header-bar{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:16px;min-height:40px;
+  margin-bottom:28px;min-height:40px;gap:8px;
 }
 .header-close{
   width:40px;height:40px;border:none;background:transparent;
@@ -37,10 +37,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   display:flex;align-items:center;justify-content:center;
   font-family:inherit;padding:0;flex-shrink:0;
 }
-.logo-text{
-  font-size:22px;font-weight:800;color:var(--navy);
-  letter-spacing:-.03em;text-transform:lowercase;
+.logo-brand{
+  flex:1;text-align:center;font-size:26px;font-weight:900;color:#0f172a;
+  letter-spacing:-.04em;line-height:1;margin:0;
 }
+.logo-brand .logo-sep{color:#94a3b8;font-size:20px;margin:0 3px;position:relative;top:-2px;font-weight:400}
+.logo-text{display:none}
 .header-actions-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .header-eye,.header-tg{
   width:40px;height:40px;border-radius:50%;border:none;padding:0;
@@ -49,13 +51,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 }
 .header-eye:active,.header-tg:active{transform:scale(.92)}
 .header-eye{
-  display:flex;background:#fff;color:var(--navy);
-  box-shadow:0 1px 4px rgba(15,23,42,.08);
+  display:flex;background:transparent;color:var(--navy);
 }
 .header-eye svg{width:22px;height:22px;stroke:var(--navy);fill:none;stroke-width:2}
 .header-tg{
   display:flex;background:var(--tg-blue);
-  box-shadow:0 2px 8px rgba(42,171,238,.35);
+  box-shadow:0 4px 14px rgba(42,171,238,.3);
 }
 .header-tg svg{width:20px;height:20px;fill:#fff}
 .header-tg.active{box-shadow:0 2px 12px rgba(42,171,238,.5)}
@@ -63,15 +64,19 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .logo-dot{display:none}
 
 /* TOGGLE */
-.toggle{background:#fff;border-radius:100px;padding:4px;display:flex;gap:4px;box-shadow:0 1px 4px rgba(15,23,42,.06)}
+.toggle{
+  background:#fff;border-radius:20px;padding:6px;display:flex;gap:0;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  max-width:320px;width:100%;margin:0 auto;
+}
 .toggle-btn{
-  flex:1;padding:11px 12px;border-radius:100px;border:none;font-size:14px;font-weight:600;
-  cursor:pointer;transition:all .22s;font-family:inherit;letter-spacing:-.01em;
-  background:transparent;color:#8e8e93;
+  flex:1;padding:10px 12px;border-radius:16px;border:none;font-size:15px;font-weight:500;
+  cursor:pointer;transition:all .22s;font-family:inherit;letter-spacing:.02em;
+  background:transparent;color:#6b7280;
 }
 .toggle-btn.active{
-  background:var(--tg-blue);color:#fff;
-  box-shadow:0 2px 8px rgba(42,171,238,.35);
+  background:var(--tg-blue);color:#fff;font-weight:600;
+  box-shadow:0 1px 4px rgba(42,171,238,.25);
 }
 
 /* CONTENT */
@@ -80,8 +85,12 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 /* ══ SENDER VIEW ══ */
 #senderView{
   display:flex;flex-direction:column;align-items:stretch;
-  padding:0 24px;height:100%;overflow:hidden;
+  padding:0 20px;height:100%;overflow:hidden;
 }
+.view-sender .map-layers-btn{display:none}
+#senderView .sender-body{flex:0 1 auto;min-height:0}
+#senderView .shipments-wrap.visible{flex:0 1 auto;max-height:42%}
+#senderView .sender-hero{flex:1}
 .sender-top{
   flex-shrink:0;width:100%;display:flex;flex-direction:column;align-items:center;
 }
@@ -89,106 +98,16 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
 }
 
-/* SCENE — CSS clay */
-.scene{
-  width:100%;height:240px;position:relative;overflow:hidden;
-  margin:0 0 12px;flex-shrink:0;pointer-events:none;
-  background:var(--app-bg);
+/* ══ SENDER VIEW — Figma hero ══ */
+.sender-top{
+  flex-shrink:0;width:100%;display:flex;flex-direction:column;align-items:center;
 }
-.scene-clay{position:relative;width:100%;height:100%}
-.clay-road{
-  position:absolute;bottom:-24px;left:-8%;width:88%;height:130px;
-  background:#4a5568;border-radius:45% 55% 0 0;
-  transform:rotate(-6deg);
-  box-shadow:0 8px 24px rgba(30,41,59,.2);
+.sender-hero{
+  width:100%;flex:1;min-height:180px;max-height:280px;
+  display:flex;align-items:center;justify-content:center;
+  margin:8px 0 12px;
 }
-.clay-road::before{
-  content:'';position:absolute;top:42%;left:18%;width:55%;height:0;
-  border-top:3px dashed rgba(255,255,255,.88);
-  transform:rotate(-2deg);
-}
-.clay-sign{
-  position:absolute;right:14%;top:18%;width:56px;height:140px;
-}
-.clay-pole{
-  position:absolute;right:22px;top:0;width:11px;height:100%;
-  background:linear-gradient(90deg,#a08050,#c4a574,#a08050);
-  border-radius:6px;box-shadow:2px 4px 8px rgba(60,40,20,.25);
-}
-.clay-arrow{
-  position:absolute;right:0;height:26px;border-radius:13px;
-  display:flex;align-items:center;justify-content:flex-end;padding-right:10px;
-  box-shadow:2px 4px 10px rgba(0,0,0,.12);
-}
-.clay-arrow::after{
-  content:'';width:0;height:0;border:7px solid transparent;
-  position:absolute;right:8px;top:50%;transform:translateY(-50%);
-}
-.clay-arrow--blue{top:8px;width:72px;background:#2AABEE}
-.clay-arrow--blue::after{border-left:10px solid #fff;border-right:none}
-.clay-arrow--green{top:52px;width:64px;background:#7BC67E}
-.clay-arrow--green::after{
-  right:auto;left:8px;border-right:10px solid #fff;border-left:none;
-}
-.clay-arrow--orange{top:96px;width:68px;background:#F5A623}
-.clay-arrow--orange::after{border-left:10px solid #fff}
-.clay-boxes{
-  position:absolute;right:8%;bottom:22%;width:56px;height:72px;
-}
-.clay-box{
-  position:absolute;border-radius:6px;
-  box-shadow:2px 4px 12px rgba(42,171,238,.25);
-  border:1px solid rgba(30,140,200,.4);
-}
-.clay-box::before{
-  content:'';position:absolute;background:rgba(255,255,255,.75);
-  border-radius:1px;
-}
-.clay-box--1{bottom:0;right:0;width:48px;height:32px;background:#2AABEE}
-.clay-box--1::before{top:14px;left:6px;width:36px;height:3px;box-shadow:0 8px 0 rgba(255,255,255,.75)}
-.clay-box--2{bottom:22px;right:6px;width:42px;height:28px;background:#4eb8f0}
-.clay-box--2::before{top:12px;left:5px;width:32px;height:2px;box-shadow:0 7px 0 rgba(255,255,255,.75)}
-.clay-box--3{bottom:42px;right:12px;width:36px;height:24px;background:#7ecbf7}
-.clay-box--3::before{top:10px;left:4px;width:28px;height:2px;box-shadow:0 6px 0 rgba(255,255,255,.75)}
-.clay-car{
-  position:absolute;left:28%;bottom:26%;width:96px;height:52px;
-  filter:drop-shadow(0 8px 16px rgba(42,171,238,.3));
-  animation:clayCarFloat 4s ease-in-out infinite;
-}
-.car-body{
-  position:absolute;bottom:10px;left:8px;width:80px;height:28px;
-  background:linear-gradient(180deg,#5ec4f7,#2AABEE);border-radius:10px;
-  border:1.5px solid #229ED9;
-}
-.car-roof{
-  position:absolute;bottom:34px;left:22px;width:52px;height:22px;
-  background:#3aa8e0;border-radius:12px 12px 4px 4px;
-  border:1.5px solid #229ED9;
-}
-.car-window{
-  position:absolute;bottom:36px;width:20px;height:14px;
-  background:#d0eefa;border-radius:4px;border:1px solid #a8daf0;
-}
-.car-window--l{left:26px}
-.car-window--r{left:50px}
-.car-driver{
-  position:absolute;bottom:38px;left:34px;width:12px;height:14px;
-  background:#fff;border-radius:8px 8px 4px 4px;opacity:.95;
-}
-.car-wheel{
-  position:absolute;bottom:4px;width:18px;height:18px;
-  background:#374151;border-radius:50%;border:2px solid #1f2937;
-}
-.car-wheel::after{
-  content:'';position:absolute;inset:4px;background:#e5e7eb;border-radius:50%;
-}
-.car-wheel--l{left:18px}
-.car-wheel--r{left:62px}
-@keyframes clayCarFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-4px)}
-}
-
+.service-hero-svg{width:100%;max-width:340px;height:220px;display:block}
 .sender-title{display:none}
 
 /* Jo'natmalar ro'yxati */
@@ -200,51 +119,52 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .shipments-head{display:none}
 .shipments-list{
   flex:1;overflow-y:auto;display:flex;flex-direction:column;
-  gap:12px;padding-bottom:8px;-webkit-overflow-scrolling:touch;
+  gap:14px;padding-bottom:8px;-webkit-overflow-scrolling:touch;
 }
 .shipment-card{
-  display:flex;align-items:center;gap:14px;padding:12px 14px;
-  background:var(--card-bg);border:none;border-radius:15px;
-  box-shadow:0 4px 18px rgba(15,23,42,.07),0 1px 2px rgba(15,23,42,.04);
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:16px;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-radius:28px;border:1px solid rgba(255,255,255,.65);
+  box-shadow:0 8px 30px rgba(0,0,0,.06);
 }
 .shipment-thumb{
   width:56px;height:56px;border-radius:12px;object-fit:cover;
   border:1px solid #EEE;flex-shrink:0;
 }
+.shipment-card-left{display:flex;align-items:center;gap:16px;flex:1;min-width:0}
 .shipment-type-icon{
-  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  width:52px;height:52px;border-radius:18px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:#d4ebfa;border:none;
+  background:#E1F0FA;border:none;
 }
-.shipment-type-icon--travel{background:#d4ebfa}
-.shipment-type-icon--order{background:#d4ebfa}
 .shipment-type-icon svg{width:28px;height:28px}
 .shipment-status--travel{color:var(--tg-blue);background:rgba(42,171,238,.14)}
-.shipment-body{flex:1;min-width:0}
+.shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .shipment-dest{
-  font-size:17px;font-weight:700;color:var(--navy);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:4px;
+  font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-.02em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;
 }
-.shipment-date{font-size:11px;color:#9CA3AF;font-weight:500;margin-top:3px}
+.shipment-date{font-size:12px;color:#9ca3af;font-weight:500}
 .shipment-status{
-  display:inline-block;font-size:12px;font-weight:600;color:var(--tg-blue);
-  background:rgba(42,171,238,.12);padding:4px 11px;border-radius:100px;
+  display:inline-block;font-size:13px;font-weight:700;color:var(--tg-blue);
+  background:#E1F0FA;padding:4px 10px;border-radius:8px;width:fit-content;line-height:1.2;
 }
-.shipment-actions{
-  display:flex;flex-direction:row;gap:12px;flex-shrink:0;align-items:center;
-}
+.shipment-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
 .shipment-icon-btn{
   width:40px;height:40px;border-radius:50%;border:none;padding:0;flex-shrink:0;
-  background:transparent;
+  background:transparent;color:#9ca3af;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:transform .15s,opacity .15s;
+  cursor:pointer;transition:color .15s,background .15s,transform .15s;
   -webkit-tap-highlight-color:transparent;
 }
 .shipment-icon-btn svg{width:22px;height:22px;pointer-events:none}
-.shipment-icon-btn--edit svg{stroke:var(--tg-blue);stroke-width:2;fill:none}
-.shipment-icon-btn--location svg{stroke:var(--tg-blue);fill:none;stroke-width:2}
-.shipment-icon-btn--delete svg{stroke:#E74C3C;stroke-width:2;fill:none}
-.shipment-icon-btn:active{transform:scale(.88);opacity:.7}
+.shipment-icon-btn--edit svg{stroke:currentColor;stroke-width:2;fill:none}
+.shipment-icon-btn--edit:hover,.shipment-icon-btn--edit:active{color:var(--tg-blue);background:rgba(42,171,238,.08)}
+.shipment-icon-btn--location svg{stroke:currentColor;fill:none;stroke-width:2}
+.shipment-icon-btn--delete svg{stroke:currentColor;stroke-width:2;fill:none}
+.shipment-icon-btn--delete:hover,.shipment-icon-btn--delete:active{color:#ef4444;background:rgba(239,68,68,.08)}
+.shipment-icon-btn:active{transform:scale(.92)}
 .sheet-overlay--edit{z-index:212}
 .sheet-overlay--travel{z-index:213}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
@@ -252,28 +172,32 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 /* CTA */
 .cta-wrap{
   flex-shrink:0;width:100%;
-  padding:8px 0 max(20px,env(safe-area-inset-bottom));
+  padding:0 0 max(28px,env(safe-area-inset-bottom));
   background:transparent;
-  display:flex;flex-direction:column;gap:12px;
+  display:flex;flex-direction:column;gap:14px;
 }
 .cta-btn{
-  flex:none;width:100%;height:56px;
-  background:var(--tg-blue);
-  border:none;border-radius:14px;
-  display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;
-  box-shadow:0 4px 14px rgba(42,171,238,.32);
-  cursor:pointer;transition:transform .2s,box-shadow .2s;position:relative;outline:none;
+  position:relative;width:100%;
+  background:var(--tg-blue);color:#fff;
+  padding:14px 10px;border:none;border-radius:22px;
+  display:flex;align-items:center;
+  box-shadow:0 8px 24px -6px rgba(42,171,238,.6);
+  cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;outline:none;
 }
-.cta-btn:active{transform:scale(.98);box-shadow:0 2px 8px rgba(42,171,238,.28)}
+.cta-btn:active{transform:scale(.98);background:#209ce0}
 .cta-shine{display:none}
-.cta-icon{
-  width:32px;height:32px;border-radius:0;flex-shrink:0;
-  background:transparent;border:none;
+.cta-icon-wrap{
+  width:46px;height:46px;flex-shrink:0;
+  background:rgba(255,255,255,.2);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:16px;
   display:flex;align-items:center;justify-content:center;
 }
-.cta-icon svg{width:26px;height:26px;display:block;flex-shrink:0}
+.cta-icon{display:contents}
+.cta-icon svg{width:26px;height:26px;display:block}
 .cta-text{
-  color:#fff;font-size:15px;font-weight:700;letter-spacing:-.02em;
+  flex:1;text-align:center;padding-right:46px;
+  color:#fff;font-size:17px;font-weight:600;letter-spacing:.02em;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 
@@ -789,7 +713,8 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 .theme-telegram body{background:var(--tg-bg)!important}
 .theme-telegram .app{background:var(--tg-bg)!important}
 .theme-telegram .header{background:var(--tg-bg)!important}
-.theme-telegram .logo-text{color:var(--tg-text)!important}
+.theme-telegram .logo-brand{color:var(--tg-text)!important}
+.theme-telegram .logo-sep{color:var(--tg-hint)!important}
 .theme-telegram .header-close{color:var(--tg-text)!important}
 .theme-telegram .toggle{background:var(--tg-secondary)!important}
 .theme-telegram .toggle-btn{color:var(--tg-hint)!important}
@@ -932,7 +857,7 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
     <div class="header">
       <div class="header-bar">
         <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
-        <div class="logo-text">duvduv</div>
+        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep">•</span> duv</h1>
         <div class="header-actions-right">
           <button type="button" class="header-eye map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -954,32 +879,59 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
       <!-- SENDER -->
       <div id="senderView">
         <div class="sender-top">
-          <div class="scene">
-            <div class="scene-clay">
-              <div class="clay-road"></div>
-              <div class="clay-sign">
-                <div class="clay-pole"></div>
-                <div class="clay-arrow clay-arrow--blue"></div>
-                <div class="clay-arrow clay-arrow--green"></div>
-                <div class="clay-arrow clay-arrow--orange"></div>
-              </div>
-              <div class="clay-boxes">
-                <div class="clay-box clay-box--1"></div>
-                <div class="clay-box clay-box--2"></div>
-                <div class="clay-box clay-box--3"></div>
-              </div>
-              <div class="clay-car">
-                <div class="car-body"></div>
-                <div class="car-roof"></div>
-                <div class="car-window car-window--l"></div>
-                <div class="car-window car-window--r"></div>
-                <div class="car-driver"></div>
-                <div class="car-wheel car-wheel--l"></div>
-                <div class="car-wheel car-wheel--r"></div>
-              </div>
-            </div>
-          </div>
-          <h2 class="sender-title"><span id="senderTitleLine1">RASMGA OLING</span><br><span id="senderTitleLine2">VA JO'NATING</span></h2>
+        <div class="sender-hero">
+          <svg class="service-hero-svg" viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <style>
+              @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+              @keyframes heroFloatD{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+              @keyframes heroPulse{0%{transform:scale(.95)}50%{transform:scale(1.02);filter:brightness(1.08)}100%{transform:scale(.95)}}
+              .hero-float{animation:heroFloat 4s ease-in-out infinite}
+              .hero-float-d{animation:heroFloatD 4s ease-in-out 2s infinite}
+              .hero-pulse{animation:heroPulse 3s ease-in-out infinite;transform-origin:center}
+            </style>
+            <defs>
+              <filter id="heroShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#2AABEE" flood-opacity=".22"/></filter>
+              <filter id="heroGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
+            </defs>
+            <ellipse cx="160" cy="105" rx="110" ry="60" fill="#E1F0FA" opacity=".4"/>
+            <path d="M40,140 C90,190 170,170 170,105 C170,40 250,40 300,75" fill="none" stroke="#2AABEE" stroke-width="2.5" stroke-dasharray="6 8" stroke-linecap="round" opacity=".5"/>
+            <circle cx="50" cy="65" r="3" fill="#2AABEE" opacity=".4"/>
+            <circle cx="280" cy="155" r="4" fill="#2AABEE" opacity=".5"/>
+            <g transform="translate(85,125)" class="hero-float-d">
+              <circle r="48" fill="#fff" filter="url(#heroShadow)"/>
+              <g transform="translate(0,-3) scale(1.15)">
+                <path d="M0,-16 L20,-6 L0,4 L-20,-6 Z" fill="#E1F0FA"/>
+                <path d="M-20,-6 L0,4 L0,24 L-20,14 Z" fill="#2AABEE"/>
+                <path d="M0,4 L20,-6 L20,14 L0,24 Z" fill="#1C8FCD"/>
+                <path d="M-10,-11 L10,-1" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M0,4 L0,24" stroke="#fff" stroke-width="2" opacity=".4"/>
+              </g>
+            </g>
+            <g transform="translate(235,85)" class="hero-float">
+              <circle r="48" fill="#fff" filter="url(#heroShadow)"/>
+              <g transform="translate(0,5) scale(1.1)">
+                <rect x="-19" y="10" width="8" height="12" rx="4" fill="#1C8FCD"/>
+                <rect x="11" y="10" width="8" height="12" rx="4" fill="#1C8FCD"/>
+                <rect x="-24" y="-5" width="48" height="20" rx="7" fill="#2AABEE"/>
+                <path d="M-18,-5 L-13,-17 Q-10,-21 0,-21 Q10,-21 13,-17 L18,-5 Z" fill="#2AABEE"/>
+                <path d="M-14,-6 L-10,-16 Q-8,-19 0,-19 Q8,-19 10,-16 L14,-6 Z" fill="#E1F0FA"/>
+                <path d="M-8,-16 L4,-6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".9"/>
+                <rect x="-20" y="3" width="10" height="5" rx="2.5" fill="#fff"/>
+                <rect x="10" y="3" width="10" height="5" rx="2.5" fill="#fff"/>
+              </g>
+            </g>
+            <g transform="translate(160,105)" class="hero-pulse">
+              <path d="M0,-26 C-13,-26 -22,-16 -22,-4 C-22,10 0,28 0,28 C0,28 22,10 22,-4 C22,-16 13,-26 0,-26 Z" fill="#2AABEE" filter="url(#heroGlow)"/>
+              <circle cy="-6" r="7.5" fill="#fff"/>
+              <circle cy="-6" r="2.5" fill="#2AABEE"/>
+            </g>
+            <g transform="translate(145,170) rotate(-15) scale(.8)" filter="url(#heroShadow)">
+              <path d="M-16,12 L22,-12 L6,18 Z" fill="#fff"/>
+              <path d="M6,18 L22,-12 L14,25 Z" fill="#E1F0FA"/>
+              <path d="M6,18 L10,22 L8,15 Z" fill="#1C8FCD"/>
+            </g>
+          </svg>
+        </div>
         </div>
 
         <div class="sender-body">
@@ -991,13 +943,11 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 
         <div class="cta-wrap">
           <button type="button" class="cta-btn" onclick="openTravelSheet()">
-            <div class="cta-shine"></div>
-            <div class="cta-icon" id="ctaTravelIcon"></div>
+            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
             <span class="cta-text" id="ctaTravelText">Yo'l olish</span>
           </button>
           <button type="button" class="cta-btn" onclick="openOrder()">
-            <div class="cta-shine"></div>
-            <div class="cta-icon" id="ctaOrderIcon"></div>
+            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
             <span class="cta-text" id="ctaOrderText">Jo'natma yuborish</span>
           </button>
         </div>
@@ -1484,8 +1434,9 @@ const ICON_CTA_ORDER = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linea
 
 const ICON_AVATAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5" fill="#2AABEE"/><path d="M4 20.5c0-3.8 3.4-6.5 8-6.5s8 2.7 8 6.5" fill="#2AABEE"/></svg>';
 const ICON_BOX_SMALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" fill="#2AABEE" opacity=".9"/><path d="M3 7l9 5 9-5" stroke="#fff" stroke-width="1.2" fill="none"/><path d="M12 12v10" stroke="#1e8bc4" stroke-width="1.5"/></svg>';
-const ICON_CTA_ROUTE_WHITE = '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M14 3c-4.1 0-7.5 3.2-7.5 7.3 0 4.8 7.5 13.7 7.5 13.7s7.5-8.9 7.5-13.7C21.5 6.2 18.1 3 14 3z" fill="#fff"/><circle cx="14" cy="10.2" r="3.2" fill="rgba(255,255,255,.35)" stroke="#fff" stroke-width="1.6"/></svg>';
-const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 28 28" aria-hidden="true"><path d="M4 10l10-6 10 6v9l-10 6L4 19V10z" fill="none" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/><path d="M14 4v21M4 10l10 6 10-6" stroke="#fff" stroke-width="1.9" fill="none"/><path d="M9 7.5h10" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".85"/></svg>';
+const ICON_CTA_ROUTE_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>';
+const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="M20 2H4c-1 0-2 .9-2 2v3.01c0 .72.43 1.34 1 1.69V20c0 1.1 1.1 2 2 2h14c.9 0 2-1.1 2-2V8.7c.57-.35 1-.97 1-1.69V4c0-1.1-1-2-2-2zm-5 12H9v-2h6v2zm5-7H4V4h16v3z"/></svg>';
+const ICON_PERSON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#2AABEE" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
 
 function detectRegionFromCoords(lng, lat){
   let best = null;
@@ -1763,8 +1714,6 @@ const MORPH_MULTI = [
 
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
-  ['#senderTitleLine1', 'RASMGA OLING'], ['#senderTitleLine2', "VA JO'NATING"],
-  ['.shipments-head', "Jo'natmalarim"],
   ['#ctaTravelText', "Yo'l olish"], ['#ctaOrderText', "Jo'natma yuborish"],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
@@ -2908,11 +2857,12 @@ function renderShipments(){
     const key = escapeHtml(getShipmentKey(s));
     return `
     <div class="shipment-card">
-      <div class="shipment-type-icon shipment-type-icon--${s.type === 'travel' ? 'travel' : 'order'}">${s.type === 'travel' ? ICON_AVATAR : ICON_BOX_SMALL}</div>
-      <div class="shipment-body">
-        <div class="shipment-dest morph-auto">${s.type === 'travel' ? escapeHtml(s.to || s.dest || '') : escapeHtml(s.dest || '')}</div>
-        <div class="shipment-date morph-auto">${formatDate(s.createdAt)}</div>
-        <span class="morph-auto ${s.type === 'travel' ? 'shipment-status shipment-status--travel' : 'shipment-status'}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
+      <div class="shipment-card-left">
+        <div class="shipment-type-icon">${s.type === 'travel' ? ICON_PERSON : ICON_BOX_SMALL}</div>
+        <div class="shipment-body">
+          <div class="shipment-dest morph-auto">${s.type === 'travel' ? escapeHtml(destToRegion(s.to || s.dest || '') || s.to || s.dest || '') : escapeHtml(destToRegion(s.dest || '') || s.dest || '')}</div>
+          <span class="morph-auto shipment-status ${s.type === 'travel' ? 'shipment-status--travel' : ''}">${s.type === 'travel' ? "Yo'lovchi" : escapeHtml(s.status || 'Aktiv')}</span>
+        </div>
       </div>
       <div class="shipment-actions">
         <button type="button" class="shipment-icon-btn shipment-icon-btn--edit" data-action="edit" data-id="${key}" aria-label="Tahrirlash">${SHIPMENT_ICON_EDIT}</button>
