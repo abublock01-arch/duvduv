@@ -1305,7 +1305,10 @@ let map = null;
 let driverLocationMarker = null;
 let orderLayersVisible = true;
 let orderClusterLayersReady = false;
-const ORDER_MAP_LAYER_IDS = ['orders-clusters', 'orders-cluster-count', 'orders-unclustered-point', 'orders-unclustered-label'];
+const ORDER_MAP_LAYER_IDS = [
+  'orders-clusters', 'orders-cluster-count',
+  'orders-unclustered-point', 'orders-unclustered-icon', 'orders-unclustered-label'
+];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
 const MAP_ICON_PERSON = 'map-icon-person';
@@ -2274,14 +2277,20 @@ function setupOrderClusterLayers(){
     paint: {
       'circle-color': MAP_ORDER_COLOR,
       'circle-radius': [
-        'interpolate', ['linear'], ['zoom'],
-        8, ['step', ['get', 'point_count'], 16, 5, 20, 20, 26, 50, 32],
-        11, ['step', ['get', 'point_count'], 20, 5, 26, 20, 32, 50, 40],
-        14, ['step', ['get', 'point_count'], 24, 5, 30, 20, 38, 50, 46]
+        'interpolate', ['exponential', 1.75], ['zoom'],
+        8, ['step', ['get', 'point_count'], 13, 10, 18, 50, 24],
+        12, ['step', ['get', 'point_count'], 17, 10, 23, 50, 31],
+        16, ['step', ['get', 'point_count'], 22, 10, 30, 50, 40]
       ],
-      'circle-stroke-width': 2,
+      'circle-stroke-width': [
+        'interpolate', ['linear'], ['zoom'],
+        8, 2,
+        14, 3,
+        16, 4
+      ],
       'circle-stroke-color': '#ffffff',
-      'circle-opacity': 0.92
+      'circle-opacity': 0.92,
+      'circle-pitch-scale': 'map'
     }
   });
   map.addLayer({
@@ -2292,7 +2301,13 @@ function setupOrderClusterLayers(){
     layout: {
       'text-field': ['get', 'point_count_abbreviated'],
       'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-      'text-size': ['interpolate', ['linear'], ['zoom'], 8, 12, 14, 16]
+      'text-size': [
+        'interpolate', ['linear'], ['zoom'],
+        8, 11,
+        12, 13,
+        16, 16
+      ],
+      'text-pitch-scale': 'map'
     },
     paint: { 'text-color': '#ffffff' }
   });
@@ -2300,6 +2315,36 @@ function setupOrderClusterLayers(){
     if (!map.getLayer('orders-unclustered-point')) {
       map.addLayer({
         id: 'orders-unclustered-point',
+        type: 'circle',
+        source: 'orders',
+        filter: ['!', ['has', 'point_count']],
+        paint: {
+          'circle-color': [
+            'match', ['get', 'itemType'],
+            'travel', '#2AABEE',
+            MAP_ORDER_COLOR
+          ],
+          'circle-radius': [
+            'interpolate', ['exponential', 1.75], ['zoom'],
+            7, 5,
+            10, 8,
+            12, 11,
+            14, 16,
+            16, 22
+          ],
+          'circle-stroke-width': [
+            'interpolate', ['linear'], ['zoom'],
+            7, 1.5,
+            14, 3,
+            16, 4
+          ],
+          'circle-stroke-color': '#ffffff',
+          'circle-opacity': 0.95,
+          'circle-pitch-scale': 'map'
+        }
+      });
+      map.addLayer({
+        id: 'orders-unclustered-icon',
         type: 'symbol',
         source: 'orders',
         filter: ['!', ['has', 'point_count']],
@@ -2309,9 +2354,17 @@ function setupOrderClusterLayers(){
             'travel', MAP_ICON_PERSON,
             MAP_ICON_BOX
           ],
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.5, 12, 0.72, 16, 0.9],
-          'icon-anchor': 'bottom',
-          'icon-allow-overlap': true
+          'icon-size': [
+            'interpolate', ['exponential', 1.75], ['zoom'],
+            7, 0.22,
+            10, 0.35,
+            12, 0.48,
+            14, 0.7,
+            16, 0.95
+          ],
+          'icon-anchor': 'center',
+          'icon-allow-overlap': true,
+          'icon-pitch-scale': 'map'
         }
       });
       map.addLayer({
@@ -2322,11 +2375,17 @@ function setupOrderClusterLayers(){
         layout: {
           'text-field': ['get', 'dest'],
           'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-          'text-size': ['interpolate', ['linear'], ['zoom'], 10, 10, 14, 12],
+          'text-size': [
+            'interpolate', ['linear'], ['zoom'],
+            10, 10,
+            14, 13,
+            16, 15
+          ],
           'text-offset': [0, 0.6],
           'text-anchor': 'top',
           'text-max-width': 12,
-          'text-allow-overlap': false
+          'text-allow-overlap': false,
+          'text-pitch-scale': 'map'
         },
         paint: {
           'text-color': '#111111',
@@ -2365,14 +2424,16 @@ function bindOrderMapEvents(){
     });
   });
 
-  map.on('click', 'orders-unclustered-point', e => {
+  const openUnclusteredOrder = e => {
     const feat = e.features?.[0];
     if (!feat) return;
     const order = findOrderByMapId(feat.properties.orderId);
     if (order) openOrderSheet(order);
-  });
+  };
+  map.on('click', 'orders-unclustered-point', openUnclusteredOrder);
+  map.on('click', 'orders-unclustered-icon', openUnclusteredOrder);
 
-  ['orders-clusters', 'orders-unclustered-point'].forEach(layerId => {
+  ['orders-clusters', 'orders-unclustered-point', 'orders-unclustered-icon'].forEach(layerId => {
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
   });
