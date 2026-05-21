@@ -90,37 +90,25 @@ html,body{
 /* ══ SENDER VIEW ══ */
 #senderView{
   display:flex;flex-direction:column;align-items:stretch;
-  padding:0 20px;height:100%;overflow:hidden;
+  padding:0 20px;height:100%;min-height:0;overflow:hidden;flex:1;
 }
 .view-sender .map-layers-btn{display:none}
-#senderView .sender-body{flex:0 1 auto;min-height:0}
-#senderView .shipments-wrap.visible{flex:0 1 auto;max-height:42%}
-#senderView .sender-hero{flex:1}
-.sender-top{
-  flex-shrink:0;width:100%;display:flex;flex-direction:column;align-items:center;
-}
-.sender-body{
+#senderView .sender-body{
   flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
+  padding-top:8px;
 }
-
-/* ══ SENDER VIEW — Figma hero ══ */
-.sender-top{
-  flex-shrink:0;width:100%;display:flex;flex-direction:column;align-items:center;
+#senderView .shipments-wrap,
+#senderView .shipments-wrap.visible{
+  flex:1;min-height:0;display:flex;flex-direction:column;
+  width:100%;overflow:hidden;
 }
-.sender-hero{
-  width:100%;flex:1;min-height:180px;max-height:280px;
-  display:flex;align-items:center;justify-content:center;
-  margin:8px 0 12px;
+.shipments-empty{
+  display:flex;flex-direction:column;align-items:flex-start;
+  justify-content:flex-start;gap:6px;padding:4px 0 12px;
+  opacity:.65;
 }
-.service-hero-svg{width:100%;max-width:340px;height:220px;display:block}
-.sender-title{display:none}
-
-/* Jo'natmalar ro'yxati */
-.shipments-wrap{
-  flex:1;display:none;flex-direction:column;
-  width:100%;min-height:0;overflow:hidden;
-}
-.shipments-wrap.visible{display:flex}
+.shipments-empty-title{font-size:19px;font-weight:700;color:#374151;margin:0}
+.shipments-empty-sub{font-size:15px;color:#9ca3af;margin:0}
 .shipments-head{display:none}
 .shipments-list{
   flex:1;overflow-y:auto;display:flex;flex-direction:column;
@@ -212,7 +200,7 @@ html,body{
 /* ══ DRIVER VIEW ══ */
 #driverView{
   display:none;flex-direction:column;align-items:stretch;
-  padding:0 12px max(12px,env(safe-area-inset-bottom));
+  padding:8px 12px max(12px,env(safe-area-inset-bottom));
   height:100%;min-height:0;flex:1;gap:8px;
   background:var(--app-bg);overflow:hidden;
 }
@@ -778,8 +766,6 @@ html,body{
 .theme-telegram .header-tg{background:var(--tg-btn)!important}
 .theme-telegram .header-tg svg{fill:var(--tg-btn-text)!important}
 .theme-telegram .header-tg.active{opacity:.85}
-.theme-telegram .scene{background:var(--tg-bg)!important}
-.theme-telegram .sender-title{color:var(--tg-text)!important}
 .theme-telegram .region-picker{--picker-fade:var(--tg-bg)!important}
 .theme-telegram .region-picker--vertical .region-picker-item.is-center,
 .theme-telegram .region-picker--horizontal .region-picker-item.is-center{color:#0B5CAD!important}
@@ -938,62 +924,6 @@ html,body{
 
       <!-- SENDER -->
       <div id="senderView">
-        <div class="sender-top">
-        <div class="sender-hero">
-          <svg class="service-hero-svg" viewBox="0 0 320 210" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <style>
-              @keyframes heroFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-              @keyframes heroFloatD{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
-              @keyframes heroPulse{0%{transform:scale(.95)}50%{transform:scale(1.02);filter:brightness(1.08)}100%{transform:scale(.95)}}
-              .hero-float{animation:heroFloat 4s ease-in-out infinite}
-              .hero-float-d{animation:heroFloatD 4s ease-in-out 2s infinite}
-              .hero-pulse{animation:heroPulse 3s ease-in-out infinite;transform-origin:center}
-            </style>
-            <defs>
-              <filter id="heroShadow" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#2AABEE" flood-opacity=".22"/></filter>
-              <filter id="heroGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
-            </defs>
-            <ellipse cx="160" cy="105" rx="110" ry="60" fill="#E1F0FA" opacity=".4"/>
-            <path d="M40,140 C90,190 170,170 170,105 C170,40 250,40 300,75" fill="none" stroke="#2AABEE" stroke-width="2.5" stroke-dasharray="6 8" stroke-linecap="round" opacity=".5"/>
-            <circle cx="50" cy="65" r="3" fill="#2AABEE" opacity=".4"/>
-            <circle cx="280" cy="155" r="4" fill="#2AABEE" opacity=".5"/>
-            <g transform="translate(85,125)" class="hero-float-d">
-              <circle r="48" fill="#fff" filter="url(#heroShadow)"/>
-              <g transform="translate(0,-3) scale(1.15)">
-                <path d="M0,-16 L20,-6 L0,4 L-20,-6 Z" fill="#E1F0FA"/>
-                <path d="M-20,-6 L0,4 L0,24 L-20,14 Z" fill="#2AABEE"/>
-                <path d="M0,4 L20,-6 L20,14 L0,24 Z" fill="#1C8FCD"/>
-                <path d="M-10,-11 L10,-1" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
-                <path d="M0,4 L0,24" stroke="#fff" stroke-width="2" opacity=".4"/>
-              </g>
-            </g>
-            <g transform="translate(235,85)" class="hero-float">
-              <circle r="48" fill="#fff" filter="url(#heroShadow)"/>
-              <g transform="translate(0,5) scale(1.1)">
-                <rect x="-19" y="10" width="8" height="12" rx="4" fill="#1C8FCD"/>
-                <rect x="11" y="10" width="8" height="12" rx="4" fill="#1C8FCD"/>
-                <rect x="-24" y="-5" width="48" height="20" rx="7" fill="#2AABEE"/>
-                <path d="M-18,-5 L-13,-17 Q-10,-21 0,-21 Q10,-21 13,-17 L18,-5 Z" fill="#2AABEE"/>
-                <path d="M-14,-6 L-10,-16 Q-8,-19 0,-19 Q8,-19 10,-16 L14,-6 Z" fill="#E1F0FA"/>
-                <path d="M-8,-16 L4,-6" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".9"/>
-                <rect x="-20" y="3" width="10" height="5" rx="2.5" fill="#fff"/>
-                <rect x="10" y="3" width="10" height="5" rx="2.5" fill="#fff"/>
-              </g>
-            </g>
-            <g transform="translate(160,105)" class="hero-pulse">
-              <path d="M0,-26 C-13,-26 -22,-16 -22,-4 C-22,10 0,28 0,28 C0,28 22,10 22,-4 C22,-16 13,-26 0,-26 Z" fill="#2AABEE" filter="url(#heroGlow)"/>
-              <circle cy="-6" r="7.5" fill="#fff"/>
-              <circle cy="-6" r="2.5" fill="#2AABEE"/>
-            </g>
-            <g transform="translate(145,170) rotate(-15) scale(.8)" filter="url(#heroShadow)">
-              <path d="M-16,12 L22,-12 L6,18 Z" fill="#fff"/>
-              <path d="M6,18 L22,-12 L14,25 Z" fill="#E1F0FA"/>
-              <path d="M6,18 L10,22 L8,15 Z" fill="#1C8FCD"/>
-            </g>
-          </svg>
-        </div>
-        </div>
-
         <div class="sender-body">
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
@@ -2252,6 +2182,7 @@ function mapItemProps(item, itemType){
 function ordersToGeoJSON(){
   const orderFeatures = [...orders, ...mapTestOrders]
     .filter(o => {
+      if (!isActiveListing(o)) return false;
       if (o.lat == null || o.lng == null) return false;
       if (!selectedDriverRegion) return true;
       return destMatchesDriverRegion(o.dest || '');
@@ -2264,6 +2195,7 @@ function ordersToGeoJSON(){
 
   const travelFeatures = travels
     .filter(t => {
+      if (!isActiveListing(t)) return false;
       const dest = t.to || t.dest || '';
       if (!selectedDriverRegion) return true;
       return destMatchesDriverRegion(dest);
@@ -2856,9 +2788,13 @@ function escapeHtml(s){
   return d.innerHTML;
 }
 
+function isActiveListing(item){
+  return (item?.status || 'Aktiv') === 'Aktiv';
+}
+
 function getMyShipments(){
   if (telegramUser.id == null) return [];
-  return shipments.filter(s => s.telegramId === telegramUser.id);
+  return shipments.filter(s => s.telegramId === telegramUser.id && isActiveListing(s));
 }
 
 function getShipmentKey(s){
@@ -2942,13 +2878,10 @@ function renderShipments(){
   const mine = getMyShipments();
   if (!mine.length) {
     wrap.classList.add('visible');
-    list.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:12px;padding:40px 20px;text-align:center;opacity:.6">
-    <svg viewBox="0 0 64 64" width="64" height="64" fill="none" stroke="#9CA3AF" stroke-width="2"><rect x="8" y="20" width="48" height="36" rx="6"/><path d="M20 20V16a12 12 0 0 1 24 0v4"/><line x1="32" y1="34" x2="32" y2="42"/><line x1="28" y1="38" x2="36" y2="38"/></svg>
-    <p class="morph-auto" style="font-size:19px;font-weight:700;color:#374151;margin:0">Hali jo'natmalar yo'q</p>
-    <span class="morph-auto" style="font-size:15px;color:#9CA3AF">Birinchi jo'natmangizni yuboring!</span>
+    list.innerHTML = `<div class="shipments-empty">
+    <p class="shipments-empty-title">Ҳали фаол эълонлар йўқ</p>
+    <span class="shipments-empty-sub">Йўл олиш ёки жўнатма юбориш орқали қўшинг</span>
   </div>`;
-    initMorphInContainer(list);
-    applyAllScriptMorphs(false);
     return;
   }
   wrap.classList.add('visible');
