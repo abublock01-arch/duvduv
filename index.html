@@ -105,13 +105,13 @@ body.view-sender .header{background:var(--app-bg)!important}
 #senderView .scene-img{
   position:absolute;left:0;bottom:0;width:100%;height:260px;
   object-fit:contain;object-position:center bottom;
-  opacity:.72;
+  opacity:.88;
   filter:none;
   max-width:none;max-height:none;
   transition:opacity .45s ease;
-  image-rendering:auto;
+  image-rendering:-webkit-optimize-contrast;
 }
-#senderView.has-active-shipments .scene-img{opacity:.58}
+#senderView.has-active-shipments .scene-img{opacity:.78}
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
   position:relative;z-index:2;background:transparent;
@@ -133,14 +133,13 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-card{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
   padding:14px 13px;
-  background:linear-gradient(145deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.32) 100%);
-  backdrop-filter:blur(40px) saturate(1.85);-webkit-backdrop-filter:blur(40px) saturate(1.85);
+  background:linear-gradient(145deg,rgba(255,255,255,.82) 0%,rgba(255,255,255,.58) 100%);
   border-radius:20px;
-  border:1px solid rgba(255,255,255,.65);
+  border:1px solid rgba(255,255,255,.88);
   box-shadow:
     0 8px 28px rgba(42,171,238,.1),
     inset 0 1px 0 rgba(255,255,255,.95),
-    inset 0 -1px 0 rgba(255,255,255,.25);
+    inset 0 -1px 0 rgba(255,255,255,.35);
   cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform .15s,box-shadow .15s;
 }
@@ -153,10 +152,9 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-type-icon{
   width:42px;height:42px;border-radius:14px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(255,255,255,.5);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.55);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
+  background:rgba(225,240,250,.9);
+  border:1px solid rgba(255,255,255,.7);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.9);
 }
 .shipment-type-icon svg{width:22px;height:22px}
 .shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
@@ -168,9 +166,8 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-status{
   display:inline-block;font-size:11px;font-weight:700;color:var(--tg-blue);
   padding:4px 9px;border-radius:8px;width:fit-content;line-height:1.2;
-  background:rgba(255,255,255,.45);
-  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
-  border:1px solid rgba(255,255,255,.5);
+  background:rgba(225,240,250,.85);
+  border:1px solid rgba(255,255,255,.6);
 }
 .shipment-status--travel{
   color:var(--tg-blue);
@@ -194,7 +191,11 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-icon-btn:active{transform:scale(.92)}
 .sheet-overlay--edit{z-index:212}
 .sheet-overlay--travel{z-index:213}
-.sheet-overlay--detail{z-index:211}
+.sheet-overlay--detail{
+  z-index:211;
+  backdrop-filter:none;-webkit-backdrop-filter:none;
+  background:rgba(15,23,42,.18);
+}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .sheet--travel{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .sheet--detail{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
@@ -840,10 +841,8 @@ body.view-sender.theme-telegram .toggle{
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
-  background:linear-gradient(145deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.32) 100%)!important;
-  border-color:rgba(255,255,255,.65)!important;
-  backdrop-filter:blur(40px) saturate(1.85)!important;
-  -webkit-backdrop-filter:blur(40px) saturate(1.85)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.82) 0%,rgba(255,255,255,.58) 100%)!important;
+  border-color:rgba(255,255,255,.88)!important;
   box-shadow:0 8px 28px rgba(42,171,238,.1),inset 0 1px 0 rgba(255,255,255,.95)!important;
 }
 .theme-telegram .shipment-dest{color:var(--tg-text)!important}
@@ -1180,9 +1179,8 @@ body.view-sender.theme-telegram .toggle{
     </div>
     <span class="detail-status-badge" id="detailStatus"></span>
     <div class="detail-actions">
-      <button type="button" class="detail-action-btn" id="detailLocationBtn" onclick="onDetailLocationClick()">📍 Lokatsiyani o'zgartirish</button>
-      <button type="button" class="detail-action-btn" id="detailEditBtn" onclick="onDetailEditClick()">✏️ Tahrirlash</button>
-      <button type="button" class="detail-action-btn detail-action-btn--tg" id="detailTelegramBtn" onclick="onDetailTelegramClick()" hidden>Telegramda yozish</button>
+      <button type="button" class="detail-action-btn" id="detailEditBtn" onclick="onDetailEditClick()">✏️ O'zgartirish</button>
+      <button type="button" class="detail-action-btn" id="detailMapBtn" onclick="onDetailMapClick()">📍 Manzilni xaritada o'zgartirish</button>
       <button type="button" class="detail-action-btn detail-action-btn--delete" id="detailDeleteBtn" onclick="onDetailDeleteClick()">O'chirish</button>
     </div>
   </div>
@@ -1920,7 +1918,10 @@ const UI_PHRASE_CYRILLIC = {
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
   'Tuman tanlang': 'Туман танланг',
   'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган',
-  "Lokatsiyani o'zgartirish": 'Локацияни ўзгартириш'
+  "Lokatsiyani o'zgartirish": 'Локацияни ўзгартириш',
+  "O'zgartirish": 'Ўзгартириш',
+  "Manzilni xaritada o'zgartirish": 'Манзилни харитада ўзгартириш',
+  'Manzilni xaritada belgilang': 'Манзилни харитада белгиланг'
 };
 
 const LATIN_CYR_CHAR = {
@@ -2881,12 +2882,18 @@ function initLocationPickerMap(centerLng, centerLat){
 
 async function openLocationPicker(key){
   const s = findShipment(key);
-  if (!s || s.type === 'travel') return;
+  if (!s) return;
   locationPickerFirestoreId = key;
   locationPickerPin = null;
   if (locationPickerMarker) {
     locationPickerMarker.remove();
     locationPickerMarker = null;
+  }
+  const titleEl = document.getElementById('locPickerTitle');
+  if (titleEl) {
+    setI18nText(titleEl, s.type === 'travel'
+      ? 'Manzilni xaritada belgilang'
+      : 'Lokatsiyani tanlang');
   }
   document.getElementById('locPickerSaveBtn').disabled = true;
   document.getElementById('locPickerOverlay').classList.add('open');
@@ -2894,13 +2901,21 @@ async function openLocationPicker(key){
   let lng = s.lng;
   let lat = s.lat;
   if (lng == null || lat == null) {
-    try {
-      const coords = await getCurrentPosition();
-      lng = coords.longitude;
-      lat = coords.latitude;
-    } catch {
-      lng = 69.2401;
-      lat = 41.2991;
+    const region = s.type === 'travel'
+      ? destToRegion(s.to || s.dest || '')
+      : destToRegion(s.dest || '');
+    const center = REGION_CENTERS[region];
+    if (center) {
+      [lng, lat] = center;
+    } else {
+      try {
+        const coords = await getCurrentPosition();
+        lng = coords.longitude;
+        lat = coords.latitude;
+      } catch {
+        lng = 69.2401;
+        lat = 41.2991;
+      }
     }
   }
   setTimeout(() => {
@@ -2923,8 +2938,14 @@ async function saveLocationPicker(){
   if (!s || !locationPickerPin) return;
   s.lat = locationPickerPin.lat;
   s.lng = locationPickerPin.lng;
-  if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
-  syncOrderFromShipment(s);
+  if (s.type === 'travel') {
+    if (s.firestoreId) await updateTravelInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
+    const t = travels.find(x => String(x.firestoreId || x.id) === String(locationPickerFirestoreId));
+    if (t) { t.lat = s.lat; t.lng = s.lng; }
+  } else {
+    if (s.firestoreId) await updateOrderInFirestore(s.firestoreId, { lat: s.lat, lng: s.lng });
+    syncOrderFromShipment(s);
+  }
   persistData();
   renderShipments();
   if (map) refreshOrderMarkers();
@@ -3169,26 +3190,18 @@ function openShipmentDetail(key){
   const fromEl = document.getElementById('detailFrom');
   const toEl = document.getElementById('detailTo');
   const statusEl = document.getElementById('detailStatus');
-  const locBtn = document.getElementById('detailLocationBtn');
-  const tgBtn = document.getElementById('detailTelegramBtn');
+  const mapBtn = document.getElementById('detailMapBtn');
+  const editBtn = document.getElementById('detailEditBtn');
+  const delBtn = document.getElementById('detailDeleteBtn');
   if (fromEl) fromEl.textContent = route.from;
   if (toEl) toEl.textContent = route.to;
   if (statusEl) {
     statusEl.textContent = shipmentStatusLabel(s);
     statusEl.classList.toggle('shipment-status--travel', s.type === 'travel');
   }
-  if (locBtn) locBtn.hidden = s.type === 'travel';
-  if (tgBtn) {
-    const uname = s.telegramUsername;
-    const show = uname && uname !== '@';
-    tgBtn.hidden = !show;
-  }
-  const editBtn = document.getElementById('detailEditBtn');
-  const delBtn = document.getElementById('detailDeleteBtn');
-  if (locBtn) setI18nText(locBtn, "📍 Lokatsiyani o'zgartirish");
-  if (editBtn) setI18nText(editBtn, '✏️ Tahrirlash');
+  if (editBtn) setI18nText(editBtn, "✏️ O'zgartirish");
+  if (mapBtn) setI18nText(mapBtn, "📍 Manzilni xaritada o'zgartirish");
   if (delBtn) setI18nText(delBtn, "O'chirish");
-  if (tgBtn && !tgBtn.hidden) setI18nText(tgBtn, 'Telegramda yozish');
   applyCyrillicUI();
   document.getElementById('detailSheetOverlay')?.classList.add('open');
 }
@@ -3198,7 +3211,7 @@ function closeShipmentDetail(){
   detailShipmentKey = null;
 }
 
-function onDetailLocationClick(){
+function onDetailMapClick(){
   const key = detailShipmentKey;
   closeShipmentDetail();
   if (key) openLocationPicker(key);
@@ -3208,12 +3221,6 @@ function onDetailEditClick(){
   const key = detailShipmentKey;
   closeShipmentDetail();
   if (key) editShipment(key);
-}
-
-function onDetailTelegramClick(){
-  const s = findShipment(detailShipmentKey);
-  if (!s?.telegramUsername || s.telegramUsername === '@') return;
-  window.open('https://t.me/' + s.telegramUsername.replace('@', ''));
 }
 
 function onDetailDeleteClick(){
