@@ -97,140 +97,38 @@ html,body{
   flex-shrink:0;width:100%;display:flex;justify-content:center;
   padding:4px 0 8px;
 }
-/* ══ SCENE — pure CSS + SVG ══ */
+/* ══ SCENE — clay 3D (Telegram ranglari) ══ */
 .scene{
   position:relative;width:100%;max-width:320px;height:220px;
-  overflow:hidden;pointer-events:none;
+  margin:0 auto;overflow:hidden;pointer-events:none;
+  background:transparent;
 }
-.scene-road{
-  position:absolute;left:0;right:0;bottom:12px;width:100%;height:90px;
-  pointer-events:none;
+.scene-svg{
+  display:block;width:100%;height:220px;
 }
-.scene-route{
-  position:absolute;left:0;right:0;top:0;bottom:0;width:100%;height:100%;
-  pointer-events:none;z-index:2;
-}
-.scene-stage{
-  position:absolute;inset:0;z-index:3;
-  transform:perspective(600px) rotateX(20deg);
-  transform-origin:50% 78%;
-}
-.scene-car{
-  position:absolute;left:14%;bottom:38px;width:88px;height:56px;
+.scene-clay-car{
+  transform-origin:160px 165px;
   animation:sceneCarFloat 4s ease-in-out infinite;
-  will-change:transform;
 }
-.scene-box-wrap{
-  position:absolute;right:12%;bottom:42px;width:64px;height:58px;
+.scene-clay-box{
+  transform-origin:58px 52px;
   animation:sceneBoxFloat 3.5s ease-in-out .5s infinite;
-  will-change:transform;
 }
-.scene-pin{
-  position:absolute;left:50%;top:28%;width:36px;height:44px;
-  margin-left:-18px;z-index:8;
-  animation:scenePinPulse 2s ease-in-out infinite;
-  will-change:transform;
-  filter:drop-shadow(0 4px 8px rgba(42,171,238,.4));
-}
-.scene-pin svg{display:block;width:36px;height:44px}
-.car-shadow,.box-shadow{
-  position:absolute;left:50%;bottom:0;width:76%;height:10px;
-  transform:translateX(-50%);
-  background:radial-gradient(ellipse,rgba(42,171,238,.28) 0%,transparent 72%);
-  border-radius:50%;
-  filter:blur(2px);
-}
-.box-shadow{width:90%;bottom:-2px}
-.car-body{
-  position:absolute;left:10px;bottom:14px;width:68px;height:26px;
-  border-radius:8px;
-  background:linear-gradient(180deg,#5BC8F5 0%,#2AABEE 55%,#1A8DC4 100%);
-  box-shadow:0 8px 20px rgba(42,171,238,.25);
-}
-.car-body::before{
-  content:'';position:absolute;left:0;top:0;width:100%;height:55%;
-  border-radius:8px 8px 4px 4px;
-  background:linear-gradient(180deg,#5BC8F5,#2AABEE);
-}
-.car-cabin{
-  position:absolute;left:22px;bottom:34px;width:46px;height:22px;
-  border-radius:10px 10px 4px 4px;
-  background:linear-gradient(180deg,#5BC8F5,#2AABEE);
-  border:1.5px solid #1A8DC4;
-  box-shadow:0 4px 12px rgba(42,171,238,.2);
-}
-.car-window{
-  position:absolute;top:5px;width:14px;height:11px;
-  border-radius:3px;background:#E8F4FD;
-  border:1px solid rgba(255,255,255,.7);
-}
-.car-window--l{left:6px}
-.car-window--r{right:6px}
-.car-driver{
-  position:absolute;left:50%;top:50%;width:7px;height:8px;
-  transform:translate(-50%,-35%);
-  border-radius:50% 50% 40% 40%;
-  background:#fff;
-  box-shadow:0 0 0 1px rgba(26,141,196,.3);
-}
-.car-wheel{
-  position:absolute;bottom:6px;width:16px;height:16px;
-  border-radius:50%;background:#0F6FA8;
-  border:2px solid #1A8DC4;
-  box-shadow:inset 0 1px 2px rgba(255,255,255,.25);
-}
-.car-wheel::after{
-  content:'';position:absolute;inset:3px;border-radius:50%;
-  background:#E8F4FD;
-}
-.car-wheel--l{left:16px}
-.car-wheel--r{right:16px}
-.scene-box{
-  position:relative;width:56px;height:48px;margin:0 auto;
-}
-.box-cube{
-  position:relative;width:48px;height:40px;margin:4px auto 0;
-  transform:skewY(-15deg) skewX(15deg);
-  transform-origin:center bottom;
-}
-.box-face--top{
-  position:absolute;left:4px;top:0;width:44px;height:28px;
-  background:#5BC8F5;
-  border:1.5px solid #2AABEE;
-  box-shadow:0 8px 20px rgba(42,171,238,.25);
-  transform:skewY(8deg) rotate(-2deg);
-}
-.box-face--front{
-  position:absolute;left:0;bottom:0;width:44px;height:22px;
-  background:linear-gradient(180deg,#2AABEE,#1A8DC4);
-  border-radius:0 0 4px 4px;
-  border:1.5px solid #1A8DC4;
-}
-.box-face--side{
-  position:absolute;right:-8px;bottom:2px;width:14px;height:24px;
-  background:linear-gradient(90deg,#1A8DC4,#0F6FA8);
-  transform:skewX(-28deg);
-  border-radius:0 2px 4px 0;
-}
-.box-tape{
-  position:absolute;left:50%;top:50%;width:52px;height:3px;
-  transform:translate(-50%,-50%) rotate(-38deg);
-  background:#fff;
-  border-radius:2px;
-  box-shadow:0 0 0 1px rgba(42,171,238,.15);
-  z-index:2;
+.scene-clay-person{
+  transform-origin:252px 48px;
+  animation:scenePersonFloat 3.8s ease-in-out .25s infinite;
 }
 @keyframes sceneCarFloat{
-  0%,100%{transform:translateY(-4px)}
-  50%{transform:translateY(0)}
+  0%,100%{transform:translate(0,-5px) rotate(-8deg)}
+  50%{transform:translate(0,0) rotate(-8deg)}
 }
 @keyframes sceneBoxFloat{
-  0%,100%{transform:translateY(-3px)}
-  50%{transform:translateY(1px)}
+  0%,100%{transform:translate(0,-4px)}
+  50%{transform:translate(0,2px)}
 }
-@keyframes scenePinPulse{
-  0%,100%{transform:scale(1)}
-  50%{transform:scale(1.08)}
+@keyframes scenePersonFloat{
+  0%,100%{transform:translate(0,-3px)}
+  50%{transform:translate(0,2px)}
 }
 #senderView .sender-body{
   flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
@@ -1078,43 +976,75 @@ html,body{
       <div id="senderView">
         <div class="sender-top">
           <div class="scene" aria-hidden="true">
-            <svg class="scene-road" viewBox="0 0 320 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
-              <path d="M-10,72 C80,88 140,48 200,58 C260,68 310,42 330,55" fill="none" stroke="rgba(42,171,238,0.2)" stroke-width="28" stroke-linecap="round"/>
-              <path d="M-10,72 C80,88 140,48 200,58 C260,68 310,42 330,55" fill="none" stroke="rgba(42,171,238,0.5)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="8 6"/>
+            <svg class="scene-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id="clayTop" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#5BC8F5"/>
+                  <stop offset="100%" stop-color="#2AABEE"/>
+                </linearGradient>
+                <linearGradient id="claySide" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stop-color="#2AABEE"/>
+                  <stop offset="100%" stop-color="#1A8DC4"/>
+                </linearGradient>
+                <linearGradient id="clayDark" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#1A8DC4"/>
+                  <stop offset="100%" stop-color="#0F6FA8"/>
+                </linearGradient>
+                <linearGradient id="clayCar" x1="20%" y1="0%" x2="80%" y2="100%">
+                  <stop offset="0%" stop-color="#5BC8F5"/>
+                  <stop offset="45%" stop-color="#2AABEE"/>
+                  <stop offset="100%" stop-color="#1A8DC4"/>
+                </linearGradient>
+                <filter id="clayShadow" x="-30%" y="-20%" width="160%" height="160%">
+                  <feDropShadow dx="0" dy="10" stdDeviation="12" flood-color="#2AABEE" flood-opacity=".28"/>
+                </filter>
+              </defs>
+              <!-- Punktir yo'l: quti → odam -->
+              <circle cx="52" cy="78" r="3.2" fill="#1A8DC4" opacity=".9"/>
+              <circle cx="78" cy="58" r="3.2" fill="#2AABEE" opacity=".85"/>
+              <circle cx="108" cy="46" r="3.2" fill="#1A8DC4" opacity=".9"/>
+              <circle cx="142" cy="42" r="3.2" fill="#2AABEE" opacity=".85"/>
+              <circle cx="178" cy="48" r="3.2" fill="#1A8DC4" opacity=".9"/>
+              <circle cx="212" cy="58" r="3.2" fill="#2AABEE" opacity=".85"/>
+              <circle cx="248" cy="72" r="3.2" fill="#1A8DC4" opacity=".9"/>
+              <!-- Tezlik chiziqlari -->
+              <g opacity=".75">
+                <rect x="68" y="158" width="22" height="5" rx="2.5" fill="#1A8DC4" transform="rotate(-28 79 160.5)"/>
+                <rect x="88" y="152" width="18" height="5" rx="2.5" fill="#2AABEE" transform="rotate(-28 97 154.5)"/>
+                <rect x="104" y="146" width="14" height="5" rx="2.5" fill="#5BC8F5" transform="rotate(-28 111 148.5)"/>
+              </g>
+              <!-- Quti (yuqori chap) -->
+              <g class="scene-clay-box" filter="url(#clayShadow)">
+                <g transform="translate(38,28) rotate(-18 28 26)">
+                  <rect x="0" y="14" width="52" height="38" rx="10" fill="url(#clayDark)"/>
+                  <rect x="4" y="0" width="48" height="40" rx="12" fill="url(#claySide)"/>
+                  <rect x="6" y="2" width="44" height="18" rx="10" fill="url(#clayTop)"/>
+                  <rect x="2" y="22" width="54" height="9" rx="4" fill="#E8F4FD" opacity=".95"/>
+                </g>
+              </g>
+              <!-- Odam (yuqori o'ng) -->
+              <g class="scene-clay-person" filter="url(#clayShadow)">
+                <circle cx="252" cy="32" r="14" fill="url(#clayTop)"/>
+                <rect x="238" y="44" width="28" height="34" rx="14" fill="url(#claySide)"/>
+                <rect x="232" y="52" width="12" height="22" rx="6" fill="url(#clayDark)" transform="rotate(18 238 63)"/>
+                <rect x="260" y="52" width="12" height="22" rx="6" fill="url(#clayDark)" transform="rotate(-14 266 63)"/>
+              </g>
+              <!-- Mashina (markaz, diagonal) -->
+              <g class="scene-clay-car" filter="url(#clayShadow)">
+                <g transform="translate(72,88) rotate(-8 88 52)">
+                  <ellipse cx="88" cy="98" rx="72" ry="10" fill="#2AABEE" opacity=".18"/>
+                  <path d="M28,72 L148,68 L168,78 L172,88 L168,96 L28,98 Z" fill="url(#clayCar)"/>
+                  <path d="M52,48 L132,44 L148,56 L150,68 L52,72 Z" fill="url(#clayTop)"/>
+                  <path d="M58,52 L78,50 L80,64 L58,66 Z" fill="#E8F4FD" opacity=".9"/>
+                  <path d="M108,50 L128,48 L130,62 L108,64 Z" fill="#E8F4FD" opacity=".85"/>
+                  <rect x="44" y="88" width="22" height="14" rx="7" fill="#0F6FA8"/>
+                  <rect x="118" y="86" width="22" height="14" rx="7" fill="#0F6FA8"/>
+                  <circle cx="55" cy="95" r="5" fill="#E8F4FD"/>
+                  <circle cx="129" cy="93" r="5" fill="#E8F4FD"/>
+                  <path d="M148,72 L168,74 L172,82 L168,88 L148,86 Z" fill="url(#clayDark)"/>
+                </g>
+              </g>
             </svg>
-            <svg class="scene-route" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-              <path d="M118,148 Q168,118 218,138" fill="none" stroke="rgba(42,171,238,0.45)" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 5"/>
-            </svg>
-            <div class="scene-stage">
-              <div class="scene-car">
-                <div class="car-shadow" aria-hidden="true"></div>
-                <div class="car-body"></div>
-                <div class="car-cabin">
-                  <div class="car-window car-window--l"><span class="car-driver"></span></div>
-                  <div class="car-window car-window--r"></div>
-                </div>
-                <div class="car-wheel car-wheel--l"></div>
-                <div class="car-wheel car-wheel--r"></div>
-              </div>
-              <div class="scene-pin">
-                <svg viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                  <path d="M18,2 C11.4,2 6,7.4 6,14 C6,22.5 18,42 18,42 C18,42 30,22.5 30,14 C30,7.4 24.6,2 18,2 Z" fill="#2AABEE"/>
-                  <circle cx="18" cy="14" r="6" fill="#fff"/>
-                  <circle cx="18" cy="14" r="2.5" fill="#2AABEE"/>
-                </svg>
-              </div>
-              <div class="scene-box-wrap">
-                <div class="scene-box">
-                  <div class="box-shadow" aria-hidden="true"></div>
-                  <div class="box-cube">
-                    <div class="box-face box-face--top"></div>
-                    <div class="box-face box-face--side"></div>
-                    <div class="box-face box-face--front"></div>
-                    <div class="box-tape"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
