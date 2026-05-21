@@ -91,31 +91,28 @@ html,body{
 #senderView{
   display:flex;flex-direction:column;align-items:stretch;
   padding:0 20px;height:100%;min-height:0;overflow:hidden;flex:1;
+  position:relative;
 }
 .view-sender .map-layers-btn{display:none}
-/* ══ SCENE — clay rasm (shaffof fon) ══ */
-.scene{
-  flex-shrink:0;width:100%;display:flex;justify-content:center;align-items:center;
-  padding:0 4px 6px;pointer-events:none;
-  background:transparent;
-}
-.scene-img{
-  display:block;width:100%;max-width:min(100%,380px);
-  height:auto;max-height:min(38vw,168px);
-  object-fit:contain;object-position:center center;
-  animation:sceneIllusFloat 4.2s ease-in-out infinite;
-  will-change:transform;
-}
-@keyframes sceneIllusFloat{
-  0%,100%{transform:translateY(-3px)}
-  50%{transform:translateY(0)}
-}
 #senderView .sender-body{
-  flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
-  padding-top:0;
+  position:relative;flex:1;min-height:0;width:100%;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+/* ══ SCENE — fon rasm ══ */
+#senderView .scene{
+  position:absolute;left:0;right:0;bottom:0;width:100%;height:260px;
+  pointer-events:none;z-index:0;padding:0;background:transparent;
+}
+#senderView .scene-img{
+  position:absolute;left:0;bottom:0;width:100%;height:260px;
+  object-fit:contain;object-position:center bottom;
+  opacity:.35;
+  filter:drop-shadow(0 8px 24px rgba(42,171,238,.3)) saturate(.85);
+  max-width:none;max-height:none;
 }
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
+  position:relative;z-index:2;background:transparent;
   flex:1;min-height:0;display:flex;flex-direction:column;
   width:100%;overflow:hidden;
 }
@@ -129,15 +126,18 @@ html,body{
 .shipments-head{display:none}
 .shipments-list{
   flex:1;overflow-y:auto;display:flex;flex-direction:column;
-  gap:11px;padding-bottom:6px;-webkit-overflow-scrolling:touch;
+  gap:11px;padding:4px 0 16px;-webkit-overflow-scrolling:touch;
 }
 .shipment-card{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:13px;background:rgba(255,255,255,.92);
+  padding:13px;background:rgba(255,255,255,.82);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-radius:22px;border:1px solid rgba(255,255,255,.65);
-  box-shadow:0 6px 24px rgba(0,0,0,.06);
+  border-radius:22px;border:1px solid rgba(255,255,255,.6);
+  box-shadow:0 6px 24px rgba(42,171,238,.08);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .15s,box-shadow .15s;
 }
+.shipment-card:active{transform:scale(.985)}
 .shipment-thumb{
   width:56px;height:56px;border-radius:12px;object-fit:cover;
   border:1px solid #EEE;flex-shrink:0;
@@ -177,12 +177,38 @@ html,body{
 .shipment-icon-btn:active{transform:scale(.92)}
 .sheet-overlay--edit{z-index:212}
 .sheet-overlay--travel{z-index:213}
+.sheet-overlay--detail{z-index:211}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .sheet--travel{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+.sheet--detail{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
+.detail-route{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  margin-bottom:18px;text-align:center;
+}
+.detail-route-from,.detail-route-to{
+  font-size:22px;font-weight:800;color:#0f172a;letter-spacing:-.02em;line-height:1.2;
+}
+.detail-route-arrow{font-size:20px;font-weight:700;color:var(--tg-blue);line-height:1}
+.detail-status-badge{
+  display:inline-block;margin:0 auto 20px;
+  font-size:12px;font-weight:700;color:var(--tg-blue);
+  background:rgba(42,171,238,.14);padding:6px 12px;border-radius:10px;
+}
+.detail-actions{display:flex;flex-direction:column;gap:10px}
+.detail-action-btn{
+  width:100%;padding:16px 18px;border:none;border-radius:16px;
+  font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
+  background:#E1F0FA;color:var(--tg-blue);
+  -webkit-tap-highlight-color:transparent;transition:transform .15s,opacity .15s;
+}
+.detail-action-btn:active{transform:scale(.98)}
+.detail-action-btn--tg{background:var(--tg-blue);color:#fff;box-shadow:0 8px 20px rgba(42,171,238,.35)}
+.detail-action-btn--delete{background:rgba(239,68,68,.12);color:#ef4444}
 /* CTA */
 #senderView .cta-wrap{
+  position:sticky;bottom:0;z-index:3;
   flex-shrink:0;width:100%;
-  padding:0 0 max(28px,env(safe-area-inset-bottom));
+  padding:12px 0 max(28px,env(safe-area-inset-bottom));
   background:transparent;
   border:none;box-shadow:none;
   display:flex;flex-direction:column;gap:13px;
@@ -792,15 +818,27 @@ html,body{
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
-  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
+  background:rgba(255,255,255,.82)!important;
+  border-color:rgba(255,255,255,.6)!important;
+  backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
 }
 .theme-telegram .shipment-dest{color:var(--tg-text)!important}
 .theme-telegram .shipment-status{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
-.theme-telegram .shipment-icon-btn--edit svg{stroke:var(--tg-btn)!important}
-.theme-telegram .shipment-icon-btn--location svg{fill:var(--tg-btn)!important;stroke:var(--tg-btn)!important}
 .theme-telegram .shipment-icon-btn--delete svg{stroke:#E74C3C!important}
+.theme-telegram .detail-route-from,.theme-telegram .detail-route-to{color:var(--tg-text)!important}
+.theme-telegram .detail-route-arrow{color:var(--tg-btn)!important}
+.theme-telegram .detail-status-badge{
+  color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 14%,transparent)!important;
+}
+.theme-telegram .detail-action-btn{
+  background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;color:var(--tg-btn)!important;
+}
+.theme-telegram .detail-action-btn--tg{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
+}
+.theme-telegram .detail-action-btn--delete{color:#E74C3C!important;background:rgba(231,76,60,.12)!important}
 .theme-telegram .map-ctrl-btn,
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
@@ -1107,6 +1145,25 @@ html,body{
       <input type="hidden" id="travelDistrict" value="">
       <button type="button" class="send-submit" id="travelActionBtn" onclick="onTravelActionClick()">Keyingi</button>
     </form>
+  </div>
+</div>
+
+<!-- JO'NATMA DETAL SHEET -->
+<div class="sheet-overlay sheet-overlay--detail" id="detailSheetOverlay" onclick="if(event.target===this)closeShipmentDetail()">
+  <div class="sheet sheet--detail" onclick="event.stopPropagation()">
+    <div class="sheet-drag"></div>
+    <div class="detail-route">
+      <span class="detail-route-from" id="detailFrom"></span>
+      <span class="detail-route-arrow" aria-hidden="true">→</span>
+      <span class="detail-route-to" id="detailTo"></span>
+    </div>
+    <span class="detail-status-badge" id="detailStatus"></span>
+    <div class="detail-actions">
+      <button type="button" class="detail-action-btn" id="detailLocationBtn" onclick="onDetailLocationClick()">📍 Lokatsiyani o'zgartirish</button>
+      <button type="button" class="detail-action-btn" id="detailEditBtn" onclick="onDetailEditClick()">✏️ Tahrirlash</button>
+      <button type="button" class="detail-action-btn detail-action-btn--tg" id="detailTelegramBtn" onclick="onDetailTelegramClick()" hidden>Telegramda yozish</button>
+      <button type="button" class="detail-action-btn detail-action-btn--delete" id="detailDeleteBtn" onclick="onDetailDeleteClick()">O'chirish</button>
+    </div>
   </div>
 </div>
 
@@ -1847,7 +1904,8 @@ const UI_PHRASE_CYRILLIC = {
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
   'Tuman tanlang': 'Туман танланг',
-  'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган'
+  'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган',
+  "Lokatsiyani o'zgartirish": 'Локацияни ўзгартириш'
 };
 
 const LATIN_CYR_CHAR = {
@@ -2892,6 +2950,7 @@ async function acceptOrder(){
 const shipments = [];
 const travels = [];
 let editingShipmentKey = null;
+let detailShipmentKey = null;
 let shipmentsListBound = false;
 let cameraStream = null;
 let facingMode = 'environment';
@@ -3058,14 +3117,94 @@ function setupShipmentsListEvents(){
   if (!list) return;
   shipmentsListBound = true;
   list.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const key = btn.dataset.id;
-    const action = btn.dataset.action;
-    if (action === 'edit') editShipment(key);
-    else if (action === 'location') openLocationPicker(key);
-    else if (action === 'delete') deleteShipment(key);
+    const delBtn = e.target.closest('[data-action="delete"]');
+    if (delBtn) {
+      e.stopPropagation();
+      deleteShipment(delBtn.dataset.id);
+      return;
+    }
+    const card = e.target.closest('.shipment-card');
+    if (card?.dataset.id) openShipmentDetail(card.dataset.id);
   });
+}
+
+function shipmentRouteLabels(s){
+  if (s.type === 'travel') {
+    return {
+      from: displayDestCyrillic(s.from || '—'),
+      to: displayDestCyrillic(s.to || s.dest || '—')
+    };
+  }
+  return {
+    from: UI_PHRASE_CYRILLIC["Jo'natuvchi"] || 'Жўнатувчи',
+    to: displayDestCyrillic(s.dest || '—')
+  };
+}
+
+function shipmentStatusLabel(s){
+  if (s.type === 'travel') return 'Йўловчи';
+  return UI_PHRASE_CYRILLIC[s.status] || latinToCyrillic(s.status || 'Aktiv');
+}
+
+function openShipmentDetail(key){
+  const s = findShipment(key);
+  if (!s) return;
+  detailShipmentKey = key;
+  const route = shipmentRouteLabels(s);
+  const fromEl = document.getElementById('detailFrom');
+  const toEl = document.getElementById('detailTo');
+  const statusEl = document.getElementById('detailStatus');
+  const locBtn = document.getElementById('detailLocationBtn');
+  const tgBtn = document.getElementById('detailTelegramBtn');
+  if (fromEl) fromEl.textContent = route.from;
+  if (toEl) toEl.textContent = route.to;
+  if (statusEl) {
+    statusEl.textContent = shipmentStatusLabel(s);
+    statusEl.classList.toggle('shipment-status--travel', s.type === 'travel');
+  }
+  if (locBtn) locBtn.hidden = s.type === 'travel';
+  if (tgBtn) {
+    const uname = s.telegramUsername;
+    const show = uname && uname !== '@';
+    tgBtn.hidden = !show;
+  }
+  const editBtn = document.getElementById('detailEditBtn');
+  const delBtn = document.getElementById('detailDeleteBtn');
+  if (locBtn) setI18nText(locBtn, "📍 Lokatsiyani o'zgartirish");
+  if (editBtn) setI18nText(editBtn, '✏️ Tahrirlash');
+  if (delBtn) setI18nText(delBtn, "O'chirish");
+  if (tgBtn && !tgBtn.hidden) setI18nText(tgBtn, 'Telegramda yozish');
+  applyCyrillicUI();
+  document.getElementById('detailSheetOverlay')?.classList.add('open');
+}
+
+function closeShipmentDetail(){
+  document.getElementById('detailSheetOverlay')?.classList.remove('open');
+  detailShipmentKey = null;
+}
+
+function onDetailLocationClick(){
+  const key = detailShipmentKey;
+  closeShipmentDetail();
+  if (key) openLocationPicker(key);
+}
+
+function onDetailEditClick(){
+  const key = detailShipmentKey;
+  closeShipmentDetail();
+  if (key) editShipment(key);
+}
+
+function onDetailTelegramClick(){
+  const s = findShipment(detailShipmentKey);
+  if (!s?.telegramUsername || s.telegramUsername === '@') return;
+  window.open('https://t.me/' + s.telegramUsername.replace('@', ''));
+}
+
+function onDetailDeleteClick(){
+  const key = detailShipmentKey;
+  closeShipmentDetail();
+  if (key) deleteShipment(key);
 }
 
 function syncOrderFromShipment(s){
@@ -3101,18 +3240,20 @@ function renderShipments(){
   wrap.classList.add('visible');
   list.innerHTML = mine.map(s => {
     const key = escapeHtml(getShipmentKey(s));
+    const route = shipmentRouteLabels(s);
+    const destLine = s.type === 'travel'
+      ? `${route.from} → ${route.to}`
+      : route.to;
     return `
-    <div class="shipment-card">
+    <div class="shipment-card" data-id="${key}" role="button" tabindex="0">
       <div class="shipment-card-left">
         <div class="shipment-type-icon">${s.type === 'travel' ? ICON_PERSON : ICON_BOX_SMALL}</div>
         <div class="shipment-body">
-          <div class="shipment-dest">${escapeHtml(displayDestCyrillic(s.type === 'travel' ? (s.to || s.dest || '') : (s.dest || '')))}</div>
-          <span class="shipment-status ${s.type === 'travel' ? 'shipment-status--travel' : ''}">${s.type === 'travel' ? 'Йўловчи' : escapeHtml(UI_PHRASE_CYRILLIC[s.status] || latinToCyrillic(s.status || 'Aktiv'))}</span>
+          <div class="shipment-dest">${escapeHtml(destLine)}</div>
+          <span class="shipment-status ${s.type === 'travel' ? 'shipment-status--travel' : ''}">${escapeHtml(shipmentStatusLabel(s))}</span>
         </div>
       </div>
       <div class="shipment-actions">
-        <button type="button" class="shipment-icon-btn shipment-icon-btn--edit" data-action="edit" data-id="${key}" aria-label="Tahrirlash">${SHIPMENT_ICON_EDIT}</button>
-        ${s.type === 'travel' ? '' : `<button type="button" class="shipment-icon-btn shipment-icon-btn--location" data-action="location" data-id="${key}" aria-label="Lokatsiya">${SHIPMENT_ICON_PIN}</button>`}
         <button type="button" class="shipment-icon-btn shipment-icon-btn--delete" data-action="delete" data-id="${key}" aria-label="O'chirish">${SHIPMENT_ICON_TRASH}</button>
       </div>
     </div>`;
