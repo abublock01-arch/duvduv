@@ -175,12 +175,14 @@ html,body{
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .sheet--travel{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 /* CTA */
-.cta-wrap{
+#senderView .cta-wrap{
   flex-shrink:0;width:100%;
   padding:0 0 max(28px,env(safe-area-inset-bottom));
   background:transparent;
+  border:none;box-shadow:none;
   display:flex;flex-direction:column;gap:14px;
 }
+.cta-wrap{background:transparent;border:none;box-shadow:none}
 .cta-btn{
   position:relative;width:100%;
   background:var(--tg-blue);color:#fff;
@@ -188,6 +190,7 @@ html,body{
   display:flex;align-items:center;
   box-shadow:0 8px 24px -6px rgba(42,171,238,.6);
   cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;outline:none;
+  -webkit-appearance:none;appearance:none;
 }
 .cta-btn:active{transform:scale(.98);background:#209ce0}
 .cta-shine{display:none}
@@ -796,14 +799,23 @@ html,body{
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
-.theme-telegram .cta-wrap{background:var(--tg-bg)!important}
+.theme-telegram #senderView{background:var(--app-bg)!important}
+.theme-telegram #senderView .sender-body{background:transparent!important}
+.theme-telegram #senderView .cta-wrap,
+.theme-telegram .cta-wrap{
+  background:transparent!important;
+  border:none!important;box-shadow:none!important;
+}
 .theme-telegram .cta-btn{
-  background:var(--tg-btn)!important;border-color:var(--tg-btn)!important;
-  box-shadow:none!important;
+  background:var(--tg-btn)!important;border:none!important;
+  box-shadow:0 8px 24px -6px rgba(42,171,238,.45)!important;
 }
 .theme-telegram .cta-text{color:var(--tg-btn-text)!important;text-shadow:none!important}
-.theme-telegram .cta-icon{background:color-mix(in srgb,var(--tg-btn-text) 15%,transparent)!important;border-color:color-mix(in srgb,var(--tg-btn-text) 25%,transparent)!important}
-.theme-telegram .cta-icon svg{stroke:var(--tg-btn-text)!important}
+.theme-telegram .cta-icon-wrap{
+  background:rgba(255,255,255,.2)!important;
+  border:none!important;
+}
+.theme-telegram .cta-icon svg{fill:var(--tg-btn-text)!important;stroke:none!important}
 .theme-telegram .map-wrap{
   background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
   box-shadow:none!important;
