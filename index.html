@@ -93,9 +93,148 @@ html,body{
   padding:0 20px;height:100%;min-height:0;overflow:hidden;flex:1;
 }
 .view-sender .map-layers-btn{display:none}
+.sender-top{
+  flex-shrink:0;width:100%;display:flex;justify-content:center;
+  padding:4px 0 8px;
+}
+/* ══ SCENE — pure CSS + SVG ══ */
+.scene{
+  position:relative;width:100%;max-width:320px;height:220px;
+  overflow:hidden;pointer-events:none;
+}
+.scene-road{
+  position:absolute;left:0;right:0;bottom:12px;width:100%;height:90px;
+  pointer-events:none;
+}
+.scene-route{
+  position:absolute;left:0;right:0;top:0;bottom:0;width:100%;height:100%;
+  pointer-events:none;z-index:2;
+}
+.scene-stage{
+  position:absolute;inset:0;z-index:3;
+  transform:perspective(600px) rotateX(20deg);
+  transform-origin:50% 78%;
+}
+.scene-car{
+  position:absolute;left:14%;bottom:38px;width:88px;height:56px;
+  animation:sceneCarFloat 4s ease-in-out infinite;
+  will-change:transform;
+}
+.scene-box-wrap{
+  position:absolute;right:12%;bottom:42px;width:64px;height:58px;
+  animation:sceneBoxFloat 3.5s ease-in-out .5s infinite;
+  will-change:transform;
+}
+.scene-pin{
+  position:absolute;left:50%;top:28%;width:36px;height:44px;
+  margin-left:-18px;z-index:8;
+  animation:scenePinPulse 2s ease-in-out infinite;
+  will-change:transform;
+  filter:drop-shadow(0 4px 8px rgba(42,171,238,.4));
+}
+.scene-pin svg{display:block;width:36px;height:44px}
+.car-shadow,.box-shadow{
+  position:absolute;left:50%;bottom:0;width:76%;height:10px;
+  transform:translateX(-50%);
+  background:radial-gradient(ellipse,rgba(42,171,238,.28) 0%,transparent 72%);
+  border-radius:50%;
+  filter:blur(2px);
+}
+.box-shadow{width:90%;bottom:-2px}
+.car-body{
+  position:absolute;left:10px;bottom:14px;width:68px;height:26px;
+  border-radius:8px;
+  background:linear-gradient(180deg,#5BC8F5 0%,#2AABEE 55%,#1A8DC4 100%);
+  box-shadow:0 8px 20px rgba(42,171,238,.25);
+}
+.car-body::before{
+  content:'';position:absolute;left:0;top:0;width:100%;height:55%;
+  border-radius:8px 8px 4px 4px;
+  background:linear-gradient(180deg,#5BC8F5,#2AABEE);
+}
+.car-cabin{
+  position:absolute;left:22px;bottom:34px;width:46px;height:22px;
+  border-radius:10px 10px 4px 4px;
+  background:linear-gradient(180deg,#5BC8F5,#2AABEE);
+  border:1.5px solid #1A8DC4;
+  box-shadow:0 4px 12px rgba(42,171,238,.2);
+}
+.car-window{
+  position:absolute;top:5px;width:14px;height:11px;
+  border-radius:3px;background:#E8F4FD;
+  border:1px solid rgba(255,255,255,.7);
+}
+.car-window--l{left:6px}
+.car-window--r{right:6px}
+.car-driver{
+  position:absolute;left:50%;top:50%;width:7px;height:8px;
+  transform:translate(-50%,-35%);
+  border-radius:50% 50% 40% 40%;
+  background:#fff;
+  box-shadow:0 0 0 1px rgba(26,141,196,.3);
+}
+.car-wheel{
+  position:absolute;bottom:6px;width:16px;height:16px;
+  border-radius:50%;background:#0F6FA8;
+  border:2px solid #1A8DC4;
+  box-shadow:inset 0 1px 2px rgba(255,255,255,.25);
+}
+.car-wheel::after{
+  content:'';position:absolute;inset:3px;border-radius:50%;
+  background:#E8F4FD;
+}
+.car-wheel--l{left:16px}
+.car-wheel--r{right:16px}
+.scene-box{
+  position:relative;width:56px;height:48px;margin:0 auto;
+}
+.box-cube{
+  position:relative;width:48px;height:40px;margin:4px auto 0;
+  transform:skewY(-15deg) skewX(15deg);
+  transform-origin:center bottom;
+}
+.box-face--top{
+  position:absolute;left:4px;top:0;width:44px;height:28px;
+  background:#5BC8F5;
+  border:1.5px solid #2AABEE;
+  box-shadow:0 8px 20px rgba(42,171,238,.25);
+  transform:skewY(8deg) rotate(-2deg);
+}
+.box-face--front{
+  position:absolute;left:0;bottom:0;width:44px;height:22px;
+  background:linear-gradient(180deg,#2AABEE,#1A8DC4);
+  border-radius:0 0 4px 4px;
+  border:1.5px solid #1A8DC4;
+}
+.box-face--side{
+  position:absolute;right:-8px;bottom:2px;width:14px;height:24px;
+  background:linear-gradient(90deg,#1A8DC4,#0F6FA8);
+  transform:skewX(-28deg);
+  border-radius:0 2px 4px 0;
+}
+.box-tape{
+  position:absolute;left:50%;top:50%;width:52px;height:3px;
+  transform:translate(-50%,-50%) rotate(-38deg);
+  background:#fff;
+  border-radius:2px;
+  box-shadow:0 0 0 1px rgba(42,171,238,.15);
+  z-index:2;
+}
+@keyframes sceneCarFloat{
+  0%,100%{transform:translateY(-4px)}
+  50%{transform:translateY(0)}
+}
+@keyframes sceneBoxFloat{
+  0%,100%{transform:translateY(-3px)}
+  50%{transform:translateY(1px)}
+}
+@keyframes scenePinPulse{
+  0%,100%{transform:scale(1)}
+  50%{transform:scale(1.08)}
+}
 #senderView .sender-body{
   flex:1;min-height:0;width:100%;display:flex;flex-direction:column;
-  padding-top:8px;
+  padding-top:0;
 }
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
@@ -207,35 +346,42 @@ html,body{
 #driverView .driver-picker-zone{
   flex:0 0 auto;width:100%;min-height:0;
 }
-#driverView .region-picker{width:100%;margin:0}
-/* Haydovchi: yuqorida ixcham gorizontal iOS drum */
+#driverView .region-picker{width:100%;margin:0;--picker-fade:#fff}
+/* Haydovchi viloyat — toggle kabi gorizontal */
 #driverView .region-picker--horizontal{
-  height:64px;max-height:64px;flex:0 0 64px;
-  margin:4px 0 0;
-  border-radius:16px;
-  background:rgba(255,255,255,.55);
-  box-shadow:0 1px 4px rgba(15,23,42,.04);
-}
-#driverView .region-picker--horizontal .region-picker-track{
-  height:64px;padding:0;
-  scroll-padding-inline:50%;
+  height:auto;flex:0 0 auto;margin:0;
+  padding:6px;border-radius:20px;
+  background:#fff;
+  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  overflow:hidden;
 }
 #driverView .region-picker--horizontal::before,
-#driverView .region-picker--horizontal::after{width:44px}
+#driverView .region-picker--horizontal::after{display:none}
+#driverView .region-picker--horizontal .region-picker-track{
+  height:44px;padding:0;gap:4px;
+  scroll-snap-type:x mandatory;
+  scroll-padding-inline:50%;
+}
 #driverView .region-picker--horizontal .region-picker-spacer{
-  flex:0 0 calc(50% - 48px);min-width:20px;
+  flex:0 0 auto;min-width:0;scroll-snap-align:none;
 }
 #driverView .region-picker--horizontal .region-picker-item{
-  padding:2px 10px;font-size:15px;
+  flex:0 0 auto;
+  padding:10px 14px;border-radius:16px;
+  font-size:15px;font-weight:600;
+  color:#6b7280;
+  opacity:1;transform:none;
+  scroll-snap-align:center;
+  transition:background .2s,color .2s,box-shadow .2s;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-adjacent{
-  font-size:17px;opacity:.55;
+  opacity:.7;font-size:15px;transform:none;color:#6b7280;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-center{
-  font-size:22px;
-}
-#driverView .region-picker--horizontal .region-picker-item.is-center .script-morph--region{
-  --script-morph-h:28px;
+  background:var(--tg-blue);color:#fff;
+  font-size:15px;font-weight:600;
+  box-shadow:0 1px 4px rgba(42,171,238,.25);
+  transform:none;opacity:1;
 }
 #driverView .map-wrap{
   flex:1 1 0;min-height:0;height:auto;width:100%;
@@ -540,10 +686,6 @@ html,body{
 .sheet-overlay--send{z-index:210}
 .sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .send-sheet-head{text-align:center;padding:4px 0 10px}
-.send-step-hint{
-  text-align:center;font-size:16px;font-weight:700;color:#0B5CAD;
-  margin:0 0 10px;letter-spacing:-.02em;
-}
 .send-thumb-wrap{display:flex;justify-content:center;margin-bottom:12px}
 .script-morph--label{
   --script-morph-h:18px;display:inline-block;text-align:left;
@@ -786,6 +928,16 @@ html,body{
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram #senderView{background:var(--app-bg)!important}
+.theme-telegram .scene{background:transparent!important}
+.theme-telegram #driverView{background:var(--app-bg)!important}
+.theme-telegram #driverView .region-picker--horizontal{
+  background:var(--tg-secondary)!important;--picker-fade:var(--tg-secondary)!important;
+}
+.theme-telegram #driverView .region-picker--horizontal .region-picker-item{color:var(--tg-hint)!important}
+.theme-telegram #driverView .region-picker--horizontal .region-picker-item.is-center{
+  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
+  box-shadow:none!important;
+}
 .theme-telegram #senderView .sender-body{background:transparent!important}
 .theme-telegram #senderView .cta-wrap,
 .theme-telegram .cta-wrap{
@@ -924,6 +1076,48 @@ html,body{
 
       <!-- SENDER -->
       <div id="senderView">
+        <div class="sender-top">
+          <div class="scene" aria-hidden="true">
+            <svg class="scene-road" viewBox="0 0 320 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMax meet">
+              <path d="M-10,72 C80,88 140,48 200,58 C260,68 310,42 330,55" fill="none" stroke="rgba(42,171,238,0.2)" stroke-width="28" stroke-linecap="round"/>
+              <path d="M-10,72 C80,88 140,48 200,58 C260,68 310,42 330,55" fill="none" stroke="rgba(42,171,238,0.5)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="8 6"/>
+            </svg>
+            <svg class="scene-route" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+              <path d="M118,148 Q168,118 218,138" fill="none" stroke="rgba(42,171,238,0.45)" stroke-width="2" stroke-linecap="round" stroke-dasharray="6 5"/>
+            </svg>
+            <div class="scene-stage">
+              <div class="scene-car">
+                <div class="car-shadow" aria-hidden="true"></div>
+                <div class="car-body"></div>
+                <div class="car-cabin">
+                  <div class="car-window car-window--l"><span class="car-driver"></span></div>
+                  <div class="car-window car-window--r"></div>
+                </div>
+                <div class="car-wheel car-wheel--l"></div>
+                <div class="car-wheel car-wheel--r"></div>
+              </div>
+              <div class="scene-pin">
+                <svg viewBox="0 0 36 44" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path d="M18,2 C11.4,2 6,7.4 6,14 C6,22.5 18,42 18,42 C18,42 30,22.5 30,14 C30,7.4 24.6,2 18,2 Z" fill="#2AABEE"/>
+                  <circle cx="18" cy="14" r="6" fill="#fff"/>
+                  <circle cx="18" cy="14" r="2.5" fill="#2AABEE"/>
+                </svg>
+              </div>
+              <div class="scene-box-wrap">
+                <div class="scene-box">
+                  <div class="box-shadow" aria-hidden="true"></div>
+                  <div class="box-cube">
+                    <div class="box-face box-face--top"></div>
+                    <div class="box-face box-face--side"></div>
+                    <div class="box-face box-face--front"></div>
+                    <div class="box-tape"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="sender-body">
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
@@ -1035,7 +1229,6 @@ html,body{
         </div>
       </div>
       <div id="sendStepDistrict" hidden>
-        <p class="send-step-hint" id="sendDistrictHint"></p>
         <div class="region-picker region-picker--vertical" id="sendDistrictPicker" aria-label="Tuman tanlash">
           <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
         </div>
@@ -1066,7 +1259,6 @@ html,body{
         </div>
       </div>
       <div id="travelStepDistrict" hidden>
-        <p class="send-step-hint" id="travelDistrictHint"></p>
         <div class="region-picker region-picker--vertical" id="travelDistrictPicker" aria-label="Tuman tanlash">
           <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
         </div>
@@ -1546,12 +1738,17 @@ function buildRegionPickerTrack(track, regions){
   }).join('') + spacer;
 }
 
-function syncHorizontalPickerSpacers(track){
+function isDriverHorizontalTrack(track){
+  return track?.id === 'regionPickerTrack';
+}
+
+function layoutHorizontalPickerSpacers(track){
   if (!track || track.closest('.region-picker--vertical')) return;
-  const half = Math.max(20, Math.floor((track.clientWidth || 0) / 2));
+  const pad = Math.max(0, track.clientWidth / 2);
   track.querySelectorAll('.region-picker-spacer').forEach(sp => {
-    sp.style.flex = `0 0 ${half}px`;
-    sp.style.minWidth = `${half}px`;
+    sp.style.flex = `0 0 ${pad}px`;
+    sp.style.width = `${pad}px`;
+    sp.style.minWidth = `${pad}px`;
   });
 }
 
@@ -1563,27 +1760,50 @@ function scrollPickerToRegion(track, region, smooth){
     const top = el.offsetTop - (track.clientHeight / 2) + (el.offsetHeight / 2);
     track.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
   } else {
-    syncHorizontalPickerSpacers(track);
-    const left = el.offsetLeft - (track.clientWidth / 2) + (el.offsetWidth / 2);
-    track.scrollTo({ left, behavior: smooth ? 'smooth' : 'instant' });
+    layoutHorizontalPickerSpacers(track);
+    const left = Math.max(0, el.offsetLeft - (track.clientWidth - el.offsetWidth) / 2);
+    const max = track.scrollWidth - track.clientWidth;
+    track.scrollTo({ left: Math.min(left, max), behavior: smooth ? 'smooth' : 'instant' });
   }
+}
+
+function snapHorizontalPickerToNearest(track, smooth, onCommit){
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  if (!items.length) return;
+  const center = track.scrollLeft + track.clientWidth / 2;
+  let closest = null;
+  let best = Infinity;
+  items.forEach(item => {
+    const mid = item.offsetLeft + item.offsetWidth / 2;
+    const d = Math.abs(mid - center);
+    if (d < best) { best = d; closest = item; }
+  });
+  if (!closest) return;
+  scrollPickerToRegion(track, closest.dataset.region, smooth);
+  updateRegionPickerVisuals(true, track, onCommit);
 }
 
 function bindRegionPickerScroll(track, onCommit){
   if (track.dataset.pickerBound) return;
   track.dataset.pickerBound = '1';
+  const driverH = isDriverHorizontalTrack(track);
   track.querySelectorAll('.region-picker-item').forEach(btn => {
     btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, true));
   });
   let scrollTimer;
   const onScroll = () => {
-    syncHorizontalPickerSpacers(track);
     updateRegionPickerVisuals(false, track, onCommit);
     clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), 120);
+    scrollTimer = setTimeout(() => {
+      if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+      else updateRegionPickerVisuals(true, track, onCommit);
+    }, 100);
   };
   track.addEventListener('scroll', onScroll, { passive: true });
-  track.addEventListener('scrollend', () => updateRegionPickerVisuals(true, track, onCommit), { passive: true });
+  track.addEventListener('scrollend', () => {
+    if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+    else updateRegionPickerVisuals(true, track, onCommit);
+  }, { passive: true });
 }
 
 function updateRegionPickerVisuals(commit, trackEl, onCommit){
@@ -1648,8 +1868,8 @@ function ensureDriverRegionPicker(){
     });
   }
   morphPickerTrack('#regionPickerTrack', scriptLatin);
-  syncHorizontalPickerSpacers(track);
-  requestAnimationFrame(() => {
+  const finishLayout = () => {
+    layoutHorizontalPickerSpacers(track);
     scrollPickerToRegion(track, selectedDriverRegion, false);
     updateRegionPickerVisuals(true, track, region => {
       if (region && region !== selectedDriverRegion) {
@@ -1657,8 +1877,20 @@ function ensureDriverRegionPicker(){
         refreshOrderMarkersDebounced();
       }
     });
-    syncHorizontalPickerSpacers(track);
-  });
+  };
+  requestAnimationFrame(() => requestAnimationFrame(finishLayout));
+  if (!track.dataset.driverPickerResize) {
+    track.dataset.driverPickerResize = '1';
+    const zone = track.closest('.driver-picker-zone');
+    if (zone && typeof ResizeObserver !== 'undefined') {
+      new ResizeObserver(() => {
+        if (!document.body.classList.contains('view-driver')) return;
+        layoutHorizontalPickerSpacers(track);
+        scrollPickerToRegion(track, selectedDriverRegion, false);
+        updateRegionPickerVisuals(false, track);
+      }).observe(zone);
+    }
+  }
 }
 
 function initRegionPicker(){
@@ -2110,8 +2342,6 @@ function sendSheetNext(){
   document.getElementById('sendStepDistrict').hidden = false;
   document.getElementById('sendNoteField').hidden = false;
   document.getElementById('sendRegion').value = region;
-  const hint = document.getElementById('sendDistrictHint');
-  if (hint) setI18nText(hint, region + ' — tuman tanlang', regionPickerLabel(region) + ' — туман танланг');
   initSendDistrictPicker();
   const btn = document.getElementById('sendActionBtn');
   btn.type = 'button';
@@ -2133,8 +2363,6 @@ function travelSheetNext(){
   document.getElementById('travelStepRegion').hidden = true;
   document.getElementById('travelStepDistrict').hidden = false;
   document.getElementById('travelRegion').value = region;
-  const hint = document.getElementById('travelDistrictHint');
-  if (hint) setI18nText(hint, region + ' — tuman tanlang', regionPickerLabel(region) + ' — туман танланг');
   initTravelDistrictPicker();
   const btn = document.getElementById('travelActionBtn');
   btn.type = 'button';
