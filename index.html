@@ -1265,6 +1265,53 @@ const STORAGE_KEY = 'duvduv_data_v1';
 mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
 
 const telegramUser = { id: null, first_name: '', username: '' };
+let persistedMapZoom = null;
+
+function userPrefKey(suffix){
+  if (telegramUser.id == null) return null;
+  return `duvduv_${suffix}_${telegramUser.id}`;
+}
+
+function saveUserRole(role){
+  const key = userPrefKey('role');
+  if (!key) return;
+  localStorage.setItem(key, role);
+}
+
+function saveUserRegion(region){
+  const key = userPrefKey('region');
+  if (!key || !region) return;
+  localStorage.setItem(key, region);
+}
+
+function saveUserMapZoom(zoom){
+  const key = userPrefKey('zoom');
+  if (!key) return;
+  localStorage.setItem(key, String(zoom));
+}
+
+function getDriverMapZoom(){
+  return persistedMapZoom ?? 10;
+}
+
+function restoreUserPrefs(){
+  if (telegramUser.id == null) return;
+  const savedRegion = localStorage.getItem(userPrefKey('region'));
+  if (savedRegion && UZ_REGIONS.includes(savedRegion)) {
+    selectedDriverRegion = savedRegion;
+  }
+  const z = parseFloat(localStorage.getItem(userPrefKey('zoom')));
+  if (!Number.isNaN(z) && z >= 0 && z <= 22) persistedMapZoom = z;
+}
+
+function applySavedUserRole(){
+  if (telegramUser.id == null) {
+    switchView('sender');
+    return;
+  }
+  const role = localStorage.getItem(userPrefKey('role'));
+  switchView(role === 'driver' ? 'driver' : 'sender');
+}
 
 function initTelegramUser(){
   const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
@@ -1702,6 +1749,7 @@ function ensureDriverRegionPicker(){
     bindRegionPickerScroll(track, region => {
       if (region !== selectedDriverRegion) {
         selectedDriverRegion = region;
+        saveUserRegion(region);
         refreshOrderMarkersDebounced();
       }
     });
@@ -1713,6 +1761,7 @@ function ensureDriverRegionPicker(){
     updateRegionPickerVisuals(true, track, region => {
       if (region && region !== selectedDriverRegion) {
         selectedDriverRegion = region;
+        saveUserRegion(region);
         refreshOrderMarkersDebounced();
       }
     });
@@ -2566,7 +2615,11 @@ function initDriverMap(){
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
     center: [69.2401, 41.2991],
-    zoom: 10
+    zoom: getDriverMapZoom()
+  });
+  map.on('zoomend', () => {
+    if (telegramUser.id == null) return;
+    saveUserMapZoom(map.getZoom());
   });
   map.on('load', () => {
     removeDriverRadiusLayers();
@@ -2586,7 +2639,7 @@ function centerMapOnDriver(){
       const lng = coords.longitude;
       const lat = coords.latitude;
       removeDriverRadiusLayers();
-      map.flyTo({ center: [lng, lat], zoom: 10, essential: true });
+      map.flyTo({ center: [lng, lat], zoom: getDriverMapZoom(), essential: true });
       if (!driverLocationMarker) {
         const el = document.createElement('div');
         el.className = 'map-driver-marker';
@@ -2599,7 +2652,7 @@ function centerMapOnDriver(){
     })
     .catch(() => {
       removeDriverRadiusLayers();
-      map.flyTo({ center: [69.2401, 41.2991], zoom: 10, essential: true });
+      map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), essential: true });
     });
 }
 
@@ -2663,6 +2716,9 @@ function openTelegramChat(){
 }
 
 function switchView(v){
+  if (telegramUser.id != null) {
+    saveUserRole(v === 'driver' ? 'driver' : 'sender');
+  }
   document.getElementById('senderView').style.display = v==='sender'?'flex':'none';
   document.getElementById('driverView').style.display = v==='driver'?'flex':'none';
   document.getElementById('btnSender').className = 'toggle-btn'+(v==='sender'?' active':'');
@@ -3524,7 +3580,9 @@ applyCyrillicUI();
 refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
-document.body.classList.add('view-sender');
+initTelegramUser();
+restoreUserPrefs();
+applySavedUserRole();
 </script>
 
 <!-- Telegram uslubidagi muvaffaqiyat -->
