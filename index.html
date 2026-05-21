@@ -961,49 +961,97 @@ html,body{
           <div class="scene" aria-hidden="true">
             <svg class="scene-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
               <defs>
-                <filter id="matteShadow" x="-25%" y="-15%" width="150%" height="150%">
-                  <feDropShadow dx="0" dy="10" stdDeviation="11" flood-color="#B8A090" flood-opacity=".22"/>
+                <filter id="softDrop" x="-40%" y="-30%" width="180%" height="180%">
+                  <feDropShadow dx="10" dy="14" stdDeviation="16" flood-color="#A89080" flood-opacity=".28"/>
                 </filter>
-                <filter id="matteShadowSm" x="-20%" y="-10%" width="140%" height="140%">
-                  <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#B8A090" flood-opacity=".18"/>
+                <filter id="boxDrop" x="-35%" y="-25%" width="170%" height="170%">
+                  <feDropShadow dx="8" dy="10" stdDeviation="10" flood-color="#A89080" flood-opacity=".24"/>
                 </filter>
               </defs>
               <rect width="320" height="220" fill="#F9ECE6"/>
               <g class="scene-illus">
-                <!-- Yer soiyasi -->
-                <ellipse cx="158" cy="188" rx="108" ry="14" fill="#D9C4B8" opacity=".35"/>
-                <!-- 4 ta quti (o'ngda ustma-ust) -->
-                <g filter="url(#matteShadow)" transform="translate(198,72)">
-                  <rect x="4" y="52" width="56" height="44" rx="14" fill="#D4B08E"/>
-                  <rect x="6" y="50" width="56" height="44" rx="14" fill="#E8C5A8"/>
-                  <rect x="2" y="36" width="60" height="40" rx="14" fill="#D4B08E"/>
-                  <rect x="4" y="34" width="58" height="40" rx="14" fill="#E8C5A8"/>
-                  <rect x="0" y="20" width="62" height="38" rx="14" fill="#D4B08E"/>
-                  <rect x="2" y="18" width="60" height="38" rx="14" fill="#E8C5A8"/>
-                  <rect x="-2" y="4" width="64" height="36" rx="14" fill="#D4B08E"/>
-                  <rect x="0" y="2" width="62" height="36" rx="14" fill="#E8C5A8"/>
-                  <!-- Yopishtiruvchi lenta -->
-                  <rect x="-4" y="38" width="70" height="10" rx="5" fill="#F7F2ED"/>
-                  <rect x="-4" y="72" width="70" height="8" rx="4" fill="#F7F2ED" opacity=".85"/>
+                <!-- Yumshoq drop shadow (o'ng/orqa) -->
+                <ellipse cx="172" cy="192" rx="118" ry="16" fill="#C8B0A0" opacity=".22"/>
+                <ellipse cx="168" cy="196" rx="95" ry="8" fill="#3A3530" opacity=".12"/>
+
+                <!-- ===== SEDAN (Cobalt/Gentra soddalashtirilgan) ===== -->
+                <g filter="url(#softDrop)" transform="translate(28,52)">
+                  <!-- AO: yerga tegish -->
+                  <path d="M18,118 L248,118 L252,128 L14,128 Z" fill="#2A2830" opacity=".14"/>
+                  <!-- Pastki korpus soyasi (chap-yuqori manba) -->
+                  <path d="M12,88 Q14,72 42,58 L228,52 Q252,54 258,72 L256,96 Q250,108 230,112 L38,114 Q16,110 12,88 Z" fill="#6E9FBD"/>
+                  <!-- Asosiy korpus -->
+                  <path d="M14,86 Q16,70 44,56 L226,50 Q250,52 256,70 L254,94 Q248,106 228,110 L40,112 Q18,108 14,86 Z" fill="#8EBAE5"/>
+                  <!-- Kaput ajratgich -->
+                  <path d="M44,56 L118,52 L118,68 L44,72 Z" fill="#7BA8CE" opacity=".35"/>
+                  <!-- Bagaj ajratgich -->
+                  <path d="M178,50 L252,48 L252,64 L178,68 Z" fill="#7BA8CE" opacity=".3"/>
+                  <!-- Tom / salon -->
+                  <path d="M52,38 L118,34 L178,32 L218,36 L228,50 L44,56 Z" fill="#7BA8CE"/>
+                  <path d="M54,36 L116,32 L176,30 L216,34 L224,48 L46,54 Z" fill="#8EBAE5"/>
+                  <!-- Oynalar (matte, shaffof emas) -->
+                  <path d="M58,38 L112,34 L112,50 L58,54 Z" fill="#4A4A4A"/>
+                  <path d="M122,34 L172,32 L172,48 L122,50 Z" fill="#4A4A4A"/>
+                  <path d="M182,32 L214,34 L214,46 L182,48 Z" fill="#4A4A4A"/>
+                  <!-- Old panjara (embossed) -->
+                  <rect x="18" y="72" width="28" height="22" rx="8" fill="#7BA8CE"/>
+                  <rect x="20" y="78" width="24" height="3" rx="1.5" fill="#6E9FBD"/>
+                  <rect x="20" y="84" width="24" height="3" rx="1.5" fill="#6E9FBD"/>
+                  <rect x="20" y="90" width="24" height="3" rx="1.5" fill="#6E9FBD"/>
+                  <!-- Old fara -->
+                  <path d="M8,74 L32,68 L36,82 L12,90 Z" fill="#C8D4DC"/>
+                  <path d="M10,76 L30,72 L32,80 L14,86 Z" fill="#D8E4EC"/>
+                  <!-- Eshik dastasi -->
+                  <rect x="128" y="78" width="14" height="5" rx="2.5" fill="#7BA8CE"/>
+                  <rect x="130" y="76" width="12" height="5" rx="2.5" fill="#8EBAE5"/>
+                  <!-- Yon ko'zgu -->
+                  <ellipse cx="108" cy="48" rx="8" ry="5" fill="#7BA8CE"/>
+                  <ellipse cx="108" cy="46" rx="7" ry="4" fill="#8EBAE5"/>
+                  <!-- Orqa g'ildirak -->
+                  <g transform="translate(208,98)">
+                    <ellipse cx="0" cy="0" rx="22" ry="22" fill="#4A4A4A"/>
+                    <ellipse cx="0" cy="0" rx="18" ry="18" fill="#5A5A5A"/>
+                    <circle cx="0" cy="0" r="12" fill="#B8C8D4"/>
+                    <path d="M0,-11 L2,-3 L11,0 L2,3 L0,11 L-2,3 L-11,0 L-2,-3 Z" fill="#D0DCE6"/>
+                    <path d="M0,-11 L3,-1 L11,2 L4,8 L0,11 L-4,8 L-11,2 L-3,-1 Z" fill="#C4D0DA" opacity=".9"/>
+                    <circle cx="0" cy="0" r="3" fill="#A8B8C4"/>
+                  </g>
+                  <!-- Old g'ildirak -->
+                  <g transform="translate(52,100)">
+                    <ellipse cx="0" cy="0" rx="22" ry="22" fill="#4A4A4A"/>
+                    <ellipse cx="0" cy="0" rx="18" ry="18" fill="#5A5A5A"/>
+                    <circle cx="0" cy="0" r="12" fill="#B8C8D4"/>
+                    <path d="M0,-11 L2,-3 L11,0 L2,3 L0,11 L-2,3 L-11,0 L-2,-3 Z" fill="#D0DCE6"/>
+                    <path d="M0,-11 L3,-1 L11,2 L4,8 L0,11 L-4,8 L-11,2 L-3,-1 Z" fill="#C4D0DA" opacity=".9"/>
+                    <circle cx="0" cy="0" r="3" fill="#A8B8C4"/>
+                  </g>
                 </g>
-                <!-- Sedan mashina -->
-                <g filter="url(#matteShadow)" transform="translate(42,78)">
-                  <rect x="8" y="58" width="148" height="36" rx="16" fill="#7BA8CE"/>
-                  <rect x="10" y="56" width="146" height="36" rx="16" fill="#8EBAE5"/>
-                  <path d="M38,28 L118,26 L138,38 L140,56 L38,58 Z" fill="#7BA8CE"/>
-                  <path d="M40,26 L116,24 L134,36 L136,54 L40,56 Z" fill="#8EBAE5"/>
-                  <rect x="48" y="32" width="32" height="22" rx="10" fill="#4A4A4A"/>
-                  <rect x="92" y="30" width="34" height="22" rx="10" fill="#4A4A4A"/>
-                  <rect x="22" y="78" width="28" height="18" rx="9" fill="#6A96B8"/>
-                  <rect x="24" y="76" width="26" height="18" rx="9" fill="#7BA8CE"/>
-                  <rect x="112" y="78" width="28" height="18" rx="9" fill="#6A96B8"/>
-                  <rect x="114" y="76" width="26" height="18" rx="9" fill="#7BA8CE"/>
-                  <circle cx="37" cy="85" r="7" fill="#4A4A4A"/>
-                  <circle cx="39" cy="83" r="4" fill="#5C5C5C"/>
-                  <circle cx="127" cy="85" r="7" fill="#4A4A4A"/>
-                  <circle cx="129" cy="83" r="4" fill="#5C5C5C"/>
-                  <rect x="138" y="62" width="22" height="20" rx="10" fill="#7BA8CE"/>
-                  <rect x="140" y="60" width="20" height="20" rx="10" fill="#8EBAE5"/>
+
+                <!-- ===== QUTI: old g'ildirak yonida (1 ta) ===== -->
+                <g filter="url(#boxDrop)" transform="translate(72,108)">
+                  <rect x="3" y="6" width="38" height="34" rx="12" fill="#D4B08E"/>
+                  <rect x="5" y="4" width="36" height="34" rx="12" fill="#E8C5A8"/>
+                  <rect x="14" y="2" width="8" height="38" rx="3" fill="#D9D4CF"/>
+                  <rect x="15" y="1" width="6" height="38" rx="2" fill="#E5E5E5"/>
+                </g>
+
+                <!-- ===== QUTI: orqa eshik yonida piramida (3 ta) ===== -->
+                <g filter="url(#boxDrop)" transform="translate(218,88)">
+                  <!-- Pastki chap -->
+                  <rect x="2" y="38" width="42" height="36" rx="13" fill="#D4B08E"/>
+                  <rect x="4" y="36" width="40" height="36" rx="13" fill="#E8C5A8"/>
+                  <rect x="18" y="34" width="7" height="40" rx="2.5" fill="#D9D4CF"/>
+                  <rect x="19" y="33" width="5" height="40" rx="2" fill="#E5E5E5"/>
+                  <!-- Pastki o'ng -->
+                  <rect x="44" y="38" width="42" height="36" rx="13" fill="#D4B08E"/>
+                  <rect x="46" y="36" width="40" height="36" rx="13" fill="#E8C5A8"/>
+                  <rect x="60" y="34" width="7" height="40" rx="2.5" fill="#D9D4CF"/>
+                  <rect x="61" y="33" width="5" height="40" rx="2" fill="#E5E5E5"/>
+                  <!-- Ustidagi 1 ta -->
+                  <rect x="22" y="8" width="44" height="34" rx="13" fill="#D4B08E"/>
+                  <rect x="24" y="6" width="42" height="34" rx="13" fill="#E8C5A8"/>
+                  <rect x="40" y="4" width="7" height="38" rx="2.5" fill="#D9D4CF"/>
+                  <rect x="41" y="3" width="5" height="38" rx="2" fill="#E5E5E5"/>
                 </g>
               </g>
             </svg>
