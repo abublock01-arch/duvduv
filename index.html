@@ -93,24 +93,21 @@ html,body{
   padding:0 20px;height:100%;min-height:0;overflow:hidden;flex:1;
 }
 .view-sender .map-layers-btn{display:none}
-.sender-top{
-  flex-shrink:0;width:100%;display:flex;justify-content:center;
-  padding:4px 0 8px;
-}
-/* ══ SCENE — matte claymorphism ══ */
+/* ══ SCENE — clay rasm (shaffof fon) ══ */
 .scene{
-  position:relative;width:100%;max-width:320px;height:220px;
-  margin:0 auto;overflow:hidden;pointer-events:none;
-  background:#F9ECE6;border-radius:24px;
-  box-shadow:0 2px 16px rgba(180,150,130,.12);
+  flex-shrink:0;width:100%;display:flex;justify-content:center;align-items:center;
+  padding:0 4px 6px;pointer-events:none;
+  background:transparent;
 }
-.scene-svg{display:block;width:100%;height:220px}
-.scene-illus{
-  transform-origin:160px 118px;
+.scene-img{
+  display:block;width:100%;max-width:min(100%,380px);
+  height:auto;max-height:min(38vw,168px);
+  object-fit:contain;object-position:center center;
   animation:sceneIllusFloat 4.2s ease-in-out infinite;
+  will-change:transform;
 }
 @keyframes sceneIllusFloat{
-  0%,100%{transform:translateY(-4px)}
+  0%,100%{transform:translateY(-3px)}
   50%{transform:translateY(0)}
 }
 #senderView .sender-body{
@@ -809,7 +806,7 @@ html,body{
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram #senderView{background:var(--app-bg)!important}
-.theme-telegram .scene{background:#F9ECE6!important}
+.theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
 .theme-telegram #driverView .region-picker--horizontal{
   background:var(--tg-secondary)!important;--picker-fade:var(--tg-secondary)!important;
@@ -957,108 +954,10 @@ html,body{
 
       <!-- SENDER -->
       <div id="senderView">
-        <div class="sender-top">
-          <div class="scene" aria-hidden="true">
-            <svg class="scene-svg" viewBox="0 0 320 220" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <filter id="softDrop" x="-40%" y="-30%" width="180%" height="180%">
-                  <feDropShadow dx="10" dy="14" stdDeviation="16" flood-color="#A89080" flood-opacity=".28"/>
-                </filter>
-                <filter id="boxDrop" x="-35%" y="-25%" width="170%" height="170%">
-                  <feDropShadow dx="8" dy="10" stdDeviation="10" flood-color="#A89080" flood-opacity=".24"/>
-                </filter>
-              </defs>
-              <rect width="320" height="220" fill="#F9ECE6"/>
-              <g class="scene-illus">
-                <!-- Yumshoq drop shadow (o'ng/orqa) -->
-                <ellipse cx="172" cy="192" rx="118" ry="16" fill="#C8B0A0" opacity=".22"/>
-                <ellipse cx="168" cy="196" rx="95" ry="8" fill="#3A3530" opacity=".12"/>
-
-                <!-- ===== SEDAN (Cobalt/Gentra soddalashtirilgan) ===== -->
-                <g filter="url(#softDrop)" transform="translate(28,52)">
-                  <!-- AO: yerga tegish -->
-                  <path d="M18,118 L248,118 L252,128 L14,128 Z" fill="#2A2830" opacity=".14"/>
-                  <!-- Pastki korpus soyasi (chap-yuqori manba) -->
-                  <path d="M12,88 Q14,72 42,58 L228,52 Q252,54 258,72 L256,96 Q250,108 230,112 L38,114 Q16,110 12,88 Z" fill="#6E9FBD"/>
-                  <!-- Asosiy korpus -->
-                  <path d="M14,86 Q16,70 44,56 L226,50 Q250,52 256,70 L254,94 Q248,106 228,110 L40,112 Q18,108 14,86 Z" fill="#8EBAE5"/>
-                  <!-- Kaput ajratgich -->
-                  <path d="M44,56 L118,52 L118,68 L44,72 Z" fill="#7BA8CE" opacity=".35"/>
-                  <!-- Bagaj ajratgich -->
-                  <path d="M178,50 L252,48 L252,64 L178,68 Z" fill="#7BA8CE" opacity=".3"/>
-                  <!-- Tom / salon -->
-                  <path d="M52,38 L118,34 L178,32 L218,36 L228,50 L44,56 Z" fill="#7BA8CE"/>
-                  <path d="M54,36 L116,32 L176,30 L216,34 L224,48 L46,54 Z" fill="#8EBAE5"/>
-                  <!-- Oynalar (matte, shaffof emas) -->
-                  <path d="M58,38 L112,34 L112,50 L58,54 Z" fill="#4A4A4A"/>
-                  <path d="M122,34 L172,32 L172,48 L122,50 Z" fill="#4A4A4A"/>
-                  <path d="M182,32 L214,34 L214,46 L182,48 Z" fill="#4A4A4A"/>
-                  <!-- Old panjara (embossed) -->
-                  <rect x="18" y="72" width="28" height="22" rx="8" fill="#7BA8CE"/>
-                  <rect x="20" y="78" width="24" height="3" rx="1.5" fill="#6E9FBD"/>
-                  <rect x="20" y="84" width="24" height="3" rx="1.5" fill="#6E9FBD"/>
-                  <rect x="20" y="90" width="24" height="3" rx="1.5" fill="#6E9FBD"/>
-                  <!-- Old fara -->
-                  <path d="M8,74 L32,68 L36,82 L12,90 Z" fill="#C8D4DC"/>
-                  <path d="M10,76 L30,72 L32,80 L14,86 Z" fill="#D8E4EC"/>
-                  <!-- Eshik dastasi -->
-                  <rect x="128" y="78" width="14" height="5" rx="2.5" fill="#7BA8CE"/>
-                  <rect x="130" y="76" width="12" height="5" rx="2.5" fill="#8EBAE5"/>
-                  <!-- Yon ko'zgu -->
-                  <ellipse cx="108" cy="48" rx="8" ry="5" fill="#7BA8CE"/>
-                  <ellipse cx="108" cy="46" rx="7" ry="4" fill="#8EBAE5"/>
-                  <!-- Orqa g'ildirak -->
-                  <g transform="translate(208,98)">
-                    <ellipse cx="0" cy="0" rx="22" ry="22" fill="#4A4A4A"/>
-                    <ellipse cx="0" cy="0" rx="18" ry="18" fill="#5A5A5A"/>
-                    <circle cx="0" cy="0" r="12" fill="#B8C8D4"/>
-                    <path d="M0,-11 L2,-3 L11,0 L2,3 L0,11 L-2,3 L-11,0 L-2,-3 Z" fill="#D0DCE6"/>
-                    <path d="M0,-11 L3,-1 L11,2 L4,8 L0,11 L-4,8 L-11,2 L-3,-1 Z" fill="#C4D0DA" opacity=".9"/>
-                    <circle cx="0" cy="0" r="3" fill="#A8B8C4"/>
-                  </g>
-                  <!-- Old g'ildirak -->
-                  <g transform="translate(52,100)">
-                    <ellipse cx="0" cy="0" rx="22" ry="22" fill="#4A4A4A"/>
-                    <ellipse cx="0" cy="0" rx="18" ry="18" fill="#5A5A5A"/>
-                    <circle cx="0" cy="0" r="12" fill="#B8C8D4"/>
-                    <path d="M0,-11 L2,-3 L11,0 L2,3 L0,11 L-2,3 L-11,0 L-2,-3 Z" fill="#D0DCE6"/>
-                    <path d="M0,-11 L3,-1 L11,2 L4,8 L0,11 L-4,8 L-11,2 L-3,-1 Z" fill="#C4D0DA" opacity=".9"/>
-                    <circle cx="0" cy="0" r="3" fill="#A8B8C4"/>
-                  </g>
-                </g>
-
-                <!-- ===== QUTI: old g'ildirak yonida (1 ta) ===== -->
-                <g filter="url(#boxDrop)" transform="translate(72,108)">
-                  <rect x="3" y="6" width="38" height="34" rx="12" fill="#D4B08E"/>
-                  <rect x="5" y="4" width="36" height="34" rx="12" fill="#E8C5A8"/>
-                  <rect x="14" y="2" width="8" height="38" rx="3" fill="#D9D4CF"/>
-                  <rect x="15" y="1" width="6" height="38" rx="2" fill="#E5E5E5"/>
-                </g>
-
-                <!-- ===== QUTI: orqa eshik yonida piramida (3 ta) ===== -->
-                <g filter="url(#boxDrop)" transform="translate(218,88)">
-                  <!-- Pastki chap -->
-                  <rect x="2" y="38" width="42" height="36" rx="13" fill="#D4B08E"/>
-                  <rect x="4" y="36" width="40" height="36" rx="13" fill="#E8C5A8"/>
-                  <rect x="18" y="34" width="7" height="40" rx="2.5" fill="#D9D4CF"/>
-                  <rect x="19" y="33" width="5" height="40" rx="2" fill="#E5E5E5"/>
-                  <!-- Pastki o'ng -->
-                  <rect x="44" y="38" width="42" height="36" rx="13" fill="#D4B08E"/>
-                  <rect x="46" y="36" width="40" height="36" rx="13" fill="#E8C5A8"/>
-                  <rect x="60" y="34" width="7" height="40" rx="2.5" fill="#D9D4CF"/>
-                  <rect x="61" y="33" width="5" height="40" rx="2" fill="#E5E5E5"/>
-                  <!-- Ustidagi 1 ta -->
-                  <rect x="22" y="8" width="44" height="34" rx="13" fill="#D4B08E"/>
-                  <rect x="24" y="6" width="42" height="34" rx="13" fill="#E8C5A8"/>
-                  <rect x="40" y="4" width="7" height="38" rx="2.5" fill="#D9D4CF"/>
-                  <rect x="41" y="3" width="5" height="38" rx="2" fill="#E5E5E5"/>
-                </g>
-              </g>
-            </svg>
-          </div>
-        </div>
-
         <div class="sender-body">
+          <div class="scene" aria-hidden="true">
+            <img class="scene-img" src="assets/scene-clay.png" alt="" width="1024" height="658" decoding="async"/>
+          </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
             <div class="shipments-list" id="shipmentsList"></div>
