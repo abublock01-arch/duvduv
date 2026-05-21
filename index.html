@@ -34,7 +34,7 @@ html,body{
 }
 .header-bar{
   display:flex;align-items:center;justify-content:space-between;
-  margin-bottom:28px;min-height:40px;gap:8px;
+  margin-bottom:12px;min-height:40px;gap:8px;
 }
 .header-close{
   width:40px;height:40px;border:none;background:transparent;
@@ -46,25 +46,17 @@ html,body{
   flex:1;text-align:center;font-size:26px;font-weight:900;color:#0f172a;
   letter-spacing:-.04em;line-height:1;margin:0;
 }
-.logo-brand .logo-sep{color:#94a3b8;font-size:20px;margin:0 3px;position:relative;top:-2px;font-weight:400}
+.logo-brand .logo-sep{color:#FF9500;font-size:20px;margin:0 3px;position:relative;top:-2px;font-weight:400}
 .logo-text{display:none}
 .header-actions-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-.header-eye,.header-tg{
+.header-eye{
   width:40px;height:40px;border-radius:50%;border:none;padding:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   flex-shrink:0;transition:transform .15s;
+  background:transparent;color:var(--navy);
 }
-.header-eye:active,.header-tg:active{transform:scale(.92)}
-.header-eye{
-  display:flex;background:transparent;color:var(--navy);
-}
+.header-eye:active{transform:scale(.92)}
 .header-eye svg{width:22px;height:22px;stroke:var(--navy);fill:none;stroke-width:2}
-.header-tg{
-  display:flex;background:var(--tg-blue);
-  box-shadow:0 4px 14px rgba(42,171,238,.3);
-}
-.header-tg svg{width:20px;height:20px;fill:#fff}
-.header-tg.active{box-shadow:0 2px 12px rgba(42,171,238,.5)}
 .logo{display:none}
 .logo-dot{display:none}
 
@@ -72,7 +64,7 @@ html,body{
 .toggle{
   background:#fff;border-radius:20px;padding:6px;display:flex;gap:0;
   box-shadow:0 1px 3px rgba(15,23,42,.04);
-  max-width:320px;width:100%;margin:0 auto;
+  max-width:320px;width:100%;margin:0 auto 0;
 }
 .toggle-btn{
   flex:1;padding:12px 12px;border-radius:16px;border:none;font-size:17px;font-weight:600;
@@ -106,10 +98,12 @@ html,body{
 #senderView .scene-img{
   position:absolute;left:0;bottom:0;width:100%;height:260px;
   object-fit:contain;object-position:center bottom;
-  opacity:.35;
-  filter:drop-shadow(0 8px 24px rgba(42,171,238,.3)) saturate(.85);
+  opacity:.5;
+  filter:blur(0px);
   max-width:none;max-height:none;
+  transition:opacity .45s ease;
 }
+#senderView.has-active-shipments .scene-img{opacity:.25}
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
   position:relative;z-index:2;background:transparent;
@@ -130,10 +124,10 @@ html,body{
 }
 .shipment-card{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:13px;background:rgba(255,255,255,.82);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-radius:22px;border:1px solid rgba(255,255,255,.6);
-  box-shadow:0 6px 24px rgba(42,171,238,.08);
+  padding:13px;background:rgba(255,255,255,.75);
+  backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);
+  border-radius:22px;border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 2px 12px rgba(42,171,238,.08);
   cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform .15s,box-shadow .15s;
 }
@@ -243,28 +237,33 @@ html,body{
 /* ══ DRIVER VIEW ══ */
 #driverView{
   display:none;flex-direction:column;align-items:stretch;
-  padding:8px 12px max(12px,env(safe-area-inset-bottom));
-  height:100%;min-height:0;flex:1;gap:8px;
+  padding:8px 0 0;height:100%;min-height:0;flex:1;gap:0;
   background:var(--app-bg);overflow:hidden;
 }
-#driverView .driver-picker-zone{
-  flex:0 0 auto;width:100%;min-height:0;
+#driverView .map-wrap{
+  order:1;flex:1 1 0;min-height:0;height:auto;width:100%;
+  padding:0 12px;
 }
-#driverView .region-picker{width:100%;margin:0;--picker-fade:#fff}
-/* Haydovchi viloyat — toggle kabi gorizontal */
+#driverView .driver-picker-zone{
+  order:2;flex:0 0 auto;width:100%;min-height:0;
+}
+#driverView .region-picker{width:100%;margin:0;--picker-fade:rgba(255,255,255,.92)}
 #driverView .region-picker--horizontal{
   height:auto;flex:0 0 auto;margin:0;
-  padding:6px;border-radius:20px;
-  background:#fff;
-  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  padding:10px 0 max(16px,env(safe-area-inset-bottom));
+  border-radius:20px 20px 0 0;
+  background:rgba(255,255,255,.92);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  box-shadow:0 -4px 24px rgba(42,171,238,.08);
   overflow:hidden;
 }
 #driverView .region-picker--horizontal::before,
 #driverView .region-picker--horizontal::after{display:none}
 #driverView .region-picker--horizontal .region-picker-track{
-  height:44px;padding:0;gap:4px;
+  height:48px;padding:0 8px;gap:4px;
   scroll-snap-type:x mandatory;
   scroll-padding-inline:50%;
+  scroll-behavior:smooth;
 }
 #driverView .region-picker--horizontal .region-picker-spacer{
   flex:0 0 auto;min-width:0;scroll-snap-align:none;
@@ -276,19 +275,16 @@ html,body{
   color:#6b7280;
   opacity:1;transform:none;
   scroll-snap-align:center;
-  transition:background .2s,color .2s,box-shadow .2s;
+  transition:color .2s,font-size .2s,font-weight .2s;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-adjacent{
-  opacity:.7;font-size:15px;transform:none;color:#6b7280;
+  opacity:.65;font-size:15px;font-weight:600;transform:none;color:#6b7280;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-center{
-  background:var(--tg-blue);color:#fff;
-  font-size:15px;font-weight:600;
-  box-shadow:0 1px 4px rgba(42,171,238,.25);
+  background:transparent;color:#2AABEE;
+  font-size:20px;font-weight:800;
+  box-shadow:none;
   transform:none;opacity:1;
-}
-#driverView .map-wrap{
-  flex:1 1 0;min-height:0;height:auto;width:100%;
 }
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
@@ -799,7 +795,6 @@ html,body{
 .theme-telegram .app{background:var(--tg-bg)!important}
 .theme-telegram .header{background:var(--tg-bg)!important}
 .theme-telegram .logo-brand{color:var(--tg-text)!important}
-.theme-telegram .logo-sep{color:var(--tg-hint)!important}
 .theme-telegram .header-close{color:var(--tg-text)!important}
 .theme-telegram .toggle{background:var(--tg-secondary)!important}
 .theme-telegram .toggle-btn{color:var(--tg-hint)!important}
@@ -809,18 +804,18 @@ html,body{
 }
 .theme-telegram .header-eye{background:var(--tg-section)!important}
 .theme-telegram .header-eye svg{stroke:var(--tg-text)!important}
-.theme-telegram .header-tg{background:var(--tg-btn)!important}
-.theme-telegram .header-tg svg{fill:var(--tg-btn-text)!important}
-.theme-telegram .header-tg.active{opacity:.85}
+.theme-telegram .logo-sep{color:#FF9500!important}
 .theme-telegram .region-picker{--picker-fade:var(--tg-bg)!important}
 .theme-telegram .region-picker--vertical .region-picker-item.is-center,
 .theme-telegram .region-picker--horizontal .region-picker-item.is-center{color:#0B5CAD!important}
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
-  background:rgba(255,255,255,.82)!important;
-  border-color:rgba(255,255,255,.6)!important;
-  backdrop-filter:blur(12px)!important;-webkit-backdrop-filter:blur(12px)!important;
+  background:rgba(255,255,255,.75)!important;
+  border-color:rgba(255,255,255,.9)!important;
+  backdrop-filter:blur(16px) saturate(1.8)!important;
+  -webkit-backdrop-filter:blur(16px) saturate(1.8)!important;
+  box-shadow:0 2px 12px rgba(42,171,238,.08)!important;
 }
 .theme-telegram .shipment-dest{color:var(--tg-text)!important}
 .theme-telegram .shipment-status{
@@ -847,12 +842,12 @@ html,body{
 .theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
 .theme-telegram #driverView .region-picker--horizontal{
-  background:var(--tg-secondary)!important;--picker-fade:var(--tg-secondary)!important;
+  background:rgba(255,255,255,.92)!important;--picker-fade:rgba(255,255,255,.92)!important;
 }
 .theme-telegram #driverView .region-picker--horizontal .region-picker-item{color:var(--tg-hint)!important}
 .theme-telegram #driverView .region-picker--horizontal .region-picker-item.is-center{
-  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
-  box-shadow:none!important;
+  background:transparent!important;color:#2AABEE!important;
+  font-size:20px!important;font-weight:800!important;box-shadow:none!important;
 }
 .theme-telegram #senderView .sender-body{background:transparent!important}
 .theme-telegram #senderView .cta-wrap,
@@ -971,13 +966,10 @@ html,body{
     <div class="header">
       <div class="header-bar">
         <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
-        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep">•</span> duv</h1>
+        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" style="color:#FF9500">·</span> duv</h1>
         <div class="header-actions-right">
           <button type="button" class="header-eye map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button type="button" class="header-tg" id="themeBtn" onclick="toggleTelegramTheme()" aria-label="Telegram" title="Telegram">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 16.2 9.9 13l7.6-6.8c.3-.3-.1-.4-.4-.2L8.8 12.5 5.6 11.4c-.7-.2-.7-.8.1-1.2l12.6-4.9c.6-.2 1.1.1.9.9l-2 12.4c-.1.6-.5.8-1 .5l-3.5-2.6-1.7 1.6c-.2.2-.4.2-.6 0z"/></svg>
           </button>
         </div>
       </div>
@@ -1016,12 +1008,6 @@ html,body{
 
       <!-- DRIVER -->
       <div id="driverView">
-        <div class="driver-picker-zone">
-          <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
-            <div class="region-picker-track" id="regionPickerTrack"></div>
-          </div>
-        </div>
-
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
           <div class="map-controls">
@@ -1031,6 +1017,11 @@ html,body{
           <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
           </button>
+        </div>
+        <div class="driver-picker-zone">
+          <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
+            <div class="region-picker-track" id="regionPickerTrack"></div>
+          </div>
         </div>
       </div>
 
@@ -1406,15 +1397,9 @@ function clearTelegramThemeVars(){
 
 function toggleTelegramTheme(){
   const root = document.documentElement;
-  const btn = document.getElementById('themeBtn');
   const on = root.classList.toggle('theme-telegram');
-  if (on) {
-    applyTelegramThemeVars();
-    btn.classList.add('active');
-  } else {
-    clearTelegramThemeVars();
-    btn.classList.remove('active');
-  }
+  if (on) applyTelegramThemeVars();
+  else clearTelegramThemeVars();
 }
 
 if (window.Telegram && Telegram.WebApp) {
@@ -3227,8 +3212,10 @@ function formatDate(ts) {
 function renderShipments(){
   const wrap = document.getElementById('shipmentsWrap');
   const list = document.getElementById('shipmentsList');
+  const senderView = document.getElementById('senderView');
   if (!wrap || !list) return;
   const mine = getMyShipments();
+  senderView?.classList.toggle('has-active-shipments', mine.length > 0);
   if (!mine.length) {
     wrap.classList.add('visible');
     list.innerHTML = `<div class="shipments-empty">
