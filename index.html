@@ -133,9 +133,10 @@ html,body{
 }
 .shipment-card{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:13px;background:transparent;
-  border-radius:22px;border:none;
-  box-shadow:none;
+  padding:13px;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-radius:22px;border:1px solid rgba(255,255,255,.65);
+  box-shadow:0 6px 24px rgba(0,0,0,.06);
 }
 .shipment-thumb{
   width:56px;height:56px;border-radius:12px;object-fit:cover;
@@ -148,7 +149,7 @@ html,body{
   background:#E1F0FA;border:none;
 }
 .shipment-type-icon svg{width:22px;height:22px}
-.shipment-status--travel{color:var(--tg-blue);background:transparent}
+.shipment-status--travel{color:var(--tg-blue);background:rgba(42,171,238,.14)}
 .shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .shipment-dest{
   font-size:16px;font-weight:800;color:#0f172a;letter-spacing:-.02em;
@@ -157,7 +158,7 @@ html,body{
 .shipment-date{font-size:11px;color:#9ca3af;font-weight:500}
 .shipment-status{
   display:inline-block;font-size:11px;font-weight:700;color:var(--tg-blue);
-  background:transparent;padding:3px 0;border-radius:0;width:fit-content;line-height:1.2;
+  background:#E1F0FA;padding:3px 8px;border-radius:6px;width:fit-content;line-height:1.2;
 }
 .shipment-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .shipment-icon-btn{
@@ -238,8 +239,6 @@ html,body{
   height:44px;padding:0;gap:4px;
   scroll-snap-type:x mandatory;
   scroll-padding-inline:50%;
-  overscroll-behavior-x:contain;
-  scroll-behavior:auto;
 }
 #driverView .region-picker--horizontal .region-picker-spacer{
   flex:0 0 auto;min-width:0;scroll-snap-align:none;
@@ -793,11 +792,11 @@ html,body{
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
-  background:transparent!important;border:none!important;box-shadow:none!important;
+  background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
 }
 .theme-telegram .shipment-dest{color:var(--tg-text)!important}
 .theme-telegram .shipment-status{
-  color:var(--tg-btn)!important;background:transparent!important;
+  color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
 .theme-telegram .shipment-icon-btn--edit svg{stroke:var(--tg-btn)!important}
 .theme-telegram .shipment-icon-btn--location svg{fill:var(--tg-btn)!important;stroke:var(--tg-btn)!important}
@@ -957,7 +956,7 @@ html,body{
       <div id="senderView">
         <div class="sender-body">
           <div class="scene" aria-hidden="true">
-            <img class="scene-img" src="assets/scene-clay.png?v=2" alt="" width="1024" height="658" decoding="async"/>
+            <img class="scene-img" src="assets/scene-clay.png" alt="" width="1024" height="658" decoding="async"/>
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
@@ -1369,8 +1368,7 @@ const MAP_MARKER_PERSON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="
   <path d="M14 34 Q20 30 26 32 L24 50 Q20 48 16 50 Z" fill="url(#pg)" opacity=".95"/>
   <path d="M50 34 Q44 30 38 32 L40 50 Q44 48 48 50 Z" fill="url(#pg)" opacity=".95"/>
 </svg>`;
-let selectedDriverRegion = REGION_ALL;
-let pickerVisualRaf = null;
+let selectedDriverRegion = 'Samarqand';
 let regionPickerBuilt = false;
 let lastDriverPickerKey = '';
 let userLocationRegion = null;
@@ -1401,8 +1399,6 @@ let locationPickerPin = null;
 const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 6.5-6.5z"/></svg>';
 const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.8"/></svg>';
 const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></svg>';
-
-const REGION_ALL = '__all__';
 
 const UZ_REGIONS = [
   'Toshkent', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
@@ -1479,14 +1475,8 @@ function detectRegionFromCoords(lng, lat){
 }
 
 function getPickerRegions(){
-  const base = userLocationRegion
-    ? UZ_REGIONS.filter(r => r !== userLocationRegion)
-    : [...UZ_REGIONS];
-  return base.includes(REGION_ALL) ? base : [...base, REGION_ALL];
-}
-
-function isRegionAll(region){
-  return region === REGION_ALL;
+  if (!userLocationRegion) return [...UZ_REGIONS];
+  return UZ_REGIONS.filter(r => r !== userLocationRegion);
 }
 
 function getDistrictsForRegion(region){
@@ -1505,8 +1495,7 @@ function destToRegion(dest){
 }
 
 function destMatchesDriverRegion(dest){
-  if (!dest) return false;
-  if (!selectedDriverRegion || isRegionAll(selectedDriverRegion)) return true;
+  if (!selectedDriverRegion || !dest) return false;
   return dest === selectedDriverRegion || dest.startsWith(selectedDriverRegion + ' —');
 }
 
@@ -1523,8 +1512,7 @@ async function refreshUserLocationRegion(){
 
 function fillRegionSelect(el, placeholder, regions){
   if (!el) return;
-  const base = regions || UZ_REGIONS;
-  const list = base.includes(REGION_ALL) ? base : [...base, REGION_ALL];
+  const list = regions || UZ_REGIONS;
   const ph = placeholder || 'Viloyatni tanlang';
   const phCyr = UI_PHRASE_CYRILLIC[ph] || latinToCyrillic(ph);
   el.innerHTML = `<option value="" disabled selected>${phCyr}</option>` +
@@ -1566,7 +1554,6 @@ function buildRegionPickerTrackPlain(track, regions){
 }
 
 function regionPickerLabel(region){
-  if (isRegionAll(region)) return 'Ҳаммаси';
   return REGION_CYRILLIC[region] || latinToCyrillic(region);
 }
 
@@ -1608,25 +1595,31 @@ function scrollPickerToRegion(track, region, smooth){
   const el = track.querySelector(`[data-region="${region}"]`);
   if (!el) return;
   const vertical = track.closest('.region-picker--vertical');
-  const driverH = isDriverHorizontalTrack(track);
-  const behavior = smooth && !driverH ? 'smooth' : 'instant';
   if (vertical) {
     const top = el.offsetTop - (track.clientHeight / 2) + (el.offsetHeight / 2);
-    track.scrollTo({ top, behavior });
+    track.scrollTo({ top, behavior: smooth ? 'smooth' : 'instant' });
   } else {
     layoutHorizontalPickerSpacers(track);
     const left = Math.max(0, el.offsetLeft - (track.clientWidth - el.offsetWidth) / 2);
     const max = track.scrollWidth - track.clientWidth;
-    track.scrollTo({ left: Math.min(left, max), behavior });
+    track.scrollTo({ left: Math.min(left, max), behavior: smooth ? 'smooth' : 'instant' });
   }
 }
 
-function schedulePickerVisuals(track, commit, onCommit){
-  if (pickerVisualRaf) cancelAnimationFrame(pickerVisualRaf);
-  pickerVisualRaf = requestAnimationFrame(() => {
-    pickerVisualRaf = null;
-    updateRegionPickerVisuals(commit, track, onCommit);
+function snapHorizontalPickerToNearest(track, smooth, onCommit){
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  if (!items.length) return;
+  const center = track.scrollLeft + track.clientWidth / 2;
+  let closest = null;
+  let best = Infinity;
+  items.forEach(item => {
+    const mid = item.offsetLeft + item.offsetWidth / 2;
+    const d = Math.abs(mid - center);
+    if (d < best) { best = d; closest = item; }
   });
+  if (!closest) return;
+  scrollPickerToRegion(track, closest.dataset.region, smooth);
+  updateRegionPickerVisuals(true, track, onCommit);
 }
 
 function bindRegionPickerScroll(track, onCommit){
@@ -1634,12 +1627,21 @@ function bindRegionPickerScroll(track, onCommit){
   track.dataset.pickerBound = '1';
   const driverH = isDriverHorizontalTrack(track);
   track.querySelectorAll('.region-picker-item').forEach(btn => {
-    btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, !driverH));
+    btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, true));
   });
-  const onScroll = () => schedulePickerVisuals(track, false, onCommit);
+  let scrollTimer;
+  const onScroll = () => {
+    updateRegionPickerVisuals(false, track, onCommit);
+    clearTimeout(scrollTimer);
+    scrollTimer = setTimeout(() => {
+      if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+      else updateRegionPickerVisuals(true, track, onCommit);
+    }, 100);
+  };
   track.addEventListener('scroll', onScroll, { passive: true });
   track.addEventListener('scrollend', () => {
-    updateRegionPickerVisuals(true, track, onCommit);
+    if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+    else updateRegionPickerVisuals(true, track, onCommit);
   }, { passive: true });
 }
 
@@ -1647,26 +1649,23 @@ function updateRegionPickerVisuals(commit, trackEl, onCommit){
   const track = trackEl || document.getElementById('regionPickerTrack');
   if (!track) return;
   const vertical = !!track.closest('.region-picker--vertical');
+  const trackRect = track.getBoundingClientRect();
+  const centerX = trackRect.left + trackRect.width / 2;
+  const centerY = trackRect.top + trackRect.height / 2;
   const items = [...track.querySelectorAll('.region-picker-item')];
-  if (!items.length) return;
   let closest = null;
   let closestDist = Infinity;
 
-  if (vertical) {
-    const centerY = track.scrollTop + track.clientHeight / 2;
-    items.forEach(item => {
-      const mid = item.offsetTop + item.offsetHeight / 2;
-      const dist = Math.abs(mid - centerY);
-      if (dist < closestDist) { closestDist = dist; closest = item; }
-    });
-  } else {
-    const centerX = track.scrollLeft + track.clientWidth / 2;
-    items.forEach(item => {
-      const mid = item.offsetLeft + item.offsetWidth / 2;
-      const dist = Math.abs(mid - centerX);
-      if (dist < closestDist) { closestDist = dist; closest = item; }
-    });
-  }
+  items.forEach(item => {
+    const rect = item.getBoundingClientRect();
+    const dist = vertical
+      ? Math.abs(rect.top + rect.height / 2 - centerY)
+      : Math.abs(rect.left + rect.width / 2 - centerX);
+    if (dist < closestDist) {
+      closestDist = dist;
+      closest = item;
+    }
+  });
 
   items.forEach(item => item.classList.remove('is-center', 'is-adjacent'));
   if (!closest) return;
@@ -1723,15 +1722,11 @@ function ensureDriverRegionPicker(){
     track.dataset.driverPickerResize = '1';
     const zone = track.closest('.driver-picker-zone');
     if (zone && typeof ResizeObserver !== 'undefined') {
-      let resizeTimer;
       new ResizeObserver(() => {
         if (!document.body.classList.contains('view-driver')) return;
-        clearTimeout(resizeTimer);
-        resizeTimer = setTimeout(() => {
-          layoutHorizontalPickerSpacers(track);
-          scrollPickerToRegion(track, selectedDriverRegion, false);
-          updateRegionPickerVisuals(false, track);
-        }, 80);
+        layoutHorizontalPickerSpacers(track);
+        scrollPickerToRegion(track, selectedDriverRegion, false);
+        updateRegionPickerVisuals(false, track);
       }).observe(zone);
     }
   }
@@ -1796,8 +1791,7 @@ const UI_PHRASE_CYRILLIC = {
   'Rasm olindi!': 'Расм олинди!', 'Rasm yuklandi!': 'Расм юкланди!',
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
-  'Tuman tanlang': 'Туман танланг',
-  'Aniq viloyatni tanlang': 'Аниқ вилоятни танланг'
+  'Tuman tanlang': 'Туман танланг'
 };
 
 const LATIN_CYR_CHAR = {
@@ -2182,10 +2176,6 @@ function sendSheetNext(){
     showToast('Viloyatni tanlang');
     return;
   }
-  if (isRegionAll(region)) {
-    showToast('Aniq viloyatni tanlang');
-    return;
-  }
   sendSheetStep = 2;
   document.getElementById('sendStepRegion').hidden = true;
   document.getElementById('sendStepDistrict').hidden = false;
@@ -2203,10 +2193,6 @@ function travelSheetNext(){
   const region = selectedTravelRegion || document.getElementById('travelRegion')?.value;
   if (!region) {
     showToast('Viloyatni tanlang');
-    return;
-  }
-  if (isRegionAll(region)) {
-    showToast('Aniq viloyatni tanlang');
     return;
   }
   travelSheetStep = 2;
