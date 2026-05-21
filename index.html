@@ -347,7 +347,14 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
   opacity:1;filter:blur(0);
 }
 .script-morph--region{
-  display:inline-block;vertical-align:middle;min-width:100%;
+  display:inline-grid;vertical-align:middle;
+  align-items:center;justify-items:center;
+  min-width:max-content;
+}
+.script-morph--region .script-morph-layer{
+  grid-area:1/1;
+  position:relative;left:auto;right:auto;top:auto;
+  transform:none;
 }
 @media (prefers-reduced-motion:reduce){
   .script-morph-layer{
@@ -1632,6 +1639,7 @@ function ensureDriverRegionPicker(){
       refreshOrderMarkersDebounced();
     }
   });
+  morphPickerTrack('#regionPickerTrack', scriptLatin);
 }
 
 function initRegionPicker(){
@@ -2512,6 +2520,7 @@ function switchView(v){
   document.body.classList.toggle('view-driver', v === 'driver');
   document.body.classList.toggle('view-sender', v === 'sender');
   if (v === 'driver') {
+    ensureDriverRegionPicker();
     if (!map) initDriverMap();
     else {
       setTimeout(() => {
