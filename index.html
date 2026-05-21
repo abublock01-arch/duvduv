@@ -204,10 +204,42 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 /* ══ DRIVER VIEW ══ */
 #driverView{
   display:none;flex-direction:column;align-items:stretch;
-  padding:0 16px;height:100%;min-height:0;flex:1;
-  background:var(--app-bg);
+  padding:0 12px max(12px,env(safe-area-inset-bottom));
+  height:100%;min-height:0;flex:1;gap:8px;
+  background:var(--app-bg);overflow:hidden;
 }
-#driverView .region-picker{width:100%}
+#driverView .driver-picker-zone{
+  flex:0 0 auto;width:100%;min-height:0;
+}
+#driverView .region-picker{width:100%;margin:0}
+/* Haydovchi: yuqorida ixcham gorizontal iOS drum */
+#driverView .region-picker--horizontal{
+  height:64px;max-height:64px;flex:0 0 64px;
+  margin:4px 0 0;
+  border-radius:16px;
+  background:rgba(255,255,255,.55);
+  box-shadow:0 1px 4px rgba(15,23,42,.04);
+}
+#driverView .region-picker--horizontal .region-picker-track{
+  height:64px;padding:0;
+}
+#driverView .region-picker--horizontal::before,
+#driverView .region-picker--horizontal::after{width:44px}
+#driverView .region-picker--horizontal .region-picker-item{
+  padding:4px 10px;font-size:13px;
+}
+#driverView .region-picker--horizontal .region-picker-item.is-adjacent{
+  font-size:15px;opacity:.5;
+}
+#driverView .region-picker--horizontal .region-picker-item.is-center{
+  font-size:20px;
+}
+#driverView .region-picker--horizontal .region-picker-item.is-center .script-morph--region{
+  --script-morph-h:28px;
+}
+#driverView .map-wrap{
+  flex:1 1 0;min-height:0;height:auto;width:100%;
+}
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
   position:relative;width:100%;flex-shrink:0;
@@ -962,8 +994,10 @@ html,body{height:100%;background:var(--app-bg);font-family:-apple-system,'SF Pro
 
       <!-- DRIVER -->
       <div id="driverView">
-        <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
-          <div class="region-picker-track" id="regionPickerTrack"></div>
+        <div class="driver-picker-zone">
+          <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
+            <div class="region-picker-track" id="regionPickerTrack"></div>
+          </div>
         </div>
 
         <div class="map-wrap" id="mapWrap">
