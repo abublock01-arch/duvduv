@@ -105,13 +105,13 @@ body.view-sender .header{background:var(--app-bg)!important}
 #senderView .scene-img{
   position:absolute;left:0;bottom:0;width:100%;height:260px;
   object-fit:contain;object-position:center bottom;
-  opacity:.88;
+  opacity:1;
   filter:none;
+  -webkit-filter:none;
   max-width:none;max-height:none;
-  transition:opacity .45s ease;
-  image-rendering:-webkit-optimize-contrast;
+  transition:opacity .4s ease;
 }
-#senderView.has-active-shipments .scene-img{opacity:.78}
+#senderView.has-active-shipments .scene-img{opacity:.92}
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
   position:relative;z-index:2;background:transparent;
@@ -1015,7 +1015,7 @@ body.view-sender.theme-telegram .toggle{
       <div id="senderView">
         <div class="sender-body">
           <div class="scene" aria-hidden="true">
-            <img class="scene-img" src="assets/scene-clay.png" alt="" width="1024" height="658" decoding="async"/>
+            <img class="scene-img" src="assets/scene-clay.png?v=3" alt="" width="1024" height="658" decoding="async"/>
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
