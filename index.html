@@ -32,6 +32,7 @@ html,body{
   padding:max(12px,env(safe-area-inset-top)) 20px 8px;
   background:var(--app-bg);z-index:20;position:relative;flex-shrink:0;
 }
+body.view-sender .header{background:var(--app-bg)!important}
 .header-bar{
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:8px;min-height:40px;gap:8px;
@@ -65,8 +66,11 @@ html,body{
   margin-bottom:0;
 }
 .toggle{
-  background:#fff;border-radius:20px;padding:6px;display:flex;gap:0;
-  box-shadow:0 1px 3px rgba(15,23,42,.04);
+  background:rgba(255,255,255,.45);
+  backdrop-filter:blur(20px) saturate(1.8);-webkit-backdrop-filter:blur(20px) saturate(1.8);
+  border:1px solid rgba(255,255,255,.55);
+  border-radius:20px;padding:6px;display:flex;gap:0;
+  box-shadow:0 4px 16px rgba(42,171,238,.08),inset 0 1px 0 rgba(255,255,255,.75);
   max-width:320px;width:100%;margin:0 auto 0;
 }
 .toggle-btn{
@@ -101,12 +105,13 @@ html,body{
 #senderView .scene-img{
   position:absolute;left:0;bottom:0;width:100%;height:260px;
   object-fit:contain;object-position:center bottom;
-  opacity:.5;
-  filter:blur(0px);
+  opacity:.72;
+  filter:none;
   max-width:none;max-height:none;
   transition:opacity .45s ease;
+  image-rendering:auto;
 }
-#senderView.has-active-shipments .scene-img{opacity:.25}
+#senderView.has-active-shipments .scene-img{opacity:.58}
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
   position:relative;z-index:2;background:transparent;
@@ -127,10 +132,15 @@ html,body{
 }
 .shipment-card{
   display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:13px;background:rgba(255,255,255,.75);
-  backdrop-filter:blur(16px) saturate(1.8);-webkit-backdrop-filter:blur(16px) saturate(1.8);
-  border-radius:22px;border:1px solid rgba(255,255,255,.9);
-  box-shadow:0 2px 12px rgba(42,171,238,.08);
+  padding:14px 13px;
+  background:linear-gradient(145deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.32) 100%);
+  backdrop-filter:blur(40px) saturate(1.85);-webkit-backdrop-filter:blur(40px) saturate(1.85);
+  border-radius:20px;
+  border:1px solid rgba(255,255,255,.65);
+  box-shadow:
+    0 8px 28px rgba(42,171,238,.1),
+    inset 0 1px 0 rgba(255,255,255,.95),
+    inset 0 -1px 0 rgba(255,255,255,.25);
   cursor:pointer;-webkit-tap-highlight-color:transparent;
   transition:transform .15s,box-shadow .15s;
 }
@@ -143,10 +153,12 @@ html,body{
 .shipment-type-icon{
   width:42px;height:42px;border-radius:14px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:#E1F0FA;border:none;
+  background:rgba(255,255,255,.5);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.55);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8);
 }
 .shipment-type-icon svg{width:22px;height:22px}
-.shipment-status--travel{color:var(--tg-blue);background:rgba(42,171,238,.14)}
 .shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .shipment-dest{
   font-size:16px;font-weight:800;color:#0f172a;letter-spacing:-.02em;
@@ -155,7 +167,15 @@ html,body{
 .shipment-date{font-size:11px;color:#9ca3af;font-weight:500}
 .shipment-status{
   display:inline-block;font-size:11px;font-weight:700;color:var(--tg-blue);
-  background:#E1F0FA;padding:3px 8px;border-radius:6px;width:fit-content;line-height:1.2;
+  padding:4px 9px;border-radius:8px;width:fit-content;line-height:1.2;
+  background:rgba(255,255,255,.45);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border:1px solid rgba(255,255,255,.5);
+}
+.shipment-status--travel{
+  color:var(--tg-blue);
+  background:rgba(42,171,238,.14);
+  border-color:rgba(42,171,238,.2);
 }
 .shipment-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
 .shipment-icon-btn{
@@ -797,6 +817,13 @@ html,body{
 .theme-telegram body{background:var(--tg-bg)!important}
 .theme-telegram .app{background:var(--tg-bg)!important}
 .theme-telegram .header{background:var(--tg-bg)!important}
+body.view-sender.theme-telegram .header{background:var(--app-bg)!important}
+body.view-sender.theme-telegram .toggle{
+  background:rgba(255,255,255,.45)!important;
+  backdrop-filter:blur(20px) saturate(1.8)!important;
+  -webkit-backdrop-filter:blur(20px) saturate(1.8)!important;
+  border-color:rgba(255,255,255,.55)!important;
+}
 .theme-telegram .logo-brand{color:var(--tg-text)!important}
 .theme-telegram .header-close{color:var(--tg-text)!important}
 .theme-telegram .toggle{background:var(--tg-secondary)!important}
@@ -813,11 +840,11 @@ html,body{
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
 .theme-telegram .shipments-head{color:var(--tg-btn)!important}
 .theme-telegram .shipment-card{
-  background:rgba(255,255,255,.75)!important;
-  border-color:rgba(255,255,255,.9)!important;
-  backdrop-filter:blur(16px) saturate(1.8)!important;
-  -webkit-backdrop-filter:blur(16px) saturate(1.8)!important;
-  box-shadow:0 2px 12px rgba(42,171,238,.08)!important;
+  background:linear-gradient(145deg,rgba(255,255,255,.62) 0%,rgba(255,255,255,.32) 100%)!important;
+  border-color:rgba(255,255,255,.65)!important;
+  backdrop-filter:blur(40px) saturate(1.85)!important;
+  -webkit-backdrop-filter:blur(40px) saturate(1.85)!important;
+  box-shadow:0 8px 28px rgba(42,171,238,.1),inset 0 1px 0 rgba(255,255,255,.95)!important;
 }
 .theme-telegram .shipment-dest{color:var(--tg-text)!important}
 .theme-telegram .shipment-status{
@@ -840,7 +867,8 @@ html,body{
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
-.theme-telegram #senderView{background:var(--app-bg)!important}
+.theme-telegram #senderView,
+.theme-telegram.view-sender .content{background:var(--app-bg)!important}
 .theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
 .theme-telegram #driverView .region-picker--horizontal{
