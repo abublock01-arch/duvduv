@@ -1548,6 +1548,12 @@ function destMatchesDriverRegion(dest){
 
 async function refreshUserLocationRegion(){
   try {
+    const perm = await getGeolocationPermissionState();
+    if (perm !== 'granted') {
+      userCoords = null;
+      userLocationRegion = null;
+      return;
+    }
     const coords = await getCurrentPosition();
     userCoords = { latitude: coords.latitude, longitude: coords.longitude };
     userLocationRegion = detectRegionFromCoords(coords.longitude, coords.latitude);
@@ -1840,7 +1846,8 @@ const UI_PHRASE_CYRILLIC = {
   'Rasm olindi!': 'Расм олинди!', 'Rasm yuklandi!': 'Расм юкланди!',
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
-  'Tuman tanlang': 'Туман танланг'
+  'Tuman tanlang': 'Туман танланг',
+  'Rasm olish tugmasini bosing': 'Расм олиш тугмасини босинг'
 };
 
 const LATIN_CYR_CHAR = {
@@ -2605,6 +2612,30 @@ function getCurrentPosition(){
   });
 }
 
+async function queryPermissionState(name){
+  if (!navigator.permissions?.query) return null;
+  try {
+    const status = await navigator.permissions.query({ name });
+    return status.state;
+  } catch (_) {
+    return null;
+  }
+}
+
+function getGeolocationPermissionState(){
+  return queryPermissionState('geolocation');
+}
+
+function getCameraPermissionState(){
+  return queryPermissionState('camera');
+}
+
+function flyToDefaultMapCenter(){
+  if (!map) return;
+  removeDriverRadiusLayers();
+  map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), essential: true });
+}
+
 function initDriverMap(){
   if (map) return;
   if (!window.mapboxgl) {
@@ -2632,8 +2663,13 @@ function initDriverMap(){
 }
 
 
-function centerMapOnDriver(){
+async function centerMapOnDriver(){
   if (!map) return;
+  const perm = await getGeolocationPermissionState();
+  if (perm !== 'granted') {
+    flyToDefaultMapCenter();
+    return;
+  }
   getCurrentPosition()
     .then(coords => {
       const lng = coords.longitude;
@@ -2650,10 +2686,7 @@ function centerMapOnDriver(){
         driverLocationMarker.setLngLat([lng, lat]);
       }
     })
-    .catch(() => {
-      removeDriverRadiusLayers();
-      map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), essential: true });
-    });
+    .catch(() => flyToDefaultMapCenter());
 }
 
 function refreshOrderMarkers(){
@@ -2913,6 +2946,18 @@ function showCameraFallback(msg){
     const p = fallback.querySelector('p');
     if (p) setI18nText(p, msg);
   }
+}
+
+function showCameraPromptPlaceholder(){
+  const fallback = document.getElementById('cameraFallback');
+  const placeholder = document.getElementById('zonePlaceholder');
+  const placeholderText = document.getElementById('zonePlaceholderText');
+  const video = document.getElementById('cameraVideo');
+  stopCamera();
+  video.classList.remove('active');
+  fallback.hidden = true;
+  placeholder.classList.remove('hidden');
+  if (placeholderText) setI18nText(placeholderText, 'Rasm olish tugmasini bosing');
 }
 
 function persistData(){
@@ -3208,7 +3253,8 @@ function closeUpload(){
   }, 550);
 }
 
-async function startCamera(){
+async function startCamera(opts = {}){
+  const userGesture = !!opts.userGesture;
   const video = document.getElementById('cameraVideo');
   const fallback = document.getElementById('cameraFallback');
   const placeholder = document.getElementById('zonePlaceholder');
@@ -3219,13 +3265,28 @@ async function startCamera(){
   const session = ++cameraSession;
   stopCamera();
   fallback.hidden = true;
-  placeholder.classList.remove('hidden');
-  if (placeholderText) setI18nText(placeholderText, 'Kamera yuklanmoqda…');
 
   if (!navigator.mediaDevices?.getUserMedia) {
     showCameraFallback('Kamera qo\'llab-quvvatlanmaydi — galereyadan tanlang');
     return;
   }
+
+  const camPerm = await getCameraPermissionState();
+  if (camPerm === 'denied') {
+    showCameraFallback('Kameraga ruxsat bering yoki galereyadan tanlang');
+    return;
+  }
+  if (camPerm === 'prompt' && !userGesture) {
+    showCameraPromptPlaceholder();
+    return;
+  }
+  if (camPerm === null && !userGesture) {
+    showCameraPromptPlaceholder();
+    return;
+  }
+
+  placeholder.classList.remove('hidden');
+  if (placeholderText) setI18nText(placeholderText, 'Kamera yuklanmoqda…');
 
   const constraintsList = [
     { video: { facingMode: { exact: facingMode } }, audio: false },
@@ -3279,7 +3340,7 @@ function stopCamera(){
 function flipCamera(){
   facingMode = facingMode === 'environment' ? 'user' : 'environment';
   if (document.getElementById('uploadOverlay').classList.contains('open')) {
-    startCamera();
+    startCamera({ userGesture: true });
   }
 }
 
@@ -3304,7 +3365,7 @@ async function compressImage(file, maxSize=800, quality=0.72) {
   });
 }
 
-function capturePhoto(){
+async function capturePhoto(){
   const video = document.getElementById('cameraVideo');
   const preview = document.getElementById('photoPreview');
   const captureBtn = document.getElementById('captureBtn');
@@ -3314,13 +3375,13 @@ function capturePhoto(){
     preview.src = '';
     preview.classList.remove('visible');
     captureBtn.classList.remove('captured');
-    startCamera();
+    startCamera({ userGesture: true });
     return;
   }
 
   if (!cameraStream || !video.videoWidth) {
-    showToast('Kamera tayyor emas');
-    return;
+    await startCamera({ userGesture: true });
+    if (!cameraStream || !video.videoWidth) return;
   }
 
   const canvas = document.createElement('canvas');
