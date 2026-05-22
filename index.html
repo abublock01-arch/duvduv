@@ -1601,7 +1601,6 @@ let driverLocationMarker = null;
 let orderLayersVisible = true;
 let orderClusterLayersReady = false;
 const ORDER_MAP_LAYER_IDS = [
-  'orders-clusters', 'orders-cluster-count',
   'orders-unclustered-icon', 'orders-unclustered-label'
 ];
 const MAP_ORDER_COLOR = '#2563EB';
@@ -2728,60 +2727,15 @@ function setupOrderClusterLayers(){
   if (!map || orderClusterLayersReady) return;
   map.addSource('orders', {
     type: 'geojson',
-    data: ordersToGeoJSON(),
-    cluster: true,
-    clusterMaxZoom: 14,
-    clusterRadius: 50
-  });
-  map.addLayer({
-    id: 'orders-clusters',
-    type: 'circle',
-    source: 'orders',
-    filter: ['has', 'point_count'],
-    paint: {
-      'circle-color': MAP_ORDER_COLOR,
-      'circle-radius': [
-        'interpolate', ['exponential', 1.75], ['zoom'],
-        8, ['step', ['get', 'point_count'], 13, 10, 18, 50, 24],
-        12, ['step', ['get', 'point_count'], 17, 10, 23, 50, 31],
-        16, ['step', ['get', 'point_count'], 22, 10, 30, 50, 40]
-      ],
-      'circle-stroke-width': [
-        'interpolate', ['linear'], ['zoom'],
-        8, 2,
-        14, 3,
-        16, 4
-      ],
-      'circle-stroke-color': '#ffffff',
-      'circle-opacity': 0.92,
-      'circle-pitch-scale': 'map'
-    }
-  });
-  map.addLayer({
-    id: 'orders-cluster-count',
-    type: 'symbol',
-    source: 'orders',
-    filter: ['has', 'point_count'],
-    layout: {
-      'text-field': ['get', 'point_count_abbreviated'],
-      'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-      'text-size': [
-        'interpolate', ['linear'], ['zoom'],
-        8, 11,
-        12, 13,
-        16, 16
-      ],
-      'text-pitch-scale': 'map'
-    },
-    paint: { 'text-color': '#ffffff' }
+    data: ordersToGeoJSON()
+    // No clustering — markers always stay as box icons regardless of zoom
   });
   loadMapMarkerImages(map).then(() => {
-    if (!map.getLayer('orders-unclustered-point')) {
+    if (!map.getLayer('orders-unclustered-icon')) {
       map.addLayer({
         id: 'orders-unclustered-icon',
         type: 'symbol',
         source: 'orders',
-        filter: ['!', ['has', 'point_count']],
         layout: {
           'icon-image': [
             'match', ['get', 'itemType'],
@@ -2790,11 +2744,12 @@ function setupOrderClusterLayers(){
           ],
           'icon-size': [
             'interpolate', ['exponential', 1.75], ['zoom'],
-            5, 0.38,
-            8, 0.52,
-            10, 0.65,
-            12, 0.78,
-            14, 0.92,
+            4, 0.22,
+            6, 0.30,
+            8, 0.42,
+            10, 0.58,
+            12, 0.72,
+            14, 0.88,
             16, 1.1
           ],
           'icon-anchor': 'center',
@@ -2806,7 +2761,6 @@ function setupOrderClusterLayers(){
         id: 'orders-unclustered-label',
         type: 'symbol',
         source: 'orders',
-        filter: ['!', ['has', 'point_count']],
         layout: {
           'text-field': ['get', 'dest'],
           'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
@@ -2843,34 +2797,15 @@ function bindOrderMapEvents(){
   if (!map || map._orderClusterEventsBound) return;
   map._orderClusterEventsBound = true;
 
-  map.on('click', 'orders-clusters', e => {
-    const features = map.queryRenderedFeatures(e.point, { layers: ['orders-clusters'] });
-    if (!features.length) return;
-    const clusterId = features[0].properties.cluster_id;
-    const coords = features[0].geometry.coordinates;
-    map.getSource('orders').getClusterExpansionZoom(clusterId, (err, zoom) => {
-      if (err) return;
-      map.easeTo({
-        center: coords,
-        zoom: Math.min(zoom + 0.5, 16),
-        duration: 650,
-        easing: t => t * (2 - t)
-      });
-    });
-  });
-
-  const openUnclusteredOrder = e => {
+  const openOrder = e => {
     const feat = e.features?.[0];
     if (!feat) return;
     const order = findOrderByMapId(feat.properties.orderId);
     if (order) openOrderSheet(order);
   };
-  map.on('click', 'orders-unclustered-icon', openUnclusteredOrder);
-
-  ['orders-clusters', 'orders-unclustered-icon'].forEach(layerId => {
-    map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
-  });
+  map.on('click', 'orders-unclustered-icon', openOrder);
+  map.on('mouseenter', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = ''; });
 }
 
 function toggleOrderMapLayers(){
@@ -3112,9 +3047,13 @@ function switchView(v){
       }, 280);
     }
     refreshUserLocationRegion().then(() => {
-      lastDriverPickerKey = '';
-      regionPickerBuilt = false;
-      setTimeout(() => ensureDriverRegionPicker(), 80);
+      // Only rebuild picker if the regions list actually changed (location moved to new region)
+      const newKey = getPickerRegions().join('|');
+      if (newKey !== lastDriverPickerKey) {
+        lastDriverPickerKey = '';
+        regionPickerBuilt = false;
+        setTimeout(() => ensureDriverRegionPicker(), 80);
+      }
       applyCyrillicUI();
     });
   } else {
