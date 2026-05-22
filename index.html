@@ -705,6 +705,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-dest .script-morph,.shipment-date .script-morph,.shipment-status .script-morph{--script-morph-h:1.15em;display:inline-block}
 .toast .script-morph{--script-morph-h:1.2em;display:inline-block}
 .send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
+.send-thumb:not([src]),.send-thumb[src=""]{display:none;}
 .send-form{display:flex;flex-direction:column;gap:14px}
 .send-field{display:flex;flex-direction:column;gap:6px}
 .send-label{font-size:14px;font-weight:600;color:#666}
@@ -1581,7 +1582,7 @@ let orderLayersVisible = true;
 let orderClusterLayersReady = false;
 const ORDER_MAP_LAYER_IDS = [
   'orders-clusters', 'orders-cluster-count',
-  'orders-unclustered-point', 'orders-unclustered-icon', 'orders-unclustered-label'
+  'orders-unclustered-icon', 'orders-unclustered-label'
 ];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
@@ -2471,10 +2472,10 @@ function updateSendActionBtn(){
   if (!btn) return;
   btn.type = 'button';
   btn.setAttribute('onclick', 'onSendActionClick()');
+  btn.hidden = false;
   if (sendSheetStep === 1) {
-    btn.hidden = true;
+    setI18nText(btn, 'Keyingi');
   } else {
-    btn.hidden = false;
     setI18nText(btn, 'Yuborish');
   }
 }
@@ -2554,7 +2555,13 @@ function travelSheetNext(){
 }
 
 function onSendActionClick(){
-  if (sendSheetStep === 2) submitOrder({ preventDefault(){ } });
+  if (sendSheetStep === 1) {
+    const region = selectedSendRegion || document.getElementById('sendDest')?.value;
+    if (!region) { showToast('Viloyatni tanlang'); return; }
+    sendSheetGoToDistrict(region);
+  } else if (sendSheetStep === 2) {
+    submitOrder({ preventDefault(){ } });
+  }
 }
 
 function onTravelActionClick(){
@@ -2723,37 +2730,6 @@ function setupOrderClusterLayers(){
   loadMapMarkerImages(map).then(() => {
     if (!map.getLayer('orders-unclustered-point')) {
       map.addLayer({
-        id: 'orders-unclustered-point',
-        type: 'circle',
-        source: 'orders',
-        filter: ['!', ['has', 'point_count']],
-        paint: {
-          'circle-color': [
-            'match', ['get', 'itemType'],
-            'travel', '#2AABEE',
-            MAP_ORDER_COLOR
-          ],
-          'circle-radius': [
-            'interpolate', ['exponential', 1.75], ['zoom'],
-            5, 14,
-            8, 18,
-            10, 22,
-            12, 26,
-            14, 32,
-            16, 40
-          ],
-          'circle-stroke-width': [
-            'interpolate', ['linear'], ['zoom'],
-            7, 1.5,
-            14, 3,
-            16, 4
-          ],
-          'circle-stroke-color': '#ffffff',
-          'circle-opacity': 0.95,
-          'circle-pitch-scale': 'map'
-        }
-      });
-      map.addLayer({
         id: 'orders-unclustered-icon',
         type: 'symbol',
         source: 'orders',
@@ -2841,10 +2817,9 @@ function bindOrderMapEvents(){
     const order = findOrderByMapId(feat.properties.orderId);
     if (order) openOrderSheet(order);
   };
-  map.on('click', 'orders-unclustered-point', openUnclusteredOrder);
   map.on('click', 'orders-unclustered-icon', openUnclusteredOrder);
 
-  ['orders-clusters', 'orders-unclustered-point', 'orders-unclustered-icon'].forEach(layerId => {
+  ['orders-clusters', 'orders-unclustered-icon'].forEach(layerId => {
     map.on('mouseenter', layerId, () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', layerId, () => { map.getCanvas().style.cursor = ''; });
   });
@@ -2911,6 +2886,7 @@ function flyToMyLocation(){
       map.flyTo({
         center: [lng, lat],
         zoom: Math.max(map.getZoom(), 14),
+        pitch: 45,
         essential: true
       });
     })
@@ -2948,7 +2924,7 @@ function getGeolocationPermissionState(){
 function flyToDefaultMapCenter(){
   if (!map) return;
   removeDriverRadiusLayers();
-  map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), essential: true });
+  map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), pitch: 45, essential: true });
 }
 
 function initDriverMap(){
@@ -2961,7 +2937,9 @@ function initDriverMap(){
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
     center: [69.2401, 41.2991],
-    zoom: getDriverMapZoom()
+    zoom: getDriverMapZoom(),
+    pitch: 45,
+    bearing: 0
   });
   map.on('zoomend', () => {
     if (telegramUser.id == null) return;
@@ -2990,7 +2968,7 @@ async function centerMapOnDriver(){
       const lng = coords.longitude;
       const lat = coords.latitude;
       removeDriverRadiusLayers();
-      map.flyTo({ center: [lng, lat], zoom: getDriverMapZoom(), essential: true });
+      map.flyTo({ center: [lng, lat], zoom: getDriverMapZoom(), pitch: 45, essential: true });
       ensureDriverLocationMarker(lng, lat);
     })
     .catch(() => flyToDefaultMapCenter());
@@ -3073,6 +3051,7 @@ function switchView(v){
         map.resize();
         refreshOrderMarkers();
         ensureDriverRegionPicker();
+        centerMapOnDriver();
       }, 280);
     }
     refreshUserLocationRegion().then(() => {
@@ -3284,8 +3263,10 @@ function loadSendDraft(){
 function isSendThumbBroken(){
   const thumb = document.getElementById('sendThumb');
   if (!thumb) return true;
-  const src = thumb.currentSrc || thumb.src || '';
-  if (!src || src.startsWith('blob:')) return true;
+  const src = thumb.src || thumb.currentSrc || '';
+  // strip page URL so bare src="" resolves to just the base URL, treat as empty
+  const relative = src === location.href ? '' : src;
+  if (!relative || relative.startsWith('blob:')) return true;
   if (thumb.complete && thumb.naturalWidth === 0) return true;
   return false;
 }
@@ -3303,6 +3284,8 @@ function abandonSendFlow(){
 }
 
 async function restoreSendFromDraft(draft){
+  // If there's no thumbnail, we can't meaningfully restore the send flow
+  if (!draft.thumb) { abandonSendFlow(); return; }
   previewObjectUrl = draft.thumb;
   selectedPhotoFile = null;
   const thumbEl = document.getElementById('sendThumb');
