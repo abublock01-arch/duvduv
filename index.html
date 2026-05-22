@@ -1647,6 +1647,23 @@ const REGION_DISTRICTS = {
   "Qoraqalpog'iston": ['Nukus', 'Amudaryo', 'Beruniy', 'Chimboy', 'Ellikqala', 'Kegeyli', 'Mo\'ynoq', 'Qonliko\'l', 'Qo\'ng\'irot', 'Shumanay', 'Taxtako\'pir', 'To\'rtko\'l', 'Xo\'jayli']
 };
 
+/** Viloyat tanlangach tuman ro'yxatida birinchi qator — viloyat markazi */
+const REGION_CITY_LABEL = {
+  'Toshkent': 'Toshkent shahar',
+  'Samarqand': 'Samarqand shahar',
+  "Farg'ona": "Farg'ona shahar",
+  'Andijon': 'Andijon shahar',
+  'Namangan': 'Namangan shahar',
+  'Buxoro': 'Buxoro shahar',
+  'Xorazm': 'Urganch shahar',
+  'Surxondaryo': 'Termiz shahar',
+  "Qashqadaryo": 'Qarshi shahar',
+  'Sirdaryo': 'Guliston shahar',
+  'Jizzax': 'Jizzax shahar',
+  'Navoiy': 'Navoiy shahar',
+  "Qoraqalpog'iston": 'Nukus shahar'
+};
+
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
 const TRAVEL_TITLE_CYRILLIC = 'Қаерга борасиз?';
 const SEND_TITLE_LATIN = 'Qayerga';
@@ -1697,9 +1714,24 @@ function getPickerRegions(){
   return UZ_REGIONS.filter(r => r !== userLocationRegion);
 }
 
+function normalizeDistrictKey(name){
+  return String(name).toLowerCase().replace(/[`']/g, "'").replace(/\s+/g, ' ').trim();
+}
+
+function districtMatchesCity(region, districtName, cityLabel){
+  const cityBase = cityLabel.replace(/\s+shahar$/i, '');
+  const d = normalizeDistrictKey(districtName);
+  const bases = [normalizeDistrictKey(cityBase), normalizeDistrictKey(region)];
+  return bases.some(b => b && (d === b || d.replace(/'/g, '') === b.replace(/'/g, '')));
+}
+
 function getDistrictsForRegion(region){
   const list = REGION_DISTRICTS[region];
-  return list ? [...list] : [region];
+  const cityLabel = REGION_CITY_LABEL[region];
+  if (!cityLabel) return list ? [...list] : [region];
+  if (!list || !list.length) return [cityLabel];
+  const tumans = list.filter(d => !districtMatchesCity(region, d, cityLabel));
+  return [cityLabel, ...tumans];
 }
 
 function formatDest(region, district){
@@ -1781,13 +1813,28 @@ function regionPickerLabel(region){
   return REGION_CYRILLIC[region] || latinToCyrillic(region);
 }
 
+function districtPickerLabel(name){
+  if (!name) return '';
+  const m = name.match(/^(.+)\s+shahar$/i);
+  if (m) {
+    const base = m[1];
+    return (REGION_CYRILLIC[base] || latinToCyrillic(base)) + ' шаҳар';
+  }
+  return latinToCyrillic(name);
+}
+
+function pickerItemLabel(name){
+  if (REGION_CYRILLIC[name]) return regionPickerLabel(name);
+  return districtPickerLabel(name);
+}
+
 function displayDestCyrillic(dest){
   if (!dest) return '';
   const sep = dest.indexOf(' — ');
   if (sep >= 0) {
     const reg = dest.slice(0, sep);
     const dist = dest.slice(sep + 3);
-    return `${regionPickerLabel(reg)} — ${latinToCyrillic(dist)}`;
+    return `${regionPickerLabel(reg)} — ${districtPickerLabel(dist)}`;
   }
   return regionPickerLabel(dest) || latinToCyrillic(dest);
 }
@@ -1795,8 +1842,8 @@ function displayDestCyrillic(dest){
 function buildRegionPickerTrack(track, regions){
   const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
   track.innerHTML = spacer + regions.map(r => {
-    const cyr = REGION_CYRILLIC[r] || latinToCyrillic(r);
-    const label = regionPickerLabel(r);
+    const label = pickerItemLabel(r);
+    const cyr = REGION_CYRILLIC[r] || districtPickerLabel(r);
     return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${label}</button>`;
   }).join('') + spacer;
 }
