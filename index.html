@@ -4,14 +4,14 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>duvduv</title>
-<link rel="preload" as="image" href="assets/car.png?v=5">
+<link rel="preload" as="image" href="assets/car.png?v=6">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --tg-blue:#2AABEE;
-  --app-bg:#E1F0FA;
+  --app-bg:#fff;
   --navy:#0f172a;
   --card-bg:#fff;
 }
@@ -221,7 +221,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 .detail-action-btn{
   width:100%;padding:16px 18px;border:none;border-radius:16px;
   font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
-  background:#E1F0FA;color:var(--tg-blue);
+  background:#fff;color:var(--tg-blue);
   -webkit-tap-highlight-color:transparent;transition:transform .15s,opacity .15s;
 }
 .detail-action-btn:active{transform:scale(.98)}
@@ -1051,7 +1051,7 @@ body.view-sender.theme-telegram .toggle,
       <div id="senderView">
         <div class="sender-body">
           <div class="scene" aria-hidden="true">
-            <img src="assets/car.png?v=5" style="width:100%;max-width:380px;height:230px;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0px 24px 20px rgba(0,0,0,0.18)) drop-shadow(0px 6px 8px rgba(0,0,0,0.12));" alt=""/>
+            <img src="assets/car.png?v=6" style="width:100%;max-width:380px;height:230px;object-fit:contain;display:block;margin:0 auto;filter:drop-shadow(0px 24px 20px rgba(0,0,0,0.18)) drop-shadow(0px 6px 8px rgba(0,0,0,0.12));" alt=""/>
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
@@ -1475,7 +1475,7 @@ function applyTelegramThemeVars(){
   const tp = (window.Telegram && Telegram.WebApp && Telegram.WebApp.themeParams) || {};
   const root = document.documentElement;
   const pick = (key, fb) => (tp[key] && String(tp[key]).trim()) || fb;
-  root.style.setProperty('--tg-bg', pick('bg_color', '#E1F0FA'));
+  root.style.setProperty('--tg-bg', pick('bg_color', '#ffffff'));
   root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#ffffff'));
   root.style.setProperty('--tg-text', pick('text_color', '#000000'));
   root.style.setProperty('--tg-hint', pick('hint_color', '#999999'));
