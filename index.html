@@ -1989,6 +1989,32 @@ function updateRegionPickerVisuals(commit, trackEl, onCommit){
   if (region && commit && onCommit) onCommit(region);
 }
 
+function refreshPickerVisualsDeferred(track, onCommit){
+  if (!track) return;
+  const run = () => updateRegionPickerVisuals(true, track, onCommit);
+  requestAnimationFrame(() => requestAnimationFrame(run));
+  setTimeout(run, 80);
+  setTimeout(run, 220);
+}
+
+function refreshSendPickersVisuals(){
+  if (sendSheetStep === 1) {
+    const track = document.getElementById('sendRegionPickerTrack');
+    refreshPickerVisualsDeferred(track, region => {
+      selectedSendRegion = region;
+      const hidden = document.getElementById('sendDest');
+      if (hidden) hidden.value = region;
+    });
+  } else if (sendSheetStep === 2) {
+    const track = document.getElementById('sendDistrictPickerTrack');
+    refreshPickerVisualsDeferred(track, district => {
+      selectedSendDistrict = district;
+      const el = document.getElementById('sendDistrict');
+      if (el) el.value = district;
+    });
+  }
+}
+
 function refreshOrderMarkersDebounced(){
   clearTimeout(refreshMarkersTimer);
   refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 80);
@@ -2355,7 +2381,7 @@ function initSendRegionPicker(){
     }
   }
   scrollPickerToRegion(track, selectedSendRegion, false);
-  updateRegionPickerVisuals(false, track, region => {
+  refreshPickerVisualsDeferred(track, region => {
     selectedSendRegion = region;
     const hidden = document.getElementById('sendDest');
     if (hidden) hidden.value = region;
@@ -2367,7 +2393,6 @@ function initSendRegionPicker(){
 async function prepareSendSheet(){
   await refreshUserLocationRegion();
   resetSendSheetSteps();
-  lastSendPickerKey = '';
   initSendRegionPicker();
 }
 
@@ -2421,7 +2446,7 @@ function initSendDistrictPicker(){
     });
   }
   scrollPickerToRegion(track, selectedSendDistrict, false);
-  updateRegionPickerVisuals(true, track, district => {
+  refreshPickerVisualsDeferred(track, district => {
     selectedSendDistrict = district;
     const el = document.getElementById('sendDistrict');
     if (el) el.value = district;
@@ -2482,6 +2507,8 @@ function updateSendActionBtn(){
 
 function resetSendSheetSteps(){
   sendSheetStep = 1;
+  sendRegionPickerBuilt = false;
+  lastSendPickerKey = '';
   sendDistrictPickerBuilt = false;
   lastSendDistrictKey = '';
   selectedSendDistrict = '';
@@ -2531,6 +2558,7 @@ function sendSheetGoToDistrict(region){
   updateSendActionBtn();
   applyCyrillicUI();
   syncSendDraft();
+  refreshSendPickersVisuals();
 }
 
 function travelSheetNext(){
@@ -3311,6 +3339,7 @@ async function restoreSendFromDraft(draft){
   updateSendActionBtn();
   applyCyrillicUI();
   syncSendDraft();
+  refreshSendPickersVisuals();
 }
 
 async function recoverSendFlow(){
@@ -3321,7 +3350,9 @@ async function recoverSendFlow(){
   if (sheetOpen && !draft) {
     if (isSendThumbBroken() && !previewObjectUrl?.startsWith('data:')) {
       abandonSendFlow();
+      return;
     }
+    refreshSendPickersVisuals();
     return;
   }
 
@@ -3351,6 +3382,7 @@ async function recoverSendFlow(){
   }
   updateSendActionBtn();
   syncSendDraft();
+  refreshSendPickersVisuals();
 }
 
 function getUserMediaWithTimeout(constraints, ms){
@@ -3818,6 +3850,7 @@ async function openSendSheetFromPhoto(){
   }
   sheet.classList.remove('send-handoff');
   syncSendDraft();
+  refreshSendPickersVisuals();
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
