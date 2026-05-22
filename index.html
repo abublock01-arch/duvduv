@@ -1493,8 +1493,28 @@ function saveUserMapZoom(zoom){
   localStorage.setItem(key, String(zoom));
 }
 
+function saveLastGPS(lng, lat){
+  const key = userPrefKey('gps');
+  if (!key) return;
+  localStorage.setItem(key, JSON.stringify({ lng, lat, t: Date.now() }));
+}
+
+function loadLastGPS(){
+  try {
+    const key = userPrefKey('gps');
+    if (!key) return null;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+    const { lng, lat, t } = JSON.parse(raw);
+    // Use cached GPS only if it's less than 30 minutes old
+    if (Date.now() - t > 30 * 60 * 1000) return null;
+    if (typeof lng !== 'number' || typeof lat !== 'number') return null;
+    return { lng, lat };
+  } catch (_) { return null; }
+}
+
 function getDriverMapZoom(){
-  return persistedMapZoom ?? 10;
+  return persistedMapZoom ?? 12;
 }
 
 function restoreUserPrefs(){
@@ -2911,10 +2931,10 @@ function flyToMyLocation(){
       const lng = coords.longitude;
       const lat = coords.latitude;
       ensureDriverLocationMarker(lng, lat);
+      saveLastGPS(lng, lat);
       map.flyTo({
         center: [lng, lat],
         zoom: Math.max(map.getZoom(), 14),
-        pitch: 45,
         essential: true
       });
     })
@@ -2952,7 +2972,7 @@ function getGeolocationPermissionState(){
 function flyToDefaultMapCenter(){
   if (!map) return;
   removeDriverRadiusLayers();
-  map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), pitch: 45, essential: true });
+  map.flyTo({ center: [69.2401, 41.2991], zoom: getDriverMapZoom(), essential: true });
 }
 
 function initDriverMap(){
@@ -2961,12 +2981,12 @@ function initDriverMap(){
     showToast('Mapbox kutubxonasi yuklanmadi');
     return;
   }
+  const cachedGPS = loadLastGPS();
   map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/streets-v12',
-    center: [69.2401, 41.2991],
+    center: cachedGPS ? [cachedGPS.lng, cachedGPS.lat] : [69.2401, 41.2991],
     zoom: getDriverMapZoom(),
-    pitch: 45,
     bearing: 0
   });
   map.on('zoomend', () => {
@@ -2986,20 +3006,29 @@ function initDriverMap(){
 
 async function centerMapOnDriver(){
   if (!map) return;
+  // Show cached location immediately (no wait) if available
+  const cached = loadLastGPS();
+  if (cached) {
+    removeDriverRadiusLayers();
+    map.jumpTo({ center: [cached.lng, cached.lat], zoom: getDriverMapZoom() });
+    ensureDriverLocationMarker(cached.lng, cached.lat);
+  }
+  // Then update with fresh GPS in background
   const perm = await getGeolocationPermissionState();
   if (perm !== 'granted') {
-    flyToDefaultMapCenter();
+    if (!cached) flyToDefaultMapCenter();
     return;
   }
   getCurrentPosition()
     .then(coords => {
       const lng = coords.longitude;
       const lat = coords.latitude;
+      saveLastGPS(lng, lat);
       removeDriverRadiusLayers();
-      map.flyTo({ center: [lng, lat], zoom: getDriverMapZoom(), pitch: 45, essential: true });
+      map.easeTo({ center: [lng, lat], zoom: getDriverMapZoom(), duration: 600 });
       ensureDriverLocationMarker(lng, lat);
     })
-    .catch(() => flyToDefaultMapCenter());
+    .catch(() => { if (!cached) flyToDefaultMapCenter(); });
 }
 
 function refreshOrderMarkers(){
@@ -4221,6 +4250,14 @@ initTelegramUser();
 restoreUserPrefs();
 renderShipments();
 applySavedUserRole();
+// Preload map in background so it's ready when user switches to driver tab
+if (window.mapboxgl) {
+  setTimeout(() => { if (!map) initDriverMap(); }, 1500);
+} else {
+  // Wait for mapbox script to load then preload
+  const mbScript = document.querySelector('script[src*="mapbox"]');
+  if (mbScript) mbScript.addEventListener('load', () => { setTimeout(() => { if (!map) initDriverMap(); }, 500); });
+}
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) syncSendDraft();
   else recoverSendFlow();
