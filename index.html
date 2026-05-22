@@ -2529,6 +2529,7 @@ function sendSheetGoToDistrict(region){
   initSendDistrictPicker();
   updateSendActionBtn();
   applyCyrillicUI();
+  syncSendDraft();
 }
 
 function travelSheetNext(){
@@ -3227,6 +3228,147 @@ let previewObjectUrl = null;
 let selectedPhotoFile = null;
 let cameraSession = 0;
 let cameraPermWatcher = null;
+const SEND_DRAFT_KEY = 'duvduv_send_draft';
+const SEND_DRAFT_TTL_MS = 30 * 60 * 1000;
+
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+function clearSendDraft(){
+  try { sessionStorage.removeItem(SEND_DRAFT_KEY); } catch (_) {}
+}
+
+function syncSendDraft(){
+  const sheetOpen = document.getElementById('sendSheetOverlay')?.classList.contains('open');
+  const thumb = previewObjectUrl || document.getElementById('sendThumb')?.src || '';
+  if (!sheetOpen && !thumb) {
+    clearSendDraft();
+    return;
+  }
+  if (!thumb || thumb.startsWith('blob:')) return;
+  try {
+    sessionStorage.setItem(SEND_DRAFT_KEY, JSON.stringify({
+      ts: Date.now(),
+      step: sendSheetStep,
+      region: selectedSendRegion || document.getElementById('sendRegion')?.value || '',
+      district: selectedSendDistrict || document.getElementById('sendDistrict')?.value || '',
+      thumb
+    }));
+  } catch (e) {
+    console.warn('send draft save:', e);
+  }
+}
+
+function loadSendDraft(){
+  try {
+    const raw = sessionStorage.getItem(SEND_DRAFT_KEY);
+    if (!raw) return null;
+    const draft = JSON.parse(raw);
+    if (!draft?.thumb || Date.now() - (draft.ts || 0) > SEND_DRAFT_TTL_MS) {
+      clearSendDraft();
+      return null;
+    }
+    return draft;
+  } catch {
+    clearSendDraft();
+    return null;
+  }
+}
+
+function isSendThumbBroken(){
+  const thumb = document.getElementById('sendThumb');
+  if (!thumb) return true;
+  const src = thumb.currentSrc || thumb.src || '';
+  if (!src || src.startsWith('blob:')) return true;
+  if (thumb.complete && thumb.naturalWidth === 0) return true;
+  return false;
+}
+
+function abandonSendFlow(){
+  clearSendDraft();
+  const sheet = document.getElementById('sendSheetOverlay');
+  const upload = document.getElementById('uploadOverlay');
+  if (sheet) sheet.classList.remove('open', 'send-handoff');
+  if (upload) upload.classList.remove('open', 'closing', 'handoff-to-send');
+  document.body.style.overflow = '';
+  resetSendSheetSteps();
+  resetUpload();
+  applyCyrillicUI();
+}
+
+async function restoreSendFromDraft(draft){
+  previewObjectUrl = draft.thumb;
+  selectedPhotoFile = null;
+  const thumbEl = document.getElementById('sendThumb');
+  if (thumbEl) thumbEl.src = draft.thumb;
+  await prepareSendSheet();
+  if (draft.region) {
+    selectedSendRegion = draft.region;
+    document.getElementById('sendDest').value = draft.region;
+    document.getElementById('sendRegion').value = draft.region;
+  }
+  const sheet = document.getElementById('sendSheetOverlay');
+  sheet.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  if (draft.step >= 2 && draft.region) {
+    sendSheetGoToDistrict(draft.region);
+    if (draft.district) {
+      selectedSendDistrict = draft.district;
+      document.getElementById('sendDistrict').value = draft.district;
+      const track = document.getElementById('sendDistrictPickerTrack');
+      if (track) scrollPickerToRegion(track, draft.district, false);
+    }
+  }
+  updateSendActionBtn();
+  applyCyrillicUI();
+  syncSendDraft();
+}
+
+async function recoverSendFlow(){
+  const sheet = document.getElementById('sendSheetOverlay');
+  const sheetOpen = sheet?.classList.contains('open');
+  const draft = loadSendDraft();
+
+  if (sheetOpen && !draft) {
+    if (isSendThumbBroken() && !previewObjectUrl?.startsWith('data:')) {
+      abandonSendFlow();
+    }
+    return;
+  }
+
+  if (!sheetOpen && draft) {
+    await restoreSendFromDraft(draft);
+    return;
+  }
+
+  if (!sheetOpen) return;
+
+  if (isSendThumbBroken() && draft?.thumb) {
+    previewObjectUrl = draft.thumb;
+    document.getElementById('sendThumb').src = draft.thumb;
+  } else if (isSendThumbBroken()) {
+    abandonSendFlow();
+    return;
+  }
+
+  if (draft?.step >= 2 && sendSheetStep === 1 && draft.region) {
+    sendSheetGoToDistrict(draft.region);
+    if (draft.district) {
+      selectedSendDistrict = draft.district;
+      document.getElementById('sendDistrict').value = draft.district;
+      const track = document.getElementById('sendDistrictPickerTrack');
+      if (track) scrollPickerToRegion(track, draft.district, false);
+    }
+  }
+  updateSendActionBtn();
+  syncSendDraft();
+}
 
 function getUserMediaWithTimeout(constraints, ms){
   return new Promise((resolve, reject) => {
@@ -3666,6 +3808,9 @@ async function openSendSheetFromPhoto(){
   const sheet = document.getElementById('sendSheetOverlay');
   const upload = document.getElementById('uploadOverlay');
   document.getElementById('sendForm').reset();
+  if (selectedPhotoFile && (!previewObjectUrl || previewObjectUrl.startsWith('blob:'))) {
+    previewObjectUrl = await fileToDataUrl(selectedPhotoFile);
+  }
   if (previewObjectUrl) {
     document.getElementById('sendThumb').src = previewObjectUrl;
   }
@@ -3689,6 +3834,7 @@ async function openSendSheetFromPhoto(){
     upload.classList.remove('closing', 'handoff-to-send');
   }
   sheet.classList.remove('send-handoff');
+  syncSendDraft();
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
@@ -3818,13 +3964,13 @@ async function capturePhoto(){
     if (!blob) return;
     const raw = new File([blob], 'photo.jpg', { type: 'image/jpeg' });
     const compressed = await compressImage(raw);
-    if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
-    previewObjectUrl = URL.createObjectURL(compressed);
+    if (previewObjectUrl?.startsWith('blob:')) URL.revokeObjectURL(previewObjectUrl);
+    selectedPhotoFile = compressed;
+    previewObjectUrl = await fileToDataUrl(compressed);
     stopCamera();
     if (window.Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.impactOccurred('medium');
     }
-    selectedPhotoFile = compressed;
     await openSendSheetFromPhoto();
   }, 'image/jpeg', 0.9);
 }
@@ -3850,7 +3996,7 @@ function resetUploadVisual(){
 
 function resetUpload(){
   resetUploadVisual();
-  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl) && !orders.some(o => o.thumbUrl === previewObjectUrl)) {
+  if (previewObjectUrl?.startsWith('blob:') && !shipments.some(s => s.thumbUrl === previewObjectUrl) && !orders.some(o => o.thumbUrl === previewObjectUrl)) {
     URL.revokeObjectURL(previewObjectUrl);
   }
   previewObjectUrl = null;
@@ -3864,10 +4010,10 @@ async function onPhotoSelected(e){
   const captureBtn = document.getElementById('captureBtn');
   const placeholder = document.getElementById('zonePlaceholder');
   const compressed = await compressImage(file);
-  if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
-  previewObjectUrl = URL.createObjectURL(compressed);
-  stopCamera();
+  if (previewObjectUrl?.startsWith('blob:')) URL.revokeObjectURL(previewObjectUrl);
   selectedPhotoFile = compressed;
+  previewObjectUrl = await fileToDataUrl(compressed);
+  stopCamera();
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('medium');
   }
@@ -3877,6 +4023,8 @@ async function onPhotoSelected(e){
 function closeSendSheet(){
   const sheet = document.getElementById('sendSheetOverlay');
   sheet.classList.remove('open', 'send-handoff');
+  document.body.style.overflow = '';
+  clearSendDraft();
   resetSendSheetSteps();
   applyCyrillicUI();
 }
@@ -3995,6 +4143,7 @@ function submitOrder(e){
     persistData();
     previewObjectUrl = null;
     selectedPhotoFile = null;
+    clearSendDraft();
     renderShipments();
     if (map) refreshOrderMarkers();
     closeSendSheet();
@@ -4056,6 +4205,16 @@ initTelegramUser();
 restoreUserPrefs();
 renderShipments();
 applySavedUserRole();
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) syncSendDraft();
+  else recoverSendFlow();
+});
+window.addEventListener('pagehide', () => syncSendDraft());
+if (window.Telegram?.WebApp?.onEvent) {
+  Telegram.WebApp.onEvent('deactivated', () => syncSendDraft());
+  Telegram.WebApp.onEvent('activated', () => recoverSendFlow());
+}
+recoverSendFlow();
 </script>
 
 <!-- Telegram uslubidagi muvaffaqiyat -->
