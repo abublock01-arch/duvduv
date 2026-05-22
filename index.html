@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
 <title>duvduv</title>
-<link rel="preload" as="image" href="assets/scene-car.png?v=1">
+<link rel="preload" as="image" href="assets/car.png?v=1">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
@@ -101,24 +101,9 @@ body.view-sender .header{background:var(--app-bg)!important}
 /* ══ SCENE — mashina rasm ══ */
 #senderView .scene{
   position:absolute;left:0;right:0;bottom:0;width:100%;
-  height:clamp(200px,36vh,260px);
-  pointer-events:none;z-index:0;padding:0;
-  display:flex;align-items:flex-end;
+  pointer-events:none;z-index:0;
 }
-#senderView .scene-card{
-  width:100%;height:100%;
-  background:#2AABEE;border-radius:20px;
-  display:flex;align-items:center;justify-content:center;
-  overflow:hidden;
-}
-#senderView .scene-car-img{
-  width:100%;height:100%;
-  max-width:100%;max-height:100%;
-  object-fit:contain;object-position:center center;
-  opacity:1;
-  transition:opacity .4s ease;
-}
-#senderView.has-active-shipments .scene-car-img{opacity:.92}
+#senderView.has-active-shipments .scene > img{opacity:.92}
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
   position:relative;z-index:2;background:transparent;
@@ -1053,7 +1038,7 @@ body.view-sender.theme-telegram .toggle,
       <div id="senderView">
         <div class="sender-body">
           <div class="scene" aria-hidden="true">
-            <img src="https://raw.githubusercontent.com/abublock01-arch/duvduv/main/car.png" style="width:100%;height:240px;object-fit:contain;display:block;" alt=""/>
+            <img src="assets/car.png?v=1" style="width:100%;height:240px;object-fit:contain;display:block;" alt=""/>
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
