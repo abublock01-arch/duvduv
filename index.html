@@ -35,6 +35,7 @@ html,body{
 }
 body.view-sender .header{background:var(--app-bg)!important}
 .header-bar{
+  position:relative;
   display:flex;align-items:center;justify-content:space-between;
   margin-bottom:8px;min-height:40px;gap:8px;
 }
@@ -43,14 +44,29 @@ body.view-sender .header{background:var(--app-bg)!important}
   font-size:26px;line-height:1;color:var(--navy);cursor:pointer;
   display:flex;align-items:center;justify-content:center;
   font-family:inherit;padding:0;flex-shrink:0;
+  position:relative;z-index:1;
 }
 .logo-brand{
-  flex:1;text-align:center;font-size:26px;font-weight:900;color:#0f172a;
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  text-align:center;font-size:26px;font-weight:900;color:#0f172a;
   letter-spacing:-.04em;line-height:1;margin:0;
+  white-space:nowrap;pointer-events:none;
 }
-.logo-brand .logo-sep{color:#FF9500;font-size:20px;margin:0 3px;position:relative;top:-2px;font-weight:400}
+.logo-brand .logo-sep{
+  display:inline-block;width:4px;height:4px;
+  background:#FF9500;border-radius:50%;
+  margin:0 12px;vertical-align:middle;
+  transform:scale(7);transform-origin:center center;
+  font-size:0;line-height:0;color:transparent;
+  position:relative;top:-1px;
+}
 .logo-text{display:none}
-.header-actions-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.header-actions-right{
+  display:flex;align-items:center;justify-content:flex-end;
+  width:40px;min-width:40px;flex-shrink:0;
+  position:relative;z-index:1;
+}
 .header-eye{
   width:40px;height:40px;border-radius:50%;border:none;padding:0;
   display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -93,7 +109,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   padding:0 20px;height:100%;min-height:0;overflow:hidden;flex:1;
   position:relative;
 }
-.view-sender .map-layers-btn{display:none}
+.view-sender .map-layers-btn{visibility:hidden;pointer-events:none}
 #senderView .sender-body{
   position:relative;flex:1;min-height:0;width:100%;
   display:flex;flex-direction:column;overflow:hidden;
@@ -852,7 +868,7 @@ body.view-sender.theme-telegram .toggle,
 }
 .theme-telegram .header-eye{background:var(--tg-section)!important}
 .theme-telegram .header-eye svg{stroke:var(--tg-text)!important}
-.theme-telegram .logo-sep{color:#FF9500!important}
+.theme-telegram .logo-sep{background:#FF9500!important}
 .theme-telegram .region-picker{--picker-fade:var(--tg-bg)!important}
 .theme-telegram .region-picker--vertical .region-picker-item.is-center{color:#0B5CAD!important}
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
@@ -1018,7 +1034,7 @@ body.view-sender.theme-telegram .toggle,
     <div class="header">
       <div class="header-bar">
         <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
-        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" style="color:#FF9500">·</span> duv</h1>
+        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
         <div class="header-actions-right">
           <button type="button" class="header-eye map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
@@ -1268,7 +1284,9 @@ body.view-sender.theme-telegram .toggle,
 
 <script>
 if (window.Telegram && Telegram.WebApp) {
-  Telegram.WebApp.disableClosingConfirmation && Telegram.WebApp.enableClosingConfirmation();
+  if (typeof Telegram.WebApp.disableClosingConfirmation === 'function') {
+    Telegram.WebApp.disableClosingConfirmation();
+  }
   if (Telegram.WebApp.isVerticalSwipesEnabled != null) {
     Telegram.WebApp.disableVerticalSwipes();
   }
