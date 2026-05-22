@@ -693,17 +693,6 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .sheet--send .region-picker--vertical .region-picker-track{height:172px}
 .sheet--send .send-form{gap:10px}
-.send-info-step{display:flex;flex-direction:column;gap:12px;margin-top:4px}
-.send-info-hint{
-  margin:0;font-size:15px;line-height:1.5;color:#5c5c5c;
-  padding:12px 14px;background:#F6F7F9;border-radius:14px;
-}
-.send-textarea--info{
-  min-height:108px;padding:14px 16px;
-  border:1px solid #E5E5E5;border-radius:16px;
-  background:#FAFAFA;resize:none;line-height:1.45;
-}
-.send-textarea--info::placeholder{color:#A8A8A8;font-size:16px}
 .send-action-btn[hidden]{display:none!important}
 .script-morph--label{
   --script-morph-h:18px;display:inline-block;text-align:left;
@@ -1259,10 +1248,6 @@ body.view-sender.theme-telegram .toggle,
           <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
         </div>
       </div>
-      <div id="sendStepInfo" hidden class="send-info-step">
-        <p class="send-info-hint" id="sendInfoHint"></p>
-        <textarea class="send-textarea send-textarea--info" id="sendNote" rows="4" placeholder=""></textarea>
-      </div>
       <input type="hidden" id="sendDest" value="">
       <input type="hidden" id="sendRegion" value="">
       <input type="hidden" id="sendDistrict" value="">
@@ -1712,12 +1697,8 @@ const SEND_TITLE_LATIN = 'Qayerga?';
 const SEND_TITLE_CYRILLIC = 'Қаерга?';
 const SEND_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const SEND_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
-const SEND_INFO_TITLE_LATIN = "Jo'natma haqida";
-const SEND_INFO_TITLE_CYRILLIC = 'Жўнатма ҳақида';
-const SEND_INFO_HINT_LATIN = "Haydovchi tushunishi uchun jo'natmangiz haqida qisqacha yozing — nima, og'irligi, maxsus talablar.";
-const SEND_INFO_HINT_CYRILLIC = 'Ҳайдовчи тушуниши учун жўнатмангиз ҳақида қисқача ёзинг — нима, огʻирлиги, махсус талаблар.';
-const SEND_NOTE_PH_LATIN = "Masalan: 2 ta quti, taxminan 5 kg, ehtiyotkor tashlang";
-const SEND_NOTE_PH_CYRILLIC = 'Масалан: 2 та қути, тахминан 5 кг, эҳтиёткор ташланг';
+const EDIT_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
+const EDIT_NOTE_PH_CYRILLIC = "Қўшимча (ихтиёрий)";
 let scriptLatin = false;
 let scriptMorphTimer = null;
 
@@ -2152,7 +2133,6 @@ const MORPH_UI_ENTRIES = [
   ['#locPickerSaveBtn', 'Saqlash'],
   ['#travelDestTitle', TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC, 'travel-dest-title-morph'],
   ['#sendDestTitle', SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC, 'travel-dest-title-morph'],
-  ['#sendInfoHint', SEND_INFO_HINT_LATIN, SEND_INFO_HINT_CYRILLIC],
   ['#editDestLabel', 'Qayerga'], ['#editNoteLabel', 'Izoh'],
   ['#travelActionBtn', 'Keyingi'], ['#sendActionBtn', 'Keyingi'], ['#editSubmitBtn', 'Saqlash'],
   ['#sheetDestLabel', 'Qayerga'], ['#sheetTelegramBtnText', 'Telegramda yozish'],
@@ -2262,10 +2242,7 @@ function initAllMorphTexts(){
     if (el) initI18nEl(el, latin, cyrillic);
   });
 
-  registerMorphAttr(document.getElementById('editNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
-  registerMorphAttr(document.getElementById('sendNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
-  const sendHint = document.getElementById('sendInfoHint');
-  if (sendHint) initI18nEl(sendHint, SEND_INFO_HINT_LATIN, SEND_INFO_HINT_CYRILLIC);
+  registerMorphAttr(document.getElementById('editNote'), 'placeholder', EDIT_NOTE_PH_LATIN, EDIT_NOTE_PH_CYRILLIC);
   registerMorphAttr(document.getElementById('headerCloseBtn'), 'aria-label', 'Yopish');
   registerMorphAttr(document.getElementById('mapLayersBtn'), 'aria-label', "Buyurtmalarni ko'rsatish");
   [
@@ -2496,9 +2473,6 @@ function updateSendActionBtn(){
   btn.setAttribute('onclick', 'onSendActionClick()');
   if (sendSheetStep === 1) {
     btn.hidden = true;
-  } else if (sendSheetStep === 2) {
-    btn.hidden = false;
-    setI18nText(btn, 'Keyingi');
   } else {
     btn.hidden = false;
     setI18nText(btn, 'Yuborish');
@@ -2512,12 +2486,8 @@ function resetSendSheetSteps(){
   selectedSendDistrict = '';
   const r = document.getElementById('sendStepRegion');
   const d = document.getElementById('sendStepDistrict');
-  const info = document.getElementById('sendStepInfo');
-  const note = document.getElementById('sendNote');
   if (r) r.hidden = false;
   if (d) d.hidden = true;
-  if (info) info.hidden = true;
-  if (note) note.value = '';
   setSendSheetTitle(SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC);
   updateSendActionBtn();
   ['sendRegion', 'sendDistrict', 'sendDest'].forEach(id => {
@@ -2553,29 +2523,12 @@ function sendSheetGoToDistrict(region){
   selectedSendRegion = region;
   document.getElementById('sendStepRegion').hidden = true;
   document.getElementById('sendStepDistrict').hidden = false;
-  document.getElementById('sendStepInfo').hidden = true;
   document.getElementById('sendRegion').value = region;
   document.getElementById('sendDest').value = region;
   setSendSheetTitle(SEND_DISTRICT_TITLE_LATIN, SEND_DISTRICT_TITLE_CYRILLIC);
   initSendDistrictPicker();
   updateSendActionBtn();
   applyCyrillicUI();
-}
-
-function sendSheetGoToInfo(){
-  const district = selectedSendDistrict || document.getElementById('sendDistrict')?.value;
-  if (!district) {
-    showToast('Tuman tanlang');
-    return;
-  }
-  sendSheetStep = 3;
-  document.getElementById('sendStepDistrict').hidden = true;
-  document.getElementById('sendStepInfo').hidden = false;
-  document.getElementById('sendDistrict').value = district;
-  setSendSheetTitle(SEND_INFO_TITLE_LATIN, SEND_INFO_TITLE_CYRILLIC);
-  updateSendActionBtn();
-  applyCyrillicUI();
-  requestAnimationFrame(() => document.getElementById('sendNote')?.focus());
 }
 
 function travelSheetNext(){
@@ -2600,8 +2553,7 @@ function travelSheetNext(){
 }
 
 function onSendActionClick(){
-  if (sendSheetStep === 2) sendSheetGoToInfo();
-  else if (sendSheetStep === 3) submitOrder({ preventDefault(){ } });
+  if (sendSheetStep === 2) submitOrder({ preventDefault(){ } });
 }
 
 function onTravelActionClick(){
@@ -4019,7 +3971,6 @@ function submitOrder(e){
     showToast('Avval rasm oling');
     return;
   }
-  const note = document.getElementById('sendNote')?.value.trim() || '';
   const btn = document.getElementById('sendActionBtn');
   btn.disabled = true;
 
@@ -4030,7 +3981,7 @@ function submitOrder(e){
       type: 'order',
       thumbUrl: storedThumb,
       dest,
-      note,
+      note: '',
       status: 'Aktiv',
       lat: coords ? coords.latitude : null,
       lng: coords ? coords.longitude : null,
