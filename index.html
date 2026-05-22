@@ -667,9 +667,25 @@ body.view-sender .header{background:var(--app-bg)!important}
 
 /* Jo'natma formasi sheet */
 .sheet-overlay--send{z-index:210}
-.sheet--send{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
-.send-sheet-head{text-align:center;padding:4px 0 10px}
-.send-thumb-wrap{display:flex;justify-content:center;margin-bottom:12px}
+.sheet-overlay--send.open .sheet--send{
+  animation:sheetUpSend .38s cubic-bezier(.32,.72,0,1) forwards;
+}
+@keyframes sheetUpSend{
+  from{transform:translateY(100%);opacity:.85}
+  to{transform:translateY(0);opacity:1}
+}
+.sheet--send{
+  padding-top:8px;
+  padding-bottom:max(20px,env(safe-area-inset-bottom));
+}
+.sheet--send .sheet-drag{margin:0 auto 14px}
+.send-sheet-head{text-align:center;padding:0 0 4px}
+.send-thumb-wrap{display:flex;justify-content:center;margin:12px 0 6px}
+.sheet--send .region-picker--vertical{
+  height:172px;margin:0 0 10px;
+}
+.sheet--send .region-picker--vertical .region-picker-track{height:172px}
+.sheet--send .send-form{gap:10px}
 .script-morph--label{
   --script-morph-h:18px;display:inline-block;text-align:left;
 }
@@ -1202,7 +1218,7 @@ body.view-sender.theme-telegram .toggle,
     <div class="sheet-drag"></div>
     <form class="send-form" id="sendForm" onsubmit="onSendFormSubmit(event)">
       <div class="travel-sheet-head send-sheet-head">
-        <h2 class="travel-dest-title" id="sendDestTitle">Qayerga</h2>
+        <h2 class="travel-dest-title" id="sendDestTitle">Qayerga?</h2>
       </div>
       <div class="send-thumb-wrap">
         <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
@@ -1220,10 +1236,6 @@ body.view-sender.theme-telegram .toggle,
       <input type="hidden" id="sendDest" value="">
       <input type="hidden" id="sendRegion" value="">
       <input type="hidden" id="sendDistrict" value="">
-      <div class="send-field" id="sendNoteField" hidden>
-        <label class="send-label" for="sendNote" id="sendNoteLabel">Izoh</label>
-        <textarea class="send-textarea" id="sendNote" placeholder="Qo'shimcha (ixtiyoriy)"></textarea>
-      </div>
       <button type="button" class="send-submit" id="sendActionBtn" onclick="onSendActionClick()">Keyingi</button>
     </form>
   </div>
@@ -1666,8 +1678,8 @@ const REGION_CITY_LABEL = {
 
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
 const TRAVEL_TITLE_CYRILLIC = 'Қаерга борасиз?';
-const SEND_TITLE_LATIN = 'Qayerga';
-const SEND_TITLE_CYRILLIC = 'Қаерга';
+const SEND_TITLE_LATIN = 'Qayerga?';
+const SEND_TITLE_CYRILLIC = 'Қаерга?';
 const SEND_NOTE_LABEL_LATIN = 'Izoh';
 const SEND_NOTE_LABEL_CYRILLIC = 'Изоҳ';
 const SEND_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
@@ -2106,7 +2118,6 @@ const MORPH_UI_ENTRIES = [
   ['#locPickerSaveBtn', 'Saqlash'],
   ['#travelDestTitle', TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC, 'travel-dest-title-morph'],
   ['#sendDestTitle', SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC, 'travel-dest-title-morph'],
-  ['#sendNoteLabel', SEND_NOTE_LABEL_LATIN, SEND_NOTE_LABEL_CYRILLIC, 'script-morph--label'],
   ['#editDestLabel', 'Qayerga'], ['#editNoteLabel', 'Izoh'],
   ['#travelActionBtn', 'Keyingi'], ['#sendActionBtn', 'Keyingi'], ['#editSubmitBtn', 'Saqlash'],
   ['#sheetDestLabel', 'Qayerga'], ['#sheetTelegramBtnText', 'Telegramda yozish'],
@@ -2216,13 +2227,12 @@ function initAllMorphTexts(){
     if (el) initI18nEl(el, latin, cyrillic);
   });
 
-  registerMorphAttr(document.getElementById('sendNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
   registerMorphAttr(document.getElementById('editNote'), 'placeholder', SEND_NOTE_PH_LATIN, SEND_NOTE_PH_CYRILLIC);
   registerMorphAttr(document.getElementById('headerCloseBtn'), 'aria-label', 'Yopish');
   registerMorphAttr(document.getElementById('mapLayersBtn'), 'aria-label', "Buyurtmalarni ko'rsatish");
   [
     ['regionPicker', 'Viloyat tanlash'],
-    ['sendRegionPicker', 'Qayerga'],
+    ['sendRegionPicker', 'Qayerga?'],
     ['travelRegionPicker', 'Qayerga borasiz']
   ].forEach(([id, label]) => {
     const el = document.getElementById(id);
@@ -2423,11 +2433,9 @@ function resetSendSheetSteps(){
   selectedSendDistrict = '';
   const r = document.getElementById('sendStepRegion');
   const d = document.getElementById('sendStepDistrict');
-  const n = document.getElementById('sendNoteField');
   const btn = document.getElementById('sendActionBtn');
   if (r) r.hidden = false;
   if (d) d.hidden = true;
-  if (n) n.hidden = true;
   if (btn) {
     btn.type = 'button';
     btn.setAttribute('onclick', 'onSendActionClick()');
@@ -2469,7 +2477,6 @@ function sendSheetNext(){
   sendSheetStep = 2;
   document.getElementById('sendStepRegion').hidden = true;
   document.getElementById('sendStepDistrict').hidden = false;
-  document.getElementById('sendNoteField').hidden = false;
   document.getElementById('sendRegion').value = region;
   initSendDistrictPicker();
   const btn = document.getElementById('sendActionBtn');
@@ -3611,6 +3618,49 @@ function closeUpload(){
   }, 550);
 }
 
+function closeUploadForSendSheet(){
+  return new Promise(resolve => {
+    const overlay = document.getElementById('uploadOverlay');
+    if (!overlay.classList.contains('open')) {
+      resolve();
+      return;
+    }
+    if (cameraPermWatcher) {
+      cameraPermWatcher.onchange = null;
+      cameraPermWatcher = null;
+    }
+    cameraSession++;
+    overlay.classList.remove('open');
+    overlay.classList.add('closing');
+    stopCamera();
+    setTimeout(() => {
+      overlay.classList.remove('closing');
+      resetUploadVisual();
+      resolve();
+    }, 380);
+  });
+}
+
+async function openSendSheetFromPhoto(){
+  const sheet = document.getElementById('sendSheetOverlay');
+  document.getElementById('sendForm').reset();
+  if (previewObjectUrl) {
+    document.getElementById('sendThumb').src = previewObjectUrl;
+  }
+  await prepareSendSheet();
+  await closeUploadForSendSheet();
+  sheet.classList.remove('open');
+  void sheet.offsetHeight;
+  requestAnimationFrame(() => {
+    sheet.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    applyCyrillicUI();
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+  });
+}
+
 async function startCamera(){
   const video = document.getElementById('cameraVideo');
   const fallback = document.getElementById('cameraFallback');
@@ -3742,16 +3792,11 @@ async function capturePhoto(){
     captureBtn.classList.add('captured');
     stopCamera();
     document.getElementById('zonePlaceholder').classList.add('hidden');
-    showToast('✅ Rasm olindi!', 'success');
     if (window.Telegram?.WebApp?.HapticFeedback) {
-      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      Telegram.WebApp.HapticFeedback.impactOccurred('medium');
     }
     selectedPhotoFile = compressed;
-    document.getElementById('sendThumb').src = previewObjectUrl;
-    document.getElementById('sendForm').reset();
-    await prepareSendSheet();
-    document.getElementById('sendSheetOverlay').classList.add('open');
-    applyCyrillicUI();
+    await openSendSheetFromPhoto();
   }, 'image/jpeg', 0.9);
 }
 
@@ -3759,7 +3804,7 @@ function openGallery(){
   document.getElementById('photoInput').click();
 }
 
-function resetUpload(){
+function resetUploadVisual(){
   stopCamera();
   const input = document.getElementById('photoInput');
   const preview = document.getElementById('photoPreview');
@@ -3767,15 +3812,19 @@ function resetUpload(){
   const fallback = document.getElementById('cameraFallback');
   const placeholder = document.getElementById('zonePlaceholder');
   input.value = '';
-  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl) && !orders.some(o => o.thumbUrl === previewObjectUrl)) {
-    URL.revokeObjectURL(previewObjectUrl);
-  }
-  previewObjectUrl = null;
   preview.src = '';
   preview.classList.remove('visible');
   captureBtn.classList.remove('captured');
   fallback.hidden = true;
   placeholder.classList.remove('hidden');
+}
+
+function resetUpload(){
+  resetUploadVisual();
+  if (previewObjectUrl && !shipments.some(s => s.thumbUrl === previewObjectUrl) && !orders.some(o => o.thumbUrl === previewObjectUrl)) {
+    URL.revokeObjectURL(previewObjectUrl);
+  }
+  previewObjectUrl = null;
 }
 
 async function onPhotoSelected(e){
@@ -3794,16 +3843,11 @@ async function onPhotoSelected(e){
   placeholder.classList.add('hidden');
   document.getElementById('cameraFallback').hidden = true;
   document.getElementById('cameraVideo').classList.remove('active');
-  showToast('✅ Rasm yuklandi!', 'success');
   selectedPhotoFile = compressed;
-  document.getElementById('sendThumb').src = previewObjectUrl;
-  document.getElementById('sendForm').reset();
-  await prepareSendSheet();
-  document.getElementById('sendSheetOverlay').classList.add('open');
-  applyCyrillicUI();
   if (window.Telegram?.WebApp?.HapticFeedback) {
-    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    Telegram.WebApp.HapticFeedback.impactOccurred('medium');
   }
+  await openSendSheetFromPhoto();
 }
 
 function closeSendSheet(){
@@ -3903,7 +3947,6 @@ function submitOrder(e){
     return;
   }
   const btn = document.getElementById('sendActionBtn');
-  const note = document.getElementById('sendNote').value.trim();
   btn.disabled = true;
 
   async function saveOrder(coords){
@@ -3913,7 +3956,7 @@ function submitOrder(e){
       type: 'order',
       thumbUrl: storedThumb,
       dest,
-      note,
+      note: '',
       status: 'Aktiv',
       lat: coords ? coords.latitude : null,
       lng: coords ? coords.longitude : null,
