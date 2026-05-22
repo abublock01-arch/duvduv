@@ -117,7 +117,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 #senderView .scene{
   position:absolute;left:0;right:0;bottom:0;width:100%;
   pointer-events:none;z-index:0;
-  background:radial-gradient(ellipse 90% 60% at 50% 100%, #fff 0%, rgba(255,255,255,.85) 38%, transparent 68%);
+  background:transparent;
 }
 #senderView .scene > img{border:none;box-shadow:none;outline:none}
 #senderView.has-active-shipments .scene > img{opacity:.92}
@@ -925,7 +925,7 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram #senderView,
 .theme-telegram.view-sender .content{background:var(--app-bg)!important}
-.theme-telegram .scene{background:radial-gradient(ellipse 90% 60% at 50% 100%, #fff 0%, rgba(255,255,255,.85) 38%, transparent 68%)!important}
+.theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
 .theme-telegram #driverView .region-picker--horizontal{
   background:rgba(255,255,255,.48)!important;--picker-fade:rgba(255,255,255,.5)!important;
@@ -1079,7 +1079,7 @@ body.view-sender.theme-telegram .toggle,
       <div id="senderView">
         <div class="sender-body">
           <div class="scene" aria-hidden="true">
-            <img src="assets/scene-car.png" fetchpriority="high" loading="eager" style="width:100%;max-width:456px;height:auto;max-height:276px;object-fit:contain;display:block;margin:-22px auto 0;" alt=""/>
+            <img src="assets/scene-car.png" fetchpriority="high" loading="eager" style="width:100%;max-width:360px;height:auto;max-height:232px;object-fit:contain;display:block;margin:-12px auto 0;filter:drop-shadow(0 18px 32px rgba(0,0,0,0.18)) drop-shadow(0 6px 12px rgba(0,0,0,0.10));" alt=""/>
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
