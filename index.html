@@ -1267,6 +1267,12 @@ body.view-sender.theme-telegram .toggle,
 </div>
 
 <script>
+if (window.Telegram && Telegram.WebApp) {
+  Telegram.WebApp.disableClosingConfirmation && Telegram.WebApp.enableClosingConfirmation();
+  if (Telegram.WebApp.isVerticalSwipesEnabled != null) {
+    Telegram.WebApp.disableVerticalSwipes();
+  }
+}
 
 const FIREBASE_CONFIG = {
   apiKey: 'AIzaSyB2SyqLQIPfwW9Kax4fQNeQBoogAaQ8CzA',
