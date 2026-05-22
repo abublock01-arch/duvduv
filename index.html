@@ -55,9 +55,9 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .logo-brand .logo-sep{
   display:inline-block;width:4px;height:4px;
-  background:#FF9500;border-radius:50%;
-  margin:0 12px;vertical-align:middle;
-  transform:scale(7);transform-origin:center center;
+  background:#FF6B4A;border-radius:50%;
+  margin:0 10px;vertical-align:middle;
+  transform:scale(2.8);transform-origin:center center;
   font-size:0;line-height:0;color:transparent;
   position:relative;top:-1px;
 }
@@ -83,15 +83,14 @@ body.view-sender .header{background:var(--app-bg)!important}
   margin-bottom:0;
 }
 .toggle{
-  background:rgba(255,255,255,.28);
-  backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);
-  border:1px solid rgba(42,171,238,.16);
-  border-radius:20px;padding:6px;display:flex;gap:0;
+  background:#fff;
+  border:1px solid rgba(255,255,255,.95);
+  border-radius:20px;padding:7px;display:flex;gap:0;
   box-shadow:0 4px 16px rgba(42,171,238,.1);
-  max-width:320px;width:100%;margin:0 auto 0;
+  max-width:352px;width:100%;margin:0 auto 0;
 }
 .toggle-btn{
-  flex:1;padding:12px 12px;border-radius:16px;border:none;font-size:17px;font-weight:600;
+  flex:1;padding:13px 13px;border-radius:16px;border:none;font-size:19px;font-weight:600;
   cursor:pointer;transition:all .22s;font-family:inherit;letter-spacing:.02em;
   background:transparent;color:#6b7280;
 }
@@ -154,15 +153,15 @@ body.view-sender .header{background:var(--app-bg)!important}
   width:56px;height:56px;border-radius:12px;object-fit:cover;
   border:1px solid #EEE;flex-shrink:0;
 }
-.shipment-card-left{display:flex;align-items:center;gap:13px;flex:1;min-width:0}
+.shipment-card-left{display:flex;align-items:center;gap:10px;flex:1;min-width:0}
 .shipment-type-icon{
-  width:42px;height:42px;border-radius:14px;flex-shrink:0;
+  width:34px;height:34px;border-radius:11px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.45);
   border:1px solid rgba(42,171,238,.12);
   box-shadow:none;
 }
-.shipment-type-icon svg{width:22px;height:22px}
+.shipment-type-icon svg{width:18px;height:18px}
 .shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .shipment-dest{
   font-size:16px;font-weight:800;color:#0f172a;letter-spacing:-.02em;
@@ -853,10 +852,8 @@ body.view-sender .header{background:var(--app-bg)!important}
 body.view-sender.theme-telegram .header{background:var(--app-bg)!important}
 body.view-sender.theme-telegram .toggle,
 .theme-telegram .toggle{
-  background:rgba(255,255,255,.28)!important;
-  backdrop-filter:blur(20px) saturate(1.6)!important;
-  -webkit-backdrop-filter:blur(20px) saturate(1.6)!important;
-  border-color:rgba(42,171,238,.16)!important;
+  background:#fff!important;
+  border-color:rgba(255,255,255,.95)!important;
   box-shadow:0 4px 16px rgba(42,171,238,.1)!important;
 }
 .theme-telegram .logo-brand{color:var(--tg-text)!important}
@@ -868,7 +865,7 @@ body.view-sender.theme-telegram .toggle,
 }
 .theme-telegram .header-eye{background:var(--tg-section)!important}
 .theme-telegram .header-eye svg{stroke:var(--tg-text)!important}
-.theme-telegram .logo-sep{background:#FF9500!important}
+.theme-telegram .logo-sep{background:#FF6B4A!important}
 .theme-telegram .region-picker{--picker-fade:var(--tg-bg)!important}
 .theme-telegram .region-picker--vertical .region-picker-item.is-center{color:#0B5CAD!important}
 .theme-telegram .region-picker-item.is-adjacent{color:var(--tg-hint)!important}
