@@ -1736,6 +1736,19 @@ function initTelegramUser(){
   telegramUser.username = user.username || '';
 }
 
+function requestNotificationPermission(){
+  if (!window.Telegram?.WebApp?.requestWriteAccess) return;
+  if (localStorage.getItem('notif_asked')) return;
+  setTimeout(() => {
+    Telegram.WebApp.requestWriteAccess(granted => {
+      localStorage.setItem('notif_asked', '1');
+      if (granted && telegramUser.id && db) {
+        db.collection('users').doc(String(telegramUser.id)).set({ notifications: true }, { merge: true });
+      }
+    });
+  }, 2000);
+}
+
 function getTelegramName(){
   const name = telegramUser.first_name || '';
   const uname = telegramUser.username ? `@${telegramUser.username}` : '';
@@ -1773,9 +1786,6 @@ if (window.Telegram && Telegram.WebApp) {
   try {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
-    if (typeof Telegram.WebApp.requestWriteAccess === 'function') {
-      Telegram.WebApp.requestWriteAccess();
-    }
     initTelegramUser();
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
@@ -4859,6 +4869,7 @@ refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
 initTelegramUser();
+requestNotificationPermission();
 syncShipmentsFromFirestore(); // re-filter with now-known telegramUser.id
 restoreUserPrefs();
 renderShipments();
