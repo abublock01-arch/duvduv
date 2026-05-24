@@ -1512,7 +1512,7 @@ function subscribeFirestoreOrders(){
       orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', ...d });
     });
     syncShipmentsFromFirestore();
-    if (isDriverMapReady()) refreshOrderMarkersDebounced();
+    refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore snapshot xatosi:', err));
 }
 async function saveTravelToFirestore(travel){
@@ -1561,7 +1561,7 @@ function subscribeFirestoreTravels(){
       travels.push({ id: doc.id, firestoreId: doc.id, type: 'travel', ...d });
     });
     syncShipmentsFromFirestore();
-    if (isDriverMapReady()) refreshOrderMarkersDebounced();
+    refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore travels snapshot xatosi:', err));
 }
 
