@@ -1614,7 +1614,8 @@ function loadLastGPS(){
   } catch (_) { return null; }
 }
 
-const DRIVER_ENTRY_ZOOM = 10;
+const DRIVER_ENTRY_ZOOM = 11;
+const MAP_LAYER_CONFIG_VERSION = 2;
 
 function getDriverMapZoom(){
   return persistedMapZoom ?? DRIVER_ENTRY_ZOOM;
@@ -1623,8 +1624,9 @@ function getDriverMapZoom(){
 function restoreUserPrefs(){
   if (telegramUser.id == null) return;
   const savedRegion = localStorage.getItem(userPrefKey('region'));
-  if (savedRegion && UZ_REGIONS.includes(savedRegion)) {
-    selectedDriverRegion = savedRegion;
+  const normalizedRegion = savedRegion === 'Toshkent' ? 'Toshkent shahar' : savedRegion;
+  if (normalizedRegion && UZ_REGIONS.includes(normalizedRegion)) {
+    selectedDriverRegion = normalizedRegion;
   }
   const z = parseFloat(localStorage.getItem(userPrefKey('zoom')));
   if (!Number.isNaN(z) && z >= 0 && z <= 22) persistedMapZoom = z;
@@ -1774,14 +1776,15 @@ const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="
 const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></svg>';
 
 const UZ_REGIONS = [
-  'Toshkent', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
+  'Toshkent shahar', 'Toshkent viloyat', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
 const MAP_TEST_PER_REGION = 1000;
-const MAP_TEST_SEED_VERSION = 4;
+const MAP_TEST_SEED_VERSION = 5;
 
 const REGION_CYRILLIC = {
-  'Toshkent': 'Тошкент', 'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
+  'Toshkent shahar': 'Тошкент шаҳар', 'Toshkent viloyat': 'Тошкент вилояти',
+  'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
   'Andijon': 'Андижон', 'Namangan': 'Наманган', 'Buxoro': 'Бухоро',
   'Xorazm': 'Хоразм', 'Surxondaryo': 'Сурхондарё', "Qashqadaryo": 'Қашқадарё',
   'Sirdaryo': 'Сирдарё', 'Jizzax': 'Жиззах', 'Navoiy': 'Навоий',
@@ -1789,7 +1792,8 @@ const REGION_CYRILLIC = {
 };
 
 const REGION_DISTRICTS = {
-  'Toshkent': ['Bektemir', 'Chilonzor', 'Mirobod', 'Olmazor', 'Sergeli', 'Shayxontohur', 'Uchtepa', 'Yashnobod', 'Yunusobod', 'Qibray', 'Zangiota', 'Parkent', 'Bekobod'],
+  'Toshkent shahar': ['Bektemir', 'Chilonzor', 'Mirobod', 'Olmazor', 'Sergeli', 'Shayxontohur', 'Uchtepa', 'Yashnobod', 'Yunusobod'],
+  'Toshkent viloyat': ['Qibray', 'Zangiota', 'Parkent', 'Bekobod', 'Ohangaron', "Yangiyo'l", "Oqqo'rg'on", 'Chirchiq', 'Angren', 'Piskent', "Bo'stonliq"],
   'Samarqand': ['Samarqand', 'Urgut', 'Bulungur', 'Ishtixon', 'Kattaqorgon', 'Narpay', 'Pastdargom', 'Paxtachi', 'Payariq', 'Toyloq'],
   "Farg'ona": ['Fargona', 'Qo\'qon', 'Marg\'ilon', 'Rishton', 'Beshariq', 'Bog\'dod', 'Buvayda', 'Dang\'ara', 'Furqat', 'O\'zbekiston', 'Quva', 'So\'x', 'Toshloq', 'Uchko\'prik', 'Yozyovon'],
   'Andijon': ['Andijon', 'Asaka', 'Baliqchi', 'Bo\'z', 'Buloqboshi', 'Izboskan', 'Jalaquduq', 'Marhamat', 'Oltinko\'l', 'Paxtaobod', 'Shahrixon', 'Ulug\'nor', 'Xonobod'],
@@ -1806,7 +1810,8 @@ const REGION_DISTRICTS = {
 
 /** Viloyat tanlangach tuman ro'yxatida birinchi qator — viloyat markazi */
 const REGION_CITY_LABEL = {
-  'Toshkent': 'Toshkent shahar',
+  'Toshkent shahar': 'Toshkent shahar',
+  'Toshkent viloyat': 'Toshkent viloyat',
   'Samarqand': 'Samarqand shahar',
   "Farg'ona": "Farg'ona shahar",
   'Andijon': 'Andijon shahar',
@@ -1833,7 +1838,9 @@ let scriptLatin = false;
 let scriptMorphTimer = null;
 
 const REGION_CENTERS = {
-  'Toshkent':[69.2401,41.2991],'Samarqand':[66.9750,39.6542],
+  'Toshkent shahar':[69.2401,41.2991],
+  'Toshkent viloyat':[69.52,41.18],
+  'Samarqand':[66.9750,39.6542],
   "Farg'ona":[71.7864,40.3864],'Andijon':[72.3438,40.7826],
   'Namangan':[71.6725,40.9983],'Buxoro':[64.4286,39.7675],
   'Xorazm':[60.6322,41.5227],'Surxondaryo':[67.8500,37.9349],
@@ -1857,6 +1864,11 @@ const ICON_CTA_BOX_WHITE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fi
 const ICON_PERSON = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#2AABEE" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>';
 
 function detectRegionFromCoords(lng, lat){
+  const city = REGION_CENTERS['Toshkent shahar'];
+  if (city) {
+    const dCity = (lng - city[0]) ** 2 + (lat - city[1]) ** 2;
+    if (dCity < 0.028) return 'Toshkent shahar';
+  }
   let best = null;
   let bestDist = Infinity;
   for (const [name, [rlng, rlat]] of Object.entries(REGION_CENTERS)) {
@@ -1902,7 +1914,17 @@ function formatDest(region, district){
 function destToRegion(dest){
   if (!dest) return '';
   const sep = dest.indexOf(' — ');
-  return sep >= 0 ? dest.slice(0, sep) : dest;
+  const region = sep >= 0 ? dest.slice(0, sep) : dest;
+  if (region === 'Toshkent') return 'Toshkent shahar';
+  return region;
+}
+
+function mapLabelRegion(destStr){
+  if (!destStr) return '';
+  const region = destToRegion(destStr);
+  if (region) return region;
+  const s = String(destStr);
+  return s.length > 20 ? s.slice(0, 18) + '…' : s;
 }
 
 function destMatchesDriverRegion(dest){
@@ -2827,11 +2849,16 @@ function mapItemProps(item, itemType){
   const to = item.to || item.dest || '';
   const from = item.from || '';
   const dest = itemType === 'travel' && from && to ? `${from} → ${to}` : (item.dest || to);
+  let mapFrom = mapLabelRegion(from);
+  const mapTo = mapLabelRegion(to || item.dest || '');
+  if (!mapFrom && userLocationRegion) mapFrom = mapLabelRegion(userLocationRegion);
   return {
     orderId: String(item.firestoreId || item.id || ''),
     dest,
     from,
     to,
+    mapFrom: mapFrom || '—',
+    mapTo: mapTo || '—',
     itemType,
     thumbUrl: item.thumbUrl || '',
     telegramUsername: item.telegramUsername || ''
@@ -2915,8 +2942,8 @@ function seedMapTestOrders(done){
   if (mapTestOrdersSeeding) return;
   mapTestOrdersSeeding = true;
   mapTestOrders.length = 0;
-  const homeRegion = userLocationRegion || 'Toshkent';
-  const homeCenter = REGION_CENTERS[homeRegion] || REGION_CENTERS.Toshkent;
+  const homeRegion = userLocationRegion || 'Toshkent shahar';
+  const homeCenter = REGION_CENTERS[homeRegion] || REGION_CENTERS['Toshkent shahar'];
   const homeDistricts = getDistrictsForRegion(homeRegion);
   const homeFrom = formatDest(homeRegion, homeDistricts[0]);
   const baseLng = homeCenter[0];
@@ -2976,7 +3003,8 @@ function addTestOrders(done){
 function setupOrderClusterLayers(){
   if (!map) return;
   const clusterLayer = map.getLayer('orders-clusters');
-  if (orderClusterLayersReady && clusterLayer?.type === 'symbol' && !map.getLayer('orders-cluster-count')) return;
+  const configOk = map._ordersLayerConfigVersion === MAP_LAYER_CONFIG_VERSION;
+  if (orderClusterLayersReady && configOk && clusterLayer?.type === 'symbol') return;
   if (map.getSource('orders')) {
     [...ORDER_MAP_LAYER_IDS, 'orders-cluster-count', 'orders-unclustered-icon', 'orders-unclustered-label'].forEach(id => {
       if (map.getLayer(id)) map.removeLayer(id);
@@ -2990,7 +3018,11 @@ function setupOrderClusterLayers(){
     data: ordersToGeoJSON(),
     cluster: true,
     clusterMaxZoom: 13,
-    clusterRadius: 50
+    clusterRadius: 50,
+    clusterProperties: {
+      travelCount: ['+', ['case', ['==', ['get', 'itemType'], 'travel'], 1, 0]],
+      orderCount: ['+', ['case', ['==', ['get', 'itemType'], 'order'], 1, 0]]
+    }
   });
   loadMapMarkerImages(map).then(() => {
     if (!map.getLayer('orders-clusters')) {
@@ -3000,10 +3032,16 @@ function setupOrderClusterLayers(){
         source: 'orders',
         filter: ['has', 'point_count'],
         layout: {
-          'icon-image': MAP_ICON_BOX,
+          'icon-image': [
+            'case',
+            ['>', ['get', 'travelCount'], 0],
+            MAP_ICON_PERSON,
+            MAP_ICON_BOX
+          ],
           'icon-size': ORDER_ICON_SIZE_LAYOUT,
           'icon-anchor': 'center',
           'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
           'icon-pitch-scale': 'map'
         }
       });
@@ -3021,6 +3059,7 @@ function setupOrderClusterLayers(){
           'icon-size': ORDER_ICON_SIZE_LAYOUT,
           'icon-anchor': 'center',
           'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
           'icon-pitch-scale': 'map'
         }
       });
@@ -3030,18 +3069,22 @@ function setupOrderClusterLayers(){
         source: 'orders',
         filter: ['!', ['has', 'point_count']],
         layout: {
-          'text-field': ['get', 'dest'],
+          'text-field': ['concat', ['get', 'mapFrom'], '\n', ['get', 'mapTo']],
           'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
           'text-size': [
             'interpolate', ['linear'], ['zoom'],
-            10, 10,
-            14, 13,
-            16, 15
+            10, 9,
+            12, 10,
+            14, 11,
+            16, 12
           ],
-          'text-offset': [0, 0.6],
+          'text-line-height': 1.15,
+          'text-offset': [0, 1.05],
           'text-anchor': 'top',
-          'text-max-width': 12,
-          'text-allow-overlap': false,
+          'text-justify': 'center',
+          'text-max-width': 16,
+          'text-allow-overlap': true,
+          'text-optional': true,
           'text-pitch-scale': 'map'
         },
         paint: {
@@ -3051,6 +3094,7 @@ function setupOrderClusterLayers(){
         }
       });
     }
+    map._ordersLayerConfigVersion = MAP_LAYER_CONFIG_VERSION;
     bindOrderMapEvents();
     if (!orderLayersVisible) {
       ORDER_MAP_LAYER_IDS.forEach(id => {
@@ -3260,8 +3304,7 @@ function refreshOrderMarkers(){
   }
   const geo = ordersToGeoJSON();
   map.getSource('orders').setData(geo);
-  const many = geo.features.length > 400;
-  const labelVis = orderLayersVisible && !many ? 'visible' : 'none';
+  const labelVis = orderLayersVisible ? 'visible' : 'none';
   if (map.getLayer('orders-unclustered-label')) {
     map.setLayoutProperty('orders-unclustered-label', 'visibility', labelVis);
   }
@@ -3368,7 +3411,7 @@ function switchView(v){
       }, 280);
     }
     refreshUserLocationRegion().then(() => {
-      const home = userLocationRegion || 'Toshkent';
+      const home = userLocationRegion || 'Toshkent shahar';
       const needsReseed = mapTestOrders.length && mapTestOrders[0]?._homeRegion !== home;
       if (needsReseed) {
         mapTestOrders.length = 0;
