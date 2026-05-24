@@ -1758,6 +1758,9 @@ let selectedSendRegion = '';
 let selectedSendDistrict = '';
 let sendSheetStep = 1;
 let sendRegionPickerBuilt = false;
+let sendRegionPickerAbort = null;
+let sendRegionUserScrolled = false;
+let sendSheetSession = 0;
 let sendDistrictPickerBuilt = false;
 let lastSendPickerKey = '';
 let lastSendDistrictKey = '';
@@ -2575,6 +2578,14 @@ function refreshScriptMorphLoop(){
   applyCyrillicUI();
 }
 
+function teardownSendRegionPickerListeners(track){
+  if (sendRegionPickerAbort) {
+    sendRegionPickerAbort.abort();
+    sendRegionPickerAbort = null;
+  }
+  if (track) delete track.dataset.sendRegionAdvance;
+}
+
 function initSendRegionPicker(){
   const track = document.getElementById('sendRegionPickerTrack');
   if (!track) return;
@@ -2587,6 +2598,8 @@ function initSendRegionPicker(){
   if (!sendRegionPickerBuilt || lastSendPickerKey !== key) {
     lastSendPickerKey = key;
     sendRegionPickerBuilt = true;
+    sendRegionUserScrolled = false;
+    teardownSendRegionPickerListeners(track);
     delete track.dataset.pickerBound;
     buildRegionPickerTrack(track, regions);
     bindRegionPickerScroll(track, region => {
@@ -2594,25 +2607,37 @@ function initSendRegionPicker(){
       const hidden = document.getElementById('sendDest');
       if (hidden) hidden.value = region;
     });
-    if (!track.dataset.sendRegionAdvance) {
-      track.dataset.sendRegionAdvance = '1';
-      const onRegionSettled = () => {
-        if (sendSheetStep !== 1) return;
-        const region = selectedSendRegion || document.getElementById('sendDest')?.value;
-        if (region) sendSheetGoToDistrict(region);
-      };
-      if ('onscrollend' in window) {
-        track.addEventListener('scrollend', onRegionSettled, { passive: true });
-      } else {
-        let t;
-        track.addEventListener('scroll', () => {
-          clearTimeout(t);
-          t = setTimeout(onRegionSettled, 180);
-        }, { passive: true });
-      }
+    sendRegionPickerAbort = new AbortController();
+    const { signal } = sendRegionPickerAbort;
+    track.dataset.sendRegionAdvance = '1';
+    const onRegionSettled = () => {
+      if (sendSheetStep !== 1) return;
+      if (!sendRegionUserScrolled) return;
+      const region = selectedSendRegion || document.getElementById('sendDest')?.value;
+      if (region) sendSheetGoToDistrict(region);
+    };
+    const markUserScroll = () => {
+      if (!track.dataset.pickerProgrammatic) sendRegionUserScrolled = true;
+    };
+    if ('onscrollend' in window) {
+      track.addEventListener('scroll', markUserScroll, { passive: true, signal });
+      track.addEventListener('scrollend', onRegionSettled, { passive: true, signal });
+    } else {
+      let t;
+      track.addEventListener('scroll', () => {
+        markUserScroll();
+        clearTimeout(t);
+        t = setTimeout(onRegionSettled, 180);
+      }, { passive: true, signal });
     }
   }
+  track.dataset.pickerProgrammatic = '1';
   scrollPickerToRegion(track, selectedSendRegion, false);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      delete track.dataset.pickerProgrammatic;
+    });
+  });
   refreshPickerVisualsDeferred(track, region => {
     selectedSendRegion = region;
     const hidden = document.getElementById('sendDest');
@@ -2743,7 +2768,10 @@ function resetSendSheetSteps(){
   lastSendPickerKey = '';
   sendDistrictPickerBuilt = false;
   lastSendDistrictKey = '';
+  selectedSendRegion = '';
   selectedSendDistrict = '';
+  sendRegionUserScrolled = false;
+  teardownSendRegionPickerListeners(document.getElementById('sendRegionPickerTrack'));
   const r = document.getElementById('sendStepRegion');
   const d = document.getElementById('sendStepDistrict');
   if (r) r.hidden = false;
@@ -3634,6 +3662,7 @@ function isSendThumbBroken(){
 }
 
 function abandonSendFlow(){
+  sendSheetSession++;
   clearSendDraft();
   const sheet = document.getElementById('sendSheetOverlay');
   const upload = document.getElementById('uploadOverlay');
@@ -3648,11 +3677,13 @@ function abandonSendFlow(){
 async function restoreSendFromDraft(draft){
   // If there's no thumbnail, we can't meaningfully restore the send flow
   if (!draft.thumb) { abandonSendFlow(); return; }
+  const session = sendSheetSession;
   previewObjectUrl = draft.thumb;
   selectedPhotoFile = null;
   const thumbEl = document.getElementById('sendThumb');
   if (thumbEl) thumbEl.src = draft.thumb;
   await prepareSendSheet();
+  if (session !== sendSheetSession) return;
   if (draft.region) {
     selectedSendRegion = draft.region;
     document.getElementById('sendDest').value = draft.region;
@@ -4143,6 +4174,8 @@ function closeUpload(){
     cameraPermWatcher = null;
   }
   cameraSession++;
+  sendSheetSession++;
+  clearSendDraft();
   overlay.classList.remove('open');
   overlay.classList.add('closing');
   stopCamera();
@@ -4154,16 +4187,19 @@ function closeUpload(){
 }
 
 async function openSendSheetFromPhoto(){
+  const session = ++sendSheetSession;
   const sheet = document.getElementById('sendSheetOverlay');
   const upload = document.getElementById('uploadOverlay');
   document.getElementById('sendForm').reset();
   if (selectedPhotoFile && (!previewObjectUrl || previewObjectUrl.startsWith('blob:'))) {
     previewObjectUrl = await fileToDataUrl(selectedPhotoFile);
   }
+  if (session !== sendSheetSession) return;
   if (previewObjectUrl) {
     document.getElementById('sendThumb').src = previewObjectUrl;
   }
   await prepareSendSheet();
+  if (session !== sendSheetSession) return;
   if (cameraPermWatcher) {
     cameraPermWatcher.onchange = null;
     cameraPermWatcher = null;
@@ -4371,6 +4407,7 @@ async function onPhotoSelected(e){
 }
 
 function closeSendSheet(){
+  sendSheetSession++;
   const sheet = document.getElementById('sendSheetOverlay');
   sheet.classList.remove('open', 'send-handoff');
   document.body.style.overflow = '';
