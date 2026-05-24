@@ -2901,26 +2901,27 @@ function seedMapTestOrders(done){
   if (mapTestOrdersSeeding) return;
   mapTestOrdersSeeding = true;
   mapTestOrders.length = 0;
+  const region = 'Toshkent';
+  const [baseLng, baseLat] = REGION_CENTERS[region];
+  const tkDistricts = getDistrictsForRegion(region);
   let i = 0;
   const chunk = 400;
   const step = () => {
     const end = Math.min(i + chunk, MAP_TEST_ORDER_COUNT);
     for (; i < end; i++) {
-      const region = UZ_REGIONS[i % UZ_REGIONS.length];
-      const center = REGION_CENTERS[region];
-      const lng = center
-        ? center[0] + (Math.random() - 0.5) * 1.5
-        : 64 + Math.random() * 8;
-      const lat = center
-        ? center[1] + (Math.random() - 0.5) * 1.0
-        : 37.5 + Math.random() * 7;
+      const lng = baseLng + (Math.random() - 0.5) * 0.38;
+      const lat = baseLat + (Math.random() - 0.5) * 0.30;
+      const district = tkDistricts[i % tkDistricts.length];
+      const dest = formatDest(region, district);
+      const fromDistrict = tkDistricts[(i + 5) % tkDistricts.length];
+      const fromDest = formatDest(region, fromDistrict);
       const isTravel = i % 6 === 0;
       mapTestOrders.push({
         id: 'test-' + i,
         type: isTravel ? 'travel' : 'order',
-        dest: region,
-        from: UZ_REGIONS[(i + 3) % UZ_REGIONS.length],
-        to: region,
+        dest,
+        from: fromDest,
+        to: dest,
         note: '',
         thumbUrl: '',
         status: 'Aktiv',
@@ -2941,10 +2942,12 @@ function seedMapTestOrders(done){
 }
 
 function addTestOrders(done){
-  if (mapTestOrders.length >= MAP_TEST_ORDER_COUNT) {
+  const tkOnly = mapTestOrders.length > 0 && destToRegion(mapTestOrders[0].dest || '') === 'Toshkent';
+  if (mapTestOrders.length >= MAP_TEST_ORDER_COUNT && tkOnly) {
     if (done) done();
     return;
   }
+  mapTestOrders.length = 0;
   seedMapTestOrders(done);
 }
 
