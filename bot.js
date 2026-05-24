@@ -21,47 +21,54 @@ const APP_URL = 'https://duvduv.vercel.app';
 
 console.log('✅ duvduv bot ishga tushdi');
 
-// Menu tugmasini o'rnatish (chap pastdagi ⊞ tugma)
-bot.setChatMenuButton({ menu_button: { type: 'web_app', text: '📱 duvduv', web_app: { url: APP_URL } } })
-  .then(() => console.log('✅ Menu tugmasi o\'rnatildi'))
-  .catch(() => {}); // Eski versiyalarda bo'lmasligi mumkin
+// Menu tugmasi — «Қани бошладик» (pastdagi ko'k tugma, URL emas)
+const MENU_BTN_TEXT = 'Қани бошладик';
+bot.setChatMenuButton({
+  menu_button: { type: 'web_app', text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
+})
+  .then(() => console.log('✅ Menu tugmasi:', MENU_BTN_TEXT))
+  .catch(err => console.warn('Menu tugmasi:', err.message));
 
-// ── Persistent klaviatura (doim pastda ko'rinadigan tugma) ───────────────
+// ── Persistent klaviatura ───────────────────────────────────────────────
 const persistentKeyboard = {
   keyboard: [[
-    { text: '📱 duvduv ni ochish', web_app: { url: APP_URL } }
+    { text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
   ]],
   resize_keyboard: true,
   persistent: true
 };
 
+const openAppInline = {
+  inline_keyboard: [[
+    { text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
+  ]]
+};
+
 // ── Yordamchi funksiyalar ─────────────────────────────────────────────────
-const mainMenu = (role) => ({
+const mainMenu = () => ({
   inline_keyboard: [
-    [{ text: '📱 duvduv ni ochish', web_app: { url: APP_URL } }],
-    role === 'driver'
-      ? [{ text: '🔔 Xabarnomalar: yoqilgan', callback_data: 'notif_off' }]
-      : [{ text: '🔔 Xabarnomalar: yoqilgan', callback_data: 'notif_off' }],
-    [{ text: '🔄 Rolni o\'zgartirish', callback_data: 'change_role' }],
+    [{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }],
+    [{ text: '🔔 Хабарномалар: ёқилган', callback_data: 'notif_off' }],
+    [{ text: '🔄 Ролни ўзгартириш', callback_data: 'change_role' }],
   ]
 });
 
 const roleMenu = {
   inline_keyboard: [
     [
-      { text: '🚗 Haydovchi', callback_data: 'role_driver' },
-      { text: '📦 Jo\'natuvchi', callback_data: 'role_sender' },
+      { text: '🚗 Ҳайдовчи', callback_data: 'role_driver' },
+      { text: '📦 Жўнатувчи', callback_data: 'role_sender' },
     ]
   ]
 };
 
 const notifMenu = (notif) => ({
   inline_keyboard: [
-    [{ text: '📱 duvduv ni ochish', web_app: { url: APP_URL } }],
+    [{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }],
     notif
-      ? [{ text: '🔔 Xabarnomalar: yoqilgan ✓', callback_data: 'notif_off' }]
-      : [{ text: '🔕 Xabarnomalar: o\'chirilgan', callback_data: 'notif_on' }],
-    [{ text: '🔄 Rolni o\'zgartirish', callback_data: 'change_role' }],
+      ? [{ text: '🔔 Хабарномалар: ёқилган ✓', callback_data: 'notif_off' }]
+      : [{ text: '🔕 Хабарномалар: ўчирилган', callback_data: 'notif_on' }],
+    [{ text: '🔄 Ролни ўзгартириш', callback_data: 'change_role' }],
   ]
 });
 
@@ -93,37 +100,37 @@ bot.onText(/\/start/, async (msg) => {
     const existing = await getUser(user.id);
 
     if (existing && existing.role) {
-      // Qaytgan foydalanuvchi
       await saveUser(user);
-      const roleText = existing.role === 'driver' ? '🚗 Haydovchi' : '📦 Jo\'natuvchi';
+      const roleText = existing.role === 'driver' ? '🚗 Ҳайдовчи' : '📦 Жўнатувчи';
 
       await bot.sendMessage(chatId,
-        `👋 Qaytib keldingiz, *${name}*!\n\n` +
-        `Rolingiz: ${roleText}\n\n` +
-        `Yangi e'lonlar haqida xabardor qilamiz 🔔`,
+        `👋 Қайта келдингиз, *${name}*!\n\n` +
+        `Ролингиз: ${roleText}\n\n` +
+        `Янги эълонлар ҳақида хабардор қиламиз 🔔`,
         {
           parse_mode: 'Markdown',
           reply_markup: persistentKeyboard
         }
       );
-      // Inline menyu alohida
-      await bot.sendMessage(chatId, '⚙️ Sozlamalar:', {
-        reply_markup: mainMenu(existing.role)
+      await bot.sendMessage(chatId, '⚙️ Созламалар:', {
+        reply_markup: mainMenu()
       });
     } else {
-      // Yangi foydalanuvchi — avval persistent keyboard, keyin rol tanlash
       await saveUser(user);
 
       await bot.sendMessage(chatId,
-        `👋 Salom, *${name}*!\n\n` +
-        `*duvduv* — O'zbekiston bo'ylab yuk va yo'lovchi tashish platformasi.\n\n` +
-        `Siz kim sifatida foydalanasiz?`,
+        `👋 Салом, *${name}*!\n\n` +
+        `*duvduv* — Ўзбекистон бўйлаб юк ва йўловчи ташиш платформаси.\n\n` +
+        `Бошлаш учун тугмани босинг 👇`,
         {
           parse_mode: 'Markdown',
           reply_markup: persistentKeyboard
         }
       );
-      await bot.sendMessage(chatId, '👇 Rolni tanlang:', {
+      await bot.sendMessage(chatId, '👇 Иловани очинг:', {
+        reply_markup: openAppInline
+      });
+      await bot.sendMessage(chatId, '👇 Ролни танланг:', {
         reply_markup: roleMenu
       });
     }
@@ -139,7 +146,7 @@ bot.onText(/\/menu/, async (msg) => {
   const notif = existing?.notifications !== false;
 
   await bot.sendMessage(msg.chat.id,
-    `📋 *Asosiy menyu*`,
+    `📋 *Асосий меню*`,
     {
       parse_mode: 'Markdown',
       reply_markup: notifMenu(notif)
@@ -154,7 +161,7 @@ bot.onText(/\/stop/, async (msg) => {
     { merge: true }
   );
   await bot.sendMessage(msg.chat.id,
-    `🔕 Xabarnomalar o'chirildi.\n\nQayta yoqish uchun /menu buyrug'ini yuboring.`
+    `🔕 Хабарномалар ўчирилди.\n\nҚайта ёқиш учун /menu юборинг.`
   );
 });
 
@@ -169,30 +176,29 @@ bot.on('callback_query', async (query) => {
     // Rol tanlash
     if (data === 'role_driver' || data === 'role_sender') {
       const role = data === 'role_driver' ? 'driver' : 'sender';
-      const roleText = role === 'driver' ? '🚗 Haydovchi' : '📦 Jo\'natuvchi';
+      const roleText = role === 'driver' ? '🚗 Ҳайдовчи' : '📦 Жўнатувчи';
 
       await saveUser(user, { role });
 
       await bot.editMessageText(
-        `✅ Ajoyib, *${user.first_name}*!\n\n` +
-        `Rolingiz: *${roleText}*\n\n` +
+        `✅ Ажойиб, *${user.first_name}*!\n\n` +
+        `Ролингиз: *${roleText}*\n\n` +
         `${role === 'driver'
-          ? 'Toshkentdan Samarqandga, Buxoroga yoki boshqa shaharga ketayotganingizda mos jo\'natmalar haqida xabardor qilamiz! 🚗'
-          : 'Yuk yoki odam jo\'natishingiz kerak bo\'lganda mos haydovchilarni toping! 📦'
+          ? 'Тошкентдан Самарқанд, Бухоро ёки бошқа шаҳарга кетаяотганингизда мос жўнатмалар ҳақида хабардор қиламиз! 🚗'
+          : 'Юк ёки одам жўнатишингиз керак бўлганда мос ҳайдовчиларни топинг! 📦'
         }`,
         {
           chat_id: chatId,
           message_id: msgId,
           parse_mode: 'Markdown',
-          reply_markup: mainMenu(role)
+          reply_markup: mainMenu()
         }
       );
     }
 
-    // Rolni o'zgartirish
     if (data === 'change_role') {
       await bot.editMessageText(
-        `🔄 Yangi rolni tanlang:`,
+        `🔄 Янги ролни танланг:`,
         {
           chat_id: chatId,
           message_id: msgId,
@@ -212,7 +218,7 @@ bot.on('callback_query', async (query) => {
         chat_id: chatId,
         message_id: msgId,
       });
-      await bot.answerCallbackQuery(query.id, { text: '🔕 Xabarnomalar o\'chirildi' });
+      await bot.answerCallbackQuery(query.id, { text: '🔕 Хабарномалар ўчирилди' });
     }
 
     // Xabarnomani yoqish
@@ -225,7 +231,7 @@ bot.on('callback_query', async (query) => {
         chat_id: chatId,
         message_id: msgId,
       });
-      await bot.answerCallbackQuery(query.id, { text: '🔔 Xabarnomalar yoqildi' });
+      await bot.answerCallbackQuery(query.id, { text: '🔔 Хабарномалар ёқилди' });
     }
 
     await bot.answerCallbackQuery(query.id);
@@ -281,7 +287,7 @@ db.collection('orders')
             parse_mode: 'Markdown',
             reply_markup: {
               inline_keyboard: [[
-                { text: '📱 duvduv da ko\'rish', web_app: { url: APP_URL } }
+                { text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
               ]]
             }
           });

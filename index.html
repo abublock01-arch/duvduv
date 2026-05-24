@@ -1215,6 +1215,51 @@ body.view-sender.theme-telegram .toggle,
 #driverView.driver-district-open .map-my-loc{
   bottom:calc(148px + max(12px, env(safe-area-inset-bottom)));
 }
+
+/* Хабарнома рухсати — ишончли onboarding */
+.notif-onboard-overlay{
+  position:fixed;inset:0;z-index:500;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px max(16px, env(safe-area-inset-left)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-right));
+  background:rgba(15,23,42,.52);
+  backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .28s ease,visibility .28s ease;
+}
+.notif-onboard-overlay.show{
+  opacity:1;visibility:visible;pointer-events:auto;
+}
+.notif-onboard-card{
+  width:min(100%,340px);
+  background:#fff;border-radius:20px;
+  padding:28px 22px 22px;text-align:center;
+  box-shadow:0 20px 60px rgba(15,23,42,.22),0 0 0 1px rgba(42,171,238,.12);
+}
+.notif-onboard-icon{
+  width:56px;height:56px;margin:0 auto 16px;
+  border-radius:50%;background:rgba(42,171,238,.12);
+  display:flex;align-items:center;justify-content:center;
+  font-size:28px;line-height:1;
+}
+.notif-onboard-title{
+  margin:0 0 10px;font-size:20px;font-weight:800;color:#0f172a;
+  letter-spacing:-.02em;
+}
+.notif-onboard-text{
+  margin:0 0 22px;font-size:15px;line-height:1.45;color:#64748b;
+}
+.notif-onboard-btn{
+  width:100%;border:none;border-radius:14px;padding:15px 20px;
+  font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;
+  background:#2AABEE;color:#fff;
+  box-shadow:0 4px 16px rgba(42,171,238,.35);
+  -webkit-tap-highlight-color:transparent;
+}
+.notif-onboard-btn:active{transform:scale(.98)}
+.theme-telegram .notif-onboard-card{background:var(--tg-section,#fff)}
+.theme-telegram .notif-onboard-title{color:var(--tg-text,#0f172a)}
+.theme-telegram .notif-onboard-text{color:var(--tg-hint,#64748b)}
+.theme-telegram .notif-onboard-btn{background:var(--tg-btn,#2AABEE);color:var(--tg-btn-text,#fff)}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1736,17 +1781,76 @@ function initTelegramUser(){
   telegramUser.username = user.username || '';
 }
 
+function closeNotifOnboardOverlay(){
+  const overlay = document.getElementById('notifOnboardOverlay');
+  if (overlay) {
+    overlay.classList.remove('show');
+    overlay.hidden = true;
+    overlay.setAttribute('aria-hidden', 'true');
+  }
+  if (!document.querySelector('.sheet-overlay.open, .upload-overlay.open, .loc-picker-overlay.open')) {
+    document.body.style.overflow = '';
+  }
+}
+
+function saveNotifPermissionGranted(granted){
+  if (granted && telegramUser.id && db) {
+    db.collection('users').doc(String(telegramUser.id)).set({ notifications: true }, { merge: true });
+  }
+}
+
+function onNotifOnboardHa(){
+  if (localStorage.getItem('notif_asked')) {
+    closeNotifOnboardOverlay();
+    return;
+  }
+  localStorage.setItem('notif_asked', '1');
+  const tg = window.Telegram?.WebApp;
+  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+  const finish = granted => {
+    saveNotifPermissionGranted(granted);
+    closeNotifOnboardOverlay();
+    if (tg?.expand) tg.expand();
+  };
+  if (tg?.requestWriteAccess) {
+    tg.requestWriteAccess(finish);
+  } else {
+    finish(true);
+  }
+}
+
+function showNotifOnboardOverlay(){
+  const overlay = document.getElementById('notifOnboardOverlay');
+  if (!overlay) return false;
+  overlay.hidden = false;
+  overlay.setAttribute('aria-hidden', 'false');
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => overlay.classList.add('show'));
+  });
+  document.body.style.overflow = 'hidden';
+  return true;
+}
+
+function tryTelegramNotifPopup(){
+  const tg = window.Telegram?.WebApp;
+  if (!tg?.showPopup) return false;
+  tg.showPopup({
+    title: 'Хабарнома рухсати',
+    message: 'Биз сизга янги буюртма ва йўловчи ҳақида хабар юборишимиз мумкин. Хабарлар фақат мухим эълонлар учун.',
+    buttons: [{ id: 'ha', type: 'default', text: 'Ҳа' }]
+  }, () => {
+    onNotifOnboardHa();
+  });
+  return true;
+}
+
 function requestNotificationPermission(){
-  if (!window.Telegram?.WebApp?.requestWriteAccess) return;
+  if (!window.Telegram?.WebApp) return;
   if (localStorage.getItem('notif_asked')) return;
   setTimeout(() => {
-    Telegram.WebApp.requestWriteAccess(granted => {
-      localStorage.setItem('notif_asked', '1');
-      if (granted && telegramUser.id && db) {
-        db.collection('users').doc(String(telegramUser.id)).set({ notifications: true }, { merge: true });
-      }
-    });
-  }, 2000);
+    if (localStorage.getItem('notif_asked')) return;
+    if (!showNotifOnboardOverlay()) tryTelegramNotifPopup();
+  }, 400);
 }
 
 function getTelegramName(){
@@ -1787,6 +1891,7 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
+    requestNotificationPermission();
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
@@ -4869,7 +4974,6 @@ refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
 initTelegramUser();
-requestNotificationPermission();
 syncShipmentsFromFirestore(); // re-filter with now-known telegramUser.id
 restoreUserPrefs();
 renderShipments();
@@ -4893,6 +4997,18 @@ if (window.Telegram?.WebApp?.onEvent) {
 }
 recoverSendFlow();
 </script>
+
+<!-- Хабарнома рухсати (фақат Ҳа) -->
+<div class="notif-onboard-overlay" id="notifOnboardOverlay" hidden aria-hidden="true">
+  <div class="notif-onboard-card" role="dialog" aria-labelledby="notifOnboardTitle">
+    <div class="notif-onboard-icon" aria-hidden="true">🔔</div>
+    <h2 class="notif-onboard-title" id="notifOnboardTitle">Хабарнома рухсати</h2>
+    <p class="notif-onboard-text" id="notifOnboardText">
+      Биз сизга янги буюртма ва йўловчи ҳақида хабар юборишимиз мумкин. Хабарлар фақат мухим эълонлар учун.
+    </p>
+    <button type="button" class="notif-onboard-btn" id="notifOnboardHaBtn" onclick="onNotifOnboardHa()">Ҳа</button>
+  </div>
+</div>
 
 <!-- Telegram uslubidagi muvaffaqiyat -->
 <div class="tg-success-overlay" id="tgSuccessOverlay" aria-hidden="true">
