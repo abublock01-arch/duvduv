@@ -1108,18 +1108,19 @@ body.view-sender.theme-telegram .toggle,
 #driverView .region-picker--horizontal::before,
 #driverView .region-picker--horizontal::after{display:none!important}
 
-/* Track: mandatory snap, smooth yo'q */
+/* Track: native snap + tez surish */
 #driverView .region-picker--horizontal .region-picker-track{
   height:46px!important;
   scroll-snap-type:x mandatory!important;
   scroll-padding-inline:50%!important;
+  scroll-behavior:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-x:contain;
-  will-change:scroll-position;
+  touch-action:pan-x;
   align-items:center;
 }
 
-/* Barcha itemlar: chip stil, scale yo'q */
+/* Barcha itemlar: chip stil */
 #driverView .region-picker--horizontal .region-picker-item{
   color:#6b7280!important;
   background:transparent!important;
@@ -1127,10 +1128,11 @@ body.view-sender.theme-telegram .toggle,
   font-size:16px!important;font-weight:600!important;
   opacity:1!important;transform:scale(1)!important;
   padding:10px 16px!important;
-  scroll-snap-align:center;scroll-snap-stop:always;
-  transition:background .2s,color .2s,box-shadow .2s;
+  scroll-snap-align:center;scroll-snap-stop:normal;
+  transition:background .12s ease,color .12s ease,box-shadow .12s ease;
   white-space:nowrap;
-  text-shadow:none!important;will-change:auto!important;
+  text-shadow:none!important;
+  -webkit-tap-highlight-color:transparent;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-adjacent{
   color:#9ca3af!important;
@@ -2024,9 +2026,9 @@ function scrollPickerToRegion(track, region, smooth){
   }
 }
 
-function snapHorizontalPickerToNearest(track, smooth, onCommit){
+function getHorizontalPickerCenterItem(track){
   const items = [...track.querySelectorAll('.region-picker-item')];
-  if (!items.length) return;
+  if (!items.length) return null;
   const center = track.scrollLeft + track.clientWidth / 2;
   let closest = null;
   let best = Infinity;
@@ -2035,15 +2037,80 @@ function snapHorizontalPickerToNearest(track, smooth, onCommit){
     const d = Math.abs(mid - center);
     if (d < best) { best = d; closest = item; }
   });
+  return closest;
+}
+
+function settleDriverRegionPicker(track, onCommit){
+  const closest = getHorizontalPickerCenterItem(track);
   if (!closest) return;
-  scrollPickerToRegion(track, closest.dataset.region, smooth);
+  const max = track.scrollWidth - track.clientWidth;
+  const targetLeft = Math.max(0, Math.min(
+    closest.offsetLeft - (track.clientWidth - closest.offsetWidth) / 2,
+    max
+  ));
+  if (Math.abs(track.scrollLeft - targetLeft) > 2) {
+    track.scrollTo({ left: targetLeft, behavior: 'auto' });
+  }
+  const prev = track.dataset.committedRegion || '';
   updateRegionPickerVisuals(true, track, onCommit);
+  const region = closest.dataset.region;
+  if (region && region !== prev) {
+    track.dataset.committedRegion = region;
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.selectionChanged();
+    }
+  }
+}
+
+function bindDriverRegionPickerScroll(track, onCommit){
+  track.querySelectorAll('.region-picker-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      scrollPickerToRegion(track, btn.dataset.region, !prefersReducedMotion());
+    });
+  });
+  let paintRaf = 0;
+  let settleTimer = 0;
+  let settling = false;
+
+  const paint = () => {
+    if (settling) return;
+    updateRegionPickerVisuals(false, track, null);
+  };
+
+  const scheduleSettle = () => {
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      settling = true;
+      settleDriverRegionPicker(track, onCommit);
+      requestAnimationFrame(() => { settling = false; });
+    }, 'onscrollend' in window ? 0 : 100);
+  };
+
+  track.addEventListener('scroll', () => {
+    if (paintRaf) cancelAnimationFrame(paintRaf);
+    paintRaf = requestAnimationFrame(paint);
+    if (!('onscrollend' in window)) scheduleSettle();
+  }, { passive: true });
+
+  if ('onscrollend' in window) {
+    track.addEventListener('scrollend', () => {
+      clearTimeout(settleTimer);
+      settling = true;
+      settleDriverRegionPicker(track, onCommit);
+      requestAnimationFrame(() => { settling = false; });
+    }, { passive: true });
+  } else {
+    track.addEventListener('touchend', scheduleSettle, { passive: true });
+  }
 }
 
 function bindRegionPickerScroll(track, onCommit){
   if (track.dataset.pickerBound) return;
   track.dataset.pickerBound = '1';
-  const driverH = isDriverHorizontalTrack(track);
+  if (isDriverHorizontalTrack(track)) {
+    bindDriverRegionPickerScroll(track, onCommit);
+    return;
+  }
   track.querySelectorAll('.region-picker-item').forEach(btn => {
     btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, true));
   });
@@ -2051,19 +2118,13 @@ function bindRegionPickerScroll(track, onCommit){
   let scrollRaf = 0;
   const onScroll = () => {
     if (scrollRaf) cancelAnimationFrame(scrollRaf);
-    scrollRaf = requestAnimationFrame(() => {
-      updateRegionPickerVisuals(false, track, driverH ? null : onCommit);
-    });
+    scrollRaf = requestAnimationFrame(() => updateRegionPickerVisuals(false, track, onCommit));
     clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => {
-      if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
-      else updateRegionPickerVisuals(true, track, onCommit);
-    }, driverH ? 100 : 100);
+    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), 100);
   };
   const onScrollEnd = () => {
     clearTimeout(scrollTimer);
-    if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
-    else updateRegionPickerVisuals(true, track, onCommit);
+    updateRegionPickerVisuals(true, track, onCommit);
   };
   track.addEventListener('scroll', onScroll, { passive: true });
   if ('onscrollend' in window) {
@@ -2080,23 +2141,29 @@ function updateRegionPickerVisuals(commit, trackEl, onCommit){
   const track = trackEl || document.getElementById('regionPickerTrack');
   if (!track) return;
   const vertical = !!track.closest('.region-picker--vertical');
-  const trackRect = track.getBoundingClientRect();
-  const centerX = trackRect.left + trackRect.width / 2;
-  const centerY = trackRect.top + trackRect.height / 2;
+  const driverH = isDriverHorizontalTrack(track);
   const items = [...track.querySelectorAll('.region-picker-item')];
   let closest = null;
   let closestDist = Infinity;
 
-  items.forEach(item => {
-    const rect = item.getBoundingClientRect();
-    const dist = vertical
-      ? Math.abs(rect.top + rect.height / 2 - centerY)
-      : Math.abs(rect.left + rect.width / 2 - centerX);
-    if (dist < closestDist) {
-      closestDist = dist;
-      closest = item;
-    }
-  });
+  if (driverH) {
+    closest = getHorizontalPickerCenterItem(track);
+    closestDist = closest ? 0 : Infinity;
+  } else {
+    const trackRect = track.getBoundingClientRect();
+    const centerX = trackRect.left + trackRect.width / 2;
+    const centerY = trackRect.top + trackRect.height / 2;
+    items.forEach(item => {
+      const rect = item.getBoundingClientRect();
+      const dist = vertical
+        ? Math.abs(rect.top + rect.height / 2 - centerY)
+        : Math.abs(rect.left + rect.width / 2 - centerX);
+      if (dist < closestDist) {
+        closestDist = dist;
+        closest = item;
+      }
+    });
+  }
 
   items.forEach(item => item.classList.remove('is-center', 'is-adjacent'));
   if (!closest) return;
@@ -2168,29 +2235,22 @@ function ensureDriverRegionPicker(){
   const finishLayout = () => {
     layoutHorizontalPickerSpacers(track);
     scrollPickerToRegion(track, selectedDriverRegion, false);
-    updateRegionPickerVisuals(true, track, region => {
-      if (region && region !== selectedDriverRegion) {
-        selectedDriverRegion = region;
-        saveUserRegion(region);
-        refreshOrderMarkersDebounced();
-      }
-    });
+    track.dataset.committedRegion = selectedDriverRegion;
+    updateRegionPickerVisuals(true, track, null);
   };
   requestAnimationFrame(() => requestAnimationFrame(finishLayout));
   if (!track.dataset.driverPickerResize) {
     track.dataset.driverPickerResize = '1';
+    let resizeTimer = 0;
     const zone = track.closest('.driver-picker-zone');
     if (zone && typeof ResizeObserver !== 'undefined') {
       new ResizeObserver(() => {
         if (!document.body.classList.contains('view-driver')) return;
-        layoutHorizontalPickerSpacers(track);
-        updateRegionPickerVisuals(true, track, region => {
-          if (region && region !== selectedDriverRegion) {
-            selectedDriverRegion = region;
-            saveUserRegion(region);
-            refreshOrderMarkersDebounced();
-          }
-        });
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => {
+          layoutHorizontalPickerSpacers(track);
+          updateRegionPickerVisuals(false, track, null);
+        }, 80);
       }).observe(zone);
     }
   }
