@@ -381,7 +381,8 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .region-picker--vertical .region-picker-item{
   width:100%;text-align:center;padding:10px 12px;
-  transition:color .4s ease,opacity .2s ease,transform .2s ease,font-size .2s ease;
+  scroll-snap-stop:always;
+  transition:color .28s ease,opacity .28s ease,transform .28s ease,font-size .28s ease;
 }
 .region-picker--vertical .region-picker-item.is-adjacent{
   font-size:17px;font-weight:700;color:#6b7280;
@@ -510,7 +511,24 @@ body.view-sender .header{background:var(--app-bg)!important}
 #driverView .map-my-loc{
   z-index:12;
   bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
+  transition:bottom .28s ease;
 }
+#driverView .driver-district-chip{
+  position:absolute;right:14px;z-index:12;
+  bottom:calc(22px + max(12px, env(safe-area-inset-bottom)));
+  padding:8px 14px;border-radius:14px;border:1px solid #2AABEE;
+  background:rgba(255,255,255,.92);color:#2AABEE;
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  box-shadow:0 4px 14px rgba(42,171,238,.14);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;transform:translateY(5px);pointer-events:none;
+  transition:opacity .26s ease,transform .26s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+#driverView .driver-district-chip.is-visible{
+  opacity:1;transform:translateY(0);pointer-events:auto;
+}
+#driverView .driver-district-chip:active{transform:scale(.97)}
 #locPickerMap .map-controls{right:12px;z-index:6}
 #locPickerMap .map-my-loc{right:12px;bottom:12px;z-index:6}
 .loc-picker-overlay{
@@ -1139,7 +1157,7 @@ body.view-sender.theme-telegram .toggle,
 /* Track: native snap + tez surish */
 #driverView .region-picker--horizontal .region-picker-track{
   height:46px!important;
-  scroll-snap-type:x proximity!important;
+  scroll-snap-type:x mandatory!important;
   
   scroll-behavior:auto;
   -webkit-overflow-scrolling:touch;
@@ -1156,7 +1174,7 @@ body.view-sender.theme-telegram .toggle,
   font-size:16px!important;font-weight:600!important;
   opacity:1!important;transform:scale(1)!important;
   padding:10px 16px!important;
-  scroll-snap-align:center;scroll-snap-stop:normal;
+  scroll-snap-align:center;scroll-snap-stop:always;
   transition:background .12s ease,color .12s ease,box-shadow .12s ease;
   white-space:nowrap;
   text-shadow:none!important;
@@ -1311,6 +1329,9 @@ body.view-sender.theme-telegram .toggle,
           </div>
           <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </button>
+          <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden onclick="expandDriverDistrictPanel()" aria-label="Tuman tanlash">
+            <span id="driverDistrictChipText" data-i18n-latin="Tuman" data-i18n-cyrillic="Туман">Tuman</span>
           </button>
         </div>
         <div class="driver-picker-zone">
@@ -1947,9 +1968,13 @@ let lastDriverPickerKey = '';
 let driverDistrictPickerBuilt = false;
 let lastDriverDistrictKey = '';
 let driverDistrictRevealTimer = null;
+let driverDistrictCollapseTimer = null;
 const DRIVER_DISTRICT_DELAY_MS = 3000;
+const DRIVER_DISTRICT_COLLAPSE_MS = 7000;
 const DRIVER_DISTRICT_ALL = 'Hammasi';
 const PICKER_LOOP_COPIES = 3;
+const DRIVER_PICKER_SETTLE_MS = 110;
+const VERTICAL_PICKER_SETTLE_MS = 140;
 let userLocationRegion = null;
 let userCoords = null;
 let selectedTravelRegion = '';
@@ -2034,11 +2059,11 @@ const REGION_CITY_LABEL = {
 };
 
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
-const TRAVEL_TITLE_CYRILLIC = 'Қаерга борасиз?';
+const TRAVEL_TITLE_CYRILLIC = 'Қайерга борасиз?';
 const TRAVEL_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const TRAVEL_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
 const SEND_TITLE_LATIN = 'Qayerga?';
-const SEND_TITLE_CYRILLIC = 'Қаерга?';
+const SEND_TITLE_CYRILLIC = 'Қайерга?';
 const SEND_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const SEND_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
 const EDIT_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
@@ -2310,8 +2335,7 @@ function fillTravelMapRouteLeg(side, leg){
 }
 
 function shouldPickerLoop(track){
-  if (!track || !track.querySelector) return false;
-  return isDriverHorizontalTrack(track) || !!track.closest('.region-picker--vertical');
+  return isDriverHorizontalTrack(track);
 }
 
 function clearPickerLoopMeta(track){
@@ -2353,12 +2377,12 @@ function wrapPickerLoopScroll(track){
   const block = blockEnd - blockStart;
   if (block <= 0) return;
   const scroll = vertical ? track.scrollTop : track.scrollLeft;
-  if (scroll < blockStart - block * 0.35) {
+  if (scroll < blockStart - block * 0.15) {
     track.dataset.pickerWrapping = '1';
     if (vertical) track.scrollTop += block;
     else track.scrollLeft += block;
     track.dataset.pickerWrapping = '0';
-  } else if (scroll > blockEnd + block * 0.35) {
+  } else if (scroll > blockEnd + block * 0.15) {
     track.dataset.pickerWrapping = '1';
     if (vertical) track.scrollTop -= block;
     else track.scrollLeft -= block;
@@ -2443,6 +2467,11 @@ function bindDriverRegionPickerScroll(track, onCommit){
       scrollPickerToRegion(track, btn.dataset.region, !prefersReducedMotion());
     });
   });
+  const isDistrict = track.id === 'driverDistrictPickerTrack';
+  if (isDistrict) {
+    track.addEventListener('touchstart', bumpDriverDistrictActivity, { passive: true });
+    track.addEventListener('mousedown', bumpDriverDistrictActivity);
+  }
   let paintRaf = 0;
   let settleTimer = 0;
   let settling = false;
@@ -2458,11 +2487,10 @@ function bindDriverRegionPickerScroll(track, onCommit){
       settling = true;
       settleDriverRegionPicker(track, onCommit);
       requestAnimationFrame(() => { settling = false; });
-    }, 'onscrollend' in window ? 0 : 60);
+    }, 'onscrollend' in window ? 0 : DRIVER_PICKER_SETTLE_MS);
   };
 
   track.addEventListener('scroll', () => {
-    wrapPickerLoopScroll(track);
     if (paintRaf) cancelAnimationFrame(paintRaf);
     paintRaf = requestAnimationFrame(paint);
     if (!('onscrollend' in window)) scheduleSettle();
@@ -2493,14 +2521,12 @@ function bindRegionPickerScroll(track, onCommit){
   let scrollTimer;
   let scrollRaf = 0;
   const onScroll = () => {
-    wrapPickerLoopScroll(track);
     if (scrollRaf) cancelAnimationFrame(scrollRaf);
     scrollRaf = requestAnimationFrame(() => updateRegionPickerVisuals(false, track, onCommit));
     clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), 100);
+    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), VERTICAL_PICKER_SETTLE_MS);
   };
   const onScrollEnd = () => {
-    wrapPickerLoopScroll(track);
     clearTimeout(scrollTimer);
     updateRegionPickerVisuals(true, track, onCommit);
   };
@@ -2595,8 +2621,69 @@ function cancelDriverDistrictReveal(){
   driverDistrictRevealTimer = null;
 }
 
+function cancelDriverDistrictCollapse(){
+  clearTimeout(driverDistrictCollapseTimer);
+  driverDistrictCollapseTimer = null;
+}
+
+function hideDriverDistrictChip(){
+  const chip = document.getElementById('driverDistrictChip');
+  if (!chip) return;
+  chip.classList.remove('is-visible');
+  chip.hidden = true;
+}
+
+function scheduleDriverDistrictCollapse(){
+  cancelDriverDistrictCollapse();
+  if (!document.body.classList.contains('view-driver')) return;
+  const panel = document.getElementById('driverDistrictPanel');
+  if (!panel?.classList.contains('is-open')) return;
+  driverDistrictCollapseTimer = setTimeout(() => {
+    driverDistrictCollapseTimer = null;
+    collapseDriverDistrictPanel();
+  }, DRIVER_DISTRICT_COLLAPSE_MS);
+}
+
+function bumpDriverDistrictActivity(){
+  if (document.getElementById('driverDistrictPanel')?.classList.contains('is-open')) {
+    scheduleDriverDistrictCollapse();
+  }
+}
+
+function collapseDriverDistrictPanel(){
+  cancelDriverDistrictCollapse();
+  const panel = document.getElementById('driverDistrictPanel');
+  const chip = document.getElementById('driverDistrictChip');
+  const driverView = document.getElementById('driverView');
+  if (panel?.classList.contains('is-open')) {
+    panel.classList.remove('is-open');
+    setTimeout(() => {
+      if (!panel.classList.contains('is-open')) panel.hidden = true;
+    }, 320);
+  } else if (panel) {
+    panel.hidden = true;
+  }
+  driverView?.classList.remove('driver-district-open');
+  if (chip) {
+    chip.hidden = false;
+    requestAnimationFrame(() => chip.classList.add('is-visible'));
+  }
+}
+
+function expandDriverDistrictPanel(){
+  cancelDriverDistrictCollapse();
+  const chip = document.getElementById('driverDistrictChip');
+  if (chip) {
+    chip.classList.remove('is-visible');
+    setTimeout(() => { chip.hidden = true; }, 260);
+  }
+  showDriverDistrictPanel();
+}
+
 function hideDriverDistrictPanel(){
   cancelDriverDistrictReveal();
+  cancelDriverDistrictCollapse();
+  hideDriverDistrictChip();
   const panel = document.getElementById('driverDistrictPanel');
   const driverView = document.getElementById('driverView');
   if (panel) {
@@ -2614,6 +2701,7 @@ function onDriverDistrictChanged(district){
     selectedDriverDistrict = district;
     saveUserDistrict(district);
   }
+  bumpDriverDistrictActivity();
   refreshOrderMarkersDebounced();
 }
 
@@ -2645,6 +2733,7 @@ function ensureDriverDistrictPicker(){
 
 function showDriverDistrictPanel(){
   if (!selectedDriverRegion) return;
+  hideDriverDistrictChip();
   ensureDriverDistrictPicker();
   const panel = document.getElementById('driverDistrictPanel');
   const driverView = document.getElementById('driverView');
@@ -2655,7 +2744,7 @@ function showDriverDistrictPanel(){
     driverView?.classList.add('driver-district-open');
   });
   morphPickerTrack('#driverDistrictPickerTrack', scriptLatin);
-  updateDriverDistrictAllBtn();
+  scheduleDriverDistrictCollapse();
 }
 
 function scheduleDriverDistrictReveal(){
@@ -2769,17 +2858,18 @@ const UI_PHRASE_CYRILLIC = {
   "Jo'natma yuborish": 'Жўнатма юбориш', "Jo'natma rasmi": 'Жўнатма расми',
   "Qutini ramka ichida ko'ring va rasm oling": 'Қутини рамка ичида кўринг ва расм олинг',
   'Galereyadan tanlash': 'Галереядан танлаш', 'Kamera yuklanmoqda…': 'Камера юкланмоқда…',
-  'Lokatsiyani tanlang': 'Локацияни танлаш', 'Xaritaga bosing — pin qo\'yiladi': 'Харитага босинг — пин қўйилади',
+  'Lokatsiyani tanlang': 'Локацияни танланг', 'Xaritaga bosing — pin qo\'yiladi': 'Харитага босинг — пин қўйилади',
   "Xaritani suring — pin o'rtada qoladi": 'Харитани суринг — пин ўртада қолади',
-  'Saqlash': 'Сақлаш', 'Izoh': 'Изоҳ', 'Yuborish': 'Юбориш', 'Saqlash': 'Сақлаш',
+  'Saqlash': 'Сақлаш', 'Izoh': 'Изоҳ', 'Yuborish': 'Юбориш',
   'Telegramda yozish': 'Телеграмда ёзиш', 'Buyurtmani Qabul Qilish': 'Буюртмани қабул қилиш',
   "Hali jo'natmalar yo'q": 'Ҳали жўнатмалар йўқ',
   "Birinchi jo'natmangizni yuboring!": 'Биринчи жўнатмангизни юборинг!',
   "Yo'lovchi": 'Йўловчи',
-  'Qayerdan': 'Қаердан',
+  'Qayerdan': 'Қайердан', 'Qayerga': 'Қайерга',
   "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing": 'Йўловчи билан боғланиб, йўл ҳақида келишинг',
   'Aktiv': 'Актив', 'Bugun': 'Бугун',
-  'Viloyatni tanlang': 'Вилоятни танлаш', 'Viloyat tanlash': 'Вилоят танлаш',
+  'Viloyatni tanlang': 'Вилоятни танланг', 'Viloyat tanlash': 'Вилоят танлаш',
+  'Tumanni tanlang': 'Туманни танланг',
   "Buyurtmalarni ko'rsatish": 'Буюртмаларни кўрсатиш',
   "Buyurtmalarni yashirish": 'Буюртмаларни яшириш',
   'Yopish': 'Ёпиш', 'Kattalashtirish': 'Катталаштириш', 'Kichiklashtirish': 'Кичиклаштириш',
@@ -2791,13 +2881,19 @@ const UI_PHRASE_CYRILLIC = {
   'Xatolik yuz berdi': 'Хатолик юз берди', 'Kamera tayyor emas': 'Камера тайёр эмас',
   'Rasm olindi!': 'Расм олинди!', 'Rasm yuklandi!': 'Расм юкланди!',
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
-  'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
-  'Tuman tanlang': 'Туман танланг',
+  'Keyingi': 'Кейинги',
+  'Tuman tanlang': 'Туманни танланг',
   'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган',
   "Lokatsiyani o'zgartirish": 'Локацияни ўзгартириш',
   "O'zgartirish": 'Ўзгартириш',
   "Manzilni xaritada o'zgartirish": 'Манзилни харитада ўзгартириш',
-  'Manzilni xaritada belgilang': 'Манзилни харитада белгиланг'
+  'Manzilni xaritada belgilang': 'Манзилни харитада белгиланг',
+  "Yo'l o'chirildi": 'Йўл ўчирилди',
+  "Jo'natma o'chirildi": 'Жўнатма ўчирилди',
+  '📍 Lokatsiya saqlandi': '📍 Локация сақланди',
+  "Kamera qo'llab-quvvatlanmaydi — galereyadan tanlang": 'Камера қўллаб-қувватланмайди — галереядан танланг',
+  'Kamera javob bermadi — galereyadan tanlang': 'Камера жавоб бермади — галереядан танланг',
+  'Kameraga ruxsat bering yoki galereyadan tanlang': 'Камерага рухсат беринг ёки галереядан танланг'
 };
 
 const LATIN_CYR_CHAR = {
@@ -2822,10 +2918,11 @@ const MORPH_UI_ENTRIES = [
   ['#locPickerSaveBtn', 'Saqlash'],
   ['#travelDestTitle', TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC, 'travel-dest-title-morph'],
   ['#sendDestTitle', SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC, 'travel-dest-title-morph'],
-  ['#editDestLabel', 'Qayerga'], ['#editNoteLabel', 'Izoh'],
+  ['#editDestLabel', 'Qayerga', 'Қайерга'], ['#editNoteLabel', 'Izoh'],
   ['#travelActionBtn', 'Keyingi'], ['#sendActionBtn', 'Keyingi'], ['#editSubmitBtn', 'Saqlash'],
-  ['#sheetDestLabel', 'Qayerga'], ['#sheetTelegramBtnText', 'Telegramda yozish'],
+  ['#sheetDestLabel', 'Qayerga', 'Қайерга'], ['#sheetTelegramBtnText', 'Telegramda yozish'],
   ['#travelMapBadge', "Yo'lovchi"], ['#travelMapFromLbl', 'Qayerdan'], ['#travelMapToLbl', 'Qayerga'],
+  ['#driverDistrictChipText', 'Tuman'],
   ['#travelMapHint', "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing"],
   ['#travelMapContactBtnText', 'Telegramda yozish'],
   ['#sheetAcceptBtn', 'Buyurtmani Qabul Qilish']
