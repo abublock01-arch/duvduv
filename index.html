@@ -1773,7 +1773,8 @@ const UZ_REGIONS = [
   'Toshkent', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
-const MAP_TEST_ORDER_COUNT = 10000;
+const MAP_TEST_PER_REGION = 1000;
+const MAP_TEST_SEED_VERSION = 2;
 
 const REGION_CYRILLIC = {
   'Toshkent': 'Тошкент', 'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
@@ -2821,27 +2822,25 @@ function mapItemProps(item, itemType){
   };
 }
 
+function mapItemMatchesDriverFilter(item){
+  if (!isActiveListing(item)) return false;
+  if (item.lat == null || item.lng == null) return false;
+  if (!selectedDriverRegion) return true;
+  const dest = item.dest || item.to || '';
+  return destMatchesDriverRegion(dest);
+}
+
 function ordersToGeoJSON(){
-  const orderFeatures = [...orders, ...mapTestOrders]
-    .filter(o => {
-      if (!isActiveListing(o)) return false;
-      if (o.lat == null || o.lng == null) return false;
-      if (!selectedDriverRegion) return true;
-      return destMatchesDriverRegion(o.dest || '');
-    })
+  const orderFeatures = [...orders, ...mapTestOrders.filter(o => o.type !== 'travel')]
+    .filter(mapItemMatchesDriverFilter)
     .map(o => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
       properties: mapItemProps(o, 'order')
     }));
 
-  const travelFeatures = travels
-    .filter(t => {
-      if (!isActiveListing(t)) return false;
-      const dest = t.to || t.dest || '';
-      if (!selectedDriverRegion) return true;
-      return destMatchesDriverRegion(dest);
-    })
+  const travelFeatures = [...travels, ...mapTestOrders.filter(o => o.type === 'travel')]
+    .filter(mapItemMatchesDriverFilter)
     .map(t => {
       const coords = travelMapCoords(t);
       if (!coords) return null;
@@ -2884,31 +2883,41 @@ function loadMapMarkerImages(map){
 
 let mapTestOrdersSeeding = false;
 
+function getMapTestTargetCount(){
+  return UZ_REGIONS.length * MAP_TEST_PER_REGION;
+}
+
 function seedMapTestOrders(done){
-  if (mapTestOrders.length >= MAP_TEST_ORDER_COUNT) {
+  const total = getMapTestTargetCount();
+  if (mapTestOrders.length >= total && mapTestOrders[0]?._seedV === MAP_TEST_SEED_VERSION) {
     if (done) done();
     return;
   }
   if (mapTestOrdersSeeding) return;
   mapTestOrdersSeeding = true;
   mapTestOrders.length = 0;
-  const region = 'Toshkent';
-  const [baseLng, baseLat] = REGION_CENTERS[region];
-  const tkDistricts = getDistrictsForRegion(region);
   let i = 0;
-  const chunk = 400;
+  const chunk = 500;
   const step = () => {
-    const end = Math.min(i + chunk, MAP_TEST_ORDER_COUNT);
+    const end = Math.min(i + chunk, total);
     for (; i < end; i++) {
-      const lng = baseLng + (Math.random() - 0.5) * 0.38;
-      const lat = baseLat + (Math.random() - 0.5) * 0.30;
-      const district = tkDistricts[i % tkDistricts.length];
+      const regionIdx = Math.floor(i / MAP_TEST_PER_REGION);
+      const localIdx = i % MAP_TEST_PER_REGION;
+      const region = UZ_REGIONS[regionIdx];
+      const center = REGION_CENTERS[region];
+      const baseLng = center ? center[0] : 64 + Math.random() * 8;
+      const baseLat = center ? center[1] : 37.5 + Math.random() * 7;
+      const lng = baseLng + (Math.random() - 0.5) * 1.4;
+      const lat = baseLat + (Math.random() - 0.5) * 1.0;
+      const districts = getDistrictsForRegion(region);
+      const district = districts[localIdx % districts.length];
       const dest = formatDest(region, district);
-      const fromDistrict = tkDistricts[(i + 5) % tkDistricts.length];
+      const fromDistrict = districts[(localIdx + 7) % districts.length];
       const fromDest = formatDest(region, fromDistrict);
-      const isTravel = i % 6 === 0;
+      const isTravel = localIdx % 2 === 0;
       mapTestOrders.push({
-        id: 'test-' + i,
+        id: `test-${region}-${localIdx}`,
+        _seedV: MAP_TEST_SEED_VERSION,
         type: isTravel ? 'travel' : 'order',
         dest,
         from: fromDest,
@@ -2921,7 +2930,7 @@ function seedMapTestOrders(done){
         telegramUsername: '@test'
       });
     }
-    if (i < MAP_TEST_ORDER_COUNT) {
+    if (i < total) {
       requestAnimationFrame(step);
       return;
     }
@@ -2933,8 +2942,9 @@ function seedMapTestOrders(done){
 }
 
 function addTestOrders(done){
-  const tkOnly = mapTestOrders.length > 0 && destToRegion(mapTestOrders[0].dest || '') === 'Toshkent';
-  if (mapTestOrders.length >= MAP_TEST_ORDER_COUNT && tkOnly) {
+  const total = getMapTestTargetCount();
+  const ok = mapTestOrders.length >= total && mapTestOrders[0]?._seedV === MAP_TEST_SEED_VERSION;
+  if (ok) {
     if (done) done();
     return;
   }
