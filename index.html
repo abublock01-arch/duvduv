@@ -282,58 +282,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 #driverView .driver-picker-zone{
   order:2;flex:0 0 auto;width:100%;min-height:0;margin-top:auto;
 }
-#driverView .region-picker{width:100%;margin:0;--picker-fade:rgba(255,255,255,.5)}
-#driverView .region-picker--horizontal{
-  height:auto;flex:0 0 auto;margin:0;
-  padding:12px 0 max(16px,env(safe-area-inset-bottom));
-  border-radius:20px 20px 0 0;
-  background:transparent;
-  backdrop-filter:none;-webkit-backdrop-filter:none;
-  box-shadow:none;
-  border:none;
-  overflow:hidden;
-}
-#driverView .region-picker--horizontal::before,
-#driverView .region-picker--horizontal::after{
-  display:block;width:72px;
-}
-#driverView .region-picker--horizontal::before{
-  background:linear-gradient(to right,rgba(0,0,0,.18) 0%,transparent 60%);
-}
-#driverView .region-picker--horizontal::after{
-  background:linear-gradient(to left,rgba(0,0,0,.18) 0%,transparent 60%);
-}
-#driverView .region-picker--horizontal .region-picker-track{
-  height:52px;padding:0;gap:0;
-  scroll-snap-type:x mandatory;
-  -webkit-overflow-scrolling:touch;
-  overscroll-behavior-x:contain;
-  will-change:scroll-position;
-}
-#driverView .region-picker--horizontal .region-picker-spacer{
-  flex:0 0 auto;min-width:0;scroll-snap-align:none;
-}
-#driverView .region-picker--horizontal .region-picker-item{
-  flex:0 0 auto;
-  padding:10px 16px;border-radius:16px;
-  font-size:16px;font-weight:600;
-  color:rgba(255,255,255,.55);
-  opacity:.7;transform:scale(.94);
-  scroll-snap-align:center;scroll-snap-stop:always;
-  transition:color .25s ease,opacity .25s ease,font-size .25s ease,font-weight .25s ease,transform .25s ease;
-  will-change:transform,opacity;
-  text-shadow:0 1px 4px rgba(0,0,0,.25);
-}
-#driverView .region-picker--horizontal .region-picker-item.is-adjacent{
-  opacity:.85;font-size:17px;font-weight:600;transform:scale(.97);color:rgba(255,255,255,.7);
-}
-#driverView .region-picker--horizontal .region-picker-item.is-center{
-  background:transparent;color:#fff;
-  font-size:20px;font-weight:800;
-  box-shadow:none;
-  transform:scale(1);opacity:1;
-  text-shadow:0 1px 8px rgba(42,171,238,.6),0 0 20px rgba(42,171,238,.3);
-}
+#driverView .region-picker{width:100%;margin:0;--picker-fade:#fff}
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
   position:relative;width:100%;flex-shrink:0;
@@ -1015,7 +964,8 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
 .theme-telegram #driverView .region-picker--horizontal{
-  background:rgba(255,255,255,.48)!important;--picker-fade:rgba(255,255,255,.5)!important;
+  background:#fff!important;--picker-fade:#fff!important;
+  border-color:#2AABEE!important;
 }
 .theme-telegram .loc-picker-overlay,
 .theme-telegram .loc-picker-header,
@@ -1023,10 +973,12 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .loc-picker-close{
   background:rgba(255,255,255,.55)!important;color:#0f172a!important;
 }
-.theme-telegram #driverView .region-picker--horizontal .region-picker-item{color:var(--tg-hint)!important}
+.theme-telegram #driverView .region-picker--horizontal .region-picker-item{color:#6b7280!important}
+.theme-telegram #driverView .region-picker--horizontal .region-picker-item.is-adjacent{color:#9ca3af!important}
 .theme-telegram #driverView .region-picker--horizontal .region-picker-item.is-center{
-  background:transparent!important;color:#2AABEE!important;
-  font-size:20px!important;font-weight:800!important;box-shadow:none!important;
+  background:#2AABEE!important;color:#fff!important;
+  font-size:16px!important;font-weight:700!important;
+  box-shadow:0 2px 10px rgba(42,171,238,.35)!important;
 }
 .theme-telegram #senderView .sender-body{background:transparent!important}
 .theme-telegram #senderView .cta-wrap,
@@ -1134,63 +1086,22 @@ body.view-sender.theme-telegram .toggle,
   .tg-check-mark{transition:stroke-dashoffset .2s ease .1s}
 }
 
-/* ══ DRIVER VERTICAL PICKER — xarita ustida shaffof ══ */
+/* ══ DRIVER HORIZONTAL PICKER — oq fon, ingichka ko'k chet ══ */
 #driverView{position:relative}
-#driverView .driver-picker-zone{
-  position:absolute;bottom:0;left:0;right:0;z-index:10;
-  background:transparent;pointer-events:none;
-  padding-bottom:max(0px,env(safe-area-inset-bottom));
-}
-#driverView .driver-picker-zone>*{pointer-events:auto}
-#driverView .region-picker--vertical{
-  --picker-fade:transparent;
-  height:160px;margin:0;
-}
-#driverView .region-picker--vertical .region-picker-track{
-  height:160px;will-change:scroll-position;
-}
-#driverView .region-picker--vertical .region-picker-spacer{
-  flex:0 0 calc(50% - 28px);min-height:44px;
-}
-#driverView .region-picker--vertical .region-picker-item{
-  color:rgba(255,255,255,.42);
-  text-shadow:0 1px 4px rgba(0,0,0,.45);
-  will-change:transform,opacity;
-}
-#driverView .region-picker--vertical .region-picker-item.is-adjacent{
-  font-size:17px;font-weight:700;
-  color:rgba(255,255,255,.68);
-  opacity:.75;transform:scale(.91);
-}
-#driverView .region-picker--vertical .region-picker-item.is-center{
-  color:#fff;
-  font-size:26px;font-weight:900;
-  opacity:1;transform:scale(1);letter-spacing:-.02em;
-  text-shadow:0 0 18px rgba(42,171,238,.65),0 1px 6px rgba(0,0,0,.35);
-  background:transparent;box-shadow:none;
-}
-
-/* ══ DRIVER HORIZONTAL PICKER — chip/pill stil, pastda ══ */
-#driverView{position:relative}
-
-/* Zona: xarita ustida, pastda */
 #driverView .driver-picker-zone{
   position:absolute;bottom:0;left:0;right:0;z-index:10;
   pointer-events:none;background:transparent;
+  padding:0 12px max(12px,env(safe-area-inset-bottom));
 }
 #driverView .driver-picker-zone>*{pointer-events:auto}
-
-/* Picker konteyner */
 #driverView .region-picker--horizontal{
   height:auto!important;
-  background:rgba(255,255,255,.92)!important;
-  backdrop-filter:blur(16px)!important;
-  -webkit-backdrop-filter:blur(16px)!important;
-  border-radius:20px!important;
-  border:none!important;
-  box-shadow:0 -2px 20px rgba(0,0,0,.08)!important;
-  padding:7px!important;
-  margin:0 12px max(14px,env(safe-area-inset-bottom)) 12px!important;
+  background:#fff!important;
+  border:1px solid #2AABEE!important;
+  border-radius:20px 20px 0 0!important;
+  box-shadow:0 -4px 24px rgba(42,171,238,.08)!important;
+  padding:8px 6px!important;
+  margin:0!important;
 }
 
 /* Gradient fadelari o'chadi (chip stilda kerak emas) */
@@ -2141,15 +2052,18 @@ function bindRegionPickerScroll(track, onCommit){
   const onScroll = () => {
     if (scrollRaf) cancelAnimationFrame(scrollRaf);
     scrollRaf = requestAnimationFrame(() => {
-      updateRegionPickerVisuals(false, track, onCommit);
+      updateRegionPickerVisuals(false, track, driverH ? null : onCommit);
     });
     clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), driverH ? 60 : 100);
+    scrollTimer = setTimeout(() => {
+      if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+      else updateRegionPickerVisuals(true, track, onCommit);
+    }, driverH ? 100 : 100);
   };
-  // CSS scroll-snap:mandatory allaqachon snap qilgan — JS ikkinchi scroll qilmaydi
   const onScrollEnd = () => {
     clearTimeout(scrollTimer);
-    updateRegionPickerVisuals(true, track, onCommit);
+    if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+    else updateRegionPickerVisuals(true, track, onCommit);
   };
   track.addEventListener('scroll', onScroll, { passive: true });
   if ('onscrollend' in window) {
@@ -2270,8 +2184,13 @@ function ensureDriverRegionPicker(){
       new ResizeObserver(() => {
         if (!document.body.classList.contains('view-driver')) return;
         layoutHorizontalPickerSpacers(track);
-        scrollPickerToRegion(track, selectedDriverRegion, false);
-        updateRegionPickerVisuals(false, track);
+        updateRegionPickerVisuals(true, track, region => {
+          if (region && region !== selectedDriverRegion) {
+            selectedDriverRegion = region;
+            saveUserRegion(region);
+            refreshOrderMarkersDebounced();
+          }
+        });
       }).observe(zone);
     }
   }
