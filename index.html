@@ -502,6 +502,10 @@ body.view-sender .header{background:var(--app-bg)!important}
   display:flex;align-items:center;justify-content:center;
 }
 .map-my-loc svg{width:22px;height:22px;stroke:var(--tg-blue);stroke-width:2.2;fill:none}
+#driverView .map-my-loc{
+  z-index:12;
+  bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
+}
 #locPickerMap .map-controls{right:12px;z-index:6}
 #locPickerMap .map-my-loc{right:12px;bottom:12px;z-index:6}
 .loc-picker-overlay{
@@ -1619,11 +1623,8 @@ function getDriverMapZoom(){
 function restoreUserPrefs(){
   if (telegramUser.id == null) return;
   const savedRegion = localStorage.getItem(userPrefKey('region'));
-  const pickerRegions = getPickerRegions();
-  if (savedRegion && pickerRegions.includes(savedRegion)) {
+  if (savedRegion && UZ_REGIONS.includes(savedRegion)) {
     selectedDriverRegion = savedRegion;
-  } else if (pickerRegions.length) {
-    selectedDriverRegion = pickerRegions[0];
   }
   const z = parseFloat(localStorage.getItem(userPrefKey('zoom')));
   if (!Number.isNaN(z) && z >= 0 && z <= 22) persistedMapZoom = z;
@@ -1777,7 +1778,7 @@ const UZ_REGIONS = [
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
 const MAP_TEST_PER_REGION = 1000;
-const MAP_TEST_SEED_VERSION = 3;
+const MAP_TEST_SEED_VERSION = 4;
 
 const REGION_CYRILLIC = {
   'Toshkent': 'Тошкент', 'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
@@ -1866,29 +1867,12 @@ function detectRegionFromCoords(lng, lat){
 }
 
 function getPickerRegions(){
-  if (!userLocationRegion) return UZ_REGIONS.filter(r => r !== 'Toshkent');
+  if (!userLocationRegion) return [...UZ_REGIONS];
   return UZ_REGIONS.filter(r => r !== userLocationRegion);
 }
 
-function getTestSeedRegions(){
-  return getPickerRegions();
-}
-
-function getItemDestinationForFilter(item){
-  if (item?.type === 'travel') return item.to || item.dest || '';
-  return item.dest || '';
-}
-
-function flyMapToDriverRegion(region){
-  if (!map || !region) return;
-  const center = REGION_CENTERS[region];
-  if (!center) return;
-  map.flyTo({
-    center,
-    zoom: 9,
-    duration: 600,
-    essential: true
-  });
+function getDriverPickerRegions(){
+  return [...UZ_REGIONS];
 }
 
 function normalizeDistrictKey(name){
@@ -1924,6 +1908,13 @@ function destToRegion(dest){
 function destMatchesDriverRegion(dest){
   if (!selectedDriverRegion || !dest) return false;
   return dest === selectedDriverRegion || dest.startsWith(selectedDriverRegion + ' —');
+}
+
+function itemOriginMatchesDriver(item){
+  if (!userLocationRegion) return true;
+  const from = item.from || '';
+  if (!from) return true;
+  return destToRegion(from) === userLocationRegion;
 }
 
 async function refreshUserLocationRegion(){
@@ -2235,7 +2226,7 @@ function ensureDriverRegionPicker(){
   if (!document.body.classList.contains('view-driver')) return;
   const track = document.getElementById('regionPickerTrack');
   if (!track) return;
-  const regions = getPickerRegions();
+  const regions = getDriverPickerRegions();
   if (!regions.length) return;
   if (!regions.includes(selectedDriverRegion)) {
     selectedDriverRegion = regions[0];
@@ -2250,7 +2241,6 @@ function ensureDriverRegionPicker(){
       if (region !== selectedDriverRegion) {
         selectedDriverRegion = region;
         saveUserRegion(region);
-        flyMapToDriverRegion(region);
         refreshOrderMarkersDebounced();
       }
     });
@@ -2261,7 +2251,6 @@ function ensureDriverRegionPicker(){
     scrollPickerToRegion(track, selectedDriverRegion, false);
     track.dataset.committedRegion = selectedDriverRegion;
     updateRegionPickerVisuals(true, track, null);
-    flyMapToDriverRegion(selectedDriverRegion);
     refreshOrderMarkers();
   };
   requestAnimationFrame(() => requestAnimationFrame(finishLayout));
@@ -2853,7 +2842,11 @@ function mapItemMatchesDriverFilter(item){
   if (!isActiveListing(item)) return false;
   if (item.lat == null || item.lng == null) return false;
   if (!selectedDriverRegion) return true;
-  return destMatchesDriverRegion(getItemDestinationForFilter(item));
+  if (item.type === 'travel') {
+    const to = item.to || item.dest || '';
+    return destMatchesDriverRegion(to) && itemOriginMatchesDriver(item);
+  }
+  return destMatchesDriverRegion(item.dest || '') && itemOriginMatchesDriver(item);
 }
 
 function ordersToGeoJSON(){
@@ -2910,12 +2903,11 @@ function loadMapMarkerImages(map){
 let mapTestOrdersSeeding = false;
 
 function getMapTestTargetCount(){
-  return getTestSeedRegions().length * MAP_TEST_PER_REGION;
+  return UZ_REGIONS.length * MAP_TEST_PER_REGION;
 }
 
 function seedMapTestOrders(done){
-  const destRegions = getTestSeedRegions();
-  const total = destRegions.length * MAP_TEST_PER_REGION;
+  const total = getMapTestTargetCount();
   if (mapTestOrders.length >= total && mapTestOrders[0]?._seedV === MAP_TEST_SEED_VERSION) {
     if (done) done();
     return;
@@ -2924,8 +2916,11 @@ function seedMapTestOrders(done){
   mapTestOrdersSeeding = true;
   mapTestOrders.length = 0;
   const homeRegion = userLocationRegion || 'Toshkent';
+  const homeCenter = REGION_CENTERS[homeRegion] || REGION_CENTERS.Toshkent;
   const homeDistricts = getDistrictsForRegion(homeRegion);
   const homeFrom = formatDest(homeRegion, homeDistricts[0]);
+  const baseLng = homeCenter[0];
+  const baseLat = homeCenter[1];
   let i = 0;
   const chunk = 500;
   const step = () => {
@@ -2933,12 +2928,9 @@ function seedMapTestOrders(done){
     for (; i < end; i++) {
       const regionIdx = Math.floor(i / MAP_TEST_PER_REGION);
       const localIdx = i % MAP_TEST_PER_REGION;
-      const region = destRegions[regionIdx];
-      const center = REGION_CENTERS[region];
-      const baseLng = center ? center[0] : 64 + Math.random() * 8;
-      const baseLat = center ? center[1] : 37.5 + Math.random() * 7;
-      const lng = baseLng + (Math.random() - 0.5) * 1.4;
-      const lat = baseLat + (Math.random() - 0.5) * 1.0;
+      const region = UZ_REGIONS[regionIdx];
+      const lng = baseLng + (Math.random() - 0.5) * 0.35;
+      const lat = baseLat + (Math.random() - 0.5) * 0.25;
       const districts = getDistrictsForRegion(region);
       const district = districts[localIdx % districts.length];
       const toDest = formatDest(region, district);
@@ -2946,9 +2938,10 @@ function seedMapTestOrders(done){
       mapTestOrders.push({
         id: `test-${region}-${localIdx}`,
         _seedV: MAP_TEST_SEED_VERSION,
+        _homeRegion: homeRegion,
         type: isTravel ? 'travel' : 'order',
         dest: toDest,
-        from: isTravel ? homeFrom : '',
+        from: homeFrom,
         to: toDest,
         note: '',
         thumbUrl: '',
@@ -3228,25 +3221,23 @@ function initDriverMap(){
     addTestOrders();
     setupOrderClusterLayers();
     refreshOrderMarkers();
+    centerMapOnDriver();
     ensureDriverRegionPicker();
-    centerMapOnDriver({ moveMap: false });
-    if (selectedDriverRegion) flyMapToDriverRegion(selectedDriverRegion);
   });
 }
 
 
-async function centerMapOnDriver(opts = {}){
-  const moveMap = opts.moveMap !== false;
+async function centerMapOnDriver(){
   if (!map) return;
   const cached = loadLastGPS();
   if (cached) {
     removeDriverRadiusLayers();
-    if (moveMap) map.jumpTo({ center: [cached.lng, cached.lat], zoom: DRIVER_ENTRY_ZOOM });
+    map.jumpTo({ center: [cached.lng, cached.lat], zoom: DRIVER_ENTRY_ZOOM });
     ensureDriverLocationMarker(cached.lng, cached.lat);
   }
   const perm = await getGeolocationPermissionState();
   if (perm !== 'granted') {
-    if (!cached && moveMap) flyToDefaultMapCenter();
+    if (!cached) flyToDefaultMapCenter();
     return;
   }
   getCurrentPosition()
@@ -3255,10 +3246,10 @@ async function centerMapOnDriver(opts = {}){
       const lat = coords.latitude;
       saveLastGPS(lng, lat);
       removeDriverRadiusLayers();
-      if (moveMap) map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+      map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
       ensureDriverLocationMarker(lng, lat);
     })
-    .catch(() => { if (!cached && moveMap) flyToDefaultMapCenter(); });
+    .catch(() => { if (!cached) flyToDefaultMapCenter(); });
 }
 
 function refreshOrderMarkers(){
@@ -3373,20 +3364,15 @@ function switchView(v){
         map.resize();
         refreshOrderMarkers();
         ensureDriverRegionPicker();
-        centerMapOnDriver({ moveMap: false });
-        if (selectedDriverRegion) flyMapToDriverRegion(selectedDriverRegion);
+        centerMapOnDriver();
       }, 280);
     }
     refreshUserLocationRegion().then(() => {
-      const newKey = getPickerRegions().join('|');
-      if (newKey !== lastDriverPickerKey) {
-        lastDriverPickerKey = '';
-        regionPickerBuilt = false;
+      const home = userLocationRegion || 'Toshkent';
+      const needsReseed = mapTestOrders.length && mapTestOrders[0]?._homeRegion !== home;
+      if (needsReseed) {
         mapTestOrders.length = 0;
-        setTimeout(() => {
-          ensureDriverRegionPicker();
-          addTestOrders(() => refreshOrderMarkers());
-        }, 80);
+        addTestOrders(() => refreshOrderMarkers());
       }
       applyCyrillicUI();
     });
