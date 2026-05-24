@@ -1512,7 +1512,7 @@ function subscribeFirestoreOrders(){
       orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', ...d });
     });
     syncShipmentsFromFirestore();
-    if (map) refreshOrderMarkers();
+    if (isDriverMapReady()) refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore snapshot xatosi:', err));
 }
 async function saveTravelToFirestore(travel){
@@ -1561,7 +1561,7 @@ function subscribeFirestoreTravels(){
       travels.push({ id: doc.id, firestoreId: doc.id, type: 'travel', ...d });
     });
     syncShipmentsFromFirestore();
-    if (map) refreshOrderMarkers();
+    if (isDriverMapReady()) refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore travels snapshot xatosi:', err));
 }
 
@@ -1644,7 +1644,7 @@ function applySavedUserRole(){
 function initTelegramUser(){
   const user = window.Telegram?.WebApp?.initDataUnsafe?.user;
   if (!user) return;
-  telegramUser.id = user.id ?? null;
+  telegramUser.id = user.id != null ? Number(user.id) : null;
   telegramUser.first_name = user.first_name || '';
   telegramUser.username = user.username || '';
 }
@@ -1666,8 +1666,8 @@ function applyTelegramThemeVars(){
   root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#ffffff'));
   root.style.setProperty('--tg-text', pick('text_color', '#000000'));
   root.style.setProperty('--tg-hint', pick('hint_color', '#999999'));
-  root.style.setProperty('--tg-btn', pick('button_color', '#2AABEE'));
-  root.style.setProperty('--tg-btn-text', pick('button_text_color', '#ffffff'));
+  root.style.setProperty('--tg-btn', '#2AABEE');
+  root.style.setProperty('--tg-btn-text', '#ffffff');
   root.style.setProperty('--tg-section', pick('section_bg_color', '#ffffff'));
 }
 
@@ -2247,7 +2247,11 @@ function refreshSendPickersVisuals(){
 
 function refreshOrderMarkersDebounced(){
   clearTimeout(refreshMarkersTimer);
-  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 80);
+  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 150);
+}
+
+function isDriverMapReady(){
+  return !!(map && map.isStyleLoaded() && map.getSource('map-orders'));
 }
 
 function ensureDriverRegionPicker(){
@@ -2279,7 +2283,7 @@ function ensureDriverRegionPicker(){
     scrollPickerToRegion(track, selectedDriverRegion, false);
     track.dataset.committedRegion = selectedDriverRegion;
     updateRegionPickerVisuals(true, track, null);
-    refreshOrderMarkers();
+    refreshOrderMarkersDebounced();
   };
   requestAnimationFrame(() => requestAnimationFrame(finishLayout));
   if (!track.dataset.driverPickerResize) {
@@ -3019,7 +3023,7 @@ function seedMapTestOrders(done){
       return;
     }
     mapTestOrdersSeeding = false;
-    if (map) refreshOrderMarkers();
+    refreshOrderMarkersDebounced();
     if (done) done();
   };
   step();
@@ -3284,7 +3288,10 @@ function initDriverMap(){
     style: 'mapbox://styles/mapbox/streets-v12',
     center: cachedGPS ? [cachedGPS.lng, cachedGPS.lat] : [69.2401, 41.2991],
     zoom: getDriverMapZoom(),
-    bearing: 0
+    bearing: 0,
+    antialias: false,
+    fadeDuration: 0,
+    trackResize: false
   });
   map.on('zoomend', () => {
     if (telegramUser.id == null) return;
@@ -3294,7 +3301,7 @@ function initDriverMap(){
     removeDriverRadiusLayers();
     addTestOrders();
     setupOrderClusterLayers();
-    refreshOrderMarkers();
+    refreshOrderMarkersDebounced();
     centerMapOnDriver();
     ensureDriverRegionPicker();
   });
@@ -3327,10 +3334,10 @@ async function centerMapOnDriver(){
 }
 
 function refreshOrderMarkers(){
-  if (!map) return;
+  if (!map || !map.isStyleLoaded()) return;
   if (!map.getSource('map-orders')) {
-    if (map.isStyleLoaded()) setupOrderClusterLayers();
-    else return;
+    setupOrderClusterLayers();
+    return;
   }
   const geo = buildMapGeoCollections();
   map.getSource('map-orders').setData(geo.orders);
@@ -3363,7 +3370,7 @@ async function adminDeleteAllOrders(){
   shipments.length = 0;
   persistData();
   renderShipments();
-  if (map) refreshOrderMarkers();
+  refreshOrderMarkersDebounced();
   console.log(`adminDeleteAllOrders: ${deleted} ta hujjat o'chirildi`);
 }
 window.adminDeleteAllOrders = adminDeleteAllOrders;
@@ -3436,7 +3443,7 @@ function switchView(v){
     else {
       setTimeout(() => {
         map.resize();
-        refreshOrderMarkers();
+        refreshOrderMarkersDebounced();
         ensureDriverRegionPicker();
         centerMapOnDriver();
       }, 280);
@@ -3446,7 +3453,7 @@ function switchView(v){
       const needsReseed = mapTestOrders.length && mapTestOrders[0]?._homeRegion !== home;
       if (needsReseed) {
         mapTestOrders.length = 0;
-        addTestOrders(() => refreshOrderMarkers());
+        addTestOrders(() => refreshOrderMarkersDebounced());
       }
       applyCyrillicUI();
     });
@@ -3551,7 +3558,7 @@ async function saveLocationPicker(){
   }
   persistData();
   renderShipments();
-  if (map) refreshOrderMarkers();
+  refreshOrderMarkersDebounced();
   closeLocationPicker();
   showToast('📍 Lokatsiya saqlandi', 'success');
 }
@@ -3817,14 +3824,14 @@ function loadPersistedData(){
     shipments.forEach(s => {
       if (!s.firestoreId) {
         const match = orders.find(o =>
-          o.telegramId === s.telegramId &&
+          String(o.telegramId) === String(s.telegramId) &&
           (String(o.id) === String(s.id) || (o.dest === s.dest && o.thumbUrl === s.thumbUrl))
         );
         if (match) s.firestoreId = match.firestoreId || match.id;
       }
     });
     renderShipments();
-    if (map) refreshOrderMarkers();
+    refreshOrderMarkersDebounced();
   } catch (e) {
     console.warn('Yuklash xatosi:', e);
   }
@@ -3858,7 +3865,7 @@ function isActiveListing(item){
 
 function getMyShipments(){
   if (telegramUser.id == null) return [];
-  return shipments.filter(s => s.telegramId === telegramUser.id && isActiveListing(s));
+  return shipments.filter(s => String(s.telegramId) === String(telegramUser.id) && isActiveListing(s));
 }
 
 function getShipmentKey(s){
@@ -3894,9 +3901,9 @@ function mergeFirestoreShipment(item, defaultType){
 
 function syncShipmentsFromFirestore(){
   if (telegramUser.id == null) return;
-  orders.filter(o => o.telegramId === telegramUser.id)
+  orders.filter(o => String(o.telegramId) === String(telegramUser.id))
     .forEach(o => mergeFirestoreShipment(o, 'order'));
-  travels.filter(t => t.telegramId === telegramUser.id)
+  travels.filter(t => String(t.telegramId) === String(telegramUser.id))
     .forEach(t => mergeFirestoreShipment(t, 'travel'));
   persistData();
   renderShipments();
@@ -4080,7 +4087,7 @@ async function saveEditShipment(e){
   }
   persistData();
   renderShipments();
-  if (map) refreshOrderMarkers();
+  refreshOrderMarkersDebounced();
   closeEditSheet();
   showToast('✅ Saqlandi', 'success');
 }
@@ -4107,7 +4114,7 @@ async function confirmDeleteShipment(key){
   removeShipmentLocal(key, s.type);
   persistData();
   renderShipments();
-  if (map) refreshOrderMarkers();
+  refreshOrderMarkersDebounced();
   showAlert(s.type === 'travel' ? 'Yo\'l o\'chirildi' : 'Jo\'natma o\'chirildi');
 }
 
@@ -4477,7 +4484,7 @@ async function submitTravel(e){
   travels.unshift({ id: firestoreId || String(travel.id), firestoreId: firestoreId || null, ...travel });
   persistData();
   renderShipments();
-  if (map) refreshOrderMarkers();
+  refreshOrderMarkersDebounced();
   closeTravelSheet();
   btn.disabled = false;
   showSuccessCheck();
@@ -4532,7 +4539,7 @@ function submitOrder(e){
     selectedPhotoFile = null;
     clearSendDraft();
     renderShipments();
-    if (map) refreshOrderMarkers();
+    refreshOrderMarkersDebounced();
     closeSendSheet();
     closeUpload();
     btn.disabled = false;
@@ -4589,6 +4596,7 @@ refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
 initTelegramUser();
+syncShipmentsFromFirestore(); // re-filter with now-known telegramUser.id
 restoreUserPrefs();
 renderShipments();
 applySavedUserRole();
