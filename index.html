@@ -667,6 +667,58 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet-tg-btn:active{transform:scale(.97)}
 .sheet-tg-btn:disabled{opacity:.4;cursor:not-allowed}
 
+/* Yo'l olish — haydovchi xarita sheet */
+.sheet-overlay--travel-map{z-index:214}
+.sheet--travel-map{padding-top:10px;padding-bottom:max(24px,env(safe-area-inset-bottom))}
+.travel-map-hero{
+  display:flex;flex-direction:column;align-items:center;gap:10px;
+  margin:4px 0 20px;
+}
+.travel-map-icon{
+  width:88px;height:88px;display:flex;align-items:center;justify-content:center;
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(42,171,238,.14),rgba(42,171,238,.04));
+  border:1px solid rgba(42,171,238,.2);
+  box-shadow:0 12px 32px rgba(42,171,238,.15);
+}
+.travel-map-icon svg{width:56px;height:56px}
+.travel-map-badge{
+  font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#2AABEE;background:rgba(42,171,238,.12);
+  padding:6px 14px;border-radius:100px;
+}
+.travel-map-route{
+  display:grid;grid-template-columns:1fr auto 1fr;gap:8px 10px;align-items:center;
+  margin-bottom:16px;padding:16px 14px;
+  background:#F6F8FA;border-radius:20px;border:1px solid #E8ECF0;
+}
+.travel-map-route-leg{display:flex;flex-direction:column;gap:4px;min-width:0}
+.travel-map-route-leg--to{text-align:right;align-items:flex-end}
+.travel-map-lbl{
+  font-size:10px;font-weight:700;color:#94A3B8;
+  text-transform:uppercase;letter-spacing:.08em;
+}
+.travel-map-val{
+  font-size:16px;font-weight:800;color:#0f172a;line-height:1.25;
+  letter-spacing:-.02em;word-break:break-word;
+}
+.travel-map-arrow{
+  font-size:22px;font-weight:800;color:#2AABEE;line-height:1;
+  padding:0 2px;
+}
+.travel-map-hint{
+  margin:0 0 16px;font-size:14px;line-height:1.45;color:#64748b;text-align:center;
+}
+.travel-map-contact{
+  width:100%;padding:18px 20px;border:none;border-radius:100px;
+  background:linear-gradient(155deg,#39B8F5 0%,#2AABEE 50%,#1E88E5 100%);
+  color:#fff;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;
+  box-shadow:0 12px 28px rgba(42,171,238,.35);
+  transition:transform .15s;
+}
+.travel-map-contact:active{transform:scale(.98)}
+.travel-map-contact:disabled{opacity:.45;cursor:not-allowed}
+
 /* Jo'natma formasi sheet */
 .sheet-overlay--send{z-index:210}
 .sheet-overlay--send .sheet--send{animation:none;transform:translateY(0)}
@@ -1446,6 +1498,33 @@ body.view-sender.theme-telegram .toggle,
   </div>
 </div>
 
+<!-- YO'L OLISH SHEET (haydovchi xarita) -->
+<div class="sheet-overlay sheet-overlay--travel-map" id="travelMapSheetOverlay" onclick="if(event.target===this)closeTravelMapSheet()">
+  <div class="sheet sheet--travel-map" onclick="event.stopPropagation()">
+    <button type="button" class="sheet-close" onclick="closeTravelMapSheet()" aria-label="Yopish">×</button>
+    <div class="sheet-drag"></div>
+    <div class="travel-map-hero">
+      <div class="travel-map-icon" id="travelMapIcon" aria-hidden="true"></div>
+      <span class="travel-map-badge" id="travelMapBadge">Yo'lovchi</span>
+    </div>
+    <div class="travel-map-route">
+      <div class="travel-map-route-leg">
+        <span class="travel-map-lbl" id="travelMapFromLbl">Qayerdan</span>
+        <span class="travel-map-val" id="travelMapFrom"></span>
+      </div>
+      <span class="travel-map-arrow" aria-hidden="true">→</span>
+      <div class="travel-map-route-leg travel-map-route-leg--to">
+        <span class="travel-map-lbl" id="travelMapToLbl">Qayerga</span>
+        <span class="travel-map-val" id="travelMapTo"></span>
+      </div>
+    </div>
+    <p class="travel-map-hint" id="travelMapHint">Yo'lovchi bilan bog'lanib, yo'l haqida kelishing</p>
+    <button type="button" class="travel-map-contact" id="travelMapContactBtn" onclick="openTravelMapTelegram()">
+      <span id="travelMapContactBtnText">Telegramda yozish</span>
+    </button>
+  </div>
+</div>
+
 <script>
 if (window.Telegram && Telegram.WebApp) {
   if (typeof Telegram.WebApp.disableClosingConfirmation === 'function') {
@@ -1764,6 +1843,7 @@ let refreshMarkersTimer = null;
 const orders = [];
 const mapTestOrders = [];
 let activeSheetOrder = null;
+let activeSheetTravel = null;
 let locationPickerMap = null;
 let locationPickerFirestoreId = null;
 let locationPickerPin = null;
@@ -1938,6 +2018,8 @@ function initRegionSelects(){
 }
 
 function initCtaIcons(){
+  const travelMapIcon = document.getElementById('travelMapIcon');
+  if (travelMapIcon) travelMapIcon.innerHTML = ICON_PASSENGER_3D;
   const travel = document.getElementById('ctaTravelIcon');
   const order = document.getElementById('ctaOrderIcon');
   if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
@@ -2242,7 +2324,10 @@ const UI_PHRASE_CYRILLIC = {
   'Telegramda yozish': 'Телеграмда ёзиш', 'Buyurtmani Qabul Qilish': 'Буюртмани қабул қилиш',
   "Hali jo'natmalar yo'q": 'Ҳали жўнатмалар йўқ',
   "Birinchi jo'natmangizni yuboring!": 'Биринчи жўнатмангизни юборинг!',
-  "Yo'lovchi": 'Йўловчи', 'Aktiv': 'Актив', 'Bugun': 'Бугун',
+  "Yo'lovchi": 'Йўловчи',
+  'Qayerdan': 'Қаердан',
+  "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing": 'Йўловчи билан боғланиб, йўл ҳақида келишинг',
+  'Aktiv': 'Актив', 'Bugun': 'Бугун',
   'Viloyatni tanlang': 'Вилоятни танлаш', 'Viloyat tanlash': 'Вилоят танлаш',
   "Buyurtmalarni ko'rsatish": 'Буюртмаларни кўрсатиш',
   "Buyurtmalarni yashirish": 'Буюртмаларни яшириш',
@@ -2288,6 +2373,9 @@ const MORPH_UI_ENTRIES = [
   ['#editDestLabel', 'Qayerga'], ['#editNoteLabel', 'Izoh'],
   ['#travelActionBtn', 'Keyingi'], ['#sendActionBtn', 'Keyingi'], ['#editSubmitBtn', 'Saqlash'],
   ['#sheetDestLabel', 'Qayerga'], ['#sheetTelegramBtnText', 'Telegramda yozish'],
+  ['#travelMapBadge', "Yo'lovchi"], ['#travelMapFromLbl', 'Qayerdan'], ['#travelMapToLbl', 'Qayerga'],
+  ['#travelMapHint', "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing"],
+  ['#travelMapContactBtnText', 'Telegramda yozish'],
   ['#sheetAcceptBtn', 'Buyurtmani Qabul Qilish']
 ];
 
@@ -2742,9 +2830,14 @@ function travelMapCoords(t){
 }
 
 function mapItemProps(item, itemType){
+  const to = item.to || item.dest || '';
+  const from = item.from || '';
+  const dest = itemType === 'travel' && from && to ? `${from} → ${to}` : (item.dest || to);
   return {
     orderId: String(item.firestoreId || item.id || ''),
-    dest: item.dest || item.to || '',
+    dest,
+    from,
+    to,
     itemType,
     thumbUrl: item.thumbUrl || '',
     telegramUsername: item.telegramUsername || ''
@@ -2903,13 +2996,16 @@ function bindOrderMapEvents(){
   if (!map || map._orderClusterEventsBound) return;
   map._orderClusterEventsBound = true;
 
-  const openOrder = e => {
+  const openMapItem = e => {
     const feat = e.features?.[0];
     if (!feat) return;
-    const order = findOrderByMapId(feat.properties.orderId);
-    if (order) openOrderSheet(order);
+    const item = findOrderByMapId(feat.properties.orderId);
+    if (!item) return;
+    const type = feat.properties.itemType || item.type;
+    if (type === 'travel') openTravelMapSheet(item);
+    else openOrderSheet(item);
   };
-  map.on('click', 'orders-unclustered-icon', openOrder);
+  map.on('click', 'orders-unclustered-icon', openMapItem);
   map.on('mouseenter', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = ''; });
 }
@@ -3109,12 +3205,41 @@ async function adminDeleteAllOrders(){
 window.adminDeleteAllOrders = adminDeleteAllOrders;
 
 function openOrderSheet(order){
+  closeTravelMapSheet();
   activeSheetOrder = order;
   document.getElementById('sheetOrderThumb').src = order.thumbUrl || '';
   setI18nText(document.getElementById('sheetOrderDest'), order.dest || '');
   const tgBtn = document.getElementById('sheetTelegramBtn');
   if (tgBtn) tgBtn.disabled = !order.telegramUsername || order.telegramUsername === '@';
   document.getElementById('sheetOverlay').classList.add('open');
+}
+
+function openTravelMapSheet(travel){
+  closeSheet();
+  activeSheetTravel = travel;
+  const route = shipmentRouteLabels(travel);
+  const iconEl = document.getElementById('travelMapIcon');
+  if (iconEl) iconEl.innerHTML = ICON_PASSENGER_3D;
+  const fromEl = document.getElementById('travelMapFrom');
+  const toEl = document.getElementById('travelMapTo');
+  if (fromEl) fromEl.textContent = route.from;
+  if (toEl) toEl.textContent = route.to;
+  const contactBtn = document.getElementById('travelMapContactBtn');
+  const hasTg = travel.telegramUsername && travel.telegramUsername !== '@';
+  if (contactBtn) contactBtn.disabled = !hasTg;
+  document.getElementById('travelMapSheetOverlay')?.classList.add('open');
+  applyCyrillicUI();
+}
+
+function closeTravelMapSheet(){
+  document.getElementById('travelMapSheetOverlay')?.classList.remove('open');
+  activeSheetTravel = null;
+}
+
+function openTravelMapTelegram(){
+  const uname = activeSheetTravel?.telegramUsername;
+  if (!uname || uname === '@') return;
+  window.open('https://t.me/' + uname.replace('@', ''));
 }
 
 function closeMiniApp(){
