@@ -1081,6 +1081,42 @@ body.view-sender.theme-telegram .toggle,
   .tg-success-bubble{transition:transform .2s ease}
   .tg-check-mark{transition:stroke-dashoffset .2s ease .1s}
 }
+
+/* ══ DRIVER VERTICAL PICKER — xarita ustida shaffof ══ */
+#driverView{position:relative}
+#driverView .driver-picker-zone{
+  position:absolute;bottom:0;left:0;right:0;z-index:10;
+  background:transparent;pointer-events:none;
+  padding-bottom:max(0px,env(safe-area-inset-bottom));
+}
+#driverView .driver-picker-zone>*{pointer-events:auto}
+#driverView .region-picker--vertical{
+  --picker-fade:transparent;
+  height:160px;margin:0;
+}
+#driverView .region-picker--vertical .region-picker-track{
+  height:160px;will-change:scroll-position;
+}
+#driverView .region-picker--vertical .region-picker-spacer{
+  flex:0 0 calc(50% - 28px);min-height:44px;
+}
+#driverView .region-picker--vertical .region-picker-item{
+  color:rgba(255,255,255,.42);
+  text-shadow:0 1px 4px rgba(0,0,0,.45);
+  will-change:transform,opacity;
+}
+#driverView .region-picker--vertical .region-picker-item.is-adjacent{
+  font-size:17px;font-weight:700;
+  color:rgba(255,255,255,.68);
+  opacity:.75;transform:scale(.91);
+}
+#driverView .region-picker--vertical .region-picker-item.is-center{
+  color:#fff;
+  font-size:26px;font-weight:900;
+  opacity:1;transform:scale(1);letter-spacing:-.02em;
+  text-shadow:0 0 18px rgba(42,171,238,.65),0 1px 6px rgba(0,0,0,.35);
+  background:transparent;box-shadow:none;
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1147,7 +1183,7 @@ body.view-sender.theme-telegram .toggle,
           </button>
         </div>
         <div class="driver-picker-zone">
-          <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
+          <div class="region-picker region-picker--vertical" id="regionPicker" aria-label="Viloyat tanlash">
             <div class="region-picker-track" id="regionPickerTrack"></div>
           </div>
         </div>
@@ -1900,7 +1936,7 @@ function buildRegionPickerTrack(track, regions){
 }
 
 function isDriverHorizontalTrack(track){
-  return track?.id === 'regionPickerTrack';
+  return false; // picker endi vertikal
 }
 
 function layoutHorizontalPickerSpacers(track){
