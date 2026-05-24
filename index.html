@@ -506,45 +506,29 @@ body.view-sender .header{background:var(--app-bg)!important}
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   box-shadow:0 4px 16px rgba(42,171,238,.18);
   display:flex;align-items:center;justify-content:center;
-  flex-shrink:0;
 }
 .map-my-loc svg{width:22px;height:22px;stroke:var(--tg-blue);stroke-width:2.2;fill:none}
-#driverView .map-right-controls{
-  position:absolute;right:14px;z-index:12;
-  bottom:calc(62px + max(12px, env(safe-area-inset-bottom)));
-  display:flex;flex-direction:column;align-items:flex-end;gap:0;
-  pointer-events:none;
+#driverView .map-my-loc{
+  z-index:12;
+  bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
   transition:bottom .28s ease;
 }
-#driverView.driver-district-chip-visible .map-right-controls{gap:10px}
-#driverView .map-right-controls>*{pointer-events:auto}
-#driverView .map-my-loc{
-  position:relative;right:auto;bottom:auto;
-  transition:transform .2s ease;
-}
 #driverView .driver-district-chip{
-  position:relative;right:auto;bottom:auto;
-  min-width:96px;height:40px;padding:0 20px;
-  border-radius:14px;border:1px solid #2AABEE;
-  background:#fff;color:#2AABEE;
-  font-size:15px;font-weight:700;font-family:inherit;cursor:pointer;
-  box-shadow:0 2px 10px rgba(42,171,238,.2);
-  display:flex;align-items:center;justify-content:center;
-  max-height:0;opacity:0;overflow:hidden;padding-top:0;padding-bottom:0;
-  border-width:0;margin:0;
-  transform:translateY(4px);pointer-events:none;
-  transition:max-height .28s ease,opacity .26s ease,transform .26s ease,padding .28s ease,border-width .28s ease,margin .28s ease;
+  position:absolute;right:14px;z-index:12;
+  bottom:calc(22px + max(12px, env(safe-area-inset-bottom)));
+  padding:8px 14px;border-radius:14px;border:1px solid #2AABEE;
+  background:rgba(255,255,255,.92);color:#2AABEE;
+  font-size:13px;font-weight:700;font-family:inherit;cursor:pointer;
+  box-shadow:0 4px 14px rgba(42,171,238,.14);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  opacity:0;transform:translateY(5px);pointer-events:none;
+  transition:opacity .26s ease,transform .26s ease;
   -webkit-tap-highlight-color:transparent;
 }
 #driverView .driver-district-chip.is-visible{
-  max-height:48px;opacity:1;padding:0 20px;border-width:1px;
-  margin-top:0;transform:translateY(0);pointer-events:auto;
-}
-#driverView.driver-district-open .map-right-controls{
-  bottom:calc(132px + max(12px, env(safe-area-inset-bottom)));
+  opacity:1;transform:translateY(0);pointer-events:auto;
 }
 #driverView .driver-district-chip:active{transform:scale(.97)}
-#driverView .driver-district-chip.is-visible:active{transform:scale(.97)}
 #locPickerMap .map-controls{right:12px;z-index:6}
 #locPickerMap .map-my-loc{right:12px;bottom:12px;z-index:6}
 .loc-picker-overlay{
@@ -1234,6 +1218,9 @@ body.view-sender.theme-telegram .toggle,
 #driverView .driver-district-picker .region-picker-item{
   font-size:15px!important;padding:8px 14px!important;
 }
+#driverView.driver-district-open .map-my-loc{
+  bottom:calc(148px + max(12px, env(safe-area-inset-bottom)));
+}
 
 /* Хабарнома рухсати — ишончли onboarding */
 .notif-onboard-overlay{
@@ -1340,15 +1327,12 @@ body.view-sender.theme-telegram .toggle,
             <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
             <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
           </div>
-          </div>
-          <div class="map-right-controls" id="mapRightControls">
-            <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-            </button>
-            <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden onclick="expandDriverDistrictPanel()" aria-label="Tuman tanlash">
-              <span id="driverDistrictChipText" data-i18n-latin="Tuman" data-i18n-cyrillic="Туман">Tuman</span>
-            </button>
-          </div>
+          <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+          </button>
+          <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden onclick="expandDriverDistrictPanel()" aria-label="Tuman tanlash">
+            <span id="driverDistrictChipText" data-i18n-latin="Tuman" data-i18n-cyrillic="Туман">Tuman</span>
+          </button>
         </div>
         <div class="driver-picker-zone">
           <div class="driver-picker-stack">
@@ -2644,22 +2628,9 @@ function cancelDriverDistrictCollapse(){
 
 function hideDriverDistrictChip(){
   const chip = document.getElementById('driverDistrictChip');
-  const driverView = document.getElementById('driverView');
   if (!chip) return;
   chip.classList.remove('is-visible');
-  driverView?.classList.remove('driver-district-chip-visible');
-  setTimeout(() => {
-    if (!chip.classList.contains('is-visible')) chip.hidden = true;
-  }, 280);
-}
-
-function showDriverDistrictChip(){
-  const chip = document.getElementById('driverDistrictChip');
-  const driverView = document.getElementById('driverView');
-  if (!chip) return;
-  chip.hidden = false;
-  driverView?.classList.add('driver-district-chip-visible');
-  requestAnimationFrame(() => chip.classList.add('is-visible'));
+  chip.hidden = true;
 }
 
 function scheduleDriverDistrictCollapse(){
@@ -2682,6 +2653,7 @@ function bumpDriverDistrictActivity(){
 function collapseDriverDistrictPanel(){
   cancelDriverDistrictCollapse();
   const panel = document.getElementById('driverDistrictPanel');
+  const chip = document.getElementById('driverDistrictChip');
   const driverView = document.getElementById('driverView');
   if (panel?.classList.contains('is-open')) {
     panel.classList.remove('is-open');
@@ -2692,12 +2664,19 @@ function collapseDriverDistrictPanel(){
     panel.hidden = true;
   }
   driverView?.classList.remove('driver-district-open');
-  showDriverDistrictChip();
+  if (chip) {
+    chip.hidden = false;
+    requestAnimationFrame(() => chip.classList.add('is-visible'));
+  }
 }
 
 function expandDriverDistrictPanel(){
   cancelDriverDistrictCollapse();
-  hideDriverDistrictChip();
+  const chip = document.getElementById('driverDistrictChip');
+  if (chip) {
+    chip.classList.remove('is-visible');
+    setTimeout(() => { chip.hidden = true; }, 260);
+  }
   showDriverDistrictPanel();
 }
 
