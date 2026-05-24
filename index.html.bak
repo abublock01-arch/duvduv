@@ -287,10 +287,10 @@ body.view-sender .header{background:var(--app-bg)!important}
   height:auto;flex:0 0 auto;margin:0;
   padding:12px 0 max(16px,env(safe-area-inset-bottom));
   border-radius:20px 20px 0 0;
-  background:transparent;
-  backdrop-filter:none;-webkit-backdrop-filter:none;
-  box-shadow:none;
-  border:none;
+  background:rgba(255,255,255,.48);
+  backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px) saturate(180%);
+  box-shadow:0 -4px 24px rgba(15,23,42,.06),inset 0 1px 0 rgba(255,255,255,.75);
+  border:1px solid rgba(255,255,255,.45);
   overflow:hidden;
 }
 #driverView .region-picker--horizontal::before,
@@ -298,17 +298,18 @@ body.view-sender .header{background:var(--app-bg)!important}
   display:block;width:72px;
 }
 #driverView .region-picker--horizontal::before{
-  background:linear-gradient(to right,rgba(0,0,0,.18) 0%,transparent 60%);
+  background:linear-gradient(to right,rgba(255,255,255,.85) 0%,rgba(255,255,255,.35) 55%,transparent);
 }
 #driverView .region-picker--horizontal::after{
-  background:linear-gradient(to left,rgba(0,0,0,.18) 0%,transparent 60%);
+  background:linear-gradient(to left,rgba(255,255,255,.85) 0%,rgba(255,255,255,.35) 55%,transparent);
 }
 #driverView .region-picker--horizontal .region-picker-track{
   height:52px;padding:0;gap:0;
-  scroll-snap-type:x mandatory;
+  scroll-snap-type:x proximity;
+  scroll-padding-inline:50%;
+  scroll-behavior:smooth;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-x:contain;
-  will-change:scroll-position;
 }
 #driverView .region-picker--horizontal .region-picker-spacer{
   flex:0 0 auto;min-width:0;scroll-snap-align:none;
@@ -317,22 +318,19 @@ body.view-sender .header{background:var(--app-bg)!important}
   flex:0 0 auto;
   padding:10px 16px;border-radius:16px;
   font-size:16px;font-weight:600;
-  color:rgba(255,255,255,.55);
+  color:#8e8e93;
   opacity:.7;transform:scale(.94);
-  scroll-snap-align:center;scroll-snap-stop:always;
+  scroll-snap-align:center;scroll-snap-stop:normal;
   transition:color .25s ease,opacity .25s ease,font-size .25s ease,font-weight .25s ease,transform .25s ease;
-  will-change:transform,opacity;
-  text-shadow:0 1px 4px rgba(0,0,0,.25);
 }
 #driverView .region-picker--horizontal .region-picker-item.is-adjacent{
-  opacity:.85;font-size:17px;font-weight:600;transform:scale(.97);color:rgba(255,255,255,.7);
+  opacity:.85;font-size:17px;font-weight:600;transform:scale(.97);color:#6b7280;
 }
 #driverView .region-picker--horizontal .region-picker-item.is-center{
-  background:transparent;color:#fff;
+  background:transparent;color:#2AABEE;
   font-size:20px;font-weight:800;
   box-shadow:none;
   transform:scale(1);opacity:1;
-  text-shadow:0 1px 8px rgba(42,171,238,.6),0 0 20px rgba(42,171,238,.3);
 }
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
@@ -1515,10 +1513,8 @@ function loadLastGPS(){
   } catch (_) { return null; }
 }
 
-const DRIVER_ENTRY_ZOOM = 10;
-
 function getDriverMapZoom(){
-  return persistedMapZoom ?? DRIVER_ENTRY_ZOOM;
+  return persistedMapZoom ?? 12;
 }
 
 function restoreUserPrefs(){
@@ -1958,21 +1954,22 @@ function bindRegionPickerScroll(track, onCommit){
     scrollRaf = requestAnimationFrame(() => {
       updateRegionPickerVisuals(false, track, onCommit);
     });
-    clearTimeout(scrollTimer);
-    scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), driverH ? 60 : 100);
+    if (!driverH) {
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(() => updateRegionPickerVisuals(true, track, onCommit), 100);
+    }
   };
-  // CSS scroll-snap:mandatory allaqachon snap qilgan — JS ikkinchi scroll qilmaydi
   const onScrollEnd = () => {
-    clearTimeout(scrollTimer);
-    updateRegionPickerVisuals(true, track, onCommit);
+    if (driverH) snapHorizontalPickerToNearest(track, true, onCommit);
+    else updateRegionPickerVisuals(true, track, onCommit);
   };
   track.addEventListener('scroll', onScroll, { passive: true });
   if ('onscrollend' in window) {
     track.addEventListener('scrollend', onScrollEnd, { passive: true });
-  } else {
+  } else if (driverH) {
     track.addEventListener('touchend', () => {
       clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(onScrollEnd, 80);
+      scrollTimer = setTimeout(onScrollEnd, 150);
     }, { passive: true });
   }
 }
@@ -2948,7 +2945,7 @@ async function centerMapOnDriver(){
   const cached = loadLastGPS();
   if (cached) {
     removeDriverRadiusLayers();
-    map.jumpTo({ center: [cached.lng, cached.lat], zoom: DRIVER_ENTRY_ZOOM });
+    map.jumpTo({ center: [cached.lng, cached.lat], zoom: getDriverMapZoom() });
     ensureDriverLocationMarker(cached.lng, cached.lat);
   }
   // Then update with fresh GPS in background
@@ -2963,7 +2960,7 @@ async function centerMapOnDriver(){
       const lat = coords.latitude;
       saveLastGPS(lng, lat);
       removeDriverRadiusLayers();
-      map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+      map.easeTo({ center: [lng, lat], zoom: getDriverMapZoom(), duration: 600 });
       ensureDriverLocationMarker(lng, lat);
     })
     .catch(() => { if (!cached) flyToDefaultMapCenter(); });
