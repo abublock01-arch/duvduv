@@ -307,7 +307,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 .region-picker-track::-webkit-scrollbar{display:none}
 .region-picker-spacer{flex:0 0 calc(50% - 72px);min-width:48px;scroll-snap-align:none}
 .region-picker-item{
-  flex:0 0 auto;scroll-snap-align:center;scroll-snap-stop:normal;
+  flex:0 0 auto;scroll-snap-align:center;scroll-snap-stop:always;
   border:none;background:transparent;cursor:pointer;font-family:inherit;
   padding:8px 14px;white-space:nowrap;
   font-size:17px;font-weight:600;color:#9ca3af;
@@ -1111,8 +1111,8 @@ body.view-sender.theme-telegram .toggle,
 /* Track: native snap + tez surish */
 #driverView .region-picker--horizontal .region-picker-track{
   height:46px!important;
-  scroll-snap-type:x proximity!important;
-  
+  scroll-snap-type:x mandatory!important;
+  scroll-padding-inline:50%!important;
   scroll-behavior:auto;
   -webkit-overflow-scrolling:touch;
   overscroll-behavior-x:contain;
@@ -1580,7 +1580,7 @@ function saveUserRole(role){
 
 function saveUserRegion(region){
   const key = userPrefKey('region');
-  if (!key || !region || region === DRIVER_REGION_ALL) return;
+  if (!key || !region) return;
   localStorage.setItem(key, region);
 }
 
@@ -1769,8 +1769,6 @@ const UZ_REGIONS = [
   'Toshkent', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
-const DRIVER_REGION_ALL = 'Hammasi';
-const MAP_TEST_ORDER_COUNT = 10000;
 
 const REGION_CYRILLIC = {
   'Toshkent': 'Тошкент', 'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
@@ -1863,14 +1861,6 @@ function getPickerRegions(){
   return UZ_REGIONS.filter(r => r !== userLocationRegion);
 }
 
-function getDriverPickerRegions(){
-  return [...getPickerRegions(), DRIVER_REGION_ALL];
-}
-
-function isDriverRegionAll(region){
-  return region === DRIVER_REGION_ALL;
-}
-
 function normalizeDistrictKey(name){
   return String(name).toLowerCase().replace(/[`']/g, "'").replace(/\s+/g, ' ').trim();
 }
@@ -1902,8 +1892,7 @@ function destToRegion(dest){
 }
 
 function destMatchesDriverRegion(dest){
-  if (!dest) return false;
-  if (!selectedDriverRegion || isDriverRegionAll(selectedDriverRegion)) return true;
+  if (!selectedDriverRegion || !dest) return false;
   return dest === selectedDriverRegion || dest.startsWith(selectedDriverRegion + ' —');
 }
 
@@ -1984,7 +1973,6 @@ function districtPickerLabel(name){
 }
 
 function pickerItemLabel(name){
-  if (name === DRIVER_REGION_ALL) return 'Ҳаммаси';
   if (REGION_CYRILLIC[name]) return regionPickerLabel(name);
   return districtPickerLabel(name);
 }
@@ -2004,9 +1992,8 @@ function buildRegionPickerTrack(track, regions){
   const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
   track.innerHTML = spacer + regions.map(r => {
     const label = pickerItemLabel(r);
-    const cyr = r === DRIVER_REGION_ALL ? 'Ҳаммаси' : (REGION_CYRILLIC[r] || districtPickerLabel(r));
-    const latin = r === DRIVER_REGION_ALL ? 'Hammasi' : r;
-    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${latin}" data-region-cyrillic="${cyr}">${label}</button>`;
+    const cyr = REGION_CYRILLIC[r] || districtPickerLabel(r);
+    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${label}</button>`;
   }).join('') + spacer;
 }
 
@@ -2056,7 +2043,14 @@ function getHorizontalPickerCenterItem(track){
 function settleDriverRegionPicker(track, onCommit){
   const closest = getHorizontalPickerCenterItem(track);
   if (!closest) return;
-  // CSS scroll-snap-type:x mandatory o'zi snap qiladi — JS scrollTo kerak emas
+  const max = track.scrollWidth - track.clientWidth;
+  const targetLeft = Math.max(0, Math.min(
+    closest.offsetLeft - (track.clientWidth - closest.offsetWidth) / 2,
+    max
+  ));
+  if (Math.abs(track.scrollLeft - targetLeft) > 2) {
+    track.scrollTo({ left: targetLeft, behavior: 'auto' });
+  }
   const prev = track.dataset.committedRegion || '';
   updateRegionPickerVisuals(true, track, onCommit);
   const region = closest.dataset.region;
@@ -2089,7 +2083,7 @@ function bindDriverRegionPickerScroll(track, onCommit){
       settling = true;
       settleDriverRegionPicker(track, onCommit);
       requestAnimationFrame(() => { settling = false; });
-    }, 'onscrollend' in window ? 0 : 60);
+    }, 'onscrollend' in window ? 0 : 100);
   };
 
   track.addEventListener('scroll', () => {
@@ -2218,7 +2212,7 @@ function ensureDriverRegionPicker(){
   if (!document.body.classList.contains('view-driver')) return;
   const track = document.getElementById('regionPickerTrack');
   if (!track) return;
-  const regions = getDriverPickerRegions();
+  const regions = getPickerRegions();
   if (!regions.length) return;
   if (!regions.includes(selectedDriverRegion)) {
     selectedDriverRegion = regions[0];
@@ -2326,7 +2320,6 @@ const UI_PHRASE_CYRILLIC = {
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
   'Tuman tanlang': 'Туман танланг',
-  'Hammasi': 'Ҳаммаси',
   'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган',
   "Lokatsiyani o'zgartirish": 'Локацияни ўзгартириш',
   "O'zgartirish": 'Ўзгартириш',
@@ -2891,61 +2884,21 @@ function loadMapMarkerImages(map){
   ]);
 }
 
-let mapTestOrdersSeeding = false;
-
-function seedMapTestOrders(done){
-  if (mapTestOrders.length >= MAP_TEST_ORDER_COUNT) {
-    if (done) done();
-    return;
+function addTestOrders(){
+  if (mapTestOrders.length) return;
+  for (let i = 0; i < 100; i++) {
+    mapTestOrders.push({
+      id: 'test-' + i,
+      type: 'order',
+      dest: UZ_REGIONS[i % UZ_REGIONS.length],
+      note: 'Test buyurtma',
+      thumbUrl: '',
+      status: 'Aktiv',
+      lat: 41.2 + Math.random() * 0.2,
+      lng: 69.1 + Math.random() * 0.4,
+      telegramUsername: '@test'
+    });
   }
-  if (mapTestOrdersSeeding) return;
-  mapTestOrdersSeeding = true;
-  mapTestOrders.length = 0;
-  let i = 0;
-  const chunk = 400;
-  const step = () => {
-    const end = Math.min(i + chunk, MAP_TEST_ORDER_COUNT);
-    for (; i < end; i++) {
-      const region = UZ_REGIONS[i % UZ_REGIONS.length];
-      const center = REGION_CENTERS[region];
-      const lng = center
-        ? center[0] + (Math.random() - 0.5) * 1.5
-        : 64 + Math.random() * 8;
-      const lat = center
-        ? center[1] + (Math.random() - 0.5) * 1.0
-        : 37.5 + Math.random() * 7;
-      const isTravel = i % 6 === 0;
-      mapTestOrders.push({
-        id: 'test-' + i,
-        type: isTravel ? 'travel' : 'order',
-        dest: region,
-        from: UZ_REGIONS[(i + 3) % UZ_REGIONS.length],
-        to: region,
-        note: '',
-        thumbUrl: '',
-        status: 'Aktiv',
-        lat,
-        lng,
-        telegramUsername: '@test'
-      });
-    }
-    if (i < MAP_TEST_ORDER_COUNT) {
-      requestAnimationFrame(step);
-      return;
-    }
-    mapTestOrdersSeeding = false;
-    if (map) refreshOrderMarkers();
-    if (done) done();
-  };
-  step();
-}
-
-function addTestOrders(done){
-  if (mapTestOrders.length >= MAP_TEST_ORDER_COUNT) {
-    if (done) done();
-    return;
-  }
-  seedMapTestOrders(done);
 }
 
 function setupOrderClusterLayers(){
@@ -3038,7 +2991,6 @@ function bindOrderMapEvents(){
 
 function toggleOrderMapLayers(){
   orderLayersVisible = !orderLayersVisible;
-  if (orderLayersVisible) addTestOrders();
   const vis = orderLayersVisible ? 'visible' : 'none';
   if (map) {
     ORDER_MAP_LAYER_IDS.forEach(id => {
@@ -3201,13 +3153,7 @@ function refreshOrderMarkers(){
     if (map.isStyleLoaded()) setupOrderClusterLayers();
     else return;
   }
-  const geo = ordersToGeoJSON();
-  map.getSource('orders').setData(geo);
-  const many = geo.features.length > 400;
-  const labelVis = orderLayersVisible && !many ? 'visible' : 'none';
-  if (map.getLayer('orders-unclustered-label')) {
-    map.setLayoutProperty('orders-unclustered-label', 'visibility', labelVis);
-  }
+  map.getSource('orders').setData(ordersToGeoJSON());
 }
 
 async function adminDeleteAllOrders(){
@@ -3312,7 +3258,7 @@ function switchView(v){
     }
     refreshUserLocationRegion().then(() => {
       // Only rebuild picker if the regions list actually changed (location moved to new region)
-      const newKey = getDriverPickerRegions().join('|');
+      const newKey = getPickerRegions().join('|');
       if (newKey !== lastDriverPickerKey) {
         lastDriverPickerKey = '';
         regionPickerBuilt = false;
