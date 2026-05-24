@@ -1580,7 +1580,7 @@ function saveUserRole(role){
 
 function saveUserRegion(region){
   const key = userPrefKey('region');
-  if (!key || !region || region === DRIVER_REGION_ALL) return;
+  if (!key || !region) return;
   localStorage.setItem(key, region);
 }
 
@@ -1700,8 +1700,11 @@ let driverLocationMarker = null;
 let orderLayersVisible = true;
 let orderClusterLayersReady = false;
 const ORDER_MAP_LAYER_IDS = [
-  'orders-clusters', 'orders-cluster-count',
-  'orders-unclustered-icon', 'orders-unclustered-label'
+  'orders-clusters', 'orders-unclustered-icon', 'orders-unclustered-label'
+];
+const ORDER_ICON_SIZE_LAYOUT = [
+  'interpolate', ['exponential', 1.75], ['zoom'],
+  4, 0.22, 6, 0.30, 8, 0.42, 10, 0.58, 12, 0.72, 14, 0.88, 16, 1.1
 ];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
@@ -1770,7 +1773,6 @@ const UZ_REGIONS = [
   'Toshkent', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
-const DRIVER_REGION_ALL = 'Hammasi';
 const MAP_TEST_ORDER_COUNT = 10000;
 
 const REGION_CYRILLIC = {
@@ -1864,14 +1866,6 @@ function getPickerRegions(){
   return UZ_REGIONS.filter(r => r !== userLocationRegion);
 }
 
-function getDriverPickerRegions(){
-  return [...getPickerRegions(), DRIVER_REGION_ALL];
-}
-
-function isDriverRegionAll(region){
-  return region === DRIVER_REGION_ALL;
-}
-
 function normalizeDistrictKey(name){
   return String(name).toLowerCase().replace(/[`']/g, "'").replace(/\s+/g, ' ').trim();
 }
@@ -1903,8 +1897,7 @@ function destToRegion(dest){
 }
 
 function destMatchesDriverRegion(dest){
-  if (!dest) return false;
-  if (!selectedDriverRegion || isDriverRegionAll(selectedDriverRegion)) return true;
+  if (!selectedDriverRegion || !dest) return false;
   return dest === selectedDriverRegion || dest.startsWith(selectedDriverRegion + ' —');
 }
 
@@ -1985,7 +1978,6 @@ function districtPickerLabel(name){
 }
 
 function pickerItemLabel(name){
-  if (name === DRIVER_REGION_ALL) return 'Ҳаммаси';
   if (REGION_CYRILLIC[name]) return regionPickerLabel(name);
   return districtPickerLabel(name);
 }
@@ -2005,9 +1997,8 @@ function buildRegionPickerTrack(track, regions){
   const spacer = '<div class="region-picker-spacer" aria-hidden="true"></div>';
   track.innerHTML = spacer + regions.map(r => {
     const label = pickerItemLabel(r);
-    const cyr = r === DRIVER_REGION_ALL ? 'Ҳаммаси' : (REGION_CYRILLIC[r] || districtPickerLabel(r));
-    const latin = r === DRIVER_REGION_ALL ? 'Hammasi' : r;
-    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${latin}" data-region-cyrillic="${cyr}">${label}</button>`;
+    const cyr = REGION_CYRILLIC[r] || districtPickerLabel(r);
+    return `<button type="button" class="region-picker-item" data-region="${r}" data-region-latin="${r}" data-region-cyrillic="${cyr}">${label}</button>`;
   }).join('') + spacer;
 }
 
@@ -2219,7 +2210,7 @@ function ensureDriverRegionPicker(){
   if (!document.body.classList.contains('view-driver')) return;
   const track = document.getElementById('regionPickerTrack');
   if (!track) return;
-  const regions = getDriverPickerRegions();
+  const regions = getPickerRegions();
   if (!regions.length) return;
   if (!regions.includes(selectedDriverRegion)) {
     selectedDriverRegion = regions[0];
@@ -2327,7 +2318,6 @@ const UI_PHRASE_CYRILLIC = {
   'Saqlandi': 'Сақланди', 'Avval rasm oling': 'Аввал расм олинг',
   'Keyingi': 'Кейинги', 'Tuman tanlash': 'Туман танлаш',
   'Tuman tanlang': 'Туман танланг',
-  'Hammasi': 'Ҳаммаси',
   'Kameraga ruxsat berilmagan': 'Камерага рухсат берилмаган',
   "Lokatsiyani o'zgartirish": 'Локацияни ўзгартириш',
   "O'zgartirish": 'Ўзгартириш',
@@ -2954,9 +2944,10 @@ function addTestOrders(done){
 
 function setupOrderClusterLayers(){
   if (!map) return;
-  if (orderClusterLayersReady && map.getLayer('orders-clusters')) return;
+  const clusterLayer = map.getLayer('orders-clusters');
+  if (orderClusterLayersReady && clusterLayer?.type === 'symbol' && !map.getLayer('orders-cluster-count')) return;
   if (map.getSource('orders')) {
-    [...ORDER_MAP_LAYER_IDS, 'orders-unclustered-icon', 'orders-unclustered-label'].forEach(id => {
+    [...ORDER_MAP_LAYER_IDS, 'orders-cluster-count', 'orders-unclustered-icon', 'orders-unclustered-label'].forEach(id => {
       if (map.getLayer(id)) map.removeLayer(id);
     });
     map.removeSource('orders');
@@ -2967,46 +2958,22 @@ function setupOrderClusterLayers(){
     type: 'geojson',
     data: ordersToGeoJSON(),
     cluster: true,
-    clusterMaxZoom: 14,
+    clusterMaxZoom: 13,
     clusterRadius: 50
   });
   loadMapMarkerImages(map).then(() => {
     if (!map.getLayer('orders-clusters')) {
       map.addLayer({
         id: 'orders-clusters',
-        type: 'circle',
-        source: 'orders',
-        filter: ['has', 'point_count'],
-        paint: {
-          'circle-color': [
-            'step', ['get', 'point_count'],
-            '#22c55e',
-            10, '#eab308',
-            100, '#ef4444'
-          ],
-          'circle-radius': [
-            'step', ['get', 'point_count'],
-            18,
-            10, 22,
-            100, 28
-          ],
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#fff',
-          'circle-opacity': 0.92
-        }
-      });
-      map.addLayer({
-        id: 'orders-cluster-count',
         type: 'symbol',
         source: 'orders',
         filter: ['has', 'point_count'],
         layout: {
-          'text-field': ['get', 'point_count_abbreviated'],
-          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
-          'text-size': 13
-        },
-        paint: {
-          'text-color': '#ffffff'
+          'icon-image': MAP_ICON_BOX,
+          'icon-size': ORDER_ICON_SIZE_LAYOUT,
+          'icon-anchor': 'center',
+          'icon-allow-overlap': true,
+          'icon-pitch-scale': 'map'
         }
       });
       map.addLayer({
@@ -3020,16 +2987,7 @@ function setupOrderClusterLayers(){
             'travel', MAP_ICON_PERSON,
             MAP_ICON_BOX
           ],
-          'icon-size': [
-            'interpolate', ['exponential', 1.75], ['zoom'],
-            4, 0.22,
-            6, 0.30,
-            8, 0.42,
-            10, 0.58,
-            12, 0.72,
-            14, 0.88,
-            16, 1.1
-          ],
+          'icon-size': ORDER_ICON_SIZE_LAYOUT,
           'icon-anchor': 'center',
           'icon-allow-overlap': true,
           'icon-pitch-scale': 'map'
@@ -3382,7 +3340,7 @@ function switchView(v){
     }
     refreshUserLocationRegion().then(() => {
       // Only rebuild picker if the regions list actually changed (location moved to new region)
-      const newKey = getDriverPickerRegions().join('|');
+      const newKey = getPickerRegions().join('|');
       if (newKey !== lastDriverPickerKey) {
         lastDriverPickerKey = '';
         regionPickerBuilt = false;
