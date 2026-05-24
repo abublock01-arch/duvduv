@@ -1700,6 +1700,7 @@ let driverLocationMarker = null;
 let orderLayersVisible = true;
 let orderClusterLayersReady = false;
 const ORDER_MAP_LAYER_IDS = [
+  'orders-clusters', 'orders-cluster-count',
   'orders-unclustered-icon', 'orders-unclustered-label'
 ];
 const MAP_ORDER_COLOR = '#2563EB';
@@ -2952,18 +2953,67 @@ function addTestOrders(done){
 }
 
 function setupOrderClusterLayers(){
-  if (!map || orderClusterLayersReady) return;
+  if (!map) return;
+  if (orderClusterLayersReady && map.getLayer('orders-clusters')) return;
+  if (map.getSource('orders')) {
+    [...ORDER_MAP_LAYER_IDS, 'orders-unclustered-icon', 'orders-unclustered-label'].forEach(id => {
+      if (map.getLayer(id)) map.removeLayer(id);
+    });
+    map.removeSource('orders');
+    orderClusterLayersReady = false;
+  }
+  if (orderClusterLayersReady) return;
   map.addSource('orders', {
     type: 'geojson',
-    data: ordersToGeoJSON()
-    // No clustering — markers always stay as box icons regardless of zoom
+    data: ordersToGeoJSON(),
+    cluster: true,
+    clusterMaxZoom: 14,
+    clusterRadius: 50
   });
   loadMapMarkerImages(map).then(() => {
-    if (!map.getLayer('orders-unclustered-icon')) {
+    if (!map.getLayer('orders-clusters')) {
+      map.addLayer({
+        id: 'orders-clusters',
+        type: 'circle',
+        source: 'orders',
+        filter: ['has', 'point_count'],
+        paint: {
+          'circle-color': [
+            'step', ['get', 'point_count'],
+            '#22c55e',
+            10, '#eab308',
+            100, '#ef4444'
+          ],
+          'circle-radius': [
+            'step', ['get', 'point_count'],
+            18,
+            10, 22,
+            100, 28
+          ],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#fff',
+          'circle-opacity': 0.92
+        }
+      });
+      map.addLayer({
+        id: 'orders-cluster-count',
+        type: 'symbol',
+        source: 'orders',
+        filter: ['has', 'point_count'],
+        layout: {
+          'text-field': ['get', 'point_count_abbreviated'],
+          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Bold'],
+          'text-size': 13
+        },
+        paint: {
+          'text-color': '#ffffff'
+        }
+      });
       map.addLayer({
         id: 'orders-unclustered-icon',
         type: 'symbol',
         source: 'orders',
+        filter: ['!', ['has', 'point_count']],
         layout: {
           'icon-image': [
             'match', ['get', 'itemType'],
@@ -2989,6 +3039,7 @@ function setupOrderClusterLayers(){
         id: 'orders-unclustered-label',
         type: 'symbol',
         source: 'orders',
+        filter: ['!', ['has', 'point_count']],
         layout: {
           'text-field': ['get', 'dest'],
           'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
@@ -3034,7 +3085,23 @@ function bindOrderMapEvents(){
     if (type === 'travel') openTravelMapSheet(item);
     else openOrderSheet(item);
   };
+
+  map.on('click', 'orders-clusters', e => {
+    const feat = map.queryRenderedFeatures(e.point, { layers: ['orders-clusters'] })[0];
+    if (!feat?.properties?.cluster_id) return;
+    const src = map.getSource('orders');
+    const clusterId = feat.properties.cluster_id;
+    const center = feat.geometry.coordinates;
+    Promise.resolve(src.getClusterExpansionZoom(clusterId))
+      .then(zoom => {
+        map.easeTo({ center, zoom: Math.min(zoom, 18), duration: 450 });
+      })
+      .catch(err => console.warn('Cluster zoom:', err));
+  });
+
   map.on('click', 'orders-unclustered-icon', openMapItem);
+  map.on('mouseenter', 'orders-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
+  map.on('mouseleave', 'orders-clusters', () => { map.getCanvas().style.cursor = ''; });
   map.on('mouseenter', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = ''; });
 }
