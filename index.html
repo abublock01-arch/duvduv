@@ -1505,7 +1505,7 @@ async function deleteOrderFromFirestore(firestoreId){
 }
 function subscribeFirestoreOrders(){
   if (!db) return;
-  db.collection('orders').orderBy('createdAt','desc').onSnapshot(snap => {
+  db.collection('orders').orderBy('createdAt','desc').limit(500).onSnapshot(snap => {
     orders.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
@@ -1554,7 +1554,7 @@ async function deleteTravelFromFirestore(firestoreId){
 }
 function subscribeFirestoreTravels(){
   if (!db) return;
-  db.collection('travels').orderBy('createdAt','desc').onSnapshot(snap => {
+  db.collection('travels').orderBy('createdAt','desc').limit(500).onSnapshot(snap => {
     travels.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
@@ -3804,7 +3804,17 @@ function showCameraFallback(msg){
 
 function persistData(){
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ shipments, orders, travels }));
+    // localStorage'ga faqat foydalanuvchining o'z elonlari saqlanadi
+    // (boshqa foydalanuvchilar elonlari Firestore'dan keladi, xotirani tejash uchun)
+    const myId = telegramUser.id != null ? String(telegramUser.id) : null;
+    const myShipments = shipments;
+    const myOrders = myId ? orders.filter(o => String(o.telegramId) === myId) : [];
+    const myTravels = myId ? travels.filter(t => String(t.telegramId) === myId) : [];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      shipments: myShipments,
+      orders: myOrders,
+      travels: myTravels
+    }));
   } catch (e) {
     console.warn('Saqlash xatosi:', e);
   }
