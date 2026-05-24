@@ -1615,7 +1615,7 @@ function loadLastGPS(){
 }
 
 const DRIVER_ENTRY_ZOOM = 11;
-const MAP_LAYER_CONFIG_VERSION = 2;
+const MAP_LAYER_CONFIG_VERSION = 3;
 
 function getDriverMapZoom(){
   return persistedMapZoom ?? DRIVER_ENTRY_ZOOM;
@@ -1705,8 +1705,11 @@ let map = null;
 let driverLocationMarker = null;
 let orderLayersVisible = true;
 let orderClusterLayersReady = false;
+const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 13, clusterRadius: 50 };
+const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels'];
 const ORDER_MAP_LAYER_IDS = [
-  'orders-clusters', 'orders-unclustered-icon', 'orders-unclustered-label'
+  'map-orders-clusters', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
+  'map-travels-clusters', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
 ];
 const ORDER_ICON_SIZE_LAYOUT = [
   'interpolate', ['exponential', 1.75], ['zoom'],
@@ -1780,7 +1783,7 @@ const UZ_REGIONS = [
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
 const MAP_TEST_PER_REGION = 1000;
-const MAP_TEST_SEED_VERSION = 5;
+const MAP_TEST_SEED_VERSION = 6;
 
 const REGION_CYRILLIC = {
   'Toshkent shahar': 'Тошкент шаҳар', 'Toshkent viloyat': 'Тошкент вилояти',
@@ -2876,7 +2879,7 @@ function mapItemMatchesDriverFilter(item){
   return destMatchesDriverRegion(item.dest || '') && itemOriginMatchesDriver(item);
 }
 
-function ordersToGeoJSON(){
+function buildMapGeoCollections(){
   const orderFeatures = [...orders, ...mapTestOrders.filter(o => o.type !== 'travel')]
     .filter(mapItemMatchesDriverFilter)
     .map(o => ({
@@ -2898,7 +2901,10 @@ function ordersToGeoJSON(){
     })
     .filter(Boolean);
 
-  return { type: 'FeatureCollection', features: [...orderFeatures, ...travelFeatures] };
+  return {
+    orders: { type: 'FeatureCollection', features: orderFeatures },
+    travels: { type: 'FeatureCollection', features: travelFeatures }
+  };
 }
 
 function findOrderByMapId(orderId){
@@ -2962,6 +2968,8 @@ function seedMapTestOrders(done){
       const district = districts[localIdx % districts.length];
       const toDest = formatDest(region, district);
       const isTravel = localIdx % 2 === 0;
+      const typeOffLng = isTravel ? 0.007 : -0.007;
+      const typeOffLat = isTravel ? 0.005 : -0.005;
       mapTestOrders.push({
         id: `test-${region}-${localIdx}`,
         _seedV: MAP_TEST_SEED_VERSION,
@@ -2973,8 +2981,8 @@ function seedMapTestOrders(done){
         note: '',
         thumbUrl: '',
         status: 'Aktiv',
-        lat,
-        lng,
+        lat: lat + typeOffLat,
+        lng: lng + typeOffLng,
         telegramUsername: '@test'
       });
     }
@@ -3000,99 +3008,90 @@ function addTestOrders(done){
   seedMapTestOrders(done);
 }
 
-function setupOrderClusterLayers(){
+const MAP_LABEL_LAYOUT = {
+  'text-field': ['concat', ['get', 'mapFrom'], '\n', ['get', 'mapTo']],
+  'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
+  'text-size': ['interpolate', ['linear'], ['zoom'], 10, 9, 12, 10, 14, 11, 16, 12],
+  'text-line-height': 1.15,
+  'text-offset': [0, 1.05],
+  'text-anchor': 'top',
+  'text-justify': 'center',
+  'text-max-width': 16,
+  'text-allow-overlap': true,
+  'text-optional': true,
+  'text-pitch-scale': 'map'
+};
+
+const MAP_LABEL_PAINT = {
+  'text-color': '#111111',
+  'text-halo-color': '#ffffff',
+  'text-halo-width': 1.5
+};
+
+function removeMapOrderLayers(){
   if (!map) return;
-  const clusterLayer = map.getLayer('orders-clusters');
-  const configOk = map._ordersLayerConfigVersion === MAP_LAYER_CONFIG_VERSION;
-  if (orderClusterLayersReady && configOk && clusterLayer?.type === 'symbol') return;
-  if (map.getSource('orders')) {
-    [...ORDER_MAP_LAYER_IDS, 'orders-cluster-count', 'orders-unclustered-icon', 'orders-unclustered-label'].forEach(id => {
-      if (map.getLayer(id)) map.removeLayer(id);
-    });
-    map.removeSource('orders');
-    orderClusterLayersReady = false;
-  }
-  if (orderClusterLayersReady) return;
-  map.addSource('orders', {
-    type: 'geojson',
-    data: ordersToGeoJSON(),
-    cluster: true,
-    clusterMaxZoom: 13,
-    clusterRadius: 50,
-    clusterProperties: {
-      travelCount: ['+', ['case', ['==', ['get', 'itemType'], 'travel'], 1, 0]],
-      orderCount: ['+', ['case', ['==', ['get', 'itemType'], 'order'], 1, 0]]
+  [...ORDER_MAP_LAYER_IDS, 'orders-clusters', 'orders-unclustered-icon', 'orders-unclustered-label', 'orders-cluster-count'].forEach(id => {
+    if (map.getLayer(id)) map.removeLayer(id);
+  });
+  [...MAP_ORDER_SOURCE_IDS, 'orders'].forEach(id => {
+    if (map.getSource(id)) map.removeSource(id);
+  });
+}
+
+function addMapTypeLayers(sourceId, iconImage, iconOffset){
+  const prefix = sourceId;
+  map.addLayer({
+    id: `${prefix}-clusters`,
+    type: 'symbol',
+    source: sourceId,
+    filter: ['has', 'point_count'],
+    layout: {
+      'icon-image': iconImage,
+      'icon-size': ORDER_ICON_SIZE_LAYOUT,
+      'icon-anchor': 'center',
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-pitch-scale': 'map'
     }
   });
+  map.addLayer({
+    id: `${prefix}-unclustered-icon`,
+    type: 'symbol',
+    source: sourceId,
+    filter: ['!', ['has', 'point_count']],
+    layout: {
+      'icon-image': iconImage,
+      'icon-size': ORDER_ICON_SIZE_LAYOUT,
+      'icon-anchor': 'center',
+      'icon-offset': iconOffset,
+      'icon-allow-overlap': true,
+      'icon-ignore-placement': true,
+      'icon-pitch-scale': 'map'
+    }
+  });
+  map.addLayer({
+    id: `${prefix}-unclustered-label`,
+    type: 'symbol',
+    source: sourceId,
+    filter: ['!', ['has', 'point_count']],
+    layout: { ...MAP_LABEL_LAYOUT, 'text-offset': [iconOffset[0], 1.05] },
+    paint: MAP_LABEL_PAINT
+  });
+}
+
+function setupOrderClusterLayers(){
+  if (!map) return;
+  const configOk = map._ordersLayerConfigVersion === MAP_LAYER_CONFIG_VERSION;
+  if (orderClusterLayersReady && configOk && map.getSource('map-orders')) return;
+  removeMapOrderLayers();
+  orderClusterLayersReady = false;
+  const geo = buildMapGeoCollections();
+  map.addSource('map-orders', { type: 'geojson', data: geo.orders, ...MAP_CLUSTER_OPTS });
+  map.addSource('map-travels', { type: 'geojson', data: geo.travels, ...MAP_CLUSTER_OPTS });
   loadMapMarkerImages(map).then(() => {
-    if (!map.getLayer('orders-clusters')) {
-      map.addLayer({
-        id: 'orders-clusters',
-        type: 'symbol',
-        source: 'orders',
-        filter: ['has', 'point_count'],
-        layout: {
-          'icon-image': [
-            'case',
-            ['>', ['get', 'travelCount'], 0],
-            MAP_ICON_PERSON,
-            MAP_ICON_BOX
-          ],
-          'icon-size': ORDER_ICON_SIZE_LAYOUT,
-          'icon-anchor': 'center',
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true,
-          'icon-pitch-scale': 'map'
-        }
-      });
-      map.addLayer({
-        id: 'orders-unclustered-icon',
-        type: 'symbol',
-        source: 'orders',
-        filter: ['!', ['has', 'point_count']],
-        layout: {
-          'icon-image': [
-            'match', ['get', 'itemType'],
-            'travel', MAP_ICON_PERSON,
-            MAP_ICON_BOX
-          ],
-          'icon-size': ORDER_ICON_SIZE_LAYOUT,
-          'icon-anchor': 'center',
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true,
-          'icon-pitch-scale': 'map'
-        }
-      });
-      map.addLayer({
-        id: 'orders-unclustered-label',
-        type: 'symbol',
-        source: 'orders',
-        filter: ['!', ['has', 'point_count']],
-        layout: {
-          'text-field': ['concat', ['get', 'mapFrom'], '\n', ['get', 'mapTo']],
-          'text-font': ['DIN Pro Medium', 'Arial Unicode MS Regular'],
-          'text-size': [
-            'interpolate', ['linear'], ['zoom'],
-            10, 9,
-            12, 10,
-            14, 11,
-            16, 12
-          ],
-          'text-line-height': 1.15,
-          'text-offset': [0, 1.05],
-          'text-anchor': 'top',
-          'text-justify': 'center',
-          'text-max-width': 16,
-          'text-allow-overlap': true,
-          'text-optional': true,
-          'text-pitch-scale': 'map'
-        },
-        paint: {
-          'text-color': '#111111',
-          'text-halo-color': '#ffffff',
-          'text-halo-width': 1.5
-        }
-      });
+    if (!map.getLayer('map-orders-clusters')) {
+      addMapTypeLayers('map-orders', MAP_ICON_BOX, [-0.35, 0]);
+      addMapTypeLayers('map-travels', MAP_ICON_PERSON, [0.35, 0]);
     }
     map._ordersLayerConfigVersion = MAP_LAYER_CONFIG_VERSION;
     bindOrderMapEvents();
@@ -3106,37 +3105,40 @@ function setupOrderClusterLayers(){
 }
 
 function bindOrderMapEvents(){
-  if (!map || map._orderClusterEventsBound) return;
-  map._orderClusterEventsBound = true;
+  if (!map || map._orderMapEventsReady) return;
+  map._orderMapEventsReady = true;
 
-  const openMapItem = e => {
-    const feat = e.features?.[0];
-    if (!feat) return;
-    const item = findOrderByMapId(feat.properties.orderId);
+  const clusterLayers = ['map-orders-clusters', 'map-travels-clusters'];
+  const iconLayers = ['map-orders-unclustered-icon', 'map-travels-unclustered-icon'];
+  const hoverLayers = [...clusterLayers, ...iconLayers];
+
+  map.on('click', e => {
+    const clusterFeat = map.queryRenderedFeatures(e.point, { layers: clusterLayers })[0];
+    if (clusterFeat?.properties?.cluster_id != null) {
+      const sourceId = clusterFeat.layer.id.startsWith('map-travels') ? 'map-travels' : 'map-orders';
+      const src = map.getSource(sourceId);
+      const clusterId = clusterFeat.properties.cluster_id;
+      const center = clusterFeat.geometry.coordinates;
+      Promise.resolve(src.getClusterExpansionZoom(clusterId))
+        .then(zoom => {
+          map.easeTo({ center, zoom: Math.min(zoom, 18), duration: 450 });
+        })
+        .catch(err => console.warn('Cluster zoom:', err));
+      return;
+    }
+    const iconFeat = map.queryRenderedFeatures(e.point, { layers: iconLayers })[0];
+    if (!iconFeat) return;
+    const item = findOrderByMapId(iconFeat.properties.orderId);
     if (!item) return;
-    const type = feat.properties.itemType || item.type;
+    const type = iconFeat.properties.itemType || item.type;
     if (type === 'travel') openTravelMapSheet(item);
     else openOrderSheet(item);
-  };
-
-  map.on('click', 'orders-clusters', e => {
-    const feat = map.queryRenderedFeatures(e.point, { layers: ['orders-clusters'] })[0];
-    if (!feat?.properties?.cluster_id) return;
-    const src = map.getSource('orders');
-    const clusterId = feat.properties.cluster_id;
-    const center = feat.geometry.coordinates;
-    Promise.resolve(src.getClusterExpansionZoom(clusterId))
-      .then(zoom => {
-        map.easeTo({ center, zoom: Math.min(zoom, 18), duration: 450 });
-      })
-      .catch(err => console.warn('Cluster zoom:', err));
   });
 
-  map.on('click', 'orders-unclustered-icon', openMapItem);
-  map.on('mouseenter', 'orders-clusters', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'orders-clusters', () => { map.getCanvas().style.cursor = ''; });
-  map.on('mouseenter', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = 'pointer'; });
-  map.on('mouseleave', 'orders-unclustered-icon', () => { map.getCanvas().style.cursor = ''; });
+  hoverLayers.forEach(id => {
+    map.on('mouseenter', id, () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
+  });
 }
 
 function toggleOrderMapLayers(){
@@ -3298,16 +3300,17 @@ async function centerMapOnDriver(){
 
 function refreshOrderMarkers(){
   if (!map) return;
-  if (!map.getSource('orders')) {
+  if (!map.getSource('map-orders')) {
     if (map.isStyleLoaded()) setupOrderClusterLayers();
     else return;
   }
-  const geo = ordersToGeoJSON();
-  map.getSource('orders').setData(geo);
+  const geo = buildMapGeoCollections();
+  map.getSource('map-orders').setData(geo.orders);
+  map.getSource('map-travels').setData(geo.travels);
   const labelVis = orderLayersVisible ? 'visible' : 'none';
-  if (map.getLayer('orders-unclustered-label')) {
-    map.setLayoutProperty('orders-unclustered-label', 'visibility', labelVis);
-  }
+  ['map-orders-unclustered-label', 'map-travels-unclustered-label'].forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', labelVis);
+  });
 }
 
 async function adminDeleteAllOrders(){
