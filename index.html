@@ -2018,9 +2018,13 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.expand();
     initTelegramUser();
     setTimeout(() => {
-      const hasRWA = typeof Telegram.WebApp.requestWriteAccess === 'function';
-      const ver = Telegram.WebApp.version || 'unknown';
-      Telegram.WebApp.showAlert(`v:${ver} rwa:${hasRWA} id:${telegramUser.id}`);
+      Telegram.WebApp.requestWriteAccess(granted => {
+        if (granted && telegramUser.id && db) {
+          db.collection('users').doc(String(telegramUser.id)).set(
+            { notifications: true, chatId: telegramUser.id }, { merge: true }
+          );
+        }
+      });
     }, 1200);
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
