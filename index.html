@@ -376,48 +376,48 @@ body.view-sender .header{background:var(--app-bg)!important}
   display:flex;justify-content:center;align-items:center;
 }
 .picker-stepper{
-  position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  position:absolute;right:12px;top:50%;transform:translateY(-50%);
   z-index:4;display:flex;flex-direction:column;align-items:center;
-  gap:14px;padding:0;background:transparent;
-  box-shadow:none;pointer-events:none;
+  gap:4px;padding:6px 5px;
+  border-radius:18px;pointer-events:none;
+  background:rgba(255,255,255,.94);
+  border:1px solid rgba(42,171,238,.22);
+  box-shadow:0 6px 24px rgba(42,171,238,.14);
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  transition:box-shadow .25s ease,border-color .25s ease;
 }
-.picker-stepper-btn{
+.picker-stepper--hint{
+  border-color:rgba(42,171,238,.45);
+  box-shadow:0 8px 28px rgba(42,171,238,.28);
+  animation:pickerStepperPulse 1s ease-in-out infinite;
+}
+@keyframes pickerStepperPulse{
+  0%,100%{box-shadow:0 6px 24px rgba(42,171,238,.14)}
+  50%{box-shadow:0 10px 32px rgba(42,171,238,.32)}
+}
+.picker-chevron{
   pointer-events:auto;
-  width:52px;height:44px;border:none;border-radius:14px;cursor:pointer;
+  width:44px;height:44px;border:none;border-radius:13px;cursor:pointer;
   display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(180deg,#fff 0%,#f0f4f8 100%);
-  color:#2AABEE;
-  box-shadow:
-    0 4px 14px rgba(42,171,238,.18),
-    0 1px 0 rgba(255,255,255,.9) inset;
-  transition:transform .1s ease,background .12s ease,color .12s ease,box-shadow .12s ease;
+  background:rgba(42,171,238,.08);color:#2AABEE;
+  transition:transform .12s ease,background .12s ease,color .12s ease,box-shadow .12s ease;
   -webkit-tap-highlight-color:transparent;
 }
-.picker-stepper-arrow{
-  display:block;width:0;height:0;
-  border-left:13px solid transparent;
-  border-right:13px solid transparent;
-  transition:border-color .12s ease;
+.picker-chevron svg{display:block;width:26px;height:26px}
+.picker-chevron--up svg{transform:rotate(180deg)}
+.picker-stepper-line{
+  display:block;width:3px;height:18px;border-radius:2px;
+  background:linear-gradient(180deg,rgba(42,171,238,.15),rgba(42,171,238,.55),rgba(42,171,238,.15));
 }
-.picker-stepper-btn--up .picker-stepper-arrow{
-  border-bottom:16px solid currentColor;
-}
-.picker-stepper-btn--down .picker-stepper-arrow{
-  border-top:16px solid currentColor;
-}
-.picker-stepper-btn:active,
-.picker-stepper-btn.is-pressed{
-  transform:scale(.94);
-  background:linear-gradient(180deg,#39B8F5 0%,#2AABEE 55%,#1E88E5 100%);
+.picker-chevron:active,
+.picker-chevron.is-pressed{
+  transform:scale(.92);
+  background:linear-gradient(155deg,#39B8F5,#2AABEE 55%,#1E88E5);
   color:#fff;
-  box-shadow:
-    inset 0 3px 8px rgba(0,0,0,.22),
-    0 2px 6px rgba(42,171,238,.35);
+  box-shadow:inset 0 2px 6px rgba(0,0,0,.2),0 2px 8px rgba(42,171,238,.35);
 }
-.picker-stepper-btn--up:active .picker-stepper-arrow,
-.picker-stepper-btn--up.is-pressed .picker-stepper-arrow{border-bottom-color:#fff}
-.picker-stepper-btn--down:active .picker-stepper-arrow,
-.picker-stepper-btn--down.is-pressed .picker-stepper-arrow{border-top-color:#fff}
+.picker-chevron:active svg,
+.picker-chevron.is-pressed svg{filter:brightness(10)}
 .region-picker--vertical{
   height:196px;margin:4px 0 16px;
 }
@@ -1533,12 +1533,9 @@ body.view-sender.theme-telegram .toggle,
             <div class="region-picker-track" id="sendRegionPickerTrack"></div>
           </div>
           <div class="picker-stepper" role="group" aria-label="Viloyat ro'yxati">
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
+            <button type="button" class="picker-chevron picker-chevron--up" aria-label="Yuqoriga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+            <span class="picker-stepper-line" aria-hidden="true"></span>
+            <button type="button" class="picker-chevron picker-chevron--down" aria-label="Pastga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
           </div>
         </div>
       </div>
@@ -1548,12 +1545,9 @@ body.view-sender.theme-telegram .toggle,
             <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
           </div>
           <div class="picker-stepper" role="group" aria-label="Tuman ro'yxati">
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
+            <button type="button" class="picker-chevron picker-chevron--up" aria-label="Yuqoriga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+            <span class="picker-stepper-line" aria-hidden="true"></span>
+            <button type="button" class="picker-chevron picker-chevron--down" aria-label="Pastga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
           </div>
         </div>
       </div>
@@ -1580,12 +1574,9 @@ body.view-sender.theme-telegram .toggle,
             <div class="region-picker-track" id="travelRegionPickerTrack"></div>
           </div>
           <div class="picker-stepper" role="group" aria-label="Viloyat ro'yxati">
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
+            <button type="button" class="picker-chevron picker-chevron--up" aria-label="Yuqoriga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+            <span class="picker-stepper-line" aria-hidden="true"></span>
+            <button type="button" class="picker-chevron picker-chevron--down" aria-label="Pastga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
           </div>
         </div>
       </div>
@@ -1595,12 +1586,9 @@ body.view-sender.theme-telegram .toggle,
             <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
           </div>
           <div class="picker-stepper" role="group" aria-label="Tuman ro'yxati">
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
-            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
-              <span class="picker-stepper-arrow" aria-hidden="true"></span>
-            </button>
+            <button type="button" class="picker-chevron picker-chevron--up" aria-label="Yuqoriga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
+            <span class="picker-stepper-line" aria-hidden="true"></span>
+            <button type="button" class="picker-chevron picker-chevron--down" aria-label="Pastga"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg></button>
           </div>
         </div>
       </div>
@@ -2224,8 +2212,10 @@ const DRIVER_DISTRICT_DELAY_MS = 3000;
 const DRIVER_DISTRICT_COLLAPSE_MS = 0; // auto-collapse o'chirilgan
 const DRIVER_DISTRICT_ALL = 'Hammasi';
 const PICKER_LOOP_COPIES = 3;
+const PICKER_DEMO_MS = 2000;
 const DRIVER_PICKER_SETTLE_MS = 110;
 const VERTICAL_PICKER_SETTLE_MS = 140;
+let pickerDemoToken = 0;
 let userLocationRegion = null;
 let userCoords = null;
 let selectedTravelRegion = '';
@@ -2667,6 +2657,80 @@ function layoutHorizontalPickerSpacers(track){
   });
 }
 
+function getVerticalPickerOnCommit(track){
+  if (!track) return null;
+  const id = track.id;
+  if (id === 'sendRegionPickerTrack') {
+    return region => {
+      selectedSendRegion = region;
+      const dest = document.getElementById('sendDest');
+      if (dest) dest.value = region;
+      const hidden = document.getElementById('sendRegion');
+      if (hidden) hidden.value = region;
+    };
+  }
+  if (id === 'sendDistrictPickerTrack') {
+    return district => {
+      selectedSendDistrict = district;
+      const el = document.getElementById('sendDistrict');
+      if (el) el.value = district;
+    };
+  }
+  if (id === 'travelRegionPickerTrack') {
+    return region => {
+      selectedTravelRegion = region;
+      const hidden = document.getElementById('travelRegion');
+      if (hidden) hidden.value = region;
+    };
+  }
+  if (id === 'travelDistrictPickerTrack') {
+    return district => {
+      selectedTravelDistrict = district;
+      const el = document.getElementById('travelDistrict');
+      if (el) el.value = district;
+    };
+  }
+  return null;
+}
+
+function getSelectedValueForTrack(track){
+  if (!track) return '';
+  const id = track.id;
+  if (id === 'sendRegionPickerTrack') return selectedSendRegion || document.getElementById('sendDest')?.value || '';
+  if (id === 'travelRegionPickerTrack') return selectedTravelRegion || document.getElementById('travelRegion')?.value || '';
+  if (id === 'sendDistrictPickerTrack') return selectedSendDistrict || document.getElementById('sendDistrict')?.value || '';
+  if (id === 'travelDistrictPickerTrack') return selectedTravelDistrict || document.getElementById('travelDistrict')?.value || '';
+  return '';
+}
+
+function commitVerticalPickerAfterStep(track){
+  if (!track) return;
+  const onCommit = getVerticalPickerOnCommit(track);
+  track.dataset.pickerProgrammatic = '1';
+  const finish = () => {
+    updateRegionPickerVisuals(true, track, onCommit);
+    setTimeout(() => delete track.dataset.pickerProgrammatic, 100);
+  };
+  if (prefersReducedMotion()) {
+    finish();
+    return;
+  }
+  const settleMs = VERTICAL_PICKER_SETTLE_MS + 120;
+  if ('onscrollend' in window) {
+    let done = false;
+    const once = () => {
+      if (done) return;
+      done = true;
+      track.removeEventListener('scrollend', once);
+      finish();
+    };
+    track.addEventListener('scrollend', once, { passive: true });
+    setTimeout(() => once(), settleMs + 180);
+  } else {
+    setTimeout(finish, settleMs);
+  }
+}
+
 function scrollVerticalPickerStep(track, direction){
   if (!track) return;
   const items = [...track.querySelectorAll('.region-picker-item')];
@@ -2684,6 +2748,67 @@ function scrollVerticalPickerStep(track, direction){
   if (!target) return;
   const top = target.offsetTop - (track.clientHeight / 2) + (target.offsetHeight / 2);
   track.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+  updateRegionPickerVisuals(false, track, null);
+  commitVerticalPickerAfterStep(track);
+}
+
+function cancelPickerDemo(){
+  pickerDemoToken++;
+}
+
+function runPickerDemoHint(track, stepper, token){
+  if (!track || prefersReducedMotion()) return;
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  if (items.length < 2) return;
+  const restore = getSelectedValueForTrack(track);
+  const onCommit = getVerticalPickerOnCommit(track);
+  const stepH = items[0]?.offsetHeight || 44;
+  const maxScroll = Math.max(0, track.scrollHeight - track.clientHeight);
+  const baseTop = track.scrollTop;
+  track.dataset.pickerProgrammatic = '1';
+  stepper?.classList.add('picker-stepper--hint');
+  const start = performance.now();
+  const tick = now => {
+    if (token !== pickerDemoToken || track.dataset.pickerDemoCancelled) {
+      stepper?.classList.remove('picker-stepper--hint');
+      delete track.dataset.pickerProgrammatic;
+      delete track.dataset.pickerDemoCancelled;
+      return;
+    }
+    const t = Math.min(1, (now - start) / PICKER_DEMO_MS);
+    const wave = Math.sin(t * Math.PI * 2.8) * stepH * 1.15;
+    track.scrollTop = Math.max(0, Math.min(maxScroll, baseTop + wave));
+    updateRegionPickerVisuals(false, track, null);
+    if (t < 1) {
+      requestAnimationFrame(tick);
+      return;
+    }
+    scrollPickerToRegion(track, restore, false);
+    requestAnimationFrame(() => {
+      updateRegionPickerVisuals(true, track, onCommit);
+      stepper?.classList.remove('picker-stepper--hint');
+      delete track.dataset.pickerProgrammatic;
+      delete track.dataset.pickerDemoCancelled;
+    });
+  };
+  requestAnimationFrame(tick);
+}
+
+function schedulePickerDemoForSheet(sheetKind){
+  const token = ++pickerDemoToken;
+  const trackId = sheetKind === 'travel' ? 'travelRegionPickerTrack' : 'sendRegionPickerTrack';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      if (token !== pickerDemoToken) return;
+      if (sheetKind === 'travel' && travelSheetStep !== 1) return;
+      if (sheetKind === 'send' && sendSheetStep !== 1) return;
+      const track = document.getElementById(trackId);
+      const step = track?.closest('.picker-with-stepper')?.querySelector('.picker-stepper');
+      if (!track || track.closest('[hidden]')) return;
+      delete track.dataset.pickerDemoCancelled;
+      runPickerDemoHint(track, step, token);
+    });
+  });
 }
 
 function bindPickerStepperControls(){
@@ -2691,18 +2816,18 @@ function bindPickerStepperControls(){
   document.body.dataset.pickerStepperBound = '1';
   const clearPressed = btn => btn?.classList.remove('is-pressed');
   document.body.addEventListener('pointerdown', e => {
-    const btn = e.target.closest('.picker-stepper-btn--up, .picker-stepper-btn--down');
+    const btn = e.target.closest('.picker-chevron--up, .picker-chevron--down');
     if (btn) btn.classList.add('is-pressed');
   }, { passive: true });
-  document.body.addEventListener('pointerup', e => clearPressed(e.target.closest('.picker-stepper-btn--up, .picker-stepper-btn--down')));
-  document.body.addEventListener('pointercancel', e => clearPressed(e.target.closest('.picker-stepper-btn--up, .picker-stepper-btn--down')));
+  document.body.addEventListener('pointerup', e => clearPressed(e.target.closest('.picker-chevron--up, .picker-chevron--down')));
+  document.body.addEventListener('pointercancel', e => clearPressed(e.target.closest('.picker-chevron--up, .picker-chevron--down')));
   document.body.addEventListener('click', e => {
-    const btn = e.target.closest('.picker-stepper-btn--up, .picker-stepper-btn--down');
+    const btn = e.target.closest('.picker-chevron--up, .picker-chevron--down');
     if (!btn) return;
     const wrap = btn.closest('.picker-with-stepper');
     const track = wrap?.querySelector('.region-picker-track');
     if (!track) return;
-    scrollVerticalPickerStep(track, btn.classList.contains('picker-stepper-btn--up') ? -1 : 1);
+    scrollVerticalPickerStep(track, btn.classList.contains('picker-chevron--up') ? -1 : 1);
     if (window.Telegram?.WebApp?.HapticFeedback) {
       Telegram.WebApp.HapticFeedback.selectionChanged();
     }
@@ -5086,6 +5211,7 @@ async function openSendSheetFromPhoto(){
   sheet.classList.remove('send-handoff');
   syncSendDraft();
   refreshSendPickersVisuals();
+  schedulePickerDemoForSheet('send');
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
@@ -5273,6 +5399,12 @@ async function onPhotoSelected(e){
 
 function closeSendSheet(){
   sendSheetSession++;
+  cancelPickerDemo();
+  const track = document.getElementById('sendRegionPickerTrack');
+  if (track) {
+    track.dataset.pickerDemoCancelled = '1';
+    track.closest('.picker-with-stepper')?.querySelector('.picker-stepper')?.classList.remove('picker-stepper--hint');
+  }
   const sheet = document.getElementById('sendSheetOverlay');
   sheet.classList.remove('open', 'send-handoff');
   document.body.style.overflow = '';
@@ -5288,9 +5420,16 @@ async function openTravelSheet(){
   initTravelRegionPicker();
   document.getElementById('travelSheetOverlay').classList.add('open');
   applyCyrillicUI();
+  schedulePickerDemoForSheet('travel');
 }
 
 function closeTravelSheet(){
+  cancelPickerDemo();
+  const track = document.getElementById('travelRegionPickerTrack');
+  if (track) {
+    track.dataset.pickerDemoCancelled = '1';
+    track.closest('.picker-with-stepper')?.querySelector('.picker-stepper')?.classList.remove('picker-stepper--hint');
+  }
   document.getElementById('travelSheetOverlay').classList.remove('open');
   resetTravelSheetSteps();
   applyCyrillicUI();
