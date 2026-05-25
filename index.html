@@ -1310,11 +1310,11 @@ body.view-sender.theme-telegram .toggle,
         <div class="cta-wrap">
           <button type="button" class="cta-btn" onclick="openTravelSheet()">
             <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
-            <span class="cta-text" id="ctaTravelText">Yo'l olish</span>
+            <span class="cta-text" id="ctaTravelText">SAFARNI BOSHLASH</span>
           </button>
           <button type="button" class="cta-btn" onclick="openOrder()">
             <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
-            <span class="cta-text" id="ctaOrderText">Jo'natma yuborish</span>
+            <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
           </button>
         </div>
       </div>
@@ -1904,7 +1904,6 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
-    requestNotificationPermission();
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
@@ -2854,8 +2853,10 @@ function scriptMorphSwap(container, newText){
 const UI_PHRASE_CYRILLIC = {
   "Jo'natuvchi": 'Жўнатувчи', 'Haydovchi': 'Ҳайдовчи',
   'RASMGA OLING': 'РАСМГА ОЛИНГ', "VA JO'NATING": 'ВА ЖЎНАТИНГ',
-  "Jo'natmalarim": 'Жўнатмаларим', "Yo'l olish": 'Йўл олиш',
-  "Jo'natma yuborish": 'Жўнатма юбориш', "Jo'natma rasmi": 'Жўнатма расми',
+  "Jo'natmalarim": 'Жўнатмаларим',
+  'SAFARNI BOSHLASH': 'САФАРНИ БОШЛАШ',
+  'POCHTA YUBORISH': 'ПОЧТА ЮБОРИШ',
+  "Jo'natma rasmi": 'Жўнатма расми',
   "Qutini ramka ichida ko'ring va rasm oling": 'Қутини рамка ичида кўринг ва расм олинг',
   'Galereyadan tanlash': 'Галереядан танлаш', 'Kamera yuklanmoqda…': 'Камера юкланмоқда…',
   'Lokatsiyani tanlang': 'Локацияни танланг', 'Xaritaga bosing — pin qo\'yiladi': 'Харитага босинг — пин қўйилади',
@@ -2911,7 +2912,7 @@ const MORPH_MULTI = [
 
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
-  ['#ctaTravelText', "Yo'l olish"], ['#ctaOrderText', "Jo'natma yuborish"],
+  ['#ctaTravelText', 'SAFARNI BOSHLASH'], ['#ctaOrderText', 'POCHTA YUBORISH'],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
   ['#locPickerTitle', 'Lokatsiyani tanlang'], ['.loc-picker-hint', "Xaritani suring — pin o'rtada qoladi"],
@@ -4564,7 +4565,7 @@ function renderShipments(){
     wrap.classList.add('visible');
     list.innerHTML = `<div class="shipments-empty">
     <p class="shipments-empty-title">Ҳали фаол эълонлар йўқ</p>
-    <span class="shipments-empty-sub">Йўл олиш ёки жўнатма юбориш орқали қўшинг</span>
+    <span class="shipments-empty-sub">САФАРНИ БОШЛАШ ёки ПОЧТА ЮБОРИШ орқали қўшинг</span>
   </div>`;
     return;
   }
@@ -4689,6 +4690,7 @@ function deleteShipment(key){
 }
 
 async function openOrder(){
+  requestNotificationPermission();
   const overlay = document.getElementById('uploadOverlay');
   overlay.classList.remove('closing');
   overlay.classList.add('open');
@@ -4969,6 +4971,7 @@ function closeSendSheet(){
 }
 
 async function openTravelSheet(){
+  requestNotificationPermission();
   await refreshUserLocationRegion();
   resetTravelSheetSteps();
   lastTravelPickerKey = '';
