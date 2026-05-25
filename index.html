@@ -513,6 +513,36 @@ body.view-sender .header{background:var(--app-bg)!important}
   bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
   transition:bottom .28s ease;
 }
+.map-route-btn{
+  position:absolute;right:14px;z-index:12;
+  width:48px;height:48px;border-radius:50%;border:none;padding:0;cursor:pointer;
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  box-shadow:0 4px 16px rgba(42,171,238,.18);
+  display:flex;align-items:center;justify-content:center;
+  bottom:calc(136px + max(12px, env(safe-area-inset-bottom)));
+  transition:bottom .28s ease;
+}
+.map-route-btn svg{width:22px;height:22px;stroke:var(--tg-blue)}
+.map-route-btn.has-route{background:var(--tg-blue)}
+.map-route-btn.has-route svg{stroke:#fff}
+.sheet--route .route-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.sheet--route .route-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+.sheet--route .route-dot.a{background:var(--tg-blue)}
+.sheet--route .route-dot.b{background:#ef4444}
+.sheet--route .route-select{
+  flex:1;padding:13px 16px;border-radius:14px;border:1.5px solid #e8e8ed;
+  font-size:16px;font-family:inherit;color:#000;background:#f7f7f8;
+  appearance:none;-webkit-appearance:none;outline:none;
+}
+.sheet--route .route-select:focus{border-color:var(--tg-blue)}
+.sheet--route .route-save{
+  width:100%;padding:15px;border:none;border-radius:16px;
+  background:var(--tg-blue);color:#fff;font-size:17px;font-weight:600;
+  cursor:pointer;margin-top:8px;font-family:inherit;
+}
+.sheet--route .route-save:active{opacity:.85}
+.sheet--route .route-label{font-size:13px;color:#8e8e93;margin-bottom:4px;font-weight:500}
 #driverView .driver-district-chip{
   position:absolute;right:14px;z-index:12;
   bottom:calc(22px + max(12px, env(safe-area-inset-bottom)));
@@ -1330,6 +1360,9 @@ body.view-sender.theme-telegram .toggle,
           <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
           </button>
+          <button type="button" class="map-route-btn" id="routeSetBtn" onclick="openRouteSheet()" aria-label="Yo'nalish">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M6 17V9a6 6 0 0 1 6-6h0"/><path d="M18 7v8a6 6 0 0 1-6 6h0"/></svg>
+          </button>
           <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden onclick="expandDriverDistrictPanel()" aria-label="Tuman tanlash">
             <span id="driverDistrictChipText" data-i18n-latin="Tuman" data-i18n-cyrillic="Туман">Tuman</span>
           </button>
@@ -1478,6 +1511,30 @@ body.view-sender.theme-telegram .toggle,
       <input type="hidden" id="travelDistrict" value="">
       <button type="button" class="send-submit" id="travelActionBtn" onclick="onTravelActionClick()">Keyingi</button>
     </form>
+  </div>
+</div>
+
+<!-- YO'NALISH SHEET -->
+<div class="sheet-overlay sheet-overlay--route" id="routeSheetOverlay" onclick="if(event.target===this)closeRouteSheet()" style="z-index:215">
+  <div class="sheet sheet--route" onclick="event.stopPropagation()">
+    <button type="button" class="sheet-close" onclick="closeRouteSheet()">×</button>
+    <div class="sheet-drag"></div>
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:20px">🗺 Йўналишим</h2>
+    <div class="route-row">
+      <div class="route-dot a"></div>
+      <div style="flex:1">
+        <div class="route-label">Қаердан (А нуқта)</div>
+        <select class="route-select" id="routeFromSelect"></select>
+      </div>
+    </div>
+    <div class="route-row">
+      <div class="route-dot b"></div>
+      <div style="flex:1">
+        <div class="route-label">Қаерга (Б нуқта)</div>
+        <select class="route-select" id="routeToSelect"></select>
+      </div>
+    </div>
+    <button class="route-save" onclick="saveRoute()">Сақлаш</button>
   </div>
 </div>
 
@@ -1856,6 +1913,61 @@ function tryTelegramNotifPopup(){
   });
   return true;
 }
+
+// ── Yo'nalish (Route) ─────────────────────────────────────────────────────
+const ROUTE_REGIONS = [
+  'Тошкент шаҳри','Тошкент вилояти','Самарқанд','Бухоро','Андижон',
+  'Фарғона','Наманган','Қашқадарё','Сурхондарё','Хоразм',
+  'Навоий','Жиззах','Сирдарё','Қорақалпоғистон'
+];
+
+function openRouteSheet(){
+  const fromSel = document.getElementById('routeFromSelect');
+  const toSel = document.getElementById('routeToSelect');
+  const saved = JSON.parse(localStorage.getItem('driver_route')||'{}');
+
+  [fromSel, toSel].forEach(sel => {
+    sel.innerHTML = '<option value="">— Танланг —</option>' +
+      ROUTE_REGIONS.map(r => `<option value="${r}">${r}</option>`).join('');
+  });
+  if (saved.from) fromSel.value = saved.from;
+  if (saved.to) toSel.value = saved.to;
+
+  document.getElementById('routeSheetOverlay').classList.add('open');
+}
+
+function closeRouteSheet(){
+  document.getElementById('routeSheetOverlay').classList.remove('open');
+}
+
+function saveRoute(){
+  const from = document.getElementById('routeFromSelect').value;
+  const to = document.getElementById('routeToSelect').value;
+  if (!from || !to) { alert('Иккала нуқтани танланг'); return; }
+  if (from === to) { alert('А ва Б нуқта бир хил бўлмаслиги керак'); return; }
+
+  localStorage.setItem('driver_route', JSON.stringify({ from, to }));
+
+  // Firestorega saqlash
+  if (telegramUser.id && db) {
+    db.collection('users').doc(String(telegramUser.id)).set(
+      { routeFrom: from, routeTo: to }, { merge: true }
+    );
+  }
+
+  // Tugmani rang o'zgartirish
+  document.getElementById('routeSetBtn').classList.add('has-route');
+  closeRouteSheet();
+}
+
+// Sahifa yuklanganida saqlangan yo'nalishni ko'rsatish
+(function initRouteBtn(){
+  const saved = JSON.parse(localStorage.getItem('driver_route')||'{}');
+  if (saved.from && saved.to) {
+    const btn = document.getElementById('routeSetBtn');
+    if (btn) btn.classList.add('has-route');
+  }
+})();
 
 function requestNotificationPermission(){
   try {
