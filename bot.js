@@ -315,66 +315,63 @@ bot.on('callback_query', async (query) => {
   }
 });
 
-// ── Yangi order → mos haydovchilarga xabar ───────────────────────────────
-let initialized = false;
-db.collection('orders')
-  .orderBy('createdAt', 'desc')
-  .onSnapshot(async (snap) => {
-    if (!initialized) { initialized = true; return; } // Birinchi yuklanishni o'tkazib yuborish
 
-    for (const change of snap.docChanges()) {
-      if (change.type !== 'added') continue;
+// ── Yangi travel → mos haydovchilarga xabar ──────────────────────────────
+async function notifyDrivers(from, to, type, sender) {
+  if (!from || !to) return;
+  const usersSnap = await db.collection('users')
+    .where('role', '==', 'driver')
+    .where('notifications', '==', true)
+    .get();
 
-      const order = change.doc.data();
-      const createdAt = order.createdAt?.toDate?.() || new Date(0);
-      if (Date.now() - createdAt.getTime() > 30_000) continue;
+  for (const doc of usersSnap.docs) {
+    const driver = doc.data();
+    if (!driver.chatId) continue;
 
-      const from = order.from || '';
-      const to = order.to || '';
-      const type = order.type === 'person' ? '👤 Yo\'lovchi' : '📦 Jo\'natma';
-      const sender = order.telegramUsername || '';
+    const driverFrom = driver.routeFrom || '';
+    const driverTo   = driver.routeTo   || '';
+    if (driverFrom && driverTo) {
+      const match = (driverFrom === from && driverTo === to) ||
+                    (driverFrom === to   && driverTo === from);
+      if (!match) continue;
+    }
 
-      if (!from || !to) continue;
+    const text =
+      `🔔 *Янги эълон!*\n\n` +
+      `${type}\n` +
+      `📍 ${from} → ${to}\n` +
+      (sender ? `👤 ${sender}\n` : '') +
+      `\n_Mini appda batafsil ko'ring_ 👇`;
 
-      try {
-        // Mos haydovchilarni topish
-        const usersSnap = await db.collection('users')
-          .where('role', '==', 'driver')
-          .where('notifications', '==', true)
-          .get();
+    await bot.sendMessage(driver.chatId, text, {
+      parse_mode: 'Markdown',
+      reply_markup: { inline_keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }]] }
+    });
+  }
+}
 
-        for (const doc of usersSnap.docs) {
-          const driver = doc.data();
-          if (!driver.chatId) continue;
+let initOrders = false;
+db.collection('orders').orderBy('createdAt','desc')
+  .onSnapshot(async snap => {
+    if (!initOrders) { initOrders = true; return; }
+    for (const ch of snap.docChanges()) {
+      if (ch.type !== 'added') continue;
+      const d = ch.doc.data();
+      if (Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime() > 30000) continue;
+      const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
+      await notifyDrivers(d.from||'', d.to||'', type, d.telegramUsername||'').catch(console.error);
+    }
+  });
 
-          // Haydovchining yo'nalishi mos kelsa
-          const driverFrom = driver.routeFrom || '';
-          const driverTo = driver.routeTo || '';
-          if (driverFrom && driverTo) {
-            const match = (driverFrom === from && driverTo === to) ||
-                          (driverFrom === to && driverTo === from);
-            if (!match) continue;
-          }
-
-          const text =
-            `🔔 *Yangi e'lon!*\n\n` +
-            `${type}\n` +
-            `📍 ${from} → ${to}\n` +
-            (sender ? `👤 ${sender}\n` : '') +
-            `\n_Mini appda batafsil ko'ring_ 👇`;
-
-          await bot.sendMessage(driver.chatId, text, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-              inline_keyboard: [[
-                { text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
-              ]]
-            }
-          });
-        }
-      } catch (err) {
-        console.error('Notification xatosi:', err.message);
-      }
+let initTravels = false;
+db.collection('travels').orderBy('createdAt','desc')
+  .onSnapshot(async snap => {
+    if (!initTravels) { initTravels = true; return; }
+    for (const ch of snap.docChanges()) {
+      if (ch.type !== 'added') continue;
+      const d = ch.doc.data();
+      if (Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime() > 30000) continue;
+      await notifyDrivers(d.from||'', d.to||d.dest||'', '🚗 Сафар', d.telegramUsername||'').catch(console.error);
     }
   });
 
