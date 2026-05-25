@@ -1858,12 +1858,12 @@ function tryTelegramNotifPopup(){
 }
 
 function requestNotificationPermission(){
-  if (!window.Telegram?.WebApp) return;
-  if (localStorage.getItem('notif_asked')) return;
-  setTimeout(() => {
-    if (localStorage.getItem('notif_asked')) return;
-    if (!showNotifOnboardOverlay()) tryTelegramNotifPopup();
-  }, 400);
+  if (!window.Telegram?.WebApp?.requestWriteAccess) return;
+  Telegram.WebApp.requestWriteAccess(granted => {
+    if (granted && telegramUser.id && db) {
+      db.collection('users').doc(String(telegramUser.id)).set({ notifications: true }, { merge: true });
+    }
+  });
 }
 
 function getTelegramName(){
@@ -3781,10 +3781,19 @@ function flyToMyLocation(){
 
 function getCurrentPosition(){
   return new Promise((resolve, reject) => {
-    if (!navigator.geolocation) {
-      reject(new Error('Geolocation unavailable'));
+    // Telegram LocationManager — native dialog (avvalgi xulq)
+    const lm = window.Telegram?.WebApp?.LocationManager;
+    if (lm) {
+      const doGet = () => lm.getLocation(loc => {
+        if (loc && loc.latitude != null) resolve({ latitude: loc.latitude, longitude: loc.longitude });
+        else reject(new Error('Location unavailable'));
+      });
+      if (lm.isInited) { doGet(); return; }
+      lm.init(() => { doGet(); });
       return;
     }
+    // Fallback: navigator.geolocation
+    if (!navigator.geolocation) { reject(new Error('Geolocation unavailable')); return; }
     navigator.geolocation.getCurrentPosition(
       pos => resolve(pos.coords),
       err => reject(err),
