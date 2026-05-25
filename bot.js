@@ -6,8 +6,9 @@ const TelegramBot = require('node-telegram-bot-api');
 const admin = require('firebase-admin');
 
 // ── Firebase ──────────────────────────────────────────────────────────────
+const serviceAccount = require('./yolcar-30649-firebase-adminsdk-fbsvc-491c85b007.json');
 admin.initializeApp({
-  credential: admin.credential.applicationDefault(),
+  credential: admin.credential.cert(serviceAccount),
   projectId: 'yolcar-30649',
 });
 const db = admin.firestore();
@@ -72,6 +73,27 @@ const notifMenu = (notif) => ({
   ]
 });
 
+// ── Viloyatlar ────────────────────────────────────────────────────────────
+const REGIONS = [
+  'Тошкент', 'Самарқанд', 'Бухоро', 'Андижон',
+  'Фарғона', 'Наманган', 'Қашқадарё', 'Сурхондарё',
+  'Хоразм', 'Навоий', 'Жиззах', 'Сирдарё', 'Қорақалпоғистон'
+];
+
+const regionKeyboard = (prefix) => ({
+  inline_keyboard: [
+    ...REGIONS.reduce((rows, r, i) => {
+      const row = Math.floor(i / 2);
+      if (!rows[row]) rows[row] = [];
+      rows[row].push({ text: r, callback_data: `${prefix}:${r}` });
+      return rows;
+    }, [])
+  ]
+});
+
+// Vaqtinchalik sessiya (A manzilni saqlash)
+const driverSession = {};
+
 async function getUser(telegramId) {
   const doc = await db.collection('users').doc(String(telegramId)).get();
   return doc.exists ? doc.data() : null;
@@ -103,12 +125,14 @@ bot.onText(/\/start/, async (msg) => {
     if (existing && existing.role) {
       // Қайтган фойдаланувчи
       await bot.sendMessage(chatId,
-        `👋 Қайтиб келдингиз, *${name}*!`,
+        `👋 Хуш келибсиз, *${name}*!\n\n` +
+        `🚀 duvduv — юк ва йўловчи топиш платформаси\n\n` +
+        `Қуйидаги тугмани босиб иловани очинг 👇`,
         {
           parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [[
-              { text: '✅ Қани бошладик', web_app: { url: APP_URL } }
+              { text: '🚀  Қани бошладик  →', web_app: { url: APP_URL } }
             ]]
           }
         }
@@ -116,18 +140,21 @@ bot.onText(/\/start/, async (msg) => {
     } else {
       // Янги фойдаланувчи — хабарнома рухсати
       await bot.sendMessage(chatId,
-        `🔔 *Хабарнома рухсати*\n\n` +
-        `*${name}*, duvduv сизга қуйидагилар ҳақида хабар юборади:\n\n` +
-        `📦 Юкингизга ҳайдовчи топилганда\n` +
-        `👤 Йўловчи сўрови келганда\n` +
-        `⏰ Эълон муддати тугаётганда\n\n` +
-        `━━━━━━━━━━━━━━━━━━\n` +
-        `Рухсат бериб, иловани очинг 👇`,
+        `👋 Салом, *${name}*!\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `🔔 *Хабарнома рухсати*\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n\n` +
+        `duvduv сизга муҳим хабарлар юборади:\n\n` +
+        `   📦  Юкингизга ҳайдовчи топилганда\n` +
+        `   👤  Йўловчи сўрови келганда\n` +
+        `   ⏰  Эълон муддати тугаётганда\n\n` +
+        `━━━━━━━━━━━━━━━━━━━━\n` +
+        `_Рухсат бериш учун тугмани босинг_ 👇`,
         {
           parse_mode: 'Markdown',
           reply_markup: {
             inline_keyboard: [[
-              { text: '✅ Ҳа, кираман', web_app: { url: APP_URL } }
+              { text: '✅  Ҳа, рухсат бераман  →', web_app: { url: APP_URL } }
             ]]
           }
         }
@@ -143,13 +170,24 @@ bot.onText(/\/menu/, async (msg) => {
   const user = msg.from;
   const existing = await getUser(user.id);
   const notif = existing?.notifications !== false;
+  const fromCity = existing?.routeFrom || '—';
+  const toCity = existing?.routeTo || '—';
+  const isDriver = existing?.role === 'driver';
+
+  const keyboard = {
+    inline_keyboard: [
+      [{ text: '🚀  Қани бошладик  →', web_app: { url: APP_URL } }],
+      ...(isDriver ? [[{ text: `🗺 Йўналиш: ${fromCity} → ${toCity}`, callback_data: 'set_route' }]] : []),
+      [notif
+        ? { text: '🔔 Хабарномалар: ёқилган ✓', callback_data: 'notif_off' }
+        : { text: '🔕 Хабарномалар: ўчирилган', callback_data: 'notif_on' }
+      ],
+    ]
+  };
 
   await bot.sendMessage(msg.chat.id,
-    `📋 *Асосий меню*`,
-    {
-      parse_mode: 'Markdown',
-      reply_markup: notifMenu(notif)
-    }
+    `📋 *Менюм*`,
+    { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 });
 
@@ -179,18 +217,56 @@ bot.on('callback_query', async (query) => {
 
       await saveUser(user, { role });
 
+      if (role === 'driver') {
+        await bot.editMessageText(
+          `✅ Ажойиб, *${user.first_name}*! Сиз ҳайдовчисиз 🚗\n\n📍 Қаердан кетасиз? *(А нуқта)*`,
+          { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: regionKeyboard('from') }
+        );
+      } else {
+        await bot.editMessageText(
+          `✅ Ажойиб, *${user.first_name}*!\n\nЮк ёки одам жўнатиш учун иловани очинг 📦`,
+          { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown',
+            reply_markup: { inline_keyboard: [[{ text: '🚀 Қани бошладик →', web_app: { url: APP_URL } }]] }
+          }
+        );
+      }
+    }
+
+    // Yo'nalish o'rnatish
+    if (data === 'set_route') {
       await bot.editMessageText(
-        `✅ Ажойиб, *${user.first_name}*!\n\n` +
-        `Ролингиз: *${roleText}*\n\n` +
-        `${role === 'driver'
-          ? 'Тошкентдан Самарқанд, Бухоро ёки бошқа шаҳарга кетаяотганингизда мос жўнатмалар ҳақида хабардор қиламиз! 🚗'
-          : 'Юк ёки одам жўнатишингиз керак бўлганда мос ҳайдовчиларни топинг! 📦'
-        }`,
-        {
-          chat_id: chatId,
-          message_id: msgId,
-          parse_mode: 'Markdown',
-          reply_markup: mainMenu()
+        `🗺 *Йўналишни танланг*\n\n📍 Қаердан кетасиз? *(А нуқта)*`,
+        { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: regionKeyboard('from') }
+      );
+    }
+
+    // A nuqta tanlandi
+    if (data.startsWith('from:')) {
+      const city = data.split(':')[1];
+      driverSession[user.id] = { from: city };
+      await bot.editMessageText(
+        `✅ *А нуқта:* ${city}\n\n📍 Қаерга кетасиз? *(Б нуқта)*`,
+        { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: regionKeyboard('to') }
+      );
+    }
+
+    // B nuqta tanlandi
+    if (data.startsWith('to:')) {
+      const city = data.split(':')[1];
+      const fromCity = driverSession[user.id]?.from || '';
+      delete driverSession[user.id];
+
+      await db.collection('users').doc(String(user.id)).set(
+        { routeFrom: fromCity, routeTo: city },
+        { merge: true }
+      );
+
+      await bot.editMessageText(
+        `✅ *Йўналиш сақланди!*\n\n` +
+        `🚗 ${fromCity} → ${city}\n\n` +
+        `Энди бу йўналишдаги эълонлар ҳақида хабардор қиламиз 🔔`,
+        { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown',
+          reply_markup: { inline_keyboard: [[{ text: '🚀 Қани бошладик →', web_app: { url: APP_URL } }]] }
         }
       );
     }
@@ -271,9 +347,14 @@ db.collection('orders')
           const driver = doc.data();
           if (!driver.chatId) continue;
 
-          // Haydovchining tanlangan viloyati mos kelsa
-          const driverRegion = driver.region || '';
-          if (driverRegion && driverRegion !== from && driverRegion !== to) continue;
+          // Haydovchining yo'nalishi mos kelsa
+          const driverFrom = driver.routeFrom || '';
+          const driverTo = driver.routeTo || '';
+          if (driverFrom && driverTo) {
+            const match = (driverFrom === from && driverTo === to) ||
+                          (driverFrom === to && driverTo === from);
+            if (!match) continue;
+          }
 
           const text =
             `🔔 *Yangi e'lon!*\n\n` +
