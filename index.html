@@ -1865,7 +1865,9 @@ function closeNotifOnboardOverlay(){
 
 function saveNotifPermissionGranted(granted){
   if (granted && telegramUser.id && db) {
-    db.collection('users').doc(String(telegramUser.id)).set({ notifications: true }, { merge: true });
+    db.collection('users').doc(String(telegramUser.id)).set(
+      { notifications: true, chatId: telegramUser.id }, { merge: true }
+    );
   }
 }
 
@@ -2827,7 +2829,7 @@ function onDriverDistrictChanged(district){
 }
 
 function ensureDriverDistrictPicker(){
-  const track = document.getElementById('driverDistrictPickerTrack');
+  let track = document.getElementById('driverDistrictPickerTrack');
   if (!track || !selectedDriverRegion) return;
   const districts = getDistrictPickerList(selectedDriverRegion);
   const list = [DRIVER_DISTRICT_ALL, ...districts];
@@ -2838,16 +2840,23 @@ function ensureDriverDistrictPicker(){
   if (!driverDistrictPickerBuilt || lastDriverDistrictKey !== key) {
     lastDriverDistrictKey = key;
     driverDistrictPickerBuilt = true;
-    delete track.dataset.pickerBound;
+    // Yig'ilib qolgan scroll listener'larni tozalash uchun elementni yangisi bilan almashtiramiz
+    const fresh = document.createElement('div');
+    fresh.className = track.className;
+    fresh.id = track.id;
+    track.parentNode.replaceChild(fresh, track);
+    track = fresh;
     buildRegionPickerTrack(track, list);
     bindRegionPickerScroll(track, onDriverDistrictChanged);
   }
   const scrollTarget = selectedDriverDistrict || DRIVER_DISTRICT_ALL;
   const finishLayout = () => {
-    layoutHorizontalPickerSpacers(track);
-    scrollPickerToRegion(track, scrollTarget, false);
-    track.dataset.committedRegion = scrollTarget;
-    updateRegionPickerVisuals(true, track, null);
+    const t = document.getElementById('driverDistrictPickerTrack');
+    if (!t) return;
+    layoutHorizontalPickerSpacers(t);
+    scrollPickerToRegion(t, scrollTarget, false);
+    t.dataset.committedRegion = scrollTarget;
+    updateRegionPickerVisuals(true, t, null);
   };
   requestAnimationFrame(() => requestAnimationFrame(finishLayout));
 }
