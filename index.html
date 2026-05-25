@@ -514,13 +514,13 @@ body.view-sender .header{background:var(--app-bg)!important}
   transition:bottom .28s ease;
 }
 .map-route-btn{
-  position:absolute;right:14px;z-index:12;
+  position:absolute;left:14px;z-index:12;
   width:48px;height:48px;border-radius:50%;border:none;padding:0;cursor:pointer;
   background:rgba(255,255,255,.88);
   backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
   box-shadow:0 4px 16px rgba(42,171,238,.18);
   display:flex;align-items:center;justify-content:center;
-  bottom:calc(136px + max(12px, env(safe-area-inset-bottom)));
+  bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
   transition:bottom .28s ease;
 }
 .map-route-btn svg{width:22px;height:22px;stroke:var(--tg-blue)}
@@ -2091,7 +2091,7 @@ let lastDriverDistrictKey = '';
 let driverDistrictRevealTimer = null;
 let driverDistrictCollapseTimer = null;
 const DRIVER_DISTRICT_DELAY_MS = 3000;
-const DRIVER_DISTRICT_COLLAPSE_MS = 7000;
+const DRIVER_DISTRICT_COLLAPSE_MS = 0; // auto-collapse o'chirilgan
 const DRIVER_DISTRICT_ALL = 'Hammasi';
 const PICKER_LOOP_COPIES = 3;
 const DRIVER_PICKER_SETTLE_MS = 110;
@@ -2759,10 +2759,12 @@ function scheduleDriverDistrictCollapse(){
   if (!document.body.classList.contains('view-driver')) return;
   const panel = document.getElementById('driverDistrictPanel');
   if (!panel?.classList.contains('is-open')) return;
-  driverDistrictCollapseTimer = setTimeout(() => {
-    driverDistrictCollapseTimer = null;
-    collapseDriverDistrictPanel();
-  }, DRIVER_DISTRICT_COLLAPSE_MS);
+  if (DRIVER_DISTRICT_COLLAPSE_MS > 0) {
+    driverDistrictCollapseTimer = setTimeout(() => {
+      driverDistrictCollapseTimer = null;
+      collapseDriverDistrictPanel();
+    }, DRIVER_DISTRICT_COLLAPSE_MS);
+  }
 }
 
 function bumpDriverDistrictActivity(){
