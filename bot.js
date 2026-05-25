@@ -93,46 +93,45 @@ async function saveUser(user, extra = {}) {
 // ── /start ────────────────────────────────────────────────────────────────
 bot.onText(/\/start/, async (msg) => {
   const user = msg.from;
-  const name = user.first_name || 'Do\'st';
+  const name = user.first_name || 'Дўст';
   const chatId = msg.chat.id;
 
   try {
+    await saveUser(user);
     const existing = await getUser(user.id);
 
     if (existing && existing.role) {
-      await saveUser(user);
-      const roleText = existing.role === 'driver' ? '🚗 Ҳайдовчи' : '📦 Жўнатувчи';
-
+      // Қайтган фойдаланувчи
       await bot.sendMessage(chatId,
-        `👋 Қайта келдингиз, *${name}*!\n\n` +
-        `Ролингиз: ${roleText}\n\n` +
-        `Янги эълонлар ҳақида хабардор қиламиз 🔔`,
+        `👋 Қайтиб келдингиз, *${name}*!`,
         {
           parse_mode: 'Markdown',
-          reply_markup: persistentKeyboard
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '✅ Қани бошладик', web_app: { url: APP_URL } }
+            ]]
+          }
         }
       );
-      await bot.sendMessage(chatId, '⚙️ Созламалар:', {
-        reply_markup: mainMenu()
-      });
     } else {
-      await saveUser(user);
-
+      // Янги фойдаланувчи — хабарнома рухсати
       await bot.sendMessage(chatId,
-        `👋 Салом, *${name}*!\n\n` +
-        `*duvduv* — Ўзбекистон бўйлаб юк ва йўловчи ташиш платформаси.\n\n` +
-        `Бошлаш учун тугмани босинг 👇`,
+        `🔔 *Хабарнома рухсати*\n\n` +
+        `*${name}*, duvduv сизга қуйидагилар ҳақида хабар юборади:\n\n` +
+        `📦 Юкингизга ҳайдовчи топилганда\n` +
+        `👤 Йўловчи сўрови келганда\n` +
+        `⏰ Эълон муддати тугаётганда\n\n` +
+        `━━━━━━━━━━━━━━━━━━\n` +
+        `Рухсат бериб, иловани очинг 👇`,
         {
           parse_mode: 'Markdown',
-          reply_markup: persistentKeyboard
+          reply_markup: {
+            inline_keyboard: [[
+              { text: '✅ Ҳа, кираман', web_app: { url: APP_URL } }
+            ]]
+          }
         }
       );
-      await bot.sendMessage(chatId, '👇 Иловани очинг:', {
-        reply_markup: openAppInline
-      });
-      await bot.sendMessage(chatId, '👇 Ролни танланг:', {
-        reply_markup: roleMenu
-      });
     }
   } catch (err) {
     console.error('/start xatosi:', err.message);
