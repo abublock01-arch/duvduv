@@ -3,617 +3,614 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>duvduv — Admin Panel</title>
+<title>duvduv Admin</title>
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
-:root{--blue:#2AABEE;--blue-dark:#1a8cc8;--blue-light:#e8f6fd;--blue-mid:#b3e0f7;--white:#fff;--gray:#f4f7fb;--gray2:#e9eef5;--text:#1a2233;--text2:#5a6a85;--red:#e53e3e;--green:#22c55e;--orange:#f59e0b;--radius:14px;--shadow:0 2px 16px rgba(42,171,238,.10)}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--gray);color:var(--text);min-height:100vh}
+:root{
+  --blue:#2AABEE;--blue-d:#1a8cc8;--blue-l:#e8f6fd;
+  --bg:#f0f4f8;--white:#fff;--border:#e2e8f0;
+  --text:#0f172a;--text2:#64748b;--text3:#94a3b8;
+  --green:#10b981;--red:#ef4444;--orange:#f59e0b;--purple:#8b5cf6;
+  --sidebar-w:240px;--header-h:60px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh;font-size:14px}
 
-/* HEADER */
-.header{background:var(--white);border-bottom:2px solid var(--blue-light);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(42,171,238,.08)}
-.header-logo{display:flex;align-items:center;gap:10px}
-.logo-dot{width:36px;height:36px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center}
-.logo-dot svg{width:20px;height:20px;fill:white}
-.header-logo h1{font-size:20px;font-weight:800;color:var(--blue);letter-spacing:-.5px}
-.header-badge{font-size:12px;color:var(--text2);font-weight:500;background:var(--blue-light);padding:2px 8px;border-radius:20px}
-.live-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--green);font-weight:600}
-.live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.last-update{font-size:11px;color:var(--text2)}
+/* ── SIDEBAR ── */
+.sidebar{width:var(--sidebar-w);background:var(--text);min-height:100vh;position:fixed;top:0;left:0;z-index:100;display:flex;flex-direction:column;transition:transform .25s}
+.sb-logo{padding:20px 20px 16px;border-bottom:1px solid rgba(255,255,255,.08)}
+.sb-logo-inner{display:flex;align-items:center;gap:10px}
+.sb-icon{width:36px;height:36px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-icon svg{width:18px;height:18px;fill:white}
+.sb-brand{font-size:18px;font-weight:800;color:white;letter-spacing:-.5px}
+.sb-brand span{color:var(--blue)}
+.sb-sub{font-size:10px;color:rgba(255,255,255,.35);font-weight:500;letter-spacing:.8px;text-transform:uppercase;margin-top:1px}
+.sb-nav{padding:12px 10px;flex:1}
+.sb-section{font-size:10px;color:rgba(255,255,255,.3);font-weight:600;letter-spacing:.8px;text-transform:uppercase;padding:8px 10px 4px}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;cursor:pointer;color:rgba(255,255,255,.55);font-size:13px;font-weight:500;transition:all .15s;border:none;background:transparent;width:100%;text-align:left}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85)}
+.sb-item.active{background:var(--blue);color:white;font-weight:600}
+.sb-item .sb-emoji{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.sb-badge{margin-left:auto;background:rgba(255,255,255,.12);color:rgba(255,255,255,.6);font-size:10px;font-weight:700;padding:1px 7px;border-radius:20px}
+.sb-item.active .sb-badge{background:rgba(255,255,255,.2);color:white}
+.sb-footer{padding:14px 10px;border-top:1px solid rgba(255,255,255,.08)}
+.sb-live{display:flex;align-items:center;gap:8px;padding:0 10px}
+.sb-live-dot{width:7px;height:7px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-live-text{font-size:11px;color:rgba(255,255,255,.4)}
+.sb-live-time{margin-left:auto;font-size:11px;color:rgba(255,255,255,.25);font-variant-numeric:tabular-nums}
 
-/* MAIN */
-.main{max-width:1300px;margin:0 auto;padding:20px 16px}
+/* ── MAIN ── */
+.main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+.topbar{height:var(--header-h);background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text)}
+.topbar-sub{font-size:12px;color:var(--text2);margin-top:1px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar-stat{text-align:right}
+.topbar-stat-val{font-size:15px;font-weight:700;color:var(--blue)}
+.topbar-stat-label{font-size:11px;color:var(--text3)}
+.content{padding:24px 28px;flex:1}
 
-/* STATS */
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
-.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:1.5px solid var(--blue-light);display:flex;align-items:center;gap:12px;transition:transform .15s}
-.stat-card:hover{transform:translateY(-2px)}
-.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
-.si-blue{background:var(--blue-light)}.si-green{background:#dcfce7}.si-orange{background:#fef3c7}.si-purple{background:#ede9fe}
-.stat-label{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px}
-.stat-value{font-size:24px;font-weight:800;color:var(--text);line-height:1}
-.stat-sub{font-size:11px;color:var(--text2);margin-top:2px}
+/* ── STATS ── */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.stat{background:var(--white);border-radius:14px;padding:20px;border:1px solid var(--border);position:relative;overflow:hidden;transition:box-shadow .2s}
+.stat:hover{box-shadow:0 4px 20px rgba(0,0,0,.07)}
+.stat-label{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px}
+.stat-value{font-size:32px;font-weight:800;color:var(--text);line-height:1;margin-bottom:6px}
+.stat-delta{font-size:12px;color:var(--text2)}
+.stat-delta b{color:var(--green)}
+.stat-icon-bg{position:absolute;right:-10px;top:50%;transform:translateY(-50%);font-size:64px;opacity:.06}
+.stat-bar{height:3px;border-radius:2px;margin-top:14px}
+.bar-blue{background:linear-gradient(90deg,var(--blue),var(--blue-d))}
+.bar-green{background:linear-gradient(90deg,var(--green),#059669)}
+.bar-orange{background:linear-gradient(90deg,var(--orange),#d97706)}
+.bar-purple{background:linear-gradient(90deg,var(--purple),#7c3aed)}
 
-/* TABS */
-.tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--white);padding:6px;border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
-.tab-btn{flex:1;min-width:120px;padding:9px 14px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);background:transparent;transition:all .18s;white-space:nowrap}
-.tab-btn.active{background:var(--blue);color:white;box-shadow:0 2px 8px rgba(42,171,238,.3)}
-.tab-btn:hover:not(.active){background:var(--blue-light);color:var(--blue)}
-.tab-content{display:none}
-.tab-content.active{display:block}
+/* ── CARD ── */
+.card{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden;margin-bottom:20px}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:12px}
+.card-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.card-actions{display:flex;align-items:center;gap:8px}
 
-/* TOOLBAR */
-.toolbar{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
-.search-box{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--gray2);border-radius:10px;font-size:13px;outline:none;background:var(--white);color:var(--text);transition:border .15s}
-.search-box:focus{border-color:var(--blue)}
-.filter-select{padding:9px 12px;border:1.5px solid var(--gray2);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none;cursor:pointer}
+/* ── TOOLBAR ── */
+.toolbar{display:flex;gap:8px;align-items:center}
+.search{flex:1;position:relative}
+.search input{width:100%;padding:8px 12px 8px 36px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none;background:var(--bg);color:var(--text);transition:border .15s}
+.search input:focus{border-color:var(--blue);background:var(--white)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:14px;pointer-events:none}
+.select-filter{padding:8px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;background:var(--white);color:var(--text);outline:none;cursor:pointer}
+.select-filter:focus{border-color:var(--blue)}
+.btn{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;border:none;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--blue);color:white}.btn-primary:hover{background:var(--blue-d)}
+.btn-ghost{background:transparent;color:var(--text2);border:1.5px solid var(--border)}.btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
+.btn-danger{background:transparent;color:var(--red);border:1.5px solid #fecaca;font-size:12px;padding:5px 10px}.btn-danger:hover{background:#fef2f2}
+.btn:disabled{opacity:.5;cursor:not-allowed}
 
-/* TABLE */
-.table-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1.5px solid var(--blue-light)}
+/* ── TABLE ── */
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
-thead{background:var(--blue);color:white}
-th{padding:11px 14px;text-align:left;font-weight:600;font-size:12px;white-space:nowrap}
-td{padding:10px 14px;border-bottom:1px solid var(--gray2);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--blue-light)}
-.table-empty{text-align:center;padding:40px;color:var(--text2);font-size:14px}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;border-bottom:2px solid var(--border);background:var(--bg);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--border);vertical-align:middle}
+tbody tr:last-child td{border-bottom:none}
+tbody tr:hover{background:#f8fafc}
+.table-empty{text-align:center;padding:48px;color:var(--text3)}
+.table-empty .te-icon{font-size:36px;margin-bottom:8px}
+.table-empty p{font-size:14px}
 
-/* BADGES */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.bb{background:var(--blue-light);color:var(--blue)}.bg{background:#dcfce7;color:#16a34a}.bo{background:#fef3c7;color:#d97706}.br{background:#fee2e2;color:var(--red)}.bp{background:#ede9fe;color:#7c3aed}
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:6px;font-size:11px;font-weight:600;white-space:nowrap}
+.badge-blue{background:#dbeafe;color:#1d4ed8}
+.badge-green{background:#d1fae5;color:#065f46}
+.badge-red{background:#fee2e2;color:#991b1b}
+.badge-orange{background:#fef3c7;color:#92400e}
+.badge-purple{background:#ede9fe;color:#5b21b6}
+.badge-gray{background:var(--bg);color:var(--text2)}
 
-/* USER */
-.user-cell{display:flex;align-items:center;gap:10px}
-.avatar{width:30px;height:30px;border-radius:50%;background:var(--blue);color:white;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.uname{font-weight:600;font-size:13px}.uun{font-size:11px;color:var(--blue)}
-.route{display:flex;align-items:center;gap:4px;font-size:12px}
-.rc{background:var(--gray);padding:2px 6px;border-radius:5px;font-weight:500}.ra{color:var(--blue)}
-code{font-size:11px;background:var(--gray);padding:2px 6px;border-radius:5px}
-.time-cell{font-size:11px;color:var(--text2)}
+/* ── AVATAR ── */
+.av{width:32px;height:32px;border-radius:50%;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;color:white}
+.user-row{display:flex;align-items:center;gap:10px}
+.user-info .un{font-weight:600;color:var(--text);font-size:13px}
+.user-info .uu{font-size:11px;color:var(--blue)}
+.route-wrap{display:flex;align-items:center;gap:5px}
+.route-city{background:var(--bg);border:1px solid var(--border);padding:2px 7px;border-radius:5px;font-size:12px;font-weight:500;color:var(--text)}
+.route-arrow{color:var(--text3);font-size:12px}
+code{font-size:11px;background:var(--bg);padding:2px 6px;border-radius:5px;color:var(--text2);font-family:'SF Mono',monospace}
+.time{font-size:11px;color:var(--text3)}
 
-/* PAGINATION */
-.pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--gray2)}
-.page-info{font-size:12px;color:var(--text2)}
-.page-btns{display:flex;gap:4px}
-.page-btn{padding:5px 10px;border:1.5px solid var(--gray2);border-radius:7px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)}
-.page-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
-.page-btn:hover:not(.active):not(:disabled){border-color:var(--blue);color:var(--blue)}
-.page-btn:disabled{opacity:.4;cursor:not-allowed}
+/* ── PAGINATION ── */
+.pager{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-top:1px solid var(--border)}
+.pager-info{font-size:12px;color:var(--text3)}
+.pager-btns{display:flex;gap:3px}
+.pager-btn{padding:4px 10px;border:1.5px solid var(--border);border-radius:6px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);transition:all .12s}
+.pager-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
+.pager-btn:hover:not(.active):not(:disabled){border-color:var(--blue);color:var(--blue)}
+.pager-btn:disabled{opacity:.35;cursor:not-allowed}
 
-/* LOADING */
-.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--text2)}
-.spinner{width:18px;height:18px;border:2.5px solid var(--blue-mid);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+/* ── MAP ── */
+#adminMap{width:100%;height:520px}
+.map-wrap{border-radius:0}
+.map-topbar{display:flex;gap:16px;padding:14px 20px;border-bottom:1px solid var(--border);background:var(--bg)}
+.map-stat-mini{text-align:center;flex:1}
+.map-stat-mini .v{font-size:20px;font-weight:800;color:var(--blue)}
+.map-stat-mini .l{font-size:11px;color:var(--text2);margin-top:1px}
+.map-legend{display:flex;gap:20px;padding:12px 20px;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-weight:500}
+.legend-dot{width:10px;height:10px;border-radius:50%}
 
-/* MAP */
-#adminMap{width:100%;height:500px;border-radius:var(--radius);overflow:hidden}
-.map-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1.5px solid var(--blue-light);overflow:hidden}
-.map-legend{display:flex;gap:16px;padding:12px 16px;background:var(--white);border-top:1px solid var(--gray2);flex-wrap:wrap}
-.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
-.legend-dot{width:12px;height:12px;border-radius:50%}
-.map-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.map-stat{background:var(--white);border-radius:10px;padding:12px 14px;border:1.5px solid var(--blue-light);text-align:center}
-.map-stat-val{font-size:22px;font-weight:800;color:var(--blue)}
-.map-stat-label{font-size:11px;color:var(--text2);margin-top:2px}
+/* ── BROADCAST ── */
+.bc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.rc-btn{padding:12px;border:2px solid var(--border);border-radius:10px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);text-align:center;transition:all .15s}
+.rc-btn.sel{border-color:var(--blue);background:var(--blue-l);color:var(--blue-d)}
+.rc-btn:hover:not(.sel){border-color:var(--border);background:var(--bg)}
+.rc-btn .rc-icon{font-size:22px;margin-bottom:4px}
+.rc-btn .rc-count{font-size:11px;font-weight:400;color:inherit;opacity:.7;margin-top:2px}
+.msg-area{width:100%;padding:14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;resize:vertical;min-height:120px;outline:none;font-family:inherit;color:var(--text);transition:border .15s;line-height:1.5}
+.msg-area:focus{border-color:var(--blue);background:var(--white)}
+.bc-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px}
+.char-hint{font-size:11px;color:var(--text3)}
+.send-btn{padding:11px 28px;background:var(--blue);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px}
+.send-btn:hover:not(:disabled){background:var(--blue-d)}
+.send-btn:disabled{opacity:.55;cursor:not-allowed}
 
-/* BROADCAST */
-.broadcast-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1.5px solid var(--blue-light);padding:20px;margin-bottom:16px}
-.broadcast-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
-.recipient-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
-.recipient-btn{padding:10px 8px;border:2px solid var(--gray2);border-radius:10px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);text-align:center;transition:all .15s}
-.recipient-btn.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
-.recipient-btn:hover:not(.selected){border-color:var(--blue-mid);color:var(--blue)}
-.broadcast-or{margin-bottom:12px}
-.broadcast-or label{font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:6px}
-.chatid-input{width:100%;padding:9px 12px;border:1.5px solid var(--gray2);border-radius:8px;font-size:13px;outline:none;background:var(--white)}
-.chatid-input:focus{border-color:var(--blue)}
-.msg-textarea{width:100%;padding:12px;border:1.5px solid var(--gray2);border-radius:10px;font-size:13px;resize:vertical;min-height:100px;outline:none;font-family:inherit;color:var(--text)}
-.msg-textarea:focus{border-color:var(--blue)}
-.broadcast-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:10px}
-.char-count{font-size:11px;color:var(--text2)}
-.send-btn{padding:10px 24px;background:var(--blue);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px}
-.send-btn:hover{background:var(--blue-dark)}
-.send-btn:disabled{opacity:.6;cursor:not-allowed}
-.broadcast-log{margin-top:14px;max-height:180px;overflow-y:auto}
-.log-item{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
-.log-ok{background:#dcfce7;color:#16a34a}.log-err{background:#fee2e2;color:var(--red)}.log-info{background:var(--blue-light);color:var(--blue)}
-
-/* DELETE BTN */
-.del-btn{padding:4px 8px;background:transparent;border:1.5px solid #fca5a5;color:var(--red);border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s}
-.del-btn:hover{background:#fee2e2}
+/* LOG TABLE */
+.log-status-ok{display:flex;align-items:center;gap:5px;color:var(--green);font-size:12px;font-weight:600}
+.log-status-wait{color:var(--orange);font-size:12px;font-weight:600}
+.msg-preview{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text2);font-size:12px}
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center}
-.modal-overlay.show{display:flex}
-.modal{background:var(--white);border-radius:var(--radius);padding:24px;max-width:340px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.18)}
-.modal h3{font-size:16px;font-weight:700;margin-bottom:8px}
-.modal p{font-size:13px;color:var(--text2);margin-bottom:20px}
+.overlay{position:fixed;inset:0;background:rgba(15,23,42,.45);z-index:500;display:none;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.overlay.show{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:28px;max-width:380px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-icon{width:52px;height:52px;background:#fee2e2;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.modal h3{font-size:18px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:24px}
 .modal-btns{display:flex;gap:10px;justify-content:flex-end}
-.modal-cancel{padding:8px 18px;border:1.5px solid var(--gray2);border-radius:8px;background:var(--white);cursor:pointer;font-weight:600;font-size:13px}
-.modal-confirm{padding:8px 18px;border:none;border-radius:8px;background:var(--red);color:white;cursor:pointer;font-weight:600;font-size:13px}
+.modal-cancel{padding:10px 20px;border:1.5px solid var(--border);border-radius:8px;background:var(--white);cursor:pointer;font-weight:600;font-size:13px;color:var(--text2)}
+.modal-cancel:hover{border-color:var(--text2)}
+.modal-confirm{padding:10px 20px;border:none;border-radius:8px;background:var(--red);color:white;cursor:pointer;font-weight:700;font-size:13px}
+.modal-confirm:hover{background:#dc2626}
 
-@media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)}.recipient-grid{grid-template-columns:repeat(2,1fr)}.map-stats{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.stat-value{font-size:20px}}
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:48px;gap:10px;color:var(--text3)}
+.spin{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%)}
+  .sidebar.open{transform:none}
+  .main{margin-left:0}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .bc-grid{grid-template-columns:repeat(2,1fr)}
+  .menu-toggle{display:flex!important}
+}
+.menu-toggle{display:none;width:36px;height:36px;border:none;background:var(--bg);border-radius:8px;cursor:pointer;align-items:center;justify-content:center;font-size:18px}
 </style>
 </head>
 <body>
 
-<header class="header">
-  <div class="header-logo">
-    <div class="logo-dot">
-      <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+<!-- SIDEBAR -->
+<aside class="sidebar" id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-inner">
+      <div class="sb-icon"><svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg></div>
+      <div><div class="sb-brand">duv<span>•</span>duv</div><div class="sb-sub">Admin Panel</div></div>
     </div>
-    <h1>duv<span style="color:#e53e3e">•</span>duv</h1>
-    <span class="header-badge">Admin Panel</span>
   </div>
-  <div style="display:flex;align-items:center;gap:12px">
-    <div class="live-badge"><div class="live-dot"></div> Real-time</div>
-    <div class="last-update" id="lastUpdate">—</div>
+  <nav class="sb-nav">
+    <div class="sb-section">Asosiy</div>
+    <button class="sb-item active" onclick="go('users',this)"><span class="sb-emoji">👥</span>Foydalanuvchilar<span class="sb-badge" id="nbUsers">0</span></button>
+    <button class="sb-item" onclick="go('orders',this)"><span class="sb-emoji">📦</span>Buyurtmalar<span class="sb-badge" id="nbOrders">0</span></button>
+    <button class="sb-item" onclick="go('travels',this)"><span class="sb-emoji">🚗</span>Safarlar<span class="sb-badge" id="nbTravels">0</span></button>
+    <div class="sb-section" style="margin-top:8px">Monitoring</div>
+    <button class="sb-item" onclick="go('map',this)"><span class="sb-emoji">🗺</span>Jonli xarita<span class="sb-badge" id="nbOnline">0</span></button>
+    <div class="sb-section" style="margin-top:8px">Boshqaruv</div>
+    <button class="sb-item" onclick="go('broadcast',this)"><span class="sb-emoji">📢</span>Xabar yuborish</button>
+  </nav>
+  <div class="sb-footer">
+    <div class="sb-live">
+      <div class="sb-live-dot"></div>
+      <span class="sb-live-text">Real-time bog'liq</span>
+      <span class="sb-live-time" id="liveTime">—</span>
+    </div>
   </div>
-</header>
+</aside>
 
+<!-- MAIN -->
 <div class="main">
-
-  <!-- STATS -->
-  <div class="stats">
-    <div class="stat-card"><div class="stat-icon si-blue">👥</div><div><div class="stat-label">Foydalanuvchilar</div><div class="stat-value" id="sUsers">—</div><div class="stat-sub" id="sDrivers">—</div></div></div>
-    <div class="stat-card"><div class="stat-icon si-orange">📦</div><div><div class="stat-label">Buyurtmalar</div><div class="stat-value" id="sOrders">—</div><div class="stat-sub" id="sOrdersSub">—</div></div></div>
-    <div class="stat-card"><div class="stat-icon si-green">🚗</div><div><div class="stat-label">Safarlar</div><div class="stat-value" id="sTravels">—</div><div class="stat-sub">Haydovchi yo'nalishlari</div></div></div>
-    <div class="stat-card"><div class="stat-icon si-purple">📍</div><div><div class="stat-label">Onlayn (GPS)</div><div class="stat-value" id="sOnline">—</div><div class="stat-sub">So'nggi 10 daqiqa</div></div></div>
-  </div>
-
-  <!-- TABS -->
-  <div class="tabs">
-    <button class="tab-btn active" onclick="switchTab('users')">👥 Foydalanuvchilar</button>
-    <button class="tab-btn" onclick="switchTab('orders')">📦 Buyurtmalar</button>
-    <button class="tab-btn" onclick="switchTab('travels')">🚗 Safarlar</button>
-    <button class="tab-btn" onclick="switchTab('map')">🗺 Xarita</button>
-    <button class="tab-btn" onclick="switchTab('broadcast')">📢 Xabar yuborish</button>
-  </div>
-
-  <!-- USERS -->
-  <div class="tab-content active" id="tab-users">
-    <div class="toolbar">
-      <input class="search-box" type="text" placeholder="🔍 Ism, username yoki ID..." oninput="filterTable('users',this.value)"/>
-      <select class="filter-select" onchange="filterUsers(this.value)">
-        <option value="all">Barchasi</option>
-        <option value="driver">🚗 Haydovchilar</option>
-        <option value="notif">🔔 Bildirishnoma yoqilgan</option>
-        <option value="online">📍 Onlayn (GPS)</option>
-      </select>
-    </div>
-    <div class="table-card">
-      <div class="table-wrap">
-        <table><thead><tr><th>#</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Yo'nalish</th><th>Turi</th><th>GPS</th><th>Bildirishnoma</th><th>Faollik</th><th>Xabar</th></tr></thead>
-        <tbody id="usersBody"><tr><td colspan="9"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
-      </div>
-      <div class="pagination"><div class="page-info" id="usersPageInfo">—</div><div class="page-btns" id="usersPageBtns"></div></div>
-    </div>
-  </div>
-
-  <!-- ORDERS -->
-  <div class="tab-content" id="tab-orders">
-    <div class="toolbar">
-      <input class="search-box" type="text" placeholder="🔍 Shahar yoki username..." oninput="filterTable('orders',this.value)"/>
-      <select class="filter-select" onchange="filterOrders(this.value)">
-        <option value="all">Barchasi</option>
-        <option value="package">📦 Jo'natma</option>
-        <option value="person">👤 Yo'lovchi</option>
-      </select>
-    </div>
-    <div class="table-card">
-      <div class="table-wrap">
-        <table><thead><tr><th>#</th><th>Turi</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th>O'chirish</th></tr></thead>
-        <tbody id="ordersBody"><tr><td colspan="7"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
-      </div>
-      <div class="pagination"><div class="page-info" id="ordersPageInfo">—</div><div class="page-btns" id="ordersPageBtns"></div></div>
-    </div>
-  </div>
-
-  <!-- TRAVELS -->
-  <div class="tab-content" id="tab-travels">
-    <div class="toolbar">
-      <input class="search-box" type="text" placeholder="🔍 Shahar yoki username..." oninput="filterTable('travels',this.value)"/>
-    </div>
-    <div class="table-card">
-      <div class="table-wrap">
-        <table><thead><tr><th>#</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th>O'chirish</th></tr></thead>
-        <tbody id="travelsBody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
-      </div>
-      <div class="pagination"><div class="page-info" id="travelsPageInfo">—</div><div class="page-btns" id="travelsPageBtns"></div></div>
-    </div>
-  </div>
-
-  <!-- MAP -->
-  <div class="tab-content" id="tab-map">
-    <div class="map-stats">
-      <div class="map-stat"><div class="map-stat-val" id="mOnline">0</div><div class="map-stat-label">📍 Onlayn foydalanuvchilar</div></div>
-      <div class="map-stat"><div class="map-stat-val" id="mDrivers">0</div><div class="map-stat-label">🚗 Haydovchilar (yo'nalish)</div></div>
-      <div class="map-stat"><div class="map-stat-val" id="mOrders">0</div><div class="map-stat-label">📦 Faol buyurtmalar</div></div>
-    </div>
-    <div class="map-card">
-      <div id="adminMap"></div>
-      <div class="map-legend">
-        <div class="legend-item"><div class="legend-dot" style="background:#2AABEE"></div> Haydovchi</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Mijoz</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Noma'lum</div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+      <div>
+        <div class="topbar-title" id="pageTitle">Foydalanuvchilar</div>
+        <div class="topbar-sub" id="pageSub">Barcha ro'yxatdan o'tgan foydalanuvchilar</div>
       </div>
     </div>
+    <div class="topbar-right">
+      <div class="topbar-stat"><div class="topbar-stat-val" id="tsOnline">0</div><div class="topbar-stat-label">📍 Onlayn</div></div>
+      <div style="width:1px;height:30px;background:var(--border)"></div>
+      <div class="topbar-stat"><div class="topbar-stat-val" id="tsTotal">0</div><div class="topbar-stat-label">Jami foydalanuvchi</div></div>
+    </div>
   </div>
 
-  <!-- BROADCAST -->
-  <div class="tab-content" id="tab-broadcast">
-    <div class="broadcast-card">
-      <div class="broadcast-title">📢 Xabar yuborish</div>
+  <div class="content">
+    <!-- STATS -->
+    <div class="stats" id="statsRow">
+      <div class="stat"><div class="stat-label">Foydalanuvchilar</div><div class="stat-value" id="sUsers">—</div><div class="stat-delta">Jami ro'yxatdan o'tgan</div><div class="stat-icon-bg">👥</div><div class="stat-bar bar-blue"></div></div>
+      <div class="stat"><div class="stat-label">Buyurtmalar</div><div class="stat-value" id="sOrders">—</div><div class="stat-delta" id="sOrdersSub">—</div><div class="stat-icon-bg">📦</div><div class="stat-bar bar-orange"></div></div>
+      <div class="stat"><div class="stat-label">Safarlar</div><div class="stat-value" id="sTravels">—</div><div class="stat-delta">Haydovchi yo'nalishlari</div><div class="stat-icon-bg">🚗</div><div class="stat-bar bar-green"></div></div>
+      <div class="stat"><div class="stat-label">Onlayn (GPS)</div><div class="stat-value" id="sOnline">—</div><div class="stat-delta">So'nggi 10 daqiqada</div><div class="stat-icon-bg">📍</div><div class="stat-bar bar-purple"></div></div>
+    </div>
 
-      <div style="margin-bottom:14px">
-        <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px">Kimga yuborilsin?</div>
-        <div class="recipient-grid">
-          <button class="recipient-btn selected" onclick="selectRecipient('all',this)">🌐 Hammaga<br><small style="font-weight:400;color:inherit" id="rcAll">—</small></button>
-          <button class="recipient-btn" onclick="selectRecipient('drivers',this)">🚗 Haydovchilar<br><small style="font-weight:400;color:inherit" id="rcDrivers">—</small></button>
-          <button class="recipient-btn" onclick="selectRecipient('passengers',this)">👤 Yo'lovchilar<br><small style="font-weight:400;color:inherit" id="rcPassengers">—</small></button>
-          <button class="recipient-btn" onclick="selectRecipient('single',this)">👤 Alohida<br><small style="font-weight:400;color:inherit">Telegram ID</small></button>
+    <!-- USERS -->
+    <div id="pg-users">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">👥 Foydalanuvchilar</div>
+          <div class="card-actions toolbar">
+            <div class="search"><span class="search-icon">🔍</span><input type="text" placeholder="Ism, username, ID..." oninput="filterTable('users',this.value)"/></div>
+            <select class="select-filter" onchange="filterUsers(this.value)"><option value="all">Barchasi</option><option value="driver">🚗 Haydovchilar</option><option value="notif">🔔 Bildirishnoma</option><option value="online">📍 Onlayn</option></select>
+          </div>
         </div>
-        <div id="singleIdWrap" style="display:none;margin-top:8px">
-          <input class="chatid-input" id="singleChatId" type="number" placeholder="Telegram ID kiriting (masalan: 123456789)"/>
+        <div class="table-wrap">
+          <table><thead><tr><th>#</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Yo'nalish</th><th>Turi</th><th>GPS</th><th>Bildirishnoma</th><th>Faollik</th><th></th></tr></thead>
+          <tbody id="usersBody"><tr><td colspan="9"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+        </div>
+        <div class="pager"><div class="pager-info" id="usersPI">—</div><div class="pager-btns" id="usersPB"></div></div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="pg-orders" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">📦 Buyurtmalar</div>
+          <div class="card-actions toolbar">
+            <div class="search"><span class="search-icon">🔍</span><input type="text" placeholder="Shahar yoki username..." oninput="filterTable('orders',this.value)"/></div>
+            <select class="select-filter" onchange="filterOrders(this.value)"><option value="all">Barchasi</option><option value="package">📦 Jo'natma</option><option value="person">👤 Yo'lovchi</option></select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>#</th><th>Turi</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th></th></tr></thead>
+          <tbody id="ordersBody"><tr><td colspan="7"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+        </div>
+        <div class="pager"><div class="pager-info" id="ordersPI">—</div><div class="pager-btns" id="ordersPB"></div></div>
+      </div>
+    </div>
+
+    <!-- TRAVELS -->
+    <div id="pg-travels" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🚗 Safarlar</div>
+          <div class="card-actions toolbar">
+            <div class="search"><span class="search-icon">🔍</span><input type="text" placeholder="Shahar yoki username..." oninput="filterTable('travels',this.value)"/></div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table><thead><tr><th>#</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th></th></tr></thead>
+          <tbody id="travelsBody"><tr><td colspan="6"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+        </div>
+        <div class="pager"><div class="pager-info" id="travelsPI">—</div><div class="pager-btns" id="travelsPB"></div></div>
+      </div>
+    </div>
+
+    <!-- MAP -->
+    <div id="pg-map" style="display:none">
+      <div class="card">
+        <div class="map-topbar">
+          <div class="map-stat-mini"><div class="v" id="mOnline">0</div><div class="l">📍 GPS onlayn</div></div>
+          <div class="map-stat-mini"><div class="v" id="mDrivers">0</div><div class="l">🚗 Haydovchilar</div></div>
+          <div class="map-stat-mini"><div class="v" id="mPassengers">0</div><div class="l">👤 Mijozlar</div></div>
+          <div class="map-stat-mini"><div class="v" id="mOrders">0</div><div class="l">📦 Buyurtmalar</div></div>
+        </div>
+        <div class="map-wrap"><div id="adminMap"></div></div>
+        <div class="map-legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#2AABEE"></div>Haydovchi (GPS bor)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>Mijoz (GPS bor)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:rgba(42,171,238,.3)"></div>Oflayn</div>
         </div>
       </div>
-
-      <div style="margin-bottom:8px">
-        <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px">Xabar matni (Markdown qo'llab-quvvatlanadi)</div>
-        <textarea class="msg-textarea" id="broadcastText" placeholder="*Katta yangilik!* Duvduv ilovasi yangilandi 🎉&#10;&#10;Yangi imkoniyatlarni ko'ring..." oninput="updateCharCount()"></textarea>
-      </div>
-      <div class="broadcast-footer">
-        <div class="char-count"><span id="charCount">0</span> / 4096 belgi</div>
-        <button class="send-btn" id="sendBtn" onclick="sendBroadcast()">
-          <span>📤 Yuborish</span>
-        </button>
-      </div>
     </div>
 
-    <!-- LOG -->
-    <div class="table-card">
-      <div style="padding:14px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--gray2)">📋 Yuborish tarixi</div>
-      <div class="table-wrap">
-        <table><thead><tr><th>Kimga</th><th>Matn</th><th>Yuborildi</th><th>Xato</th><th>Vaqt</th></tr></thead>
-        <tbody id="broadcastLog"><tr><td colspan="5"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+    <!-- BROADCAST -->
+    <div id="pg-broadcast" style="display:none">
+      <div class="card" style="margin-bottom:20px">
+        <div class="card-header"><div class="card-title">📢 Xabar yuborish</div></div>
+        <div style="padding:20px">
+          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Kimga?</div>
+          <div class="bc-grid">
+            <button class="rc-btn sel" onclick="selRc('all',this)"><div class="rc-icon">🌐</div><div>Hammaga</div><div class="rc-count" id="rcAll">— ta</div></button>
+            <button class="rc-btn" onclick="selRc('drivers',this)"><div class="rc-icon">🚗</div><div>Haydovchilar</div><div class="rc-count" id="rcDrivers">— ta</div></button>
+            <button class="rc-btn" onclick="selRc('passengers',this)"><div class="rc-icon">👤</div><div>Yo'lovchilar</div><div class="rc-count" id="rcPass">— ta</div></button>
+            <button class="rc-btn" onclick="selRc('single',this)"><div class="rc-icon">✍️</div><div>Alohida</div><div class="rc-count">Telegram ID</div></button>
+          </div>
+          <div id="singleWrap" style="display:none;margin-bottom:16px">
+            <input id="singleId" type="number" style="width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;outline:none" placeholder="Telegram ID (masalan: 123456789)"/>
+          </div>
+          <div style="font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Xabar <span style="font-weight:400;text-transform:none;letter-spacing:0">(Markdown qo'llab-quvvatlanadi: *kuchli*, _kursiv_, `kod`)</span></div>
+          <textarea class="msg-area" id="msgText" placeholder="Xabar matnini kiriting..." oninput="updChar()"></textarea>
+          <div class="bc-footer">
+            <div class="char-hint"><span id="charN">0</span> / 4096 belgi</div>
+            <button class="send-btn" id="sendBtn" onclick="sendBc()">📤 Yuborish</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">📋 Yuborish tarixi</div></div>
+        <div class="table-wrap">
+          <table><thead><tr><th>Kimga</th><th>Xabar</th><th>Natija</th><th>Xato</th><th>Vaqt</th></tr></thead>
+          <tbody id="bcLog"><tr><td colspan="5"><div class="loading"><div class="spin"></div></div></td></tr></tbody></table>
+        </div>
       </div>
     </div>
   </div>
-
 </div>
 
-<!-- DELETE MODAL -->
-<div class="modal-overlay" id="deleteModal">
+<!-- MODAL -->
+<div class="overlay" id="delModal">
   <div class="modal">
-    <h3>🗑 O'chirishni tasdiqlang</h3>
-    <p id="deleteModalText">Bu e'lonni o'chirishni istaysizmi? Bu amalni qaytarib bo'lmaydi.</p>
+    <div class="modal-icon">🗑</div>
+    <h3>O'chirishni tasdiqlang</h3>
+    <p id="delText">Bu amalni qaytarib bo'lmaydi. Haqiqatan ham o'chirmoqchimisiz?</p>
     <div class="modal-btns">
-      <button class="modal-cancel" onclick="closeDeleteModal()">Bekor qilish</button>
-      <button class="modal-confirm" id="deleteConfirmBtn">O'chirish</button>
+      <button class="modal-cancel" onclick="closeDel()">Bekor qilish</button>
+      <button class="modal-confirm" id="delConfirm">O'chirish</button>
     </div>
   </div>
 </div>
 
 <script>
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
-const FIREBASE_CONFIG = {
-  apiKey:'AIzaSyB2SyqLQIPfwW9Kax4fQNeQBoogAaQ8CzA',
-  authDomain:'yolcar-30649.firebaseapp.com',
-  projectId:'yolcar-30649',
-  storageBucket:'yolcar-30649.firebasestorage.app',
-  messagingSenderId:'491905484776',
-  appId:'1:491905484776:web:8cd64ce484bf5b06aa865d'
+const MAPBOX = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
+firebase.initializeApp({apiKey:'AIzaSyB2SyqLQIPfwW9Kax4fQNeQBoogAaQ8CzA',authDomain:'yolcar-30649.firebaseapp.com',projectId:'yolcar-30649',storageBucket:'yolcar-30649.firebasestorage.app',messagingSenderId:'491905484776',appId:'1:491905484776:web:8cd64ce484bf5b06aa865d'});
+const db=firebase.firestore();
+
+let allUsers=[],allOrders=[],allTravels=[],allMsgs=[];
+let filtUsers=[],filtOrders=[],filtTravels=[];
+const PG=20;let pages={users:1,orders:1,travels:1};
+let ufilt='all',ofilt='all',sq={users:'',orders:'',travels:''};
+let rcVal='all',mapInst=null,markers=[];
+let curPage='users';
+
+const PAGES={
+  users:{title:'Foydalanuvchilar',sub:'Barcha ro\'yxatdan o\'tgan foydalanuvchilar'},
+  orders:{title:'Buyurtmalar',sub:'Jo\'natmalar va yo\'lovchi so\'rovlari'},
+  travels:{title:'Safarlar',sub:'Haydovchilar e\'lon qilgan safarlar'},
+  map:{title:'Jonli xarita',sub:'Real-time GPS — foydalanuvchilar joylashuvi'},
+  broadcast:{title:'Xabar yuborish',sub:'Telegram orqali xabar va reklama'}
 };
-firebase.initializeApp(FIREBASE_CONFIG);
-const db = firebase.firestore();
 
-// ── State ──────────────────────────────────────────────────────────────────────
-let allUsers=[], allOrders=[], allTravels=[], allMsgs=[];
-let filteredUsers=[], filteredOrders=[], filteredTravels=[];
-const PAGE=20;
-let pages={users:1,orders:1,travels:1};
-let userFilter='all', orderFilter='all';
-let searchQ={users:'',orders:'',travels:''};
-let selectedRecipient='all';
-let mapInstance=null, mapMarkers=[];
+db.collection('users').orderBy('lastSeen','desc').onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('users');updMarkers();updCounts();});
+db.collection('orders').orderBy('createdAt','desc').onSnapshot(s=>{allOrders=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('orders');});
+db.collection('travels').orderBy('createdAt','desc').onSnapshot(s=>{allTravels=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('travels');});
+db.collection('admin_messages').orderBy('createdAt','desc').limit(50).onSnapshot(s=>{allMsgs=s.docs.map(d=>({id:d.id,...d.data()}));renderBcLog();});
 
-// ── Firestore listeners ────────────────────────────────────────────────────────
-db.collection('users').orderBy('lastSeen','desc').onSnapshot(snap=>{
-  allUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
-  updateStats(); applyFilters('users'); updateLastUpdate(); updateMapMarkers(); updateBroadcastCounts();
-});
-db.collection('orders').orderBy('createdAt','desc').onSnapshot(snap=>{
-  allOrders=snap.docs.map(d=>({id:d.id,...d.data()}));
-  updateStats(); applyFilters('orders'); updateLastUpdate();
-});
-db.collection('travels').orderBy('createdAt','desc').onSnapshot(snap=>{
-  allTravels=snap.docs.map(d=>({id:d.id,...d.data()}));
-  updateStats(); applyFilters('travels'); updateLastUpdate();
-});
-db.collection('admin_messages').orderBy('createdAt','desc').limit(50).onSnapshot(snap=>{
-  allMsgs=snap.docs.map(d=>({id:d.id,...d.data()}));
-  renderBroadcastLog();
-});
+function online(u){if(!u.location?.updatedAt)return false;const d=u.location.updatedAt.toDate?u.location.updatedAt.toDate():new Date(u.location.updatedAt);return Date.now()-d.getTime()<10*60*1000}
 
-// ── Stats ──────────────────────────────────────────────────────────────────────
-function isOnline(u){
-  if(!u.location?.updatedAt) return false;
-  const d=u.location.updatedAt.toDate?u.location.updatedAt.toDate():new Date(u.location.updatedAt);
-  return Date.now()-d.getTime()<10*60*1000;
+function tick(){
+  const on=allUsers.filter(online).length;
+  const dr=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
+  const pk=allOrders.filter(o=>o.type!=='person').length;
+  const pr=allOrders.filter(o=>o.type==='person').length;
+  setText('sUsers',allUsers.length);setText('sOrders',allOrders.length);setText('sTravels',allTravels.length);setText('sOnline',on);
+  setText('sOrdersSub',`📦 ${pk} jo'natma · 👤 ${pr} yo'lovchi`);
+  setText('nbUsers',allUsers.length);setText('nbOrders',allOrders.length);setText('nbTravels',allTravels.length);setText('nbOnline',on);
+  setText('tsOnline',on);setText('tsTotal',allUsers.length);
+  setText('mOnline',on);setText('mDrivers',dr);setText('mPassengers',allUsers.length-dr);setText('mOrders',allOrders.length);
+  const n=new Date();setText('liveTime',pad(n.getHours())+':'+pad(n.getMinutes())+':'+pad(n.getSeconds()));
 }
-function updateStats(){
-  const drivers=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
-  const online=allUsers.filter(isOnline).length;
-  const pkgs=allOrders.filter(o=>o.type!=='person').length;
-  const persons=allOrders.filter(o=>o.type==='person').length;
-  document.getElementById('sUsers').textContent=allUsers.length;
-  document.getElementById('sDrivers').textContent=`${drivers} haydovchi yo'nalish belgilagan`;
-  document.getElementById('sOrders').textContent=allOrders.length;
-  document.getElementById('sOrdersSub').textContent=`📦${pkgs} jo'natma · 👤${persons} yo'lovchi`;
-  document.getElementById('sTravels').textContent=allTravels.length;
-  document.getElementById('sOnline').textContent=online;
-  document.getElementById('mOnline').textContent=online;
-  document.getElementById('mDrivers').textContent=drivers;
-  document.getElementById('mOrders').textContent=allOrders.length;
-}
-function updateLastUpdate(){
-  const n=new Date();
-  document.getElementById('lastUpdate').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
-}
+function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v}
 function pad(n){return String(n).padStart(2,'0')}
 
-// ── Tabs ───────────────────────────────────────────────────────────────────────
-const TAB_NAMES=['users','orders','travels','map','broadcast'];
-function switchTab(name){
-  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
-  document.getElementById(`tab-${name}`).classList.add('active');
-  document.querySelectorAll('.tab-btn')[TAB_NAMES.indexOf(name)].classList.add('active');
-  if(name==='map') initAdminMap();
+/* NAV */
+function go(page,btn){
+  curPage=page;
+  ['users','orders','travels','map','broadcast'].forEach(p=>{const el=document.getElementById('pg-'+p);if(el)el.style.display=p===page?'':'none'});
+  document.querySelectorAll('.sb-item').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const info=PAGES[page]||{};
+  setText('pageTitle',info.title||page);setText('pageSub',info.sub||'');
+  if(page==='map')initMap();
 }
+function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
 
-// ── MAP ────────────────────────────────────────────────────────────────────────
-function initAdminMap(){
-  if(mapInstance) return;
-  mapboxgl.accessToken=MAPBOX_TOKEN;
-  mapInstance=new mapboxgl.Map({
-    container:'adminMap',
-    style:'mapbox://styles/mapbox/streets-v12',
-    center:[64.5,41.3],
-    zoom:5
-  });
-  mapInstance.addControl(new mapboxgl.NavigationControl(),'top-right');
-  mapInstance.on('load',()=>updateMapMarkers());
+/* MAP */
+function initMap(){
+  if(mapInst)return;
+  mapboxgl.accessToken=MAPBOX;
+  mapInst=new mapboxgl.Map({container:'adminMap',style:'mapbox://styles/mapbox/light-v11',center:[64.5,41.3],zoom:5.5});
+  mapInst.addControl(new mapboxgl.NavigationControl({showCompass:false}),'top-right');
+  mapInst.on('load',updMarkers);
 }
-function updateMapMarkers(){
-  if(!mapInstance||!mapInstance.loaded()) return;
-  mapMarkers.forEach(m=>m.remove());
-  mapMarkers=[];
+function updMarkers(){
+  if(!mapInst||!mapInst.loaded())return;
+  markers.forEach(m=>m.remove());markers=[];
   allUsers.forEach(u=>{
-    if(!u.location?.lat||!u.location?.lng) return;
-    const isDriver=u.routeFrom&&u.routeTo;
-    const online=isOnline(u);
-    const color=isDriver?'#2AABEE':'#22c55e';
+    if(!u.location?.lat||!u.location?.lng)return;
+    const isD=u.routeFrom&&u.routeTo;
+    const on=online(u);
+    const color=isD?'#2AABEE':'#10b981';
     const el=document.createElement('div');
-    el.style.cssText=`width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.3);cursor:pointer;${!online?'opacity:.5':''}`;
-    const popup=new mapboxgl.Popup({offset:12}).setHTML(`
-      <div style="font-size:13px;min-width:160px">
-        <b>${u.firstName||'Noma\'lum'}</b>${u.username?' (@'+u.username+')':''}<br>
-        <span style="color:#888;font-size:11px">ID: ${u.chatId||u.id}</span><br>
-        ${isDriver?`<span style="color:#2AABEE">🚗 ${u.routeFrom} → ${u.routeTo}</span><br>`:''}
-        <span style="color:${online?'#22c55e':'#aaa'}">${online?'● Onlayn':'● Oflayn'}</span><br>
-        <span style="font-size:11px;color:#888">${fmtDate(u.location.updatedAt)}</span>
-        <br><button onclick="openSingleMsg('${u.chatId||u.id}','${(u.firstName||'').replace(/'/g,'')}')" style="margin-top:6px;padding:4px 10px;background:#2AABEE;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px">Xabar yuborish</button>
-      </div>
-    `);
-    const marker=new mapboxgl.Marker({element:el}).setLngLat([u.location.lng,u.location.lat]).setPopup(popup).addTo(mapInstance);
-    mapMarkers.push(marker);
+    el.style.cssText=`width:${on?14:10}px;height:${on?14:10}px;border-radius:50%;background:${on?color:color+'55'};border:2px solid white;box-shadow:0 1px 6px rgba(0,0,0,.25);cursor:pointer;transition:transform .2s`;
+    el.onmouseenter=()=>el.style.transform='scale(1.4)';
+    el.onmouseleave=()=>el.style.transform='scale(1)';
+    const popup=new mapboxgl.Popup({offset:14,closeButton:false}).setHTML(`
+      <div style="font-size:13px;min-width:180px;padding:4px 0">
+        <div style="font-weight:700;margin-bottom:4px">${u.firstName||'Noma\'lum'}${u.username?' <span style="color:#2AABEE;font-weight:400">@'+u.username+'</span>':''}</div>
+        <div style="color:#64748b;font-size:11px;margin-bottom:6px">ID: ${u.chatId||u.id}</div>
+        ${isD?`<div style="color:#2AABEE;font-size:12px;margin-bottom:4px">🚗 ${u.routeFrom} → ${u.routeTo}</div>`:''}
+        <div style="color:${on?'#10b981':'#94a3b8'};font-size:12px;margin-bottom:8px">${on?'● Onlayn':'● Oflayn'}</div>
+        <button onclick="window._msgUser('${u.chatId||u.id}','${(u.firstName||'').replace(/'/g,'\\\'')}')" style="width:100%;padding:6px;background:#2AABEE;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600">✉️ Xabar yuborish</button>
+      </div>`);
+    markers.push(new mapboxgl.Marker({element:el}).setLngLat([u.location.lng,u.location.lat]).setPopup(popup).addTo(mapInst));
   });
 }
+window._msgUser=(id,name)=>{
+  go('broadcast',document.querySelectorAll('.sb-item')[4]);
+  document.querySelectorAll('.rc-btn')[3].click();
+  document.getElementById('singleId').value=id;
+  document.getElementById('msgText').focus();
+};
 
-// ── Filters ────────────────────────────────────────────────────────────────────
-function filterTable(type,val){searchQ[type]=val.toLowerCase();pages[type]=1;applyFilters(type)}
-function filterUsers(val){userFilter=val;pages.users=1;applyFilters('users')}
-function filterOrders(val){orderFilter=val;pages.orders=1;applyFilters('orders')}
-function applyFilters(type){
-  const q=searchQ[type];
-  if(type==='users'){
-    let d=allUsers;
-    if(userFilter==='driver') d=d.filter(u=>u.routeFrom&&u.routeTo);
-    if(userFilter==='notif')  d=d.filter(u=>u.notifications);
-    if(userFilter==='online') d=d.filter(isOnline);
-    if(q) d=d.filter(u=>(u.firstName||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||String(u.chatId||'').includes(q));
-    filteredUsers=d; renderTable('users');
-  }else if(type==='orders'){
-    let d=allOrders;
-    if(orderFilter==='package') d=d.filter(o=>o.type!=='person');
-    if(orderFilter==='person')  d=d.filter(o=>o.type==='person');
-    if(q) d=d.filter(o=>(o.from||'').toLowerCase().includes(q)||(o.to||'').toLowerCase().includes(q)||(o.telegramUsername||'').toLowerCase().includes(q));
-    filteredOrders=d; renderTable('orders');
+/* FILTERS */
+function filterTable(t,v){sq[t]=v.toLowerCase();pages[t]=1;applyF(t)}
+function filterUsers(v){ufilt=v;pages.users=1;applyF('users')}
+function filterOrders(v){ofilt=v;pages.orders=1;applyF('orders')}
+function applyF(t){
+  const q=sq[t];
+  if(t==='users'){
+    let d=[...allUsers];
+    if(ufilt==='driver')d=d.filter(u=>u.routeFrom&&u.routeTo);
+    if(ufilt==='notif')d=d.filter(u=>u.notifications);
+    if(ufilt==='online')d=d.filter(online);
+    if(q)d=d.filter(u=>(u.firstName||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||String(u.chatId||'').includes(q));
+    filtUsers=d;renderUsers();
+  }else if(t==='orders'){
+    let d=[...allOrders];
+    if(ofilt==='package')d=d.filter(o=>o.type!=='person');
+    if(ofilt==='person')d=d.filter(o=>o.type==='person');
+    if(q)d=d.filter(o=>(o.from||'').toLowerCase().includes(q)||(o.to||'').toLowerCase().includes(q)||(o.telegramUsername||'').toLowerCase().includes(q));
+    filtOrders=d;renderOrders();
   }else{
-    let d=allTravels;
-    if(q) d=d.filter(t=>(t.from||'').toLowerCase().includes(q)||(t.to||t.dest||'').toLowerCase().includes(q)||(t.telegramUsername||'').toLowerCase().includes(q));
-    filteredTravels=d; renderTable('travels');
+    let d=[...allTravels];
+    if(q)d=d.filter(t=>(t.from||'').toLowerCase().includes(q)||(t.to||t.dest||'').toLowerCase().includes(q)||(t.telegramUsername||'').toLowerCase().includes(q));
+    filtTravels=d;renderTravels();
   }
 }
 
-// ── Render ─────────────────────────────────────────────────────────────────────
-function renderTable(type){if(type==='users')renderUsers();else if(type==='orders')renderOrders();else renderTravels()}
-function paginate(arr,p){return arr.slice((p-1)*PAGE,p*PAGE)}
-function avatar(name){
-  const ch=(name||'?').charAt(0).toUpperCase();
-  const colors=['#2AABEE','#1a8cc8','#22c55e','#f59e0b','#e53e3e','#7c3aed'];
-  return`<div class="avatar" style="background:${colors[ch.charCodeAt(0)%colors.length]}">${ch}</div>`;
-}
-function routeHtml(a,b){
-  if(!a&&!b)return'<span style="color:#aaa">—</span>';
-  return`<div class="route"><span class="rc">${a||'?'}</span><span class="ra">→</span><span class="rc">${b||'?'}</span></div>`;
-}
-function timeAgo(ts){
-  if(!ts)return'—';
-  const d=ts.toDate?ts.toDate():new Date(ts),diff=Date.now()-d.getTime();
-  const m=Math.floor(diff/60000),h=Math.floor(m/60),day=Math.floor(h/24);
-  if(day>0)return`${day} kun oldin`;if(h>0)return`${h} soat oldin`;if(m>0)return`${m} daqiqa oldin`;return'Hozirgina';
-}
-function fmtDate(ts){
-  if(!ts)return'—';
-  const d=ts.toDate?ts.toDate():new Date(ts);
-  return d.toLocaleDateString('uz-UZ',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
-}
+/* RENDER HELPERS */
+function pag(arr,p){return arr.slice((p-1)*PG,p*PG)}
+const COLORS=['#2AABEE','#1a8cc8','#10b981','#f59e0b','#ef4444','#8b5cf6','#0ea5e9','#14b8a6'];
+function av(name){const c=(name||'?').charCodeAt(0)%COLORS.length;return`<div class="av" style="background:${COLORS[c]}">${(name||'?')[0].toUpperCase()}</div>`}
+function route(a,b){if(!a&&!b)return'<span style="color:var(--text3)">—</span>';return`<span class="route-wrap"><span class="route-city">${a||'?'}</span><span class="route-arrow">→</span><span class="route-city">${b||'?'}</span></span>`}
+function ago(ts){if(!ts)return'—';const d=ts.toDate?ts.toDate():new Date(ts),diff=Date.now()-d.getTime(),m=Math.floor(diff/60000),h=Math.floor(m/60),day=Math.floor(h/24);if(day>0)return`${day} kun`;if(h>0)return`${h} soat`;if(m>0)return`${m} daqiqa`;return'Hozirgina'}
+function fmt(ts){if(!ts)return'—';const d=ts.toDate?ts.toDate():new Date(ts);return`${pad(d.getDate())}.${pad(d.getMonth()+1)}.${String(d.getFullYear()).slice(-2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function empty(icon,msg,cols){return`<tr><td colspan="${cols}"><div class="table-empty"><div class="te-icon">${icon}</div><p>${msg}</p></div></td></tr>`}
 
 function renderUsers(){
-  const data=paginate(filteredUsers,pages.users);
-  document.getElementById('usersBody').innerHTML=filteredUsers.length===0
-    ?`<tr><td colspan="9"><div class="table-empty">👤 Topilmadi</div></td></tr>`
-    :data.map((u,i)=>{
-      const n=(pages.users-1)*PAGE+i+1;
-      const isDriver=u.routeFrom&&u.routeTo;
-      const online=isOnline(u);
-      return`<tr>
-        <td style="color:var(--text2);font-size:11px">${n}</td>
-        <td><div class="user-cell">${avatar(u.firstName)}<div><div class="uname">${u.firstName||'Noma\'lum'}</div><div class="uun">${u.username?'@'+u.username:''}</div></div></div></td>
-        <td><code>${u.chatId||u.id}</code></td>
-        <td>${routeHtml(u.routeFrom,u.routeTo)}</td>
-        <td>${isDriver?'<span class="badge bb">🚗 Haydovchi</span>':'<span class="badge bg">👤 Mijoz</span>'}</td>
-        <td>${online?'<span class="badge bg">📍 Onlayn</span>':'<span style="color:#ccc;font-size:11px">oflayn</span>'}</td>
-        <td>${u.notifications?'<span class="badge bg">✅</span>':'<span class="badge br">❌</span>'}</td>
-        <td><div class="time-cell">${timeAgo(u.lastSeen)}</div></td>
-        <td><button class="del-btn" onclick="confirmDelete('users','${u.id}','${(u.firstName||'').replace(/'/g,'')}')">🗑</button></td>
-      </tr>`;
-    }).join('');
-  renderPagination('users',filteredUsers.length);
+  const data=pag(filtUsers,pages.users);
+  document.getElementById('usersBody').innerHTML=filtUsers.length===0?empty('👤','Foydalanuvchi topilmadi',9):data.map((u,i)=>{
+    const n=(pages.users-1)*PG+i+1,isD=u.routeFrom&&u.routeTo,on=online(u);
+    return`<tr>
+      <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
+      <td><div class="user-row">${av(u.firstName)}<div class="user-info"><div class="un">${u.firstName||'Noma\'lum'}</div>${u.username?`<div class="uu">@${u.username}</div>`:''}</div></div></td>
+      <td><code>${u.chatId||u.id}</code></td>
+      <td>${route(u.routeFrom,u.routeTo)}</td>
+      <td>${isD?'<span class="badge badge-blue">🚗 Haydovchi</span>':'<span class="badge badge-green">👤 Mijoz</span>'}</td>
+      <td>${on?'<span class="badge badge-green">📍 Onlayn</span>':'<span class="time">oflayn</span>'}</td>
+      <td>${u.notifications?'<span class="badge badge-green">✅ Yoqilgan</span>':'<span class="badge badge-gray">❌</span>'}</td>
+      <td><span class="time">${ago(u.lastSeen)} oldin</span></td>
+      <td><button class="btn btn-danger" onclick="confirmDel('users','${u.id}','${(u.firstName||'').replace(/'/g,'')}')">🗑 O'chirish</button></td>
+    </tr>`;
+  }).join('');
+  renderPager('users',filtUsers.length);
 }
 
 function renderOrders(){
-  const data=paginate(filteredOrders,pages.orders);
-  document.getElementById('ordersBody').innerHTML=filteredOrders.length===0
-    ?`<tr><td colspan="7"><div class="table-empty">📦 Topilmadi</div></td></tr>`
-    :data.map((o,i)=>{
-      const n=(pages.orders-1)*PAGE+i+1;
-      return`<tr>
-        <td style="color:var(--text2);font-size:11px">${n}</td>
-        <td>${o.type==='person'?'<span class="badge bp">👤 Yo\'lovchi</span>':'<span class="badge bo">📦 Jo\'natma</span>'}</td>
-        <td>${routeHtml(o.from,o.to)}</td>
-        <td>${o.telegramUsername?'@'+o.telegramUsername:'<span style="color:#aaa">—</span>'}</td>
-        <td><code>${o.telegramId||'—'}</code></td>
-        <td><div class="time-cell">${fmtDate(o.createdAt)}</div></td>
-        <td><button class="del-btn" onclick="confirmDelete('orders','${o.id}','${o.from}→${o.to}')">🗑 O'chirish</button></td>
-      </tr>`;
-    }).join('');
-  renderPagination('orders',filteredOrders.length);
+  const data=pag(filtOrders,pages.orders);
+  document.getElementById('ordersBody').innerHTML=filtOrders.length===0?empty('📦','Buyurtma topilmadi',7):data.map((o,i)=>{
+    const n=(pages.orders-1)*PG+i+1;
+    return`<tr>
+      <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
+      <td>${o.type==='person'?'<span class="badge badge-purple">👤 Yo\'lovchi</span>':'<span class="badge badge-orange">📦 Jo\'natma</span>'}</td>
+      <td>${route(o.from,o.to)}</td>
+      <td>${o.telegramUsername?`<span style="color:var(--blue)">@${o.telegramUsername}</span>`:'<span class="time">—</span>'}</td>
+      <td><code>${o.telegramId||'—'}</code></td>
+      <td><span class="time">${fmt(o.createdAt)}</span></td>
+      <td><button class="btn btn-danger" onclick="confirmDel('orders','${o.id}','${(o.from||'')}→${(o.to||'')}')">🗑 O'chirish</button></td>
+    </tr>`;
+  }).join('');
+  renderPager('orders',filtOrders.length);
 }
 
 function renderTravels(){
-  const data=paginate(filteredTravels,pages.travels);
-  document.getElementById('travelsBody').innerHTML=filteredTravels.length===0
-    ?`<tr><td colspan="6"><div class="table-empty">🚗 Topilmadi</div></td></tr>`
-    :data.map((t,i)=>{
-      const n=(pages.travels-1)*PAGE+i+1;
-      return`<tr>
-        <td style="color:var(--text2);font-size:11px">${n}</td>
-        <td>${routeHtml(t.from,t.to||t.dest)}</td>
-        <td>${t.telegramUsername?'@'+t.telegramUsername:'<span style="color:#aaa">—</span>'}</td>
-        <td><code>${t.telegramId||'—'}</code></td>
-        <td><div class="time-cell">${fmtDate(t.createdAt)}</div></td>
-        <td><button class="del-btn" onclick="confirmDelete('travels','${t.id}','${t.from}→${t.to||t.dest}')">🗑 O'chirish</button></td>
-      </tr>`;
-    }).join('');
-  renderPagination('travels',filteredTravels.length);
+  const data=pag(filtTravels,pages.travels);
+  document.getElementById('travelsBody').innerHTML=filtTravels.length===0?empty('🚗','Safar topilmadi',6):data.map((t,i)=>{
+    const n=(pages.travels-1)*PG+i+1;
+    return`<tr>
+      <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
+      <td>${route(t.from,t.to||t.dest)}</td>
+      <td>${t.telegramUsername?`<span style="color:var(--blue)">@${t.telegramUsername}</span>`:'<span class="time">—</span>'}</td>
+      <td><code>${t.telegramId||'—'}</code></td>
+      <td><span class="time">${fmt(t.createdAt)}</span></td>
+      <td><button class="btn btn-danger" onclick="confirmDel('travels','${t.id}','${(t.from||'')}→${(t.to||t.dest||'')}')">🗑 O'chirish</button></td>
+    </tr>`;
+  }).join('');
+  renderPager('travels',filtTravels.length);
 }
 
-// ── Pagination ─────────────────────────────────────────────────────────────────
-function renderPagination(type,total){
-  const totalP=Math.ceil(total/PAGE),cur=pages[type];
-  document.getElementById(`${type}PageInfo`).textContent=total===0?'0 ta':`${(cur-1)*PAGE+1}–${Math.min(cur*PAGE,total)} / ${total} ta`;
-  const btns=document.getElementById(`${type}PageBtns`);
-  if(totalP<=1){btns.innerHTML='';return}
-  let h=`<button class="page-btn" onclick="goPage('${type}',${cur-1})" ${cur===1?'disabled':''}>‹</button>`;
-  for(let p=Math.max(1,cur-2);p<=Math.min(totalP,cur+2);p++)h+=`<button class="page-btn ${p===cur?'active':''}" onclick="goPage('${type}',${p})">${p}</button>`;
-  h+=`<button class="page-btn" onclick="goPage('${type}',${cur+1})" ${cur===totalP?'disabled':''}>›</button>`;
-  btns.innerHTML=h;
+function renderPager(t,total){
+  const tp=Math.ceil(total/PG),cur=pages[t];
+  document.getElementById(t+'PI').textContent=total===0?'0 ta':`${(cur-1)*PG+1}–${Math.min(cur*PG,total)} / ${total} ta`;
+  const pb=document.getElementById(t+'PB');
+  if(tp<=1){pb.innerHTML='';return}
+  let h=`<button class="pager-btn" onclick="goPg('${t}',${cur-1})" ${cur===1?'disabled':''}>‹</button>`;
+  for(let p=Math.max(1,cur-2);p<=Math.min(tp,cur+2);p++)h+=`<button class="pager-btn${p===cur?' active':''}" onclick="goPg('${t}',${p})">${p}</button>`;
+  h+=`<button class="pager-btn" onclick="goPg('${t}',${cur+1})" ${cur===tp?'disabled':''}>›</button>`;
+  pb.innerHTML=h;
 }
-function goPage(type,page){pages[type]=page;renderTable(type)}
+function goPg(t,p){pages[t]=p;if(t==='users')renderUsers();else if(t==='orders')renderOrders();else renderTravels()}
 
-// ── Delete ─────────────────────────────────────────────────────────────────────
-let _pendingDelete=null;
-function confirmDelete(collection,docId,label){
-  _pendingDelete={collection,docId};
-  document.getElementById('deleteModalText').textContent=`"${label}" ni o'chirishni istaysizmi? Bu amalni qaytarib bo'lmaydi.`;
-  document.getElementById('deleteModal').classList.add('show');
+/* DELETE */
+let pending=null;
+function confirmDel(col,id,label){
+  pending={col,id};
+  document.getElementById('delText').textContent=`"${label}" ni o'chirasizmi? Bu amalni qaytarib bo'lmaydi.`;
+  document.getElementById('delModal').classList.add('show');
 }
-function closeDeleteModal(){document.getElementById('deleteModal').classList.remove('show');_pendingDelete=null}
-document.getElementById('deleteConfirmBtn').onclick=async()=>{
-  if(!_pendingDelete)return;
-  const {collection,docId}=_pendingDelete;
-  closeDeleteModal();
-  try{
-    await db.collection(collection).doc(docId).delete();
-  }catch(e){alert('O\'chirishda xato: '+e.message)}
+function closeDel(){document.getElementById('delModal').classList.remove('show');pending=null}
+document.getElementById('delConfirm').onclick=async()=>{
+  if(!pending)return;
+  const{col,id}=pending;closeDel();
+  try{await db.collection(col).doc(id).delete()}catch(e){alert('Xato: '+e.message)}
 };
 
-// ── Broadcast ──────────────────────────────────────────────────────────────────
-function selectRecipient(val,btn){
-  selectedRecipient=val;
-  document.querySelectorAll('.recipient-btn').forEach(b=>b.classList.remove('selected'));
-  btn.classList.add('selected');
-  document.getElementById('singleIdWrap').style.display=val==='single'?'block':'none';
+/* BROADCAST */
+function selRc(val,btn){
+  rcVal=val;
+  document.querySelectorAll('.rc-btn').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+  document.getElementById('singleWrap').style.display=val==='single'?'block':'none';
 }
-function updateCharCount(){
-  document.getElementById('charCount').textContent=document.getElementById('broadcastText').value.length;
+function updChar(){document.getElementById('charN').textContent=document.getElementById('msgText').value.length}
+function updCounts(){
+  const dr=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
+  setText('rcAll',allUsers.length+' ta');
+  setText('rcDrivers',dr+' ta');
 }
-function updateBroadcastCounts(){
-  document.getElementById('rcAll').textContent=allUsers.length+' ta';
-  const drivers=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
-  document.getElementById('rcDrivers').textContent=drivers+' ta';
-}
-function openSingleMsg(chatId,name){
-  switchTab('broadcast');
-  document.querySelectorAll('.recipient-btn')[3].click();
-  document.getElementById('singleChatId').value=chatId;
-  document.getElementById('broadcastText').focus();
-}
-async function sendBroadcast(){
-  const text=document.getElementById('broadcastText').value.trim();
-  if(!text){alert('Xabar matni bo\'sh!');return}
-  let to=selectedRecipient;
-  if(to==='single'){
-    const id=document.getElementById('singleChatId').value.trim();
-    if(!id){alert('Telegram ID kiriting!');return}
-    to=id;
-  }
+async function sendBc(){
+  const text=document.getElementById('msgText').value.trim();
+  if(!text)return alert('Xabar matni bo\'sh!');
+  let to=rcVal;
+  if(to==='single'){const id=document.getElementById('singleId').value.trim();if(!id)return alert('ID kiriting!');to=id}
   const btn=document.getElementById('sendBtn');
-  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Yuborilmoqda...';
+  btn.disabled=true;btn.innerHTML='<div class="spin"></div> Yuborilmoqda...';
   try{
-    await db.collection('admin_messages').add({
-      to, text, sent:false,
-      createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    document.getElementById('broadcastText').value='';
-    updateCharCount();
+    await db.collection('admin_messages').add({to,text,sent:false,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+    document.getElementById('msgText').value='';updChar();
   }catch(e){alert('Xato: '+e.message)}
-  btn.disabled=false;btn.innerHTML='<span>📤 Yuborish</span>';
+  btn.disabled=false;btn.innerHTML='📤 Yuborish';
+}
+function renderBcLog(){
+  const lbl={all:'🌐 Hammaga',drivers:'🚗 Haydovchilar',passengers:'👤 Yo\'lovchilar'};
+  document.getElementById('bcLog').innerHTML=allMsgs.length===0
+    ?empty('📋','Hali xabar yuborilmagan',5)
+    :allMsgs.map(m=>`<tr>
+      <td><span class="badge badge-blue">${lbl[m.to]||'👤 '+m.to}</span></td>
+      <td><span class="msg-preview">${m.text||''}</span></td>
+      <td>${m.sent?`<span class="log-status-ok">✅ ${m.sentCount||0} ta</span>`:'<span class="log-status-wait">⏳ Kutmoqda</span>'}</td>
+      <td>${m.failedCount?`<span style="color:var(--red);font-size:12px">❌ ${m.failedCount}</span>`:'<span class="time">—</span>'}</td>
+      <td><span class="time">${fmt(m.createdAt)}</span></td>
+    </tr>`).join('');
 }
 
-function renderBroadcastLog(){
-  const tbody=document.getElementById('broadcastLog');
-  if(allMsgs.length===0){
-    tbody.innerHTML=`<tr><td colspan="5"><div class="table-empty">Hali xabar yuborilmagan</div></td></tr>`;return;
-  }
-  const toLabel={all:'🌐 Hammaga',drivers:'🚗 Haydovchilar',passengers:'👤 Yo\'lovchilar'};
-  tbody.innerHTML=allMsgs.map(m=>`<tr>
-    <td>${toLabel[m.to]||`👤 ${m.to}`}</td>
-    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.text||''}</td>
-    <td>${m.sent?`<span class="badge bg">✅ ${m.sentCount||0} ta</span>`:'<span class="badge bo">⏳ Kutmoqda</span>'}</td>
-    <td>${m.failedCount?`<span class="badge br">❌ ${m.failedCount}</span>`:'—'}</td>
-    <td><div class="time-cell">${fmtDate(m.createdAt)}</div></td>
-  </tr>`).join('');
-}
+// Init
+applyF('users');applyF('orders');applyF('travels');
+setInterval(()=>{tick();updMarkers()},30000);
 </script>
 </body>
 </html>

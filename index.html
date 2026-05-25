@@ -365,6 +365,42 @@ body.view-sender .header{background:var(--app-bg)!important}
 .region-picker--horizontal .region-picker-item.is-center .script-morph--region{
   --script-morph-h:36px;
 }
+.picker-with-stepper{
+  display:flex;align-items:center;gap:14px;
+  margin:4px 0 16px;padding:0 8px;
+}
+.picker-with-stepper .region-picker--vertical{
+  flex:1;min-width:0;margin:0;
+}
+.picker-stepper{
+  flex-shrink:0;width:48px;height:128px;
+  border-radius:24px;padding:5px;
+  display:flex;flex-direction:column;gap:5px;
+  background:linear-gradient(180deg,#f8fafc 0%,#e8eef4 100%);
+  box-shadow:
+    5px 5px 12px rgba(15,23,42,.1),
+    -4px -4px 10px rgba(255,255,255,.95),
+    inset 0 1px 0 rgba(255,255,255,.9);
+}
+.picker-stepper-btn{
+  flex:1;border:none;border-radius:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(180deg,#f1f5f9 0%,#e2e8f0 100%);
+  color:#2AABEE;
+  box-shadow:
+    inset 2px 2px 5px rgba(15,23,42,.14),
+    inset -2px -2px 5px rgba(255,255,255,.9);
+  transition:transform .12s ease,color .12s ease,box-shadow .12s ease;
+  -webkit-tap-highlight-color:transparent;
+}
+.picker-stepper-btn svg{display:block;width:14px;height:14px}
+.picker-stepper-btn:active{
+  transform:scale(.96);
+  color:#1E88E5;
+  box-shadow:
+    inset 3px 3px 7px rgba(15,23,42,.18),
+    inset -1px -1px 4px rgba(255,255,255,.7);
+}
 .region-picker--vertical{
   height:196px;margin:4px 0 16px;
 }
@@ -773,10 +809,12 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet--send .sheet-drag{margin:0 auto 14px}
 .send-sheet-head{text-align:center;padding:0 0 4px}
 .send-thumb-wrap{display:flex;justify-content:center;margin:12px 0 6px}
-.sheet--send .region-picker--vertical{
-  height:172px;margin:0 0 10px;
+.sheet--send .picker-with-stepper{margin:0 0 10px}
+.sheet--send .picker-with-stepper .region-picker--vertical{
+  height:172px;margin:0;
 }
-.sheet--send .region-picker--vertical .region-picker-track{height:172px}
+.sheet--send .picker-with-stepper .region-picker-track{height:172px}
+.sheet--send .picker-stepper{height:112px}
 .sheet--send .send-form{gap:10px}
 .send-action-btn[hidden]{display:none!important}
 .script-morph--label{
@@ -1476,13 +1514,33 @@ body.view-sender.theme-telegram .toggle,
         <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
       </div>
       <div id="sendStepRegion">
-        <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
-          <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+        <div class="picker-with-stepper">
+          <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
+            <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+          </div>
+          <div class="picker-stepper" role="group" aria-label="Viloyat ro'yxati">
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7 6 13h12z"/></svg>
+            </button>
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 17 7 11h10z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       <div id="sendStepDistrict" hidden>
-        <div class="region-picker region-picker--vertical" id="sendDistrictPicker" aria-label="Tuman tanlash">
-          <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
+        <div class="picker-with-stepper">
+          <div class="region-picker region-picker--vertical" id="sendDistrictPicker" aria-label="Tuman tanlash">
+            <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
+          </div>
+          <div class="picker-stepper" role="group" aria-label="Tuman ro'yxati">
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7 6 13h12z"/></svg>
+            </button>
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 17 7 11h10z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       <input type="hidden" id="sendDest" value="">
@@ -1503,13 +1561,33 @@ body.view-sender.theme-telegram .toggle,
         <h2 class="travel-dest-title" id="travelDestTitle">Qayerga borasiz?</h2>
       </div>
       <div id="travelStepRegion">
-        <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
-          <div class="region-picker-track" id="travelRegionPickerTrack"></div>
+        <div class="picker-with-stepper">
+          <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
+            <div class="region-picker-track" id="travelRegionPickerTrack"></div>
+          </div>
+          <div class="picker-stepper" role="group" aria-label="Viloyat ro'yxati">
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7 6 13h12z"/></svg>
+            </button>
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 17 7 11h10z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       <div id="travelStepDistrict" hidden>
-        <div class="region-picker region-picker--vertical" id="travelDistrictPicker" aria-label="Tuman tanlash">
-          <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
+        <div class="picker-with-stepper">
+          <div class="region-picker region-picker--vertical" id="travelDistrictPicker" aria-label="Tuman tanlash">
+            <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
+          </div>
+          <div class="picker-stepper" role="group" aria-label="Tuman ro'yxati">
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--up" aria-label="Yuqoriga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 7 6 13h12z"/></svg>
+            </button>
+            <button type="button" class="picker-stepper-btn picker-stepper-btn--down" aria-label="Pastga">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 17 7 11h10z"/></svg>
+            </button>
+          </div>
         </div>
       </div>
       <input type="hidden" id="travelTo" value="">
@@ -2572,6 +2650,41 @@ function layoutHorizontalPickerSpacers(track){
     sp.style.flex = `0 0 ${pad}px`;
     sp.style.width = `${pad}px`;
     sp.style.minWidth = `${pad}px`;
+  });
+}
+
+function scrollVerticalPickerStep(track, direction){
+  if (!track) return;
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  if (!items.length) return;
+  const centerY = track.scrollTop + track.clientHeight / 2;
+  let currentIdx = 0;
+  let best = Infinity;
+  items.forEach((item, i) => {
+    const mid = item.offsetTop + item.offsetHeight / 2;
+    const d = Math.abs(mid - centerY);
+    if (d < best) { best = d; currentIdx = i; }
+  });
+  const nextIdx = Math.max(0, Math.min(items.length - 1, currentIdx + direction));
+  const target = items[nextIdx];
+  if (!target) return;
+  const top = target.offsetTop - (track.clientHeight / 2) + (target.offsetHeight / 2);
+  track.scrollTo({ top, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
+}
+
+function bindPickerStepperControls(){
+  if (document.body.dataset.pickerStepperBound) return;
+  document.body.dataset.pickerStepperBound = '1';
+  document.body.addEventListener('click', e => {
+    const btn = e.target.closest('.picker-stepper-btn--up, .picker-stepper-btn--down');
+    if (!btn) return;
+    const wrap = btn.closest('.picker-with-stepper');
+    const track = wrap?.querySelector('.region-picker-track');
+    if (!track) return;
+    scrollVerticalPickerStep(track, btn.classList.contains('picker-stepper-btn--up') ? -1 : 1);
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.selectionChanged();
+    }
   });
 }
 
@@ -5315,6 +5428,7 @@ initFirebase();
 initRegionSelects();
 initCtaIcons();
 initAllMorphTexts();
+bindPickerStepperControls();
 applyCyrillicUI();
 refreshUserLocationRegion();
 loadPersistedData();
