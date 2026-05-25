@@ -1870,11 +1870,6 @@ function saveNotifPermissionGranted(granted){
 }
 
 function onNotifOnboardHa(){
-  if (localStorage.getItem('notif_asked')) {
-    closeNotifOnboardOverlay();
-    return;
-  }
-  localStorage.setItem('notif_asked', '1');
   const tg = window.Telegram?.WebApp;
   if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
   const finish = granted => {
@@ -1972,8 +1967,6 @@ function saveRoute(){
 function requestNotificationPermission(){
   try {
     if (!window.Telegram?.WebApp?.requestWriteAccess) return;
-    if (localStorage.getItem('notif_asked')) return;
-    localStorage.setItem('notif_asked', '1');
     Telegram.WebApp.requestWriteAccess(granted => {
       try {
         if (granted && telegramUser.id && db) {
@@ -2022,6 +2015,7 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
+    setTimeout(() => requestNotificationPermission(), 1000);
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
