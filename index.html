@@ -2017,7 +2017,11 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
-    setTimeout(() => requestNotificationPermission(), 1200);
+    setTimeout(() => {
+      const hasRWA = typeof Telegram.WebApp.requestWriteAccess === 'function';
+      const ver = Telegram.WebApp.version || 'unknown';
+      Telegram.WebApp.showAlert(`v:${ver} rwa:${hasRWA} id:${telegramUser.id}`);
+    }, 1200);
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
