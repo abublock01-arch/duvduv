@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>duvduv — Admin Panel</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+:root{--blue:#2AABEE;--blue-dark:#1a8cc8;--blue-light:#e8f6fd;--blue-mid:#b3e0f7;--white:#fff;--gray:#f4f7fb;--gray2:#e9eef5;--text:#1a2233;--text2:#5a6a85;--red:#e53e3e;--green:#22c55e;--orange:#f59e0b;--radius:14px;--shadow:0 2px 16px rgba(42,171,238,.10)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--gray);color:var(--text);min-height:100vh}
+
+/* HEADER */
+.header{background:var(--white);border-bottom:2px solid var(--blue-light);padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(42,171,238,.08)}
+.header-logo{display:flex;align-items:center;gap:10px}
+.logo-dot{width:36px;height:36px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.logo-dot svg{width:20px;height:20px;fill:white}
+.header-logo h1{font-size:20px;font-weight:800;color:var(--blue);letter-spacing:-.5px}
+.header-badge{font-size:12px;color:var(--text2);font-weight:500;background:var(--blue-light);padding:2px 8px;border-radius:20px}
+.live-badge{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--green);font-weight:600}
+.live-dot{width:8px;height:8px;background:var(--green);border-radius:50%;animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.last-update{font-size:11px;color:var(--text2)}
+
+/* MAIN */
+.main{max-width:1300px;margin:0 auto;padding:20px 16px}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.stat-card{background:var(--white);border-radius:var(--radius);padding:16px 18px;box-shadow:var(--shadow);border:1.5px solid var(--blue-light);display:flex;align-items:center;gap:12px;transition:transform .15s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.si-blue{background:var(--blue-light)}.si-green{background:#dcfce7}.si-orange{background:#fef3c7}.si-purple{background:#ede9fe}
+.stat-label{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:2px}
+.stat-value{font-size:24px;font-weight:800;color:var(--text);line-height:1}
+.stat-sub{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* TABS */
+.tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--white);padding:6px;border-radius:var(--radius);box-shadow:var(--shadow);flex-wrap:wrap}
+.tab-btn{flex:1;min-width:120px;padding:9px 14px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);background:transparent;transition:all .18s;white-space:nowrap}
+.tab-btn.active{background:var(--blue);color:white;box-shadow:0 2px 8px rgba(42,171,238,.3)}
+.tab-btn:hover:not(.active){background:var(--blue-light);color:var(--blue)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* TOOLBAR */
+.toolbar{display:flex;gap:10px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.search-box{flex:1;min-width:200px;padding:10px 14px;border:1.5px solid var(--gray2);border-radius:10px;font-size:13px;outline:none;background:var(--white);color:var(--text);transition:border .15s}
+.search-box:focus{border-color:var(--blue)}
+.filter-select{padding:9px 12px;border:1.5px solid var(--gray2);border-radius:10px;font-size:13px;background:var(--white);color:var(--text);outline:none;cursor:pointer}
+
+/* TABLE */
+.table-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;border:1.5px solid var(--blue-light)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--blue);color:white}
+th{padding:11px 14px;text-align:left;font-weight:600;font-size:12px;white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--gray2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:var(--blue-light)}
+.table-empty{text-align:center;padding:40px;color:var(--text2);font-size:14px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600}
+.bb{background:var(--blue-light);color:var(--blue)}.bg{background:#dcfce7;color:#16a34a}.bo{background:#fef3c7;color:#d97706}.br{background:#fee2e2;color:var(--red)}.bp{background:#ede9fe;color:#7c3aed}
+
+/* USER */
+.user-cell{display:flex;align-items:center;gap:10px}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--blue);color:white;font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.uname{font-weight:600;font-size:13px}.uun{font-size:11px;color:var(--blue)}
+.route{display:flex;align-items:center;gap:4px;font-size:12px}
+.rc{background:var(--gray);padding:2px 6px;border-radius:5px;font-weight:500}.ra{color:var(--blue)}
+code{font-size:11px;background:var(--gray);padding:2px 6px;border-radius:5px}
+.time-cell{font-size:11px;color:var(--text2)}
+
+/* PAGINATION */
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--gray2)}
+.page-info{font-size:12px;color:var(--text2)}
+.page-btns{display:flex;gap:4px}
+.page-btn{padding:5px 10px;border:1.5px solid var(--gray2);border-radius:7px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2)}
+.page-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
+.page-btn:hover:not(.active):not(:disabled){border-color:var(--blue);color:var(--blue)}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* LOADING */
+.loading{display:flex;align-items:center;justify-content:center;padding:40px;gap:10px;color:var(--text2)}
+.spinner{width:18px;height:18px;border:2.5px solid var(--blue-mid);border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MAP */
+#adminMap{width:100%;height:500px;border-radius:var(--radius);overflow:hidden}
+.map-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1.5px solid var(--blue-light);overflow:hidden}
+.map-legend{display:flex;gap:16px;padding:12px 16px;background:var(--white);border-top:1px solid var(--gray2);flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
+.legend-dot{width:12px;height:12px;border-radius:50%}
+.map-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.map-stat{background:var(--white);border-radius:10px;padding:12px 14px;border:1.5px solid var(--blue-light);text-align:center}
+.map-stat-val{font-size:22px;font-weight:800;color:var(--blue)}
+.map-stat-label{font-size:11px;color:var(--text2);margin-top:2px}
+
+/* BROADCAST */
+.broadcast-card{background:var(--white);border-radius:var(--radius);box-shadow:var(--shadow);border:1.5px solid var(--blue-light);padding:20px;margin-bottom:16px}
+.broadcast-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.recipient-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.recipient-btn{padding:10px 8px;border:2px solid var(--gray2);border-radius:10px;background:var(--white);cursor:pointer;font-size:12px;font-weight:600;color:var(--text2);text-align:center;transition:all .15s}
+.recipient-btn.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
+.recipient-btn:hover:not(.selected){border-color:var(--blue-mid);color:var(--blue)}
+.broadcast-or{margin-bottom:12px}
+.broadcast-or label{font-size:12px;color:var(--text2);font-weight:500;display:block;margin-bottom:6px}
+.chatid-input{width:100%;padding:9px 12px;border:1.5px solid var(--gray2);border-radius:8px;font-size:13px;outline:none;background:var(--white)}
+.chatid-input:focus{border-color:var(--blue)}
+.msg-textarea{width:100%;padding:12px;border:1.5px solid var(--gray2);border-radius:10px;font-size:13px;resize:vertical;min-height:100px;outline:none;font-family:inherit;color:var(--text)}
+.msg-textarea:focus{border-color:var(--blue)}
+.broadcast-footer{display:flex;align-items:center;justify-content:space-between;margin-top:12px;gap:10px}
+.char-count{font-size:11px;color:var(--text2)}
+.send-btn{padding:10px 24px;background:var(--blue);color:white;border:none;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s;display:flex;align-items:center;gap:8px}
+.send-btn:hover{background:var(--blue-dark)}
+.send-btn:disabled{opacity:.6;cursor:not-allowed}
+.broadcast-log{margin-top:14px;max-height:180px;overflow-y:auto}
+.log-item{padding:8px 12px;border-radius:8px;font-size:12px;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.log-ok{background:#dcfce7;color:#16a34a}.log-err{background:#fee2e2;color:var(--red)}.log-info{background:var(--blue-light);color:var(--blue)}
+
+/* DELETE BTN */
+.del-btn{padding:4px 8px;background:transparent;border:1.5px solid #fca5a5;color:var(--red);border-radius:6px;cursor:pointer;font-size:11px;transition:all .15s}
+.del-btn:hover{background:#fee2e2}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--white);border-radius:var(--radius);padding:24px;max-width:340px;width:90%;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal h3{font-size:16px;font-weight:700;margin-bottom:8px}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:20px}
+.modal-btns{display:flex;gap:10px;justify-content:flex-end}
+.modal-cancel{padding:8px 18px;border:1.5px solid var(--gray2);border-radius:8px;background:var(--white);cursor:pointer;font-weight:600;font-size:13px}
+.modal-confirm{padding:8px 18px;border:none;border-radius:8px;background:var(--red);color:white;cursor:pointer;font-weight:600;font-size:13px}
+
+@media(max-width:768px){.stats{grid-template-columns:repeat(2,1fr)}.recipient-grid{grid-template-columns:repeat(2,1fr)}.map-stats{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:480px){.stats{grid-template-columns:repeat(2,1fr)}.stat-value{font-size:20px}}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-logo">
+    <div class="logo-dot">
+      <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+    </div>
+    <h1>duv<span style="color:#e53e3e">•</span>duv</h1>
+    <span class="header-badge">Admin Panel</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <div class="live-badge"><div class="live-dot"></div> Real-time</div>
+    <div class="last-update" id="lastUpdate">—</div>
+  </div>
+</header>
+
+<div class="main">
+
+  <!-- STATS -->
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon si-blue">👥</div><div><div class="stat-label">Foydalanuvchilar</div><div class="stat-value" id="sUsers">—</div><div class="stat-sub" id="sDrivers">—</div></div></div>
+    <div class="stat-card"><div class="stat-icon si-orange">📦</div><div><div class="stat-label">Buyurtmalar</div><div class="stat-value" id="sOrders">—</div><div class="stat-sub" id="sOrdersSub">—</div></div></div>
+    <div class="stat-card"><div class="stat-icon si-green">🚗</div><div><div class="stat-label">Safarlar</div><div class="stat-value" id="sTravels">—</div><div class="stat-sub">Haydovchi yo'nalishlari</div></div></div>
+    <div class="stat-card"><div class="stat-icon si-purple">📍</div><div><div class="stat-label">Onlayn (GPS)</div><div class="stat-value" id="sOnline">—</div><div class="stat-sub">So'nggi 10 daqiqa</div></div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('users')">👥 Foydalanuvchilar</button>
+    <button class="tab-btn" onclick="switchTab('orders')">📦 Buyurtmalar</button>
+    <button class="tab-btn" onclick="switchTab('travels')">🚗 Safarlar</button>
+    <button class="tab-btn" onclick="switchTab('map')">🗺 Xarita</button>
+    <button class="tab-btn" onclick="switchTab('broadcast')">📢 Xabar yuborish</button>
+  </div>
+
+  <!-- USERS -->
+  <div class="tab-content active" id="tab-users">
+    <div class="toolbar">
+      <input class="search-box" type="text" placeholder="🔍 Ism, username yoki ID..." oninput="filterTable('users',this.value)"/>
+      <select class="filter-select" onchange="filterUsers(this.value)">
+        <option value="all">Barchasi</option>
+        <option value="driver">🚗 Haydovchilar</option>
+        <option value="notif">🔔 Bildirishnoma yoqilgan</option>
+        <option value="online">📍 Onlayn (GPS)</option>
+      </select>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Yo'nalish</th><th>Turi</th><th>GPS</th><th>Bildirishnoma</th><th>Faollik</th><th>Xabar</th></tr></thead>
+        <tbody id="usersBody"><tr><td colspan="9"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+      </div>
+      <div class="pagination"><div class="page-info" id="usersPageInfo">—</div><div class="page-btns" id="usersPageBtns"></div></div>
+    </div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="tab-content" id="tab-orders">
+    <div class="toolbar">
+      <input class="search-box" type="text" placeholder="🔍 Shahar yoki username..." oninput="filterTable('orders',this.value)"/>
+      <select class="filter-select" onchange="filterOrders(this.value)">
+        <option value="all">Barchasi</option>
+        <option value="package">📦 Jo'natma</option>
+        <option value="person">👤 Yo'lovchi</option>
+      </select>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Turi</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th>O'chirish</th></tr></thead>
+        <tbody id="ordersBody"><tr><td colspan="7"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+      </div>
+      <div class="pagination"><div class="page-info" id="ordersPageInfo">—</div><div class="page-btns" id="ordersPageBtns"></div></div>
+    </div>
+  </div>
+
+  <!-- TRAVELS -->
+  <div class="tab-content" id="tab-travels">
+    <div class="toolbar">
+      <input class="search-box" type="text" placeholder="🔍 Shahar yoki username..." oninput="filterTable('travels',this.value)"/>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th>O'chirish</th></tr></thead>
+        <tbody id="travelsBody"><tr><td colspan="6"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+      </div>
+      <div class="pagination"><div class="page-info" id="travelsPageInfo">—</div><div class="page-btns" id="travelsPageBtns"></div></div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="tab-content" id="tab-map">
+    <div class="map-stats">
+      <div class="map-stat"><div class="map-stat-val" id="mOnline">0</div><div class="map-stat-label">📍 Onlayn foydalanuvchilar</div></div>
+      <div class="map-stat"><div class="map-stat-val" id="mDrivers">0</div><div class="map-stat-label">🚗 Haydovchilar (yo'nalish)</div></div>
+      <div class="map-stat"><div class="map-stat-val" id="mOrders">0</div><div class="map-stat-label">📦 Faol buyurtmalar</div></div>
+    </div>
+    <div class="map-card">
+      <div id="adminMap"></div>
+      <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#2AABEE"></div> Haydovchi</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div> Mijoz</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div> Noma'lum</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BROADCAST -->
+  <div class="tab-content" id="tab-broadcast">
+    <div class="broadcast-card">
+      <div class="broadcast-title">📢 Xabar yuborish</div>
+
+      <div style="margin-bottom:14px">
+        <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px">Kimga yuborilsin?</div>
+        <div class="recipient-grid">
+          <button class="recipient-btn selected" onclick="selectRecipient('all',this)">🌐 Hammaga<br><small style="font-weight:400;color:inherit" id="rcAll">—</small></button>
+          <button class="recipient-btn" onclick="selectRecipient('drivers',this)">🚗 Haydovchilar<br><small style="font-weight:400;color:inherit" id="rcDrivers">—</small></button>
+          <button class="recipient-btn" onclick="selectRecipient('passengers',this)">👤 Yo'lovchilar<br><small style="font-weight:400;color:inherit" id="rcPassengers">—</small></button>
+          <button class="recipient-btn" onclick="selectRecipient('single',this)">👤 Alohida<br><small style="font-weight:400;color:inherit">Telegram ID</small></button>
+        </div>
+        <div id="singleIdWrap" style="display:none;margin-top:8px">
+          <input class="chatid-input" id="singleChatId" type="number" placeholder="Telegram ID kiriting (masalan: 123456789)"/>
+        </div>
+      </div>
+
+      <div style="margin-bottom:8px">
+        <div style="font-size:12px;color:var(--text2);font-weight:500;margin-bottom:8px">Xabar matni (Markdown qo'llab-quvvatlanadi)</div>
+        <textarea class="msg-textarea" id="broadcastText" placeholder="*Katta yangilik!* Duvduv ilovasi yangilandi 🎉&#10;&#10;Yangi imkoniyatlarni ko'ring..." oninput="updateCharCount()"></textarea>
+      </div>
+      <div class="broadcast-footer">
+        <div class="char-count"><span id="charCount">0</span> / 4096 belgi</div>
+        <button class="send-btn" id="sendBtn" onclick="sendBroadcast()">
+          <span>📤 Yuborish</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- LOG -->
+    <div class="table-card">
+      <div style="padding:14px 16px;font-size:13px;font-weight:700;border-bottom:1px solid var(--gray2)">📋 Yuborish tarixi</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Kimga</th><th>Matn</th><th>Yuborildi</th><th>Xato</th><th>Vaqt</th></tr></thead>
+        <tbody id="broadcastLog"><tr><td colspan="5"><div class="loading"><div class="spinner"></div> Yuklanmoqda...</div></td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h3>🗑 O'chirishni tasdiqlang</h3>
+    <p id="deleteModalText">Bu e'lonni o'chirishni istaysizmi? Bu amalni qaytarib bo'lmaydi.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeDeleteModal()">Bekor qilish</button>
+      <button class="modal-confirm" id="deleteConfirmBtn">O'chirish</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
+const FIREBASE_CONFIG = {
+  apiKey:'AIzaSyB2SyqLQIPfwW9Kax4fQNeQBoogAaQ8CzA',
+  authDomain:'yolcar-30649.firebaseapp.com',
+  projectId:'yolcar-30649',
+  storageBucket:'yolcar-30649.firebasestorage.app',
+  messagingSenderId:'491905484776',
+  appId:'1:491905484776:web:8cd64ce484bf5b06aa865d'
+};
+firebase.initializeApp(FIREBASE_CONFIG);
+const db = firebase.firestore();
+
+// ── State ──────────────────────────────────────────────────────────────────────
+let allUsers=[], allOrders=[], allTravels=[], allMsgs=[];
+let filteredUsers=[], filteredOrders=[], filteredTravels=[];
+const PAGE=20;
+let pages={users:1,orders:1,travels:1};
+let userFilter='all', orderFilter='all';
+let searchQ={users:'',orders:'',travels:''};
+let selectedRecipient='all';
+let mapInstance=null, mapMarkers=[];
+
+// ── Firestore listeners ────────────────────────────────────────────────────────
+db.collection('users').orderBy('lastSeen','desc').onSnapshot(snap=>{
+  allUsers=snap.docs.map(d=>({id:d.id,...d.data()}));
+  updateStats(); applyFilters('users'); updateLastUpdate(); updateMapMarkers(); updateBroadcastCounts();
+});
+db.collection('orders').orderBy('createdAt','desc').onSnapshot(snap=>{
+  allOrders=snap.docs.map(d=>({id:d.id,...d.data()}));
+  updateStats(); applyFilters('orders'); updateLastUpdate();
+});
+db.collection('travels').orderBy('createdAt','desc').onSnapshot(snap=>{
+  allTravels=snap.docs.map(d=>({id:d.id,...d.data()}));
+  updateStats(); applyFilters('travels'); updateLastUpdate();
+});
+db.collection('admin_messages').orderBy('createdAt','desc').limit(50).onSnapshot(snap=>{
+  allMsgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+  renderBroadcastLog();
+});
+
+// ── Stats ──────────────────────────────────────────────────────────────────────
+function isOnline(u){
+  if(!u.location?.updatedAt) return false;
+  const d=u.location.updatedAt.toDate?u.location.updatedAt.toDate():new Date(u.location.updatedAt);
+  return Date.now()-d.getTime()<10*60*1000;
+}
+function updateStats(){
+  const drivers=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
+  const online=allUsers.filter(isOnline).length;
+  const pkgs=allOrders.filter(o=>o.type!=='person').length;
+  const persons=allOrders.filter(o=>o.type==='person').length;
+  document.getElementById('sUsers').textContent=allUsers.length;
+  document.getElementById('sDrivers').textContent=`${drivers} haydovchi yo'nalish belgilagan`;
+  document.getElementById('sOrders').textContent=allOrders.length;
+  document.getElementById('sOrdersSub').textContent=`📦${pkgs} jo'natma · 👤${persons} yo'lovchi`;
+  document.getElementById('sTravels').textContent=allTravels.length;
+  document.getElementById('sOnline').textContent=online;
+  document.getElementById('mOnline').textContent=online;
+  document.getElementById('mDrivers').textContent=drivers;
+  document.getElementById('mOrders').textContent=allOrders.length;
+}
+function updateLastUpdate(){
+  const n=new Date();
+  document.getElementById('lastUpdate').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}:${pad(n.getSeconds())}`;
+}
+function pad(n){return String(n).padStart(2,'0')}
+
+// ── Tabs ───────────────────────────────────────────────────────────────────────
+const TAB_NAMES=['users','orders','travels','map','broadcast'];
+function switchTab(name){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el=>el.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  document.querySelectorAll('.tab-btn')[TAB_NAMES.indexOf(name)].classList.add('active');
+  if(name==='map') initAdminMap();
+}
+
+// ── MAP ────────────────────────────────────────────────────────────────────────
+function initAdminMap(){
+  if(mapInstance) return;
+  mapboxgl.accessToken=MAPBOX_TOKEN;
+  mapInstance=new mapboxgl.Map({
+    container:'adminMap',
+    style:'mapbox://styles/mapbox/streets-v12',
+    center:[64.5,41.3],
+    zoom:5
+  });
+  mapInstance.addControl(new mapboxgl.NavigationControl(),'top-right');
+  mapInstance.on('load',()=>updateMapMarkers());
+}
+function updateMapMarkers(){
+  if(!mapInstance||!mapInstance.loaded()) return;
+  mapMarkers.forEach(m=>m.remove());
+  mapMarkers=[];
+  allUsers.forEach(u=>{
+    if(!u.location?.lat||!u.location?.lng) return;
+    const isDriver=u.routeFrom&&u.routeTo;
+    const online=isOnline(u);
+    const color=isDriver?'#2AABEE':'#22c55e';
+    const el=document.createElement('div');
+    el.style.cssText=`width:14px;height:14px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 1px 6px rgba(0,0,0,.3);cursor:pointer;${!online?'opacity:.5':''}`;
+    const popup=new mapboxgl.Popup({offset:12}).setHTML(`
+      <div style="font-size:13px;min-width:160px">
+        <b>${u.firstName||'Noma\'lum'}</b>${u.username?' (@'+u.username+')':''}<br>
+        <span style="color:#888;font-size:11px">ID: ${u.chatId||u.id}</span><br>
+        ${isDriver?`<span style="color:#2AABEE">🚗 ${u.routeFrom} → ${u.routeTo}</span><br>`:''}
+        <span style="color:${online?'#22c55e':'#aaa'}">${online?'● Onlayn':'● Oflayn'}</span><br>
+        <span style="font-size:11px;color:#888">${fmtDate(u.location.updatedAt)}</span>
+        <br><button onclick="openSingleMsg('${u.chatId||u.id}','${(u.firstName||'').replace(/'/g,'')}')" style="margin-top:6px;padding:4px 10px;background:#2AABEE;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px">Xabar yuborish</button>
+      </div>
+    `);
+    const marker=new mapboxgl.Marker({element:el}).setLngLat([u.location.lng,u.location.lat]).setPopup(popup).addTo(mapInstance);
+    mapMarkers.push(marker);
+  });
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────────
+function filterTable(type,val){searchQ[type]=val.toLowerCase();pages[type]=1;applyFilters(type)}
+function filterUsers(val){userFilter=val;pages.users=1;applyFilters('users')}
+function filterOrders(val){orderFilter=val;pages.orders=1;applyFilters('orders')}
+function applyFilters(type){
+  const q=searchQ[type];
+  if(type==='users'){
+    let d=allUsers;
+    if(userFilter==='driver') d=d.filter(u=>u.routeFrom&&u.routeTo);
+    if(userFilter==='notif')  d=d.filter(u=>u.notifications);
+    if(userFilter==='online') d=d.filter(isOnline);
+    if(q) d=d.filter(u=>(u.firstName||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||String(u.chatId||'').includes(q));
+    filteredUsers=d; renderTable('users');
+  }else if(type==='orders'){
+    let d=allOrders;
+    if(orderFilter==='package') d=d.filter(o=>o.type!=='person');
+    if(orderFilter==='person')  d=d.filter(o=>o.type==='person');
+    if(q) d=d.filter(o=>(o.from||'').toLowerCase().includes(q)||(o.to||'').toLowerCase().includes(q)||(o.telegramUsername||'').toLowerCase().includes(q));
+    filteredOrders=d; renderTable('orders');
+  }else{
+    let d=allTravels;
+    if(q) d=d.filter(t=>(t.from||'').toLowerCase().includes(q)||(t.to||t.dest||'').toLowerCase().includes(q)||(t.telegramUsername||'').toLowerCase().includes(q));
+    filteredTravels=d; renderTable('travels');
+  }
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────────
+function renderTable(type){if(type==='users')renderUsers();else if(type==='orders')renderOrders();else renderTravels()}
+function paginate(arr,p){return arr.slice((p-1)*PAGE,p*PAGE)}
+function avatar(name){
+  const ch=(name||'?').charAt(0).toUpperCase();
+  const colors=['#2AABEE','#1a8cc8','#22c55e','#f59e0b','#e53e3e','#7c3aed'];
+  return`<div class="avatar" style="background:${colors[ch.charCodeAt(0)%colors.length]}">${ch}</div>`;
+}
+function routeHtml(a,b){
+  if(!a&&!b)return'<span style="color:#aaa">—</span>';
+  return`<div class="route"><span class="rc">${a||'?'}</span><span class="ra">→</span><span class="rc">${b||'?'}</span></div>`;
+}
+function timeAgo(ts){
+  if(!ts)return'—';
+  const d=ts.toDate?ts.toDate():new Date(ts),diff=Date.now()-d.getTime();
+  const m=Math.floor(diff/60000),h=Math.floor(m/60),day=Math.floor(h/24);
+  if(day>0)return`${day} kun oldin`;if(h>0)return`${h} soat oldin`;if(m>0)return`${m} daqiqa oldin`;return'Hozirgina';
+}
+function fmtDate(ts){
+  if(!ts)return'—';
+  const d=ts.toDate?ts.toDate():new Date(ts);
+  return d.toLocaleDateString('uz-UZ',{day:'2-digit',month:'2-digit',year:'2-digit'})+' '+d.toLocaleTimeString('uz-UZ',{hour:'2-digit',minute:'2-digit'});
+}
+
+function renderUsers(){
+  const data=paginate(filteredUsers,pages.users);
+  document.getElementById('usersBody').innerHTML=filteredUsers.length===0
+    ?`<tr><td colspan="9"><div class="table-empty">👤 Topilmadi</div></td></tr>`
+    :data.map((u,i)=>{
+      const n=(pages.users-1)*PAGE+i+1;
+      const isDriver=u.routeFrom&&u.routeTo;
+      const online=isOnline(u);
+      return`<tr>
+        <td style="color:var(--text2);font-size:11px">${n}</td>
+        <td><div class="user-cell">${avatar(u.firstName)}<div><div class="uname">${u.firstName||'Noma\'lum'}</div><div class="uun">${u.username?'@'+u.username:''}</div></div></div></td>
+        <td><code>${u.chatId||u.id}</code></td>
+        <td>${routeHtml(u.routeFrom,u.routeTo)}</td>
+        <td>${isDriver?'<span class="badge bb">🚗 Haydovchi</span>':'<span class="badge bg">👤 Mijoz</span>'}</td>
+        <td>${online?'<span class="badge bg">📍 Onlayn</span>':'<span style="color:#ccc;font-size:11px">oflayn</span>'}</td>
+        <td>${u.notifications?'<span class="badge bg">✅</span>':'<span class="badge br">❌</span>'}</td>
+        <td><div class="time-cell">${timeAgo(u.lastSeen)}</div></td>
+        <td><button class="del-btn" onclick="confirmDelete('users','${u.id}','${(u.firstName||'').replace(/'/g,'')}')">🗑</button></td>
+      </tr>`;
+    }).join('');
+  renderPagination('users',filteredUsers.length);
+}
+
+function renderOrders(){
+  const data=paginate(filteredOrders,pages.orders);
+  document.getElementById('ordersBody').innerHTML=filteredOrders.length===0
+    ?`<tr><td colspan="7"><div class="table-empty">📦 Topilmadi</div></td></tr>`
+    :data.map((o,i)=>{
+      const n=(pages.orders-1)*PAGE+i+1;
+      return`<tr>
+        <td style="color:var(--text2);font-size:11px">${n}</td>
+        <td>${o.type==='person'?'<span class="badge bp">👤 Yo\'lovchi</span>':'<span class="badge bo">📦 Jo\'natma</span>'}</td>
+        <td>${routeHtml(o.from,o.to)}</td>
+        <td>${o.telegramUsername?'@'+o.telegramUsername:'<span style="color:#aaa">—</span>'}</td>
+        <td><code>${o.telegramId||'—'}</code></td>
+        <td><div class="time-cell">${fmtDate(o.createdAt)}</div></td>
+        <td><button class="del-btn" onclick="confirmDelete('orders','${o.id}','${o.from}→${o.to}')">🗑 O'chirish</button></td>
+      </tr>`;
+    }).join('');
+  renderPagination('orders',filteredOrders.length);
+}
+
+function renderTravels(){
+  const data=paginate(filteredTravels,pages.travels);
+  document.getElementById('travelsBody').innerHTML=filteredTravels.length===0
+    ?`<tr><td colspan="6"><div class="table-empty">🚗 Topilmadi</div></td></tr>`
+    :data.map((t,i)=>{
+      const n=(pages.travels-1)*PAGE+i+1;
+      return`<tr>
+        <td style="color:var(--text2);font-size:11px">${n}</td>
+        <td>${routeHtml(t.from,t.to||t.dest)}</td>
+        <td>${t.telegramUsername?'@'+t.telegramUsername:'<span style="color:#aaa">—</span>'}</td>
+        <td><code>${t.telegramId||'—'}</code></td>
+        <td><div class="time-cell">${fmtDate(t.createdAt)}</div></td>
+        <td><button class="del-btn" onclick="confirmDelete('travels','${t.id}','${t.from}→${t.to||t.dest}')">🗑 O'chirish</button></td>
+      </tr>`;
+    }).join('');
+  renderPagination('travels',filteredTravels.length);
+}
+
+// ── Pagination ─────────────────────────────────────────────────────────────────
+function renderPagination(type,total){
+  const totalP=Math.ceil(total/PAGE),cur=pages[type];
+  document.getElementById(`${type}PageInfo`).textContent=total===0?'0 ta':`${(cur-1)*PAGE+1}–${Math.min(cur*PAGE,total)} / ${total} ta`;
+  const btns=document.getElementById(`${type}PageBtns`);
+  if(totalP<=1){btns.innerHTML='';return}
+  let h=`<button class="page-btn" onclick="goPage('${type}',${cur-1})" ${cur===1?'disabled':''}>‹</button>`;
+  for(let p=Math.max(1,cur-2);p<=Math.min(totalP,cur+2);p++)h+=`<button class="page-btn ${p===cur?'active':''}" onclick="goPage('${type}',${p})">${p}</button>`;
+  h+=`<button class="page-btn" onclick="goPage('${type}',${cur+1})" ${cur===totalP?'disabled':''}>›</button>`;
+  btns.innerHTML=h;
+}
+function goPage(type,page){pages[type]=page;renderTable(type)}
+
+// ── Delete ─────────────────────────────────────────────────────────────────────
+let _pendingDelete=null;
+function confirmDelete(collection,docId,label){
+  _pendingDelete={collection,docId};
+  document.getElementById('deleteModalText').textContent=`"${label}" ni o'chirishni istaysizmi? Bu amalni qaytarib bo'lmaydi.`;
+  document.getElementById('deleteModal').classList.add('show');
+}
+function closeDeleteModal(){document.getElementById('deleteModal').classList.remove('show');_pendingDelete=null}
+document.getElementById('deleteConfirmBtn').onclick=async()=>{
+  if(!_pendingDelete)return;
+  const {collection,docId}=_pendingDelete;
+  closeDeleteModal();
+  try{
+    await db.collection(collection).doc(docId).delete();
+  }catch(e){alert('O\'chirishda xato: '+e.message)}
+};
+
+// ── Broadcast ──────────────────────────────────────────────────────────────────
+function selectRecipient(val,btn){
+  selectedRecipient=val;
+  document.querySelectorAll('.recipient-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  document.getElementById('singleIdWrap').style.display=val==='single'?'block':'none';
+}
+function updateCharCount(){
+  document.getElementById('charCount').textContent=document.getElementById('broadcastText').value.length;
+}
+function updateBroadcastCounts(){
+  document.getElementById('rcAll').textContent=allUsers.length+' ta';
+  const drivers=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
+  document.getElementById('rcDrivers').textContent=drivers+' ta';
+}
+function openSingleMsg(chatId,name){
+  switchTab('broadcast');
+  document.querySelectorAll('.recipient-btn')[3].click();
+  document.getElementById('singleChatId').value=chatId;
+  document.getElementById('broadcastText').focus();
+}
+async function sendBroadcast(){
+  const text=document.getElementById('broadcastText').value.trim();
+  if(!text){alert('Xabar matni bo\'sh!');return}
+  let to=selectedRecipient;
+  if(to==='single'){
+    const id=document.getElementById('singleChatId').value.trim();
+    if(!id){alert('Telegram ID kiriting!');return}
+    to=id;
+  }
+  const btn=document.getElementById('sendBtn');
+  btn.disabled=true;btn.innerHTML='<div class="spinner"></div> Yuborilmoqda...';
+  try{
+    await db.collection('admin_messages').add({
+      to, text, sent:false,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    document.getElementById('broadcastText').value='';
+    updateCharCount();
+  }catch(e){alert('Xato: '+e.message)}
+  btn.disabled=false;btn.innerHTML='<span>📤 Yuborish</span>';
+}
+
+function renderBroadcastLog(){
+  const tbody=document.getElementById('broadcastLog');
+  if(allMsgs.length===0){
+    tbody.innerHTML=`<tr><td colspan="5"><div class="table-empty">Hali xabar yuborilmagan</div></td></tr>`;return;
+  }
+  const toLabel={all:'🌐 Hammaga',drivers:'🚗 Haydovchilar',passengers:'👤 Yo\'lovchilar'};
+  tbody.innerHTML=allMsgs.map(m=>`<tr>
+    <td>${toLabel[m.to]||`👤 ${m.to}`}</td>
+    <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.text||''}</td>
+    <td>${m.sent?`<span class="badge bg">✅ ${m.sentCount||0} ta</span>`:'<span class="badge bo">⏳ Kutmoqda</span>'}</td>
+    <td>${m.failedCount?`<span class="badge br">❌ ${m.failedCount}</span>`:'—'}</td>
+    <td><div class="time-cell">${fmtDate(m.createdAt)}</div></td>
+  </tr>`).join('');
+}
+</script>
+</body>
+</html>

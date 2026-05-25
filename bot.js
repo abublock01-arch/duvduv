@@ -17,10 +17,33 @@ const db = admin.firestore();
 const TOKEN = process.env.BOT_TOKEN;
 if (!TOKEN) { console.error('❌ BOT_TOKEN topilmadi'); process.exit(1); }
 
-const bot = new TelegramBot(TOKEN, { polling: true });
+const bot = new TelegramBot(TOKEN, {
+  polling: {
+    interval: 300,
+    autoStart: true,
+    params: { timeout: 10 }
+  }
+});
 const APP_URL = 'https://duvduv.vercel.app';
 
 console.log('✅ duvduv bot ishga tushdi');
+
+// ── Polling xatolarini ushlab, avtomatik qayta ulanish ───────────────────
+bot.on('polling_error', (err) => {
+  const code = err.code || '';
+  // ETIMEDOUT, ECONNRESET, EFATAL — tarmoq uzilishi, qayta ulanamiz
+  if (['ETIMEDOUT','ECONNRESET','ENOTFOUND','EFATAL'].includes(code) ||
+      (err.message && err.message.includes('ETIMEDOUT'))) {
+    console.warn(`⚠️ Polling uzildi (${code}), 5 soniyada qayta ulanadi...`);
+    setTimeout(() => {
+      bot.stopPolling()
+        .then(() => bot.startPolling())
+        .catch(e => console.error('Qayta ulanish xatosi:', e.message));
+    }, 5000);
+  } else {
+    console.error('Polling xatosi:', err.message);
+  }
+});
 
 // Menu tugmasi — «Қани бошладик» (pastdagi ko'k tugma, URL emas)
 const MENU_BTN_TEXT = 'Қани бошладик';
@@ -317,16 +340,38 @@ bot.on('callback_query', async (query) => {
 
 
 // ── Yangi travel → mos haydovchilarga xabar ──────────────────────────────
+// Mijozga tasdiqlash xabari
+async function notifySender(telegramId, from, to, type) {
+  if (!telegramId) { console.log('⚠️ notifySender: telegramId yo\'q'); return; }
+  console.log(`📨 Sender ga xabar: chatId=${telegramId}`);
+  try {
+    await bot.sendMessage(telegramId,
+      `✅ *Эълонингиз қабул қилинди!*\n\n` +
+      `${type}\n` +
+      `📍 ${from} → ${to}\n\n` +
+      `Ҳайдовчи топилганда хабар берамиз 🔔`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: { inline_keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }]] }
+      }
+    );
+  } catch(e) {
+    console.error('Sender notification xatosi:', e.message);
+  }
+}
+
 async function notifyDrivers(from, to, type, sender) {
-  if (!from || !to) return;
+  if (!from || !to) { console.log('⚠️ notifyDrivers: from yoki to yo\'q'); return; }
+  console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}`);
   const usersSnap = await db.collection('users')
     .where('role', '==', 'driver')
     .where('notifications', '==', true)
     .get();
 
+  console.log(`👥 Topilgan haydovchilar: ${usersSnap.size} ta`);
   for (const doc of usersSnap.docs) {
     const driver = doc.data();
-    if (!driver.chatId) continue;
+    if (!driver.chatId) { console.log(`⚠️ Driver ${doc.id}: chatId yo'q`); continue; }
 
     const driverFrom = driver.routeFrom || '';
     const driverTo   = driver.routeTo   || '';
@@ -353,26 +398,84 @@ async function notifyDrivers(from, to, type, sender) {
 let initOrders = false;
 db.collection('orders').orderBy('createdAt','desc')
   .onSnapshot(async snap => {
-    if (!initOrders) { initOrders = true; return; }
+    if (!initOrders) { initOrders = true; console.log('✅ orders listener tayyor'); return; }
     for (const ch of snap.docChanges()) {
       if (ch.type !== 'added') continue;
       const d = ch.doc.data();
-      if (Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime() > 30000) continue;
+      const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
+      console.log(`📦 Yangi order: from=${d.from} to=${d.to} telegramId=${d.telegramId} yoshi=${age}ms`);
+      if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
       const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
-      await notifyDrivers(d.from||'', d.to||'', type, d.telegramUsername||'').catch(console.error);
+      const from = d.from || '';
+      const to   = d.to   || '';
+      await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
+      await notifyDrivers(from, to, type, d.telegramUsername||'').catch(e => console.error('notifyDrivers xato:', e.message));
     }
-  });
+  }, err => console.error('orders listener xato:', err.message));
 
 let initTravels = false;
 db.collection('travels').orderBy('createdAt','desc')
   .onSnapshot(async snap => {
-    if (!initTravels) { initTravels = true; return; }
+    if (!initTravels) { initTravels = true; console.log('✅ travels listener tayyor'); return; }
     for (const ch of snap.docChanges()) {
       if (ch.type !== 'added') continue;
       const d = ch.doc.data();
-      if (Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime() > 30000) continue;
-      await notifyDrivers(d.from||'', d.to||d.dest||'', '🚗 Сафар', d.telegramUsername||'').catch(console.error);
+      const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
+      console.log(`🚗 Yangi travel: from=${d.from} to=${d.to} telegramId=${d.telegramId} yoshi=${age}ms`);
+      if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
+      const from = d.from  || '';
+      const to   = d.to || d.dest || '';
+      await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
+      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername||'').catch(e => console.error('notifyDrivers xato:', e.message));
     }
-  });
+  }, err => console.error('travels listener xato:', err.message));
+
+// ── Admin broadcast xabarlari ─────────────────────────────────────────────────
+let initAdminMsg = false;
+db.collection('admin_messages').where('sent', '==', false).orderBy('createdAt', 'asc')
+  .onSnapshot(async snap => {
+    if (!initAdminMsg) { initAdminMsg = true; return; }
+    for (const ch of snap.docChanges()) {
+      if (ch.type !== 'added') continue;
+      const ref = ch.doc.ref;
+      const d   = ch.doc.data();
+      const text = d.text || '';
+      const to   = d.to || 'all'; // 'all' | 'drivers' | 'passengers' | chatId
+      if (!text) { await ref.update({ sent: true, error: 'bo\'sh xabar' }); continue; }
+      try {
+        let chatIds = [];
+        if (to === 'all') {
+          const snap2 = await db.collection('users').where('chatId', '>', 0).get();
+          chatIds = snap2.docs.map(d => d.data().chatId).filter(Boolean);
+        } else if (to === 'drivers') {
+          const snap2 = await db.collection('users').where('routeFrom', '!=', '').get();
+          chatIds = snap2.docs.map(d => d.data().chatId).filter(Boolean);
+        } else if (to === 'passengers') {
+          // orders da type === 'person' bo'lgan unique telegramId lar
+          const snap2 = await db.collection('orders').where('type', '==', 'person').get();
+          const ids = [...new Set(snap2.docs.map(d => d.data().telegramId).filter(Boolean))];
+          chatIds = ids;
+        } else {
+          // Alohida chatId
+          chatIds = [Number(to) || to];
+        }
+        let sent = 0, failed = 0;
+        for (const chatId of chatIds) {
+          try {
+            await bot.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+            sent++;
+          } catch (e) {
+            console.warn(`⚠️ ${chatId} ga yuborib bo'lmadi: ${e.message}`);
+            failed++;
+          }
+        }
+        await ref.update({ sent: true, sentCount: sent, failedCount: failed, sentAt: admin.firestore.FieldValue.serverTimestamp() });
+        console.log(`📢 Broadcast: ${sent} ta yuborildi, ${failed} ta xato`);
+      } catch (e) {
+        console.error('Broadcast xatosi:', e.message);
+        await ref.update({ sent: true, error: e.message });
+      }
+    }
+  }, err => console.error('admin_messages listener xato:', err.message));
 
 console.log('📡 Firestore va Telegram tinglanyapti...');
