@@ -366,35 +366,34 @@ body.view-sender .header{background:var(--app-bg)!important}
   --script-morph-h:36px;
 }
 .picker-wrap{
-  position:relative;
-  margin:4px 0 16px;
+  display:flex;align-items:stretch;gap:0;
+  position:relative;margin:4px 0 16px;
 }
-.picker-wrap .region-picker--vertical{
+.picker-wrap__main{
+  flex:1;min-width:0;
+}
+.picker-wrap__main .region-picker--vertical{
   width:100%;margin:0;
 }
-.picker-wrap .region-picker--vertical .region-picker-item{
+.picker-wrap__main .region-picker--vertical .region-picker-item{
   display:flex;justify-content:center;align-items:center;
 }
-.picker-swipe-hint{
-  position:absolute;inset:0;z-index:5;pointer-events:none;
-  display:flex;align-items:center;justify-content:center;
+.picker-swipe-rail{
+  flex:0 0 52px;position:relative;
+  touch-action:none;cursor:grab;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
 }
-.picker-swipe-hint .picker-hand{
-  width:40px;height:40px;color:rgba(42,171,238,.82);
-  filter:drop-shadow(0 2px 10px rgba(42,171,238,.28));
-  opacity:0;transform:translateY(-24px);
+.picker-swipe-rail:active{cursor:grabbing}
+.picker-swipe-rail .picker-hand{
+  position:absolute;left:50%;margin-left:-19px;top:0;
+  width:38px;height:38px;pointer-events:none;
+  color:rgba(42,171,238,.85);
+  filter:drop-shadow(0 2px 8px rgba(42,171,238,.22));
+  opacity:0;will-change:transform,opacity;
 }
-.picker-swipe-hint .picker-hand svg{
+.picker-swipe-rail .picker-hand svg{
   display:block;width:100%;height:100%;transform:rotate(180deg);
-}
-.picker-swipe-hint.is-playing .picker-hand{
-  animation:pickerHandSwipeDown 1s cubic-bezier(.4,0,.2,1) forwards;
-}
-@keyframes pickerHandSwipeDown{
-  0%{opacity:0;transform:translateY(-24px)}
-  14%{opacity:1}
-  58%{opacity:1;transform:translateY(40px)}
-  100%{opacity:0;transform:translateY(56px)}
 }
 .region-picker--vertical{
   height:196px;margin:4px 0 16px;
@@ -1507,16 +1506,22 @@ body.view-sender.theme-telegram .toggle,
       </div>
       <div id="sendStepRegion">
         <div class="picker-wrap">
-          <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
-            <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+          <div class="picker-wrap__main">
+            <div class="region-picker region-picker--vertical" id="sendRegionPicker" aria-label="Qayerga">
+              <div class="region-picker-track" id="sendRegionPickerTrack"></div>
+            </div>
           </div>
+          <div class="picker-swipe-rail" aria-hidden="true"></div>
         </div>
       </div>
       <div id="sendStepDistrict" hidden>
         <div class="picker-wrap">
-          <div class="region-picker region-picker--vertical" id="sendDistrictPicker" aria-label="Tuman tanlash">
-            <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
+          <div class="picker-wrap__main">
+            <div class="region-picker region-picker--vertical" id="sendDistrictPicker" aria-label="Tuman tanlash">
+              <div class="region-picker-track" id="sendDistrictPickerTrack"></div>
+            </div>
           </div>
+          <div class="picker-swipe-rail" aria-hidden="true"></div>
         </div>
       </div>
       <input type="hidden" id="sendDest" value="">
@@ -1538,16 +1543,22 @@ body.view-sender.theme-telegram .toggle,
       </div>
       <div id="travelStepRegion">
         <div class="picker-wrap">
-          <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
-            <div class="region-picker-track" id="travelRegionPickerTrack"></div>
+          <div class="picker-wrap__main">
+            <div class="region-picker region-picker--vertical" id="travelRegionPicker" aria-label="Qayerga borasiz">
+              <div class="region-picker-track" id="travelRegionPickerTrack"></div>
+            </div>
           </div>
+          <div class="picker-swipe-rail" aria-hidden="true"></div>
         </div>
       </div>
       <div id="travelStepDistrict" hidden>
         <div class="picker-wrap">
-          <div class="region-picker region-picker--vertical" id="travelDistrictPicker" aria-label="Tuman tanlash">
-            <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
+          <div class="picker-wrap__main">
+            <div class="region-picker region-picker--vertical" id="travelDistrictPicker" aria-label="Tuman tanlash">
+              <div class="region-picker-track" id="travelDistrictPickerTrack"></div>
+            </div>
           </div>
+          <div class="picker-swipe-rail" aria-hidden="true"></div>
         </div>
       </div>
       <input type="hidden" id="travelTo" value="">
@@ -2662,15 +2673,54 @@ function getSelectedValueForTrack(track){
   return '';
 }
 
-function ensurePickerSwipeHint(wrap){
-  let hint = wrap.querySelector('.picker-swipe-hint');
-  if (hint) return hint;
-  hint = document.createElement('div');
-  hint.className = 'picker-swipe-hint';
-  hint.setAttribute('aria-hidden', 'true');
-  hint.innerHTML = '<div class="picker-hand">' + PICKER_HAND_SVG + '</div>';
-  wrap.appendChild(hint);
-  return hint;
+function easePickerSwipe(t){
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function getVerticalPickerCenterIndex(track){
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  if (!items.length) return 0;
+  const centerY = track.scrollTop + track.clientHeight / 2;
+  let idx = 0;
+  let best = Infinity;
+  items.forEach((item, i) => {
+    const mid = item.offsetTop + item.offsetHeight / 2;
+    const d = Math.abs(mid - centerY);
+    if (d < best) { best = d; idx = i; }
+  });
+  return idx;
+}
+
+function scrollVerticalPickerToIndex(track, idx){
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  const target = items[Math.max(0, Math.min(items.length - 1, idx))];
+  if (!target) return;
+  const top = target.offsetTop - (track.clientHeight / 2) + (target.offsetHeight / 2);
+  track.scrollTop = Math.max(0, Math.min(track.scrollHeight - track.clientHeight, top));
+}
+
+function ensurePickerHandInRail(rail){
+  let hand = rail.querySelector('.picker-hand');
+  if (hand) return hand;
+  hand = document.createElement('div');
+  hand.className = 'picker-hand';
+  hand.innerHTML = PICKER_HAND_SVG;
+  rail.appendChild(hand);
+  return hand;
+}
+
+function setPickerHandPose(hand, rail, t){
+  if (!hand || !rail) return;
+  const h = rail.clientHeight || 172;
+  const y0 = h * 0.18;
+  const y1 = h * 0.58;
+  const eased = easePickerSwipe(Math.min(1, Math.max(0, t)));
+  const y = y0 + (y1 - y0) * eased;
+  let opacity = 1;
+  if (t < 0.12) opacity = t / 0.12;
+  else if (t > 0.88) opacity = (1 - t) / 0.12;
+  hand.style.transform = `translateY(${y}px)`;
+  hand.style.opacity = String(Math.min(1, Math.max(0, opacity)));
 }
 
 function cancelPickerDemo(){
@@ -2681,42 +2731,84 @@ function runPickerSwipeHint(track, wrap, token){
   if (!track || !wrap || prefersReducedMotion()) return;
   const items = [...track.querySelectorAll('.region-picker-item')];
   if (items.length < 2) return;
-  const restore = getSelectedValueForTrack(track);
   const onCommit = getVerticalPickerOnCommit(track);
-  const stepH = items[0]?.offsetHeight || 44;
-  const maxScroll = Math.max(0, track.scrollHeight - track.clientHeight);
-  const baseTop = track.scrollTop;
-  const hint = ensurePickerSwipeHint(wrap);
-  hint.classList.remove('is-playing');
-  void hint.offsetWidth;
-  hint.classList.add('is-playing');
+  const rail = wrap.querySelector('.picker-swipe-rail');
+  const hand = rail ? ensurePickerHandInRail(rail) : null;
+  const startIdx = getVerticalPickerCenterIndex(track);
+  const nextIdx = Math.min(startIdx + 1, items.length - 1);
+  if (nextIdx === startIdx) return;
+  const startScroll = track.scrollTop;
+  scrollVerticalPickerToIndex(track, nextIdx);
+  const endScroll = track.scrollTop;
+  track.scrollTop = startScroll;
   track.dataset.pickerProgrammatic = '1';
   const start = performance.now();
   const tick = now => {
     if (token !== pickerDemoToken || track.dataset.pickerDemoCancelled) {
-      hint.classList.remove('is-playing');
+      if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
       delete track.dataset.pickerProgrammatic;
       delete track.dataset.pickerDemoCancelled;
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
-    const scrollT = t < 0.55 ? t / 0.55 : 1 - (t - 0.55) / 0.45;
-    const offset = scrollT * stepH * 0.7;
-    track.scrollTop = Math.min(maxScroll, baseTop + offset);
+    const eased = easePickerSwipe(t);
+    track.scrollTop = startScroll + (endScroll - startScroll) * eased;
     updateRegionPickerVisuals(false, track, null);
+    setPickerHandPose(hand, rail, t);
     if (t < 1) {
       requestAnimationFrame(tick);
       return;
     }
-    scrollPickerToRegion(track, restore, false);
-    requestAnimationFrame(() => {
-      updateRegionPickerVisuals(true, track, onCommit);
-      hint.classList.remove('is-playing');
-      delete track.dataset.pickerProgrammatic;
-      delete track.dataset.pickerDemoCancelled;
-    });
+    track.scrollTop = endScroll;
+    updateRegionPickerVisuals(true, track, onCommit);
+    if (hand) {
+      hand.style.opacity = '0';
+      hand.style.transform = '';
+    }
+    delete track.dataset.pickerProgrammatic;
+    delete track.dataset.pickerDemoCancelled;
   };
   requestAnimationFrame(tick);
+}
+
+let pickerRailDrag = null;
+
+function bindPickerSwipeRails(){
+  if (document.body.dataset.pickerRailBound) return;
+  document.body.dataset.pickerRailBound = '1';
+  const settleRailScroll = track => {
+    const idx = getVerticalPickerCenterIndex(track);
+    scrollVerticalPickerToIndex(track, idx);
+    updateRegionPickerVisuals(true, track, getVerticalPickerOnCommit(track));
+  };
+  document.body.addEventListener('pointerdown', e => {
+    const rail = e.target.closest('.picker-swipe-rail');
+    if (!rail || e.button > 0) return;
+    const track = rail.closest('.picker-wrap')?.querySelector('.region-picker-track');
+    if (!track || track.closest('[hidden]')) return;
+    pickerRailDrag = {
+      rail, track, pointerId: e.pointerId,
+      startY: e.clientY, startScroll: track.scrollTop
+    };
+    rail.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  document.body.addEventListener('pointermove', e => {
+    if (!pickerRailDrag || e.pointerId !== pickerRailDrag.pointerId) return;
+    const { track, startY, startScroll } = pickerRailDrag;
+    const max = Math.max(0, track.scrollHeight - track.clientHeight);
+    track.scrollTop = Math.max(0, Math.min(max, startScroll + (startY - e.clientY)));
+    updateRegionPickerVisuals(false, track, null);
+  }, { passive: true });
+  const endRailDrag = e => {
+    if (!pickerRailDrag || e.pointerId !== pickerRailDrag.pointerId) return;
+    const { rail, track } = pickerRailDrag;
+    try { rail.releasePointerCapture(e.pointerId); } catch (_) {}
+    pickerRailDrag = null;
+    settleRailScroll(track);
+  };
+  document.body.addEventListener('pointerup', endRailDrag);
+  document.body.addEventListener('pointercancel', endRailDrag);
 }
 
 function schedulePickerSwipeHint(sheetKind){
@@ -5305,7 +5397,8 @@ function closeSendSheet(){
   const track = document.getElementById('sendRegionPickerTrack');
   if (track) {
     track.dataset.pickerDemoCancelled = '1';
-    track.closest('.picker-wrap')?.querySelector('.picker-swipe-hint')?.classList.remove('is-playing');
+    const hand = track.closest('.picker-wrap')?.querySelector('.picker-hand');
+    if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
   }
   const sheet = document.getElementById('sendSheetOverlay');
   sheet.classList.remove('open', 'send-handoff');
@@ -5330,7 +5423,8 @@ function closeTravelSheet(){
   const track = document.getElementById('travelRegionPickerTrack');
   if (track) {
     track.dataset.pickerDemoCancelled = '1';
-    track.closest('.picker-wrap')?.querySelector('.picker-swipe-hint')?.classList.remove('is-playing');
+    const hand = track.closest('.picker-wrap')?.querySelector('.picker-hand');
+    if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
   }
   document.getElementById('travelSheetOverlay').classList.remove('open');
   resetTravelSheetSteps();
@@ -5490,6 +5584,7 @@ initFirebase();
 initRegionSelects();
 initCtaIcons();
 initAllMorphTexts();
+bindPickerSwipeRails();
 applyCyrillicUI();
 refreshUserLocationRegion();
 loadPersistedData();
