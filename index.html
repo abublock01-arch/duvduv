@@ -431,17 +431,23 @@ body.view-sender .header{background:var(--app-bg)!important}
   --script-morph-h:36px;
 }
 .travel-sheet-head{text-align:center;padding:8px 0 12px}
-.sheet-pick-back{
-  display:flex;align-items:center;justify-content:center;gap:6px;
-  width:calc(100% - 8px);max-width:340px;margin:0 auto 10px;padding:9px 14px;
-  border-radius:12px;border:1px solid rgba(42,171,238,.28);
-  background:rgba(42,171,238,.07);color:#2AABEE;
-  font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
+.sheet-action-bar{
+  display:flex;align-items:stretch;gap:8px;width:100%;margin-top:6px;
 }
-.sheet-pick-back[hidden]{display:none!important}
-.sheet-pick-back:active{background:rgba(42,171,238,.14)}
-.sheet-pick-back-arrow{font-size:16px;line-height:1;opacity:.9}
+.sheet-action-bar .sheet-action-main{
+  flex:1;min-width:0;margin-top:0;
+}
+.sheet-action-back{
+  flex:0 0 52px;width:52px;align-self:stretch;min-height:54px;
+  padding:0;border:none;border-radius:100px;
+  background:rgba(42,171,238,.12);color:#2AABEE;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:background .12s ease,transform .12s ease;
+}
+.sheet-action-back[hidden]{display:none!important}
+.sheet-action-back:active{background:rgba(42,171,238,.22);transform:scale(.96)}
+.sheet-action-back svg{display:block;width:22px;height:22px}
 .travel-dest-title{
   font-size:clamp(34px,10vw,48px);font-weight:800;color:var(--navy);
   letter-spacing:-.04em;line-height:1.1;margin:0;
@@ -1507,10 +1513,6 @@ body.view-sender.theme-telegram .toggle,
     <form class="send-form" id="sendForm" onsubmit="onSendFormSubmit(event)">
       <div class="travel-sheet-head send-sheet-head">
         <h2 class="travel-dest-title" id="sendDestTitle">Qayerga?</h2>
-        <button type="button" class="sheet-pick-back" id="sendPickBack" hidden onclick="sendSheetBackToRegion()">
-          <span class="sheet-pick-back-arrow" aria-hidden="true">←</span>
-          <span id="sendPickBackText">Viloyatni almashtirish</span>
-        </button>
       </div>
       <div class="send-thumb-wrap">
         <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
@@ -1538,7 +1540,12 @@ body.view-sender.theme-telegram .toggle,
       <input type="hidden" id="sendDest" value="">
       <input type="hidden" id="sendRegion" value="">
       <input type="hidden" id="sendDistrict" value="">
-      <button type="button" class="send-submit send-action-btn" id="sendActionBtn" hidden onclick="onSendActionClick()">Keyingi</button>
+      <div class="sheet-action-bar send-action-btn" id="sendActionBar" hidden>
+        <button type="button" class="sheet-action-back" id="sendActionBack" hidden onclick="sendSheetBackToRegion()" aria-label="Viloyatni almashtirish">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <button type="button" class="send-submit sheet-action-main" id="sendActionBtn" onclick="onSendActionClick()">Keyingi</button>
+      </div>
     </form>
   </div>
 </div>
@@ -1551,10 +1558,6 @@ body.view-sender.theme-telegram .toggle,
     <form class="send-form" id="travelForm" onsubmit="onTravelFormSubmit(event)">
       <div class="travel-sheet-head">
         <h2 class="travel-dest-title" id="travelDestTitle">Qayerga borasiz?</h2>
-        <button type="button" class="sheet-pick-back" id="travelPickBack" hidden onclick="travelSheetBackToRegion()">
-          <span class="sheet-pick-back-arrow" aria-hidden="true">←</span>
-          <span id="travelPickBackText">Viloyatni almashtirish</span>
-        </button>
       </div>
       <div id="travelStepRegion">
         <div class="picker-wrap">
@@ -1579,7 +1582,12 @@ body.view-sender.theme-telegram .toggle,
       <input type="hidden" id="travelTo" value="">
       <input type="hidden" id="travelRegion" value="">
       <input type="hidden" id="travelDistrict" value="">
-      <button type="button" class="send-submit" id="travelActionBtn" onclick="onTravelActionClick()">Keyingi</button>
+      <div class="sheet-action-bar" id="travelActionBar">
+        <button type="button" class="sheet-action-back" id="travelActionBack" hidden onclick="travelSheetBackToRegion()" aria-label="Viloyatni almashtirish">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+        </button>
+        <button type="button" class="send-submit sheet-action-main" id="travelActionBtn" onclick="onTravelActionClick()">Keyingi</button>
+      </div>
     </form>
   </div>
 </div>
@@ -2292,8 +2300,6 @@ const SEND_TITLE_LATIN = 'Qayerga?';
 const SEND_TITLE_CYRILLIC = 'Қайерга?';
 const SEND_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const SEND_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
-const PICK_BACK_REGION_LATIN = 'Viloyatni almashtirish';
-const PICK_BACK_REGION_CYRILLIC = 'Вилоятни алмаштириш';
 const EDIT_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
 const EDIT_NOTE_PH_CYRILLIC = "Қўшимча (ихтиёрий)";
 let scriptLatin = false;
@@ -2794,15 +2800,11 @@ function getDefaultPickerRegion(){
   return regions[0] || '';
 }
 
-function updateSheetPickBackButtons(){
-  const sendBtn = document.getElementById('sendPickBack');
-  const travelBtn = document.getElementById('travelPickBack');
-  const sendText = document.getElementById('sendPickBackText');
-  const travelText = document.getElementById('travelPickBackText');
-  if (sendText) setI18nText(sendText, PICK_BACK_REGION_LATIN, PICK_BACK_REGION_CYRILLIC);
-  if (travelText) setI18nText(travelText, PICK_BACK_REGION_LATIN, PICK_BACK_REGION_CYRILLIC);
-  if (sendBtn) sendBtn.hidden = sendSheetStep !== 2;
-  if (travelBtn) travelBtn.hidden = travelSheetStep !== 2;
+function setSheetActionBarStep(barId, backId, step){
+  const bar = document.getElementById(barId);
+  const back = document.getElementById(backId);
+  if (back) back.hidden = step !== 2;
+  if (bar) bar.classList.toggle('sheet-action-bar--split', step === 2);
 }
 
 function runPickerSwipeHint(track, wrap, token){
@@ -3655,7 +3657,6 @@ function applyCyrillicUI(){
     scriptMorphTimer = null;
   }
   applyAllScriptMorphs(false);
-  updateSheetPickBackButtons();
 }
 
 function refreshScriptMorphLoop(){
@@ -3849,11 +3850,13 @@ function setTravelSheetTitle(latin, cyrillic){
 }
 
 function updateSendActionBtn(){
+  const bar = document.getElementById('sendActionBar');
   const btn = document.getElementById('sendActionBtn');
   if (!btn) return;
   btn.type = 'button';
   btn.setAttribute('onclick', 'onSendActionClick()');
-  btn.hidden = false;
+  if (bar) bar.hidden = false;
+  setSheetActionBarStep('sendActionBar', 'sendActionBack', sendSheetStep);
   if (sendSheetStep === 1) {
     setI18nText(btn, 'Keyingi');
   } else {
@@ -3877,7 +3880,6 @@ function resetSendSheetSteps(){
   if (d) d.hidden = true;
   setSendSheetTitle(SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC);
   updateSendActionBtn();
-  updateSheetPickBackButtons();
   ['sendRegion', 'sendDistrict', 'sendDest'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3905,7 +3907,7 @@ function resetTravelSheetSteps(){
     btn.setAttribute('onclick', 'onTravelActionClick()');
     setI18nText(btn, 'Keyingi');
   }
-  updateSheetPickBackButtons();
+  setSheetActionBarStep('travelActionBar', 'travelActionBack', 1);
   ['travelRegion', 'travelDistrict', 'travelTo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
@@ -3925,7 +3927,6 @@ function sendSheetGoToDistrict(region){
   setSendSheetTitle(SEND_DISTRICT_TITLE_LATIN, SEND_DISTRICT_TITLE_CYRILLIC);
   initSendDistrictPicker();
   updateSendActionBtn();
-  updateSheetPickBackButtons();
   applyCyrillicUI();
   syncSendDraft();
   refreshSendPickersVisuals();
@@ -3940,7 +3941,6 @@ function sendSheetBackToRegion(){
   document.getElementById('sendDistrict').value = '';
   setSendSheetTitle(SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC);
   updateSendActionBtn();
-  updateSheetPickBackButtons();
   initSendRegionPicker();
   finalizeVerticalPickerOpen(document.getElementById('sendRegionPickerTrack'));
   applyCyrillicUI();
@@ -3966,7 +3966,7 @@ function travelSheetNext(){
   btn.type = 'button';
   btn.setAttribute('onclick', 'onTravelActionClick()');
   setI18nText(btn, 'Yuborish');
-  updateSheetPickBackButtons();
+  setSheetActionBarStep('travelActionBar', 'travelActionBack', 2);
   applyCyrillicUI();
 }
 
@@ -3980,7 +3980,7 @@ function travelSheetBackToRegion(){
   setTravelSheetTitle(TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC);
   const btn = document.getElementById('travelActionBtn');
   setI18nText(btn, 'Keyingi');
-  updateSheetPickBackButtons();
+  setSheetActionBarStep('travelActionBar', 'travelActionBack', 1);
   initTravelRegionPicker();
   finalizeVerticalPickerOpen(document.getElementById('travelRegionPickerTrack'));
   applyCyrillicUI();
