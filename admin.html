@@ -749,12 +749,7 @@ async function doGoogleLogin(){
 function showErr(msg){ const e=document.getElementById('loginErr'); e.textContent=msg; e.classList.add('show'); }
 function doLogout(){ auth.signOut(); }
 
-// ── FIRESTORE (faqat login bo'lgandan keyin ishga tushadi) ──
-function startFirestore(){
-
-// ── CONFIG ──
-
-// ── STATE ──
+// ── STATE (global) ──
 let allUsers=[],allOrders=[],allTravels=[],allMsgs=[];
 let filtDrivers=[],filtPassengers=[],filtOrders=[],filtTravels=[];
 const PG=15;
@@ -771,15 +766,17 @@ const PAGES={
   broadcast:{title:'Xabar yuborish',sub:'Telegram orqali xabar va reklama yuborish'}
 };
 
-// ── FIRESTORE LISTENERS (startFirestore() tomonidan chaqiriladi) ──
-db.collection('users').orderBy('lastSeen','desc').limit(500)
-  .onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('drivers');applyF('passengers');updMarkers();updCounts();});
-db.collection('orders').orderBy('createdAt','desc').limit(500)
-  .onSnapshot(s=>{allOrders=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('orders');});
-db.collection('travels').orderBy('createdAt','desc').limit(500)
-  .onSnapshot(s=>{allTravels=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('travels');});
-db.collection('admin_messages').orderBy('createdAt','desc').limit(50)
-  .onSnapshot(s=>{allMsgs=s.docs.map(d=>({id:d.id,...d.data()}));renderBcLog();});
+// ── FIRESTORE (faqat login bo'lgandan keyin) ──
+function startFirestore(){
+  db.collection('users').orderBy('lastSeen','desc').limit(500)
+    .onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('drivers');applyF('passengers');updMarkers();updCounts();});
+  db.collection('orders').orderBy('createdAt','desc').limit(500)
+    .onSnapshot(s=>{allOrders=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('orders');});
+  db.collection('travels').orderBy('createdAt','desc').limit(500)
+    .onSnapshot(s=>{allTravels=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('travels');});
+  db.collection('admin_messages').orderBy('createdAt','desc').limit(50)
+    .onSnapshot(s=>{allMsgs=s.docs.map(d=>({id:d.id,...d.data()}));renderBcLog();});
+}
 
 // ── HELPERS ──
 function online(u){
@@ -1145,9 +1142,7 @@ function renderBcLog(){
       </tr>`).join('');
 }
 
-} // startFirestore() end
-
-// ── INIT (auth bo'lgandan keyin startFirestore() chaqiriladi) ──
+// ── INIT ──
 </script>
 </body>
 </html>
