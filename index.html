@@ -178,22 +178,41 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .shipment-type-icon--travel svg{width:22px;height:22px}
 .shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.shipment-route{display:flex;flex-direction:column;gap:3px;min-width:0}
-.shipment-route--travel{gap:0}
-.shipment-route-leg{display:flex;align-items:center;gap:6px;min-width:0}
+.shipment-route{display:flex;flex-direction:column;gap:2px;min-width:0}
+.shipment-route--travel{gap:5px}
+.shipment-route-end{
+  display:flex;flex-wrap:wrap;align-items:center;gap:5px;min-width:0;
+}
 .shipment-route-place{
   font-size:15px;font-weight:700;color:#0f172a;letter-spacing:-.01em;line-height:1.25;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .shipment-route-place--to{color:#0B5CAD}
-.shipment-route-sub{
-  font-size:12px;font-weight:600;color:#64748b;line-height:1.2;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+.shipment-route-district{
+  font-size:12px;font-weight:600;color:#475569;line-height:1.2;
+  padding:2px 8px;border-radius:8px;
+  background:rgba(42,171,238,.1);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
-.shipment-route-arrow{
-  flex-shrink:0;width:14px;height:14px;margin:1px 0 1px 2px;color:#94a3b8;
+.shipment-route-connector{
+  display:flex;align-items:center;gap:5px;padding:0 2px;width:fit-content;
 }
-.shipment-route-arrow svg{display:block;width:100%;height:100%}
+.shipment-route-pin{
+  width:7px;height:7px;border-radius:50%;flex-shrink:0;
+}
+.shipment-route-pin--from{background:#2AABEE;box-shadow:0 0 0 2px rgba(42,171,238,.25)}
+.shipment-route-pin--to{background:#FF8C00;box-shadow:0 0 0 2px rgba(255,140,0,.22)}
+.shipment-route-stem{
+  width:32px;height:2px;border-radius:2px;flex-shrink:0;
+  background:linear-gradient(90deg,#2AABEE 0%,#FF8C00 100%);
+  position:relative;
+}
+.shipment-route-stem::after{
+  content:'';position:absolute;right:-1px;top:50%;
+  width:0;height:0;margin-top:-3px;
+  border-top:3px solid transparent;border-bottom:3px solid transparent;
+  border-left:5px solid #FF8C00;
+}
 .shipment-date{font-size:11px;color:#9ca3af;font-weight:500}
 .shipment-status{
   display:inline-block;font-size:11px;font-weight:700;color:var(--tg-blue);
@@ -1076,7 +1095,7 @@ body.view-sender.theme-telegram .toggle,
 }
 .theme-telegram .shipment-route-place{color:var(--tg-text)!important}
 .theme-telegram .shipment-route-place--to{color:var(--tg-link)!important}
-.theme-telegram .shipment-route-sub{color:var(--tg-hint)!important}
+.theme-telegram .shipment-route-district{color:var(--tg-hint)!important;background:rgba(42,171,238,.12)!important}
 .theme-telegram .shipment-status{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
@@ -5158,30 +5177,31 @@ function shipmentRouteLabels(s){
   };
 }
 
-const SHIPMENT_ROUTE_ARROW_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>';
+function shipmentRouteEndHtml(destStr, isTo){
+  const leg = parseRouteLegCyrillic(destStr || '');
+  const placeClass = isTo ? ' shipment-route-place--to' : '';
+  if (leg.sub) {
+    return `<div class="shipment-route-end">
+      <span class="shipment-route-place${placeClass}">${escapeHtml(leg.main)}</span>
+      <span class="shipment-route-district">${escapeHtml(leg.sub)}</span>
+    </div>`;
+  }
+  return `<div class="shipment-route-end"><span class="shipment-route-place${placeClass}">${escapeHtml(leg.main)}</span></div>`;
+}
 
 function shipmentCardRouteHtml(s, route){
   if (s.type === 'travel') {
     return `<div class="shipment-route shipment-route--travel">
-      <div class="shipment-route-leg">
-        <span class="shipment-route-place">${escapeHtml(route.from)}</span>
+      ${shipmentRouteEndHtml(s.from || '—', false)}
+      <div class="shipment-route-connector" aria-hidden="true">
+        <span class="shipment-route-pin shipment-route-pin--from"></span>
+        <span class="shipment-route-stem"></span>
+        <span class="shipment-route-pin shipment-route-pin--to"></span>
       </div>
-      <span class="shipment-route-arrow" aria-hidden="true">${SHIPMENT_ROUTE_ARROW_SVG}</span>
-      <div class="shipment-route-leg">
-        <span class="shipment-route-place shipment-route-place--to">${escapeHtml(route.to)}</span>
-      </div>
+      ${shipmentRouteEndHtml(s.to || s.dest || '—', true)}
     </div>`;
   }
-  const leg = parseRouteLegCyrillic(s.dest || route.to || '');
-  if (leg.sub) {
-    return `<div class="shipment-route shipment-route--order">
-      <span class="shipment-route-place">${escapeHtml(leg.main)}</span>
-      <span class="shipment-route-sub">${escapeHtml(leg.sub)}</span>
-    </div>`;
-  }
-  return `<div class="shipment-route shipment-route--order">
-    <span class="shipment-route-place">${escapeHtml(route.to)}</span>
-  </div>`;
+  return `<div class="shipment-route shipment-route--order">${shipmentRouteEndHtml(s.dest || route.to || '—', false)}</div>`;
 }
 
 function shipmentStatusLabel(s){
