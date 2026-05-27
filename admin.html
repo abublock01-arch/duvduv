@@ -1232,21 +1232,38 @@ function goPg(t,p){
   else renderTravels();
 }
 
-// ── DELETE ──
+// ── ARXIVLASH (Soft Delete) ──
 let pending=null;
-function confirmDel(col,id,label){
-  pending={col,id};
-  document.getElementById('delText').textContent=`"${label}" ni o'chirasizmi? Bu amalni qaytarib bo'lmaydi.`;
+function confirmArchive(col,id,label){
+  pending={col,id,action:'archive'};
+  document.getElementById('delModalIcon').textContent='📁';
+  document.getElementById('delModalTitle').textContent='Arxivlash';
+  document.getElementById('delText').textContent=`"${label}" arxivga ko'chiriladi. Kerak bo'lsa "Arxiv" bo'limidan tiklash mumkin.`;
+  document.getElementById('delConfirm').textContent='📁 Arxivlash';
+  document.getElementById('delConfirm').style.background='#f59e0b';
   document.getElementById('delModal').classList.add('show');
 }
 function closeDel(){document.getElementById('delModal').classList.remove('show');pending=null}
 document.getElementById('delConfirm').onclick=async()=>{
   if(!pending)return;
   const{col,id}=pending;closeDel();
-  try{await db.collection(col).doc(id).delete()}
-  catch(e){alert('Xato: '+e.message)}
+  try{
+    await db.collection(col).doc(id).update({
+      archived:true,
+      archivedAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }catch(e){alert('Xato: '+e.message)}
 };
 document.getElementById('delModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeDel()});
+
+async function restoreDoc(col,id){
+  try{
+    await db.collection(col).doc(id).update({
+      archived:firebase.firestore.FieldValue.delete(),
+      archivedAt:firebase.firestore.FieldValue.delete()
+    });
+  }catch(e){alert('Tiklashda xato: '+e.message)}
+}
 
 // ── BROADCAST ──
 function selRc(val,btn){
@@ -1330,6 +1347,157 @@ function renderBcLog(){
         <td>${m.failedCount?`<span style="color:var(--red);font-size:12px">❌ ${m.failedCount}</span>`:'<span class="time">—</span>'}</td>
         <td><span class="time">${fmt(m.createdAt)}</span></td>
       </tr>`).join('');
+}
+
+// ── STATUS FILTER ──
+function setStatusFilt(type,val,btn){
+  if(type==='orders')sfOrders=val;
+  else sfTravels=val;
+  const tabsId=type==='orders'?'ordersStatusTabs':'travelsStatusTabs';
+  document.getElementById(tabsId).querySelectorAll('.stab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  pages[type]=1;
+  applyF(type);
+}
+
+// ── CSV EXPORT ──
+function exportCSV(type){
+  let rows=[],filename='';
+  if(type==='drivers'){
+    filename='haydovchilar.csv';
+    rows=[["#","Ism","Username","ChatID","Yo'nalish","GPS","Faollik"]];
+    filtDrivers.forEach((u,i)=>rows.push([i+1,u.firstName||'',u.username||'',u.chatId||u.id,`${u.routeFrom||''}→${u.routeTo||''}`,online(u)?'Onlayn':'Oflayn',ago(u.lastSeen)+' oldin']));
+  }else if(type==='passengers'){
+    filename='mijozlar.csv';
+    rows=[["#","Ism","Username","ChatID","GPS","Bildirishnoma","Faollik"]];
+    filtPassengers.forEach((u,i)=>rows.push([i+1,u.firstName||'',u.username||'',u.chatId||u.id,online(u)?'Onlayn':'Oflayn',u.notifications?'Ha':"Yo'q",ago(u.lastSeen)+' oldin']));
+  }else if(type==='orders'){
+    filename='buyurtmalar.csv';
+    rows=[["#","Tur","Kimdan","Kimga","Username","TelegramID","Holat","Sana"]];
+    filtOrders.forEach((o,i)=>rows.push([i+1,o.type==='person'?"Yo'lovchi":"Jo'natma",o.from||'',o.to||'',o.telegramUsername||'',o.telegramId||'',o.archived?'Arxiv':(o.status||'active'),fmt(o.createdAt)]));
+  }else{
+    filename='safarlar.csv';
+    rows=[["#","Kimdan","Kimga","Username","TelegramID","Holat","Sana"]];
+    filtTravels.forEach((t,i)=>rows.push([i+1,t.from||'',t.to||t.dest||'',t.telegramUsername||'',t.telegramId||'',t.archived?'Arxiv':(t.status||'active'),fmt(t.createdAt)]));
+  }
+  const csv=rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob(['﻿'+csv],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=filename;
+  a.click();
+}
+
+// ── STATISTIKA GRAFIKLAR ──
+function getDayLabels(n){
+  const labels=[],now=new Date();
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(now);d.setDate(d.getDate()-i);
+    labels.push(`${d.getDate()}.${d.getMonth()+1}`);
+  }
+  return labels;
+}
+function countByDay(items,n,field='createdAt'){
+  const now=new Date();
+  return Array.from({length:n},(_,i)=>{
+    const d=new Date(now);d.setDate(d.getDate()-(n-1-i));
+    return items.filter(item=>{
+      if(!item[field])return false;
+      const id=item[field].toDate?item[field].toDate():new Date(item[field]);
+      return id.toDateString()===d.toDateString();
+    }).length;
+  });
+}
+
+function renderStats(){
+  const labels7=getDayLabels(chartUsersPeriod);
+  const userCounts=countByDay(allUsers,chartUsersPeriod,'createdAt');
+
+  const labels7o=getDayLabels(chartOrdersPeriod);
+  const orderCounts=countByDay(allOrders,chartOrdersPeriod,'createdAt');
+  const travelCounts=countByDay(allTravels,chartOrdersPeriod,'createdAt');
+
+  // Chart 1: Foydalanuvchilar
+  const ctx1=document.getElementById('chartUsers');
+  if(!ctx1)return;
+  if(chartUsersInst)chartUsersInst.destroy();
+  chartUsersInst=new Chart(ctx1,{
+    type:'bar',
+    data:{
+      labels:labels7,
+      datasets:[{
+        label:"Yangi foydalanuvchilar",
+        data:userCounts,
+        backgroundColor:'rgba(42,171,238,0.2)',
+        borderColor:'#2AABEE',
+        borderWidth:2,
+        borderRadius:6,
+        fill:true
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}
+    }
+  });
+
+  // Chart 2: Buyurtmalar + Safarlar
+  const ctx2=document.getElementById('chartOrders');
+  if(chartOrdersInst)chartOrdersInst.destroy();
+  chartOrdersInst=new Chart(ctx2,{
+    type:'line',
+    data:{
+      labels:labels7o,
+      datasets:[
+        {label:"Buyurtmalar",data:orderCounts,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#f59e0b'},
+        {label:"Safarlar",data:travelCounts,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,0.08)',borderWidth:2,tension:0.4,fill:true,pointRadius:4,pointBackgroundColor:'#10b981'}
+      ]
+    },
+    options:{
+      responsive:true,
+      plugins:{legend:{position:'top',labels:{boxWidth:12,font:{size:11}}}},
+      scales:{y:{beginAtZero:true,ticks:{stepSize:1},grid:{color:'rgba(0,0,0,.05)'}},x:{grid:{display:false}}}
+    }
+  });
+
+  // Chart 3: Buyurtma holatlari (donut)
+  const active=allOrders.filter(o=>!o.archived&&(o.status||'active')==='active').length;
+  const completed=allOrders.filter(o=>o.status==='completed').length;
+  const cancelled=allOrders.filter(o=>o.status==='cancelled').length;
+  const archived=allOrders.filter(o=>o.archived).length;
+  const ctx3=document.getElementById('chartStatus');
+  if(chartStatusInst)chartStatusInst.destroy();
+  chartStatusInst=new Chart(ctx3,{
+    type:'doughnut',
+    data:{
+      labels:['Aktiv','Bajarilgan','Bekor','Arxiv'],
+      datasets:[{data:[active,completed,cancelled,archived],backgroundColor:['#10b981','#2AABEE','#ef4444','#8b5cf6'],borderWidth:0,hoverOffset:6}]
+    },
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}
+  });
+
+  // Chart 4: Haydovchi vs Mijoz
+  const drivers=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
+  const pass=allUsers.length-drivers;
+  const ctx4=document.getElementById('chartUserType');
+  if(chartTypeInst)chartTypeInst.destroy();
+  chartTypeInst=new Chart(ctx4,{
+    type:'doughnut',
+    data:{
+      labels:['Haydovchilar','Mijozlar'],
+      datasets:[{data:[drivers,pass],backgroundColor:['#2AABEE','#10b981'],borderWidth:0,hoverOffset:6}]
+    },
+    options:{responsive:true,plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}}}}
+  });
+}
+
+function setPeriod(chart,days,btn){
+  if(chart==='users')chartUsersPeriod=days;
+  else chartOrdersPeriod=days;
+  btn.closest('.chart-period').querySelectorAll('.cper-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStats();
 }
 
 // ── INIT ──
