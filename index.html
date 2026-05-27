@@ -2254,7 +2254,6 @@ let selectedSendDistrict = '';
 let sendSheetStep = 1;
 let sendRegionPickerBuilt = false;
 let sendRegionPickerAbort = null;
-let sendRegionUserScrolled = false;
 let sendSheetSession = 0;
 let sendDistrictPickerBuilt = false;
 let lastSendPickerKey = '';
@@ -3744,7 +3743,6 @@ function teardownSendRegionPickerListeners(track){
     sendRegionPickerAbort.abort();
     sendRegionPickerAbort = null;
   }
-  if (track) delete track.dataset.sendRegionAdvance;
 }
 
 function initSendRegionPicker(){
@@ -3759,7 +3757,6 @@ function initSendRegionPicker(){
   if (!sendRegionPickerBuilt || lastSendPickerKey !== key) {
     lastSendPickerKey = key;
     sendRegionPickerBuilt = true;
-    sendRegionUserScrolled = false;
     teardownSendRegionPickerListeners(track);
     delete track.dataset.pickerBound;
     buildRegionPickerTrack(track, regions);
@@ -3768,29 +3765,6 @@ function initSendRegionPicker(){
       const hidden = document.getElementById('sendDest');
       if (hidden) hidden.value = region;
     });
-    sendRegionPickerAbort = new AbortController();
-    const { signal } = sendRegionPickerAbort;
-    track.dataset.sendRegionAdvance = '1';
-    const onRegionSettled = () => {
-      if (sendSheetStep !== 1) return;
-      if (!sendRegionUserScrolled) return;
-      const region = selectedSendRegion || document.getElementById('sendDest')?.value;
-      if (region) sendSheetGoToDistrict(region);
-    };
-    const markUserScroll = () => {
-      if (!track.dataset.pickerProgrammatic) sendRegionUserScrolled = true;
-    };
-    if ('onscrollend' in window) {
-      track.addEventListener('scroll', markUserScroll, { passive: true, signal });
-      track.addEventListener('scrollend', onRegionSettled, { passive: true, signal });
-    } else {
-      let t;
-      track.addEventListener('scroll', () => {
-        markUserScroll();
-        clearTimeout(t);
-        t = setTimeout(onRegionSettled, 180);
-      }, { passive: true, signal });
-    }
   }
   track.dataset.pickerProgrammatic = '1';
   scrollPickerToRegion(track, selectedSendRegion, false);
@@ -3948,7 +3922,6 @@ function resetSendSheetSteps(){
   lastSendDistrictKey = '';
   selectedSendRegion = '';
   selectedSendDistrict = '';
-  sendRegionUserScrolled = false;
   teardownSendRegionPickerListeners(document.getElementById('sendRegionPickerTrack'));
   const r = document.getElementById('sendStepRegion');
   const d = document.getElementById('sendStepDistrict');
@@ -5104,9 +5077,25 @@ function isActiveListing(item){
   return (item?.status || 'Aktiv') === 'Aktiv';
 }
 
+function getShipmentSortTime(s){
+  const ts = s.createdAt;
+  if (ts != null) {
+    if (typeof ts === 'number') return ts;
+    if (ts.toDate) return ts.toDate().getTime();
+    if (ts.seconds) return ts.seconds * 1000;
+    const parsed = Date.parse(ts);
+    if (!Number.isNaN(parsed)) return parsed;
+  }
+  const idNum = Number(s.id);
+  if (!Number.isNaN(idNum) && idNum > 1e11) return idNum;
+  return 0;
+}
+
 function getMyShipments(){
   if (telegramUser.id == null) return [];
-  return shipments.filter(s => String(s.telegramId) === String(telegramUser.id) && isActiveListing(s));
+  return shipments
+    .filter(s => String(s.telegramId) === String(telegramUser.id) && isActiveListing(s))
+    .sort((a, b) => getShipmentSortTime(b) - getShipmentSortTime(a));
 }
 
 function getShipmentKey(s){
