@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>duvduv Admin Panel</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -329,6 +333,50 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
 /* Mobil sidebar overlay */
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99;backdrop-filter:blur(2px)}
 .sb-overlay.show{display:block}
+
+/* ── STATUS TABS ── */
+.status-tabs{display:flex;gap:4px;padding:10px 16px;border-bottom:1px solid var(--border);background:#fafbfc;flex-wrap:wrap}
+.stab{padding:5px 13px;border-radius:20px;font-size:11.5px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all .15s;color:var(--text2);background:transparent}
+.stab:hover:not(.active){border-color:var(--border);background:var(--bg)}
+.stab.active{background:var(--blue);color:white;border-color:var(--blue)}
+.stab.s-green.active{background:#10b981;border-color:#10b981}
+.stab.s-red.active{background:#ef4444;border-color:#ef4444}
+.stab.s-gray.active{background:#64748b;border-color:#64748b}
+.stab.s-purple.active{background:#8b5cf6;border-color:#8b5cf6}
+
+/* ── CSV BUTTON ── */
+.btn-csv{padding:6px 12px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--white);color:var(--text2);display:inline-flex;align-items:center;gap:5px;transition:all .15s}
+.btn-csv:hover{border-color:#10b981;color:#10b981;background:#f0fdf4}
+
+/* ── ARCHIVE BUTTON ── */
+.btn-archive{padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;border:1.5px solid #fde68a;background:transparent;color:#b45309;transition:all .15s}
+.btn-archive:hover{background:#fffbeb;border-color:#fcd34d}
+.btn-restore{padding:5px 9px;border-radius:6px;font-size:12px;cursor:pointer;border:1.5px solid #bbf7d0;background:transparent;color:#059669;transition:all .15s}
+.btn-restore:hover{background:#f0fdf4;border-color:#6ee7b7}
+
+/* ── BROADCAST PROGRESS ── */
+.bc-progress-wrap{margin-top:10px;display:none}
+.bc-progress-wrap.show{display:block}
+.bc-progress-label{font-size:11px;color:var(--text2);margin-bottom:5px;font-weight:600}
+.bc-progress-track{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.bc-progress-bar{height:100%;background:linear-gradient(90deg,var(--blue),#38bdf8);border-radius:3px;transition:width .4s ease;width:0%}
+.bc-throttle-hint{font-size:11px;color:var(--orange);font-weight:600;margin-top:6px;display:none}
+.bc-throttle-hint.show{display:block}
+
+/* ── CHART PAGE ── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px}
+@media(max-width:900px){.chart-grid{grid-template-columns:1fr}}
+.chart-card{background:var(--white);border-radius:14px;border:1px solid var(--border);overflow:hidden}
+.chart-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.chart-title{font-size:13px;font-weight:700;color:var(--text)}
+.chart-period{display:flex;gap:4px}
+.cper-btn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--text2);transition:all .12s}
+.cper-btn.active{background:var(--blue);color:white;border-color:var(--blue)}
+.chart-body{padding:18px}
+
+/* ── CLUSTER OVERRIDE ── */
+.marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(42,171,238,.18)!important}
+.marker-cluster-small div,.marker-cluster-medium div,.marker-cluster-large div{background:rgba(42,171,238,.85)!important;color:white!important;font-weight:700!important;font-size:12px!important}
 </style>
 </head>
 <body>
@@ -381,6 +429,10 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
     <div class="sb-section">Monitoring</div>
     <button class="sb-item" onclick="go('map',this)">
       <span class="ic">🗺️</span>Jonli xarita<span class="sb-badge" id="nbOnline">0</span>
+    </button>
+    <div class="sb-section">Tahlil</div>
+    <button class="sb-item" onclick="go('stats',this)">
+      <span class="ic">📊</span>Statistika
     </button>
     <div class="sb-section">Boshqaruv</div>
     <button class="sb-item" onclick="go('broadcast',this)">
@@ -466,9 +518,12 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
               Haydovchilar
               <span style="background:#dbeafe;color:#1d4ed8;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px" id="nbDriversBadge">0</span>
             </div>
-            <div class="search" style="flex-shrink:0">
-              <span class="search-icon">🔍</span>
-              <input type="text" placeholder="Ism yoki ID..." oninput="filterSplit('drivers',this.value)" style="width:160px"/>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+              <button class="btn-csv" onclick="exportCSV('drivers')">⬇ CSV</button>
+              <div class="search">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Ism yoki ID..." oninput="filterSplit('drivers',this.value)" style="width:140px"/>
+              </div>
             </div>
           </div>
           <div class="table-wrap">
@@ -488,9 +543,12 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
               Mijozlar
               <span style="background:#d1fae5;color:#065f46;font-size:11px;font-weight:700;padding:2px 8px;border-radius:6px" id="nbPassengersBadge">0</span>
             </div>
-            <div class="search" style="flex-shrink:0">
-              <span class="search-icon">🔍</span>
-              <input type="text" placeholder="Ism yoki ID..." oninput="filterSplit('passengers',this.value)" style="width:160px"/>
+            <div style="display:flex;gap:8px;align-items:center;flex-shrink:0">
+              <button class="btn-csv" onclick="exportCSV('passengers')">⬇ CSV</button>
+              <div class="search">
+                <span class="search-icon">🔍</span>
+                <input type="text" placeholder="Ism yoki ID..." oninput="filterSplit('passengers',this.value)" style="width:140px"/>
+              </div>
             </div>
           </div>
           <div class="table-wrap">
@@ -511,6 +569,7 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
         <div class="card-header">
           <div class="card-title">📦 Buyurtmalar</div>
           <div class="card-actions toolbar">
+            <button class="btn-csv" onclick="exportCSV('orders')">⬇ CSV</button>
             <div class="search">
               <span class="search-icon">🔍</span>
               <input type="text" placeholder="Shahar yoki username..." oninput="filterTable('orders',this.value)"/>
@@ -522,10 +581,17 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
             </select>
           </div>
         </div>
+        <div class="status-tabs" id="ordersStatusTabs">
+          <button class="stab active" onclick="setStatusFilt('orders','all',this)">Barchasi</button>
+          <button class="stab s-green" onclick="setStatusFilt('orders','active',this)">🟢 Aktiv</button>
+          <button class="stab s-gray" onclick="setStatusFilt('orders','completed',this)">✅ Bajarilgan</button>
+          <button class="stab s-red" onclick="setStatusFilt('orders','cancelled',this)">🔴 Bekor</button>
+          <button class="stab s-purple" onclick="setStatusFilt('orders','archived',this)">📁 Arxiv</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Turi</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th></th></tr></thead>
-            <tbody id="ordersBody"><tr><td colspan="7"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody>
+            <thead><tr><th>#</th><th>Turi</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Holat</th><th>Sana</th><th></th></tr></thead>
+            <tbody id="ordersBody"><tr><td colspan="8"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody>
           </table>
         </div>
         <div class="pager"><div class="pager-info" id="ordersPI">—</div><div class="pager-btns" id="ordersPB"></div></div>
@@ -538,16 +604,24 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
         <div class="card-header">
           <div class="card-title">🚗 Safarlar</div>
           <div class="card-actions toolbar">
+            <button class="btn-csv" onclick="exportCSV('travels')">⬇ CSV</button>
             <div class="search">
               <span class="search-icon">🔍</span>
               <input type="text" placeholder="Shahar yoki username..." oninput="filterTable('travels',this.value)"/>
             </div>
           </div>
         </div>
+        <div class="status-tabs" id="travelsStatusTabs">
+          <button class="stab active" onclick="setStatusFilt('travels','all',this)">Barchasi</button>
+          <button class="stab s-green" onclick="setStatusFilt('travels','active',this)">🟢 Aktiv</button>
+          <button class="stab s-gray" onclick="setStatusFilt('travels','completed',this)">✅ Bajarilgan</button>
+          <button class="stab s-red" onclick="setStatusFilt('travels','cancelled',this)">🔴 Bekor</button>
+          <button class="stab s-purple" onclick="setStatusFilt('travels','archived',this)">📁 Arxiv</button>
+        </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>#</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Sana</th><th></th></tr></thead>
-            <tbody id="travelsBody"><tr><td colspan="6"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody>
+            <thead><tr><th>#</th><th>Yo'nalish</th><th>Foydalanuvchi</th><th>Telegram ID</th><th>Holat</th><th>Sana</th><th></th></tr></thead>
+            <tbody id="travelsBody"><tr><td colspan="7"><div class="loading"><div class="spin"></div> Yuklanmoqda...</div></td></tr></tbody>
           </table>
         </div>
         <div class="pager"><div class="pager-info" id="travelsPI">—</div><div class="pager-btns" id="travelsPB"></div></div>
@@ -583,6 +657,42 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
             <div style="width:12px;height:12px;background:#94a3b8;border:2px solid white;border-radius:50%;flex-shrink:0"></div>
             Oflayn (oxirgi joylashuv)
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div id="pg-stats" style="display:none">
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">👥 Yangi foydalanuvchilar</span>
+            <div class="chart-period">
+              <button class="cper-btn active" onclick="setPeriod('users',7,this)">7 kun</button>
+              <button class="cper-btn" onclick="setPeriod('users',30,this)">30 kun</button>
+            </div>
+          </div>
+          <div class="chart-body"><canvas id="chartUsers" height="180"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header">
+            <span class="chart-title">📦 Buyurtmalar va safarlar</span>
+            <div class="chart-period">
+              <button class="cper-btn active" onclick="setPeriod('orders',7,this)">7 kun</button>
+              <button class="cper-btn" onclick="setPeriod('orders',30,this)">30 kun</button>
+            </div>
+          </div>
+          <div class="chart-body"><canvas id="chartOrders" height="180"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-grid">
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">📊 Buyurtma holatlari</span></div>
+          <div class="chart-body" style="max-width:300px;margin:0 auto"><canvas id="chartStatus" height="200"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-header"><span class="chart-title">🚗 Haydovchi vs Mijoz nisbati</span></div>
+          <div class="chart-body" style="max-width:300px;margin:0 auto"><canvas id="chartUserType" height="200"></canvas></div>
         </div>
       </div>
     </div>
@@ -629,6 +739,11 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
               Yuborish
             </button>
           </div>
+          <div class="bc-progress-wrap" id="bcProgressWrap">
+            <div class="bc-progress-label" id="bcProgressLabel">Yuborilmoqda...</div>
+            <div class="bc-progress-track"><div class="bc-progress-bar" id="bcProgressBar"></div></div>
+          </div>
+          <div class="bc-throttle-hint" id="bcThrottleHint"></div>
         </div>
       </div>
 
@@ -645,15 +760,15 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
   </div><!-- /content -->
 </div><!-- /main -->
 
-<!-- DELETE MODAL -->
+<!-- ARCHIVE MODAL -->
 <div class="overlay" id="delModal">
   <div class="modal">
-    <div class="modal-icon">🗑️</div>
-    <h3>O'chirishni tasdiqlang</h3>
-    <p id="delText">Bu amalni qaytarib bo'lmaydi. Haqiqatan ham o'chirmoqchimisiz?</p>
+    <div class="modal-icon" id="delModalIcon">📁</div>
+    <h3 id="delModalTitle">Arxivlash</h3>
+    <p id="delText">Bu yozuv arxivga ko'chiriladi. Kerak bo'lsa tiklash mumkin.</p>
     <div class="modal-btns">
       <button class="modal-cancel" onclick="closeDel()">Bekor qilish</button>
-      <button class="modal-confirm" id="delConfirm">O'chirish</button>
+      <button class="modal-confirm" id="delConfirm" style="background:#f59e0b;box-shadow:0 2px 8px rgba(245,158,11,.3)">📁 Arxivlash</button>
     </div>
   </div>
 </div>
@@ -755,25 +870,30 @@ let filtDrivers=[],filtPassengers=[],filtOrders=[],filtTravels=[];
 const PG=15;
 let pages={drivers:1,passengers:1,orders:1,travels:1};
 let ofilt='all',sq={drivers:'',passengers:'',orders:'',travels:''};
-let rcVal='all',mapInst=null,mapMarkers=[];
+let sfOrders='all',sfTravels='all';
+let rcVal='all',mapInst=null,mapMarkers=[],clusterGroup=null;
 let curPage='users';
+let lastBcTime=0;
+let chartUsersInst=null,chartOrdersInst=null,chartStatusInst=null,chartTypeInst=null;
+let chartUsersPeriod=7,chartOrdersPeriod=7;
 
 const PAGES={
   users:{title:'Foydalanuvchilar',sub:"Barcha ro'yxatdan o'tgan foydalanuvchilar"},
   orders:{title:'Buyurtmalar',sub:"Jo'natmalar va yo'lovchi so'rovlari"},
   travels:{title:'Safarlar',sub:"Haydovchilar e'lon qilgan safarlar"},
   map:{title:'Jonli xarita',sub:'Real-time GPS — foydalanuvchilar joylashuvi'},
+  stats:{title:'Statistika',sub:'Haftalik va oylik tahlil grafiklar'},
   broadcast:{title:'Xabar yuborish',sub:'Telegram orqali xabar va reklama yuborish'}
 };
 
 // ── FIRESTORE (faqat login bo'lgandan keyin) ──
 function startFirestore(){
   db.collection('users').orderBy('lastSeen','desc').limit(500)
-    .onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('drivers');applyF('passengers');updMarkers();updCounts();});
+    .onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('drivers');applyF('passengers');updMarkers();updCounts();if(curPage==='stats')renderStats();});
   db.collection('orders').orderBy('createdAt','desc').limit(500)
-    .onSnapshot(s=>{allOrders=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('orders');});
+    .onSnapshot(s=>{allOrders=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('orders');if(curPage==='stats')renderStats();});
   db.collection('travels').orderBy('createdAt','desc').limit(500)
-    .onSnapshot(s=>{allTravels=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('travels');});
+    .onSnapshot(s=>{allTravels=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('travels');if(curPage==='stats')renderStats();});
   db.collection('admin_messages').orderBy('createdAt','desc').limit(50)
     .onSnapshot(s=>{allMsgs=s.docs.map(d=>({id:d.id,...d.data()}));renderBcLog();});
 }
@@ -823,7 +943,7 @@ setInterval(()=>{const n=new Date();setText('liveTime',pad(n.getHours())+':'+pad
 // ── NAVIGATION ──
 function go(page,btn){
   curPage=page;
-  ['users','orders','travels','map','broadcast'].forEach(p=>{
+  ['users','orders','travels','map','stats','broadcast'].forEach(p=>{
     const el=document.getElementById('pg-'+p);
     if(el)el.style.display=p===page?'':'none';
   });
@@ -836,6 +956,7 @@ function go(page,btn){
     initMap();
     setTimeout(()=>{if(mapInst)mapInst.invalidateSize()},150);
   }
+  if(page==='stats') renderStats();
   // Mobilda sidebar ni yopish
   if(window.innerWidth<=900) closeSidebar();
 }
@@ -858,12 +979,25 @@ function initMap(){
     zoom:6,
     zoomControl:true
   });
-  // CartoDB Voyager — streets-v12 ga eng yaqin bepul stil
   L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
     attribution:'© <a href="https://carto.com">CARTO</a>',
     subdomains:'abcd',
     maxZoom:19
   }).addTo(mapInst);
+  clusterGroup=L.markerClusterGroup({
+    chunkedLoading:true,
+    maxClusterRadius:60,
+    spiderfyOnMaxZoom:true,
+    showCoverageOnHover:false,
+    iconCreateFunction:function(cluster){
+      const n=cluster.getChildCount();
+      return L.divIcon({
+        html:`<div style="background:rgba(42,171,238,.85);color:white;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:3px solid white;box-shadow:0 2px 8px rgba(42,171,238,.4)">${n}</div>`,
+        className:'',iconSize:[36,36]
+      });
+    }
+  });
+  mapInst.addLayer(clusterGroup);
   updMarkers();
 }
 
@@ -894,9 +1028,8 @@ function makePopupHTML(u){
 }
 
 function updMarkers(){
-  if(!mapInst)return;
-  // Eski markerlarni o'chir
-  mapMarkers.forEach(m=>mapInst.removeLayer(m));
+  if(!mapInst||!clusterGroup)return;
+  clusterGroup.clearLayers();
   mapMarkers=[];
 
   const usersWithLoc=allUsers.filter(u=>u.location?.lat&&u.location?.lng);
@@ -916,28 +1049,22 @@ function updMarkers(){
     const icon=L.divIcon({
       className:'',
       html:el.outerHTML,
-      iconSize: isD?[22,22]:[48,48],
-      iconAnchor: isD?[11,11]:[24,24],
-      popupAnchor: isD?[0,-14]:[0,-28]
+      iconSize:isD?[22,22]:[48,48],
+      iconAnchor:isD?[11,11]:[24,24],
+      popupAnchor:isD?[0,-14]:[0,-28]
     });
 
     const mk=L.marker([u.location.lat,u.location.lng],{icon})
-      .bindPopup(makePopupHTML(u),{
-        maxWidth:260,
-        className:'admin-popup'
-      })
-      .addTo(mapInst);
+      .bindPopup(makePopupHTML(u),{maxWidth:260,className:'admin-popup'});
+    clusterGroup.addLayer(mk);
     mapMarkers.push(mk);
   });
 
-  // "GPS yo'q" xabarini ko'rsat/yashir
   const noData=document.getElementById('mapNoData');
   if(noData)noData.style.display=usersWithLoc.length===0?'flex':'none';
 
-  // GPS bor foydalanuvchilar bo'lsa xaritani ularga qarata
-  if(usersWithLoc.length>0&&mapMarkers.length>0){
-    const group=L.featureGroup(mapMarkers);
-    mapInst.fitBounds(group.getBounds().pad(0.25),{maxZoom:13,animate:true});
+  if(usersWithLoc.length>0){
+    try{mapInst.fitBounds(clusterGroup.getBounds().pad(0.25),{maxZoom:13,animate:true});}catch(e){}
   }
 }
 
@@ -967,12 +1094,28 @@ function applyF(t){
     filtPassengers=d;renderPassengers();
   }else if(t==='orders'){
     let d=[...allOrders];
+    if(sfOrders==='archived'){
+      d=d.filter(o=>o.archived===true);
+    }else{
+      d=d.filter(o=>!o.archived);
+      if(sfOrders==='active')d=d.filter(o=>(o.status||'active')==='active');
+      else if(sfOrders==='completed')d=d.filter(o=>o.status==='completed');
+      else if(sfOrders==='cancelled')d=d.filter(o=>o.status==='cancelled');
+    }
     if(ofilt==='package')d=d.filter(o=>o.type!=='person');
     if(ofilt==='person')d=d.filter(o=>o.type==='person');
     if(q)d=d.filter(o=>(o.from||'').toLowerCase().includes(q)||(o.to||'').toLowerCase().includes(q)||(o.telegramUsername||'').toLowerCase().includes(q));
     filtOrders=d;renderOrders();
   }else{
     let d=[...allTravels];
+    if(sfTravels==='archived'){
+      d=d.filter(r=>r.archived===true);
+    }else{
+      d=d.filter(r=>!r.archived);
+      if(sfTravels==='active')d=d.filter(r=>(r.status||'active')==='active');
+      else if(sfTravels==='completed')d=d.filter(r=>r.status==='completed');
+      else if(sfTravels==='cancelled')d=d.filter(r=>r.status==='cancelled');
+    }
     if(q)d=d.filter(r=>(r.from||'').toLowerCase().includes(q)||(r.to||r.dest||'').toLowerCase().includes(q)||(r.telegramUsername||'').toLowerCase().includes(q));
     filtTravels=d;renderTravels();
   }
@@ -1017,20 +1160,30 @@ function renderPassengers(){
   renderPager('passengers',filtPassengers.length,'passengersPI','passengersPB');
 }
 
+function statusBadge(s,archived){
+  if(archived)return'<span class="badge badge-purple">📁 Arxiv</span>';
+  const m={active:'<span class="badge badge-green">🟢 Aktiv</span>',completed:'<span class="badge badge-teal">✅ Bajarilgan</span>',cancelled:'<span class="badge badge-red">🔴 Bekor</span>'};
+  return m[s]||m['active'];
+}
 function renderOrders(){
   const data=pag(filtOrders,pages.orders);
   document.getElementById('ordersBody').innerHTML=
-    filtOrders.length===0?empty('📦',"Buyurtma topilmadi",7):
+    filtOrders.length===0?empty('📦',"Buyurtma topilmadi",8):
     data.map((o,i)=>{
       const n=(pages.orders-1)*PG+i+1;
+      const label=`${(o.from||'')}→${(o.to||'')}`.replace(/'/g,'');
+      const actionBtn=o.archived
+        ?`<button class="btn-restore" onclick="restoreDoc('orders','${o.id}')">↩ Tiklash</button>`
+        :`<button class="btn-archive" onclick="confirmArchive('orders','${o.id}','${label}')">📁</button>`;
       return`<tr>
         <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
         <td>${o.type==='person'?'<span class="badge badge-purple">👤 Yo\'lovchi</span>':'<span class="badge badge-orange">📦 Jo\'natma</span>'}</td>
         <td>${route(o.from,o.to)}</td>
         <td>${o.telegramUsername?`<span style="color:var(--blue)">@${o.telegramUsername}</span>`:'<span class="time">—</span>'}</td>
         <td><code>${o.telegramId||'—'}</code></td>
+        <td>${statusBadge(o.status,o.archived)}</td>
         <td><span class="time">${fmt(o.createdAt)}</span></td>
-        <td><button class="btn btn-danger" onclick="confirmDel('orders','${o.id}','${(o.from||'')}→${(o.to||'')}')">🗑 O'chirish</button></td>
+        <td>${actionBtn}</td>
       </tr>`;
     }).join('');
   renderPager('orders',filtOrders.length);
@@ -1039,16 +1192,21 @@ function renderOrders(){
 function renderTravels(){
   const data=pag(filtTravels,pages.travels);
   document.getElementById('travelsBody').innerHTML=
-    filtTravels.length===0?empty('🚗',"Safar topilmadi",6):
+    filtTravels.length===0?empty('🚗',"Safar topilmadi",7):
     data.map((t,i)=>{
       const n=(pages.travels-1)*PG+i+1;
+      const label=`${(t.from||'')}→${(t.to||t.dest||'')}`.replace(/'/g,'');
+      const actionBtn=t.archived
+        ?`<button class="btn-restore" onclick="restoreDoc('travels','${t.id}')">↩ Tiklash</button>`
+        :`<button class="btn-archive" onclick="confirmArchive('travels','${t.id}','${label}')">📁</button>`;
       return`<tr>
         <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
         <td>${route(t.from,t.to||t.dest)}</td>
         <td>${t.telegramUsername?`<span style="color:var(--blue)">@${t.telegramUsername}</span>`:'<span class="time">—</span>'}</td>
         <td><code>${t.telegramId||'—'}</code></td>
+        <td>${statusBadge(t.status,t.archived)}</td>
         <td><span class="time">${fmt(t.createdAt)}</span></td>
-        <td><button class="btn btn-danger" onclick="confirmDel('travels','${t.id}','${(t.from||'')}→${(t.to||t.dest||'')}')">🗑 O'chirish</button></td>
+        <td>${actionBtn}</td>
       </tr>`;
     }).join('');
   renderPager('travels',filtTravels.length);
@@ -1109,6 +1267,17 @@ function updCounts(){
 async function sendBc(){
   const text=document.getElementById('msgText').value.trim();
   if(!text)return alert("Xabar matni bo'sh!");
+  // Throttle — 30 soniya
+  const now=Date.now();
+  const remain=Math.ceil((30000-(now-lastBcTime))/1000);
+  const hint=document.getElementById('bcThrottleHint');
+  if(lastBcTime>0&&remain>0){
+    hint.textContent=`⏳ ${remain} soniyadan keyin yuborishingiz mumkin`;
+    hint.classList.add('show');
+    setTimeout(()=>hint.classList.remove('show'),3000);
+    return;
+  }
+  hint.classList.remove('show');
   let to=rcVal;
   if(to==='single'){
     const id=document.getElementById('singleId').value.trim();
@@ -1116,16 +1285,37 @@ async function sendBc(){
     to=id;
   }
   const btn=document.getElementById('sendBtn');
+  const pw=document.getElementById('bcProgressWrap');
+  const pb=document.getElementById('bcProgressBar');
+  const pl=document.getElementById('bcProgressLabel');
   btn.disabled=true;
   btn.innerHTML='<div class="spin"></div> Yuborilmoqda...';
+  pw.classList.add('show');
+  pb.style.width='0%';
+  pl.textContent='Xabar tayyorlanmoqda...';
+  // Progress animatsiyasi
+  const fakeProgress=setInterval(()=>{
+    const cur=parseFloat(pb.style.width)||0;
+    if(cur<85)pb.style.width=(cur+Math.random()*12)+'%';
+  },200);
   try{
+    pl.textContent='Firestore ga yozilmoqda...';
     await db.collection('admin_messages').add({
       to,text,sent:false,
       createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+    clearInterval(fakeProgress);
+    pb.style.width='100%';
+    pl.textContent='✅ Yuborildi! Bot tez orada ishga tushadi';
     document.getElementById('msgText').value='';
     updChar();
-  }catch(e){alert('Xato: '+e.message)}
+    lastBcTime=Date.now();
+    setTimeout(()=>{pw.classList.remove('show');pb.style.width='0%';},3000);
+  }catch(e){
+    clearInterval(fakeProgress);
+    pw.classList.remove('show');
+    alert('Xato: '+e.message);
+  }
   btn.disabled=false;
   btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Yuborish';
 }
