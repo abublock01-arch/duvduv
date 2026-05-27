@@ -2723,6 +2723,36 @@ function cancelPickerDemo(){
   pickerDemoToken++;
 }
 
+function cleanupPickerHintVisuals(wrap){
+  if (!wrap) return;
+  const hand = wrap.querySelector('.picker-hand');
+  if (hand) {
+    hand.style.opacity = '0';
+    hand.style.transform = '';
+  }
+  const rail = wrap.querySelector('.picker-swipe-rail');
+  if (rail) delete rail._pickerHintFrame;
+  const track = wrap.querySelector('.region-picker-track');
+  if (track) {
+    delete track.dataset.pickerProgrammatic;
+    delete track.dataset.pickerDemoCancelled;
+  }
+}
+
+function finalizeVerticalPickerOpen(track){
+  if (!track) return;
+  const onCommit = getVerticalPickerOnCommit(track);
+  const region = getSelectedValueForTrack(track);
+  const apply = () => {
+    delete track.dataset.pickerDemoCancelled;
+    track.dataset.pickerProgrammatic = '1';
+    if (region) scrollPickerToRegion(track, region, false);
+    updateRegionPickerVisuals(true, track, onCommit);
+    delete track.dataset.pickerProgrammatic;
+  };
+  requestAnimationFrame(() => requestAnimationFrame(apply));
+}
+
 function runPickerSwipeHint(track, wrap, token){
   if (!track || !wrap || prefersReducedMotion()) return;
   const items = [...track.querySelectorAll('.region-picker-item')];
@@ -2750,10 +2780,10 @@ function runPickerSwipeHint(track, wrap, token){
   const start = performance.now();
   const tick = now => {
     if (token !== pickerDemoToken || track.dataset.pickerDemoCancelled) {
-      if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
-      if (rail) delete rail._pickerHintFrame;
-      delete track.dataset.pickerProgrammatic;
-      delete track.dataset.pickerDemoCancelled;
+      cleanupPickerHintVisuals(wrap);
+      const region = getSelectedValueForTrack(track);
+      if (region) scrollPickerToRegion(track, region, false);
+      updateRegionPickerVisuals(true, track, onCommit);
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
@@ -3650,7 +3680,13 @@ function initSendRegionPicker(){
 async function prepareSendSheet(){
   await refreshUserLocationRegion();
   resetSendSheetSteps();
+}
+
+function openSendRegionPickerStep(){
   initSendRegionPicker();
+  const track = document.getElementById('sendRegionPickerTrack');
+  finalizeVerticalPickerOpen(track);
+  schedulePickerSwipeHint('send');
 }
 
 function initTravelRegionPicker(){
@@ -4685,6 +4721,9 @@ function isSendThumbBroken(){
 
 function abandonSendFlow(){
   sendSheetSession++;
+  cancelPickerDemo();
+  cleanupPickerHintVisuals(document.getElementById('sendRegionPickerTrack')?.closest('.picker-wrap'));
+  cleanupPickerHintVisuals(document.getElementById('sendDistrictPickerTrack')?.closest('.picker-wrap'));
   clearSendDraft();
   const sheet = document.getElementById('sendSheetOverlay');
   const upload = document.getElementById('uploadOverlay');
@@ -4726,7 +4765,8 @@ async function restoreSendFromDraft(draft){
   updateSendActionBtn();
   applyCyrillicUI();
   syncSendDraft();
-  refreshSendPickersVisuals();
+  if (sendSheetStep === 1) openSendRegionPickerStep();
+  else refreshSendPickersVisuals();
 }
 
 async function recoverSendFlow(){
@@ -4739,7 +4779,8 @@ async function recoverSendFlow(){
       abandonSendFlow();
       return;
     }
-    refreshSendPickersVisuals();
+    if (sendSheetStep === 1) finalizeVerticalPickerOpen(document.getElementById('sendRegionPickerTrack'));
+    else refreshSendPickersVisuals();
     return;
   }
 
@@ -5252,8 +5293,8 @@ async function openSendSheetFromPhoto(){
   }
   sheet.classList.remove('send-handoff');
   syncSendDraft();
-  refreshSendPickersVisuals();
-  schedulePickerSwipeHint('send');
+  if (sendSheetStep === 1) openSendRegionPickerStep();
+  else refreshSendPickersVisuals();
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
@@ -5442,12 +5483,8 @@ async function onPhotoSelected(e){
 function closeSendSheet(){
   sendSheetSession++;
   cancelPickerDemo();
-  const track = document.getElementById('sendRegionPickerTrack');
-  if (track) {
-    track.dataset.pickerDemoCancelled = '1';
-    const hand = track.closest('.picker-wrap')?.querySelector('.picker-hand');
-    if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
-  }
+  cleanupPickerHintVisuals(document.getElementById('sendRegionPickerTrack')?.closest('.picker-wrap'));
+  cleanupPickerHintVisuals(document.getElementById('sendDistrictPickerTrack')?.closest('.picker-wrap'));
   const sheet = document.getElementById('sendSheetOverlay');
   sheet.classList.remove('open', 'send-handoff');
   document.body.style.overflow = '';
@@ -5460,21 +5497,20 @@ async function openTravelSheet(){
   await refreshUserLocationRegion();
   resetTravelSheetSteps();
   lastTravelPickerKey = '';
-  initTravelRegionPicker();
   document.getElementById('travelSheetOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
   applyCyrillicUI();
+  initTravelRegionPicker();
+  finalizeVerticalPickerOpen(document.getElementById('travelRegionPickerTrack'));
   schedulePickerSwipeHint('travel');
 }
 
 function closeTravelSheet(){
   cancelPickerDemo();
-  const track = document.getElementById('travelRegionPickerTrack');
-  if (track) {
-    track.dataset.pickerDemoCancelled = '1';
-    const hand = track.closest('.picker-wrap')?.querySelector('.picker-hand');
-    if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
-  }
+  cleanupPickerHintVisuals(document.getElementById('travelRegionPickerTrack')?.closest('.picker-wrap'));
+  cleanupPickerHintVisuals(document.getElementById('travelDistrictPickerTrack')?.closest('.picker-wrap'));
   document.getElementById('travelSheetOverlay').classList.remove('open');
+  document.body.style.overflow = '';
   resetTravelSheetSteps();
   applyCyrillicUI();
 }
