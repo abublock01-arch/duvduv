@@ -2265,6 +2265,7 @@ let lastTravelDistrictKey = '';
 let refreshMarkersTimer = null;
 const orders = [];
 const mapTestOrders = [];
+let mapTestOrderById = null;
 let activeSheetOrder = null;
 let activeSheetTravel = null;
 let locationPickerMap = null;
@@ -4129,10 +4130,19 @@ function buildMapGeoCollections(){
   };
 }
 
+function rebuildMapTestOrderIndex(){
+  mapTestOrderById = new Map();
+  mapTestOrders.forEach(o => {
+    mapTestOrderById.set(String(o.id), o);
+    if (o.firestoreId) mapTestOrderById.set(String(o.firestoreId), o);
+  });
+}
+
 function findOrderByMapId(orderId){
-  return orders.find(o => String(o.firestoreId || o.id) === String(orderId))
-    || mapTestOrders.find(o => String(o.id) === String(orderId))
-    || travels.find(t => String(t.firestoreId || t.id) === String(orderId));
+  const key = String(orderId);
+  if (mapTestOrderById?.has(key)) return mapTestOrderById.get(key);
+  return orders.find(o => String(o.firestoreId || o.id) === key)
+    || travels.find(t => String(t.firestoreId || t.id) === key);
 }
 
 function loadMapMarkerImage(map, id, svg){
@@ -4164,12 +4174,14 @@ function getMapTestTargetCount(){
 function seedMapTestOrders(done){
   const total = getMapTestTargetCount();
   if (mapTestOrders.length >= total && mapTestOrders[0]?._seedV === MAP_TEST_SEED_VERSION) {
+    if (!mapTestOrderById || mapTestOrderById.size !== mapTestOrders.length) rebuildMapTestOrderIndex();
     if (done) done();
     return;
   }
   if (mapTestOrdersSeeding) return;
   mapTestOrdersSeeding = true;
   mapTestOrders.length = 0;
+  mapTestOrderById = null;
   const homeRegion = userLocationRegion || 'Toshkent shahar';
   const homeCenter = REGION_CENTERS[homeRegion] || REGION_CENTERS['Toshkent shahar'];
   const homeDistricts = getDistrictsForRegion(homeRegion);
@@ -4213,6 +4225,7 @@ function seedMapTestOrders(done){
       return;
     }
     mapTestOrdersSeeding = false;
+    rebuildMapTestOrderIndex();
     refreshOrderMarkersDebounced();
     if (done) done();
   };
@@ -4227,6 +4240,7 @@ function addTestOrders(done){
     return;
   }
   mapTestOrders.length = 0;
+  mapTestOrderById = null;
   seedMapTestOrders(done);
 }
 
@@ -4341,6 +4355,15 @@ function bindOrderMapEvents(){
       const src = map.getSource(sourceId);
       const clusterId = clusterFeat.properties.cluster_id;
       const center = clusterFeat.geometry.coordinates;
+      const count = Number(clusterFeat.properties.point_count) || 0;
+      if (count > 40) {
+        map.easeTo({
+          center,
+          zoom: Math.min(map.getZoom() + 1.5, 15),
+          duration: 400
+        });
+        return;
+      }
       Promise.resolve(src.getClusterExpansionZoom(clusterId))
         .then(zoom => {
           map.easeTo({ center, zoom: Math.min(zoom, 18), duration: 450 });
@@ -4350,11 +4373,15 @@ function bindOrderMapEvents(){
     }
     const iconFeat = map.queryRenderedFeatures(e.point, { layers: iconLayers })[0];
     if (!iconFeat) return;
-    const item = findOrderByMapId(iconFeat.properties.orderId);
-    if (!item) return;
-    const type = iconFeat.properties.itemType || item.type;
-    if (type === 'travel') openTravelMapSheet(item);
-    else openOrderSheet(item);
+    const orderId = iconFeat.properties.orderId;
+    const itemType = iconFeat.properties.itemType;
+    requestAnimationFrame(() => {
+      const item = findOrderByMapId(orderId);
+      if (!item) return;
+      const type = itemType || item.type;
+      if (type === 'travel') openTravelMapSheet(item);
+      else openOrderSheet(item);
+    });
   });
 
   hoverLayers.forEach(id => {
@@ -4587,15 +4614,12 @@ function openOrderSheet(order){
 function openTravelMapSheet(travel){
   closeSheet();
   activeSheetTravel = travel;
-  const iconEl = document.getElementById('travelMapIcon');
-  if (iconEl) iconEl.innerHTML = ICON_PASSENGER_3D;
   fillTravelMapRouteLeg('From', parseRouteLegCyrillic(travel.from || ''));
   fillTravelMapRouteLeg('To', parseRouteLegCyrillic(travel.to || travel.dest || ''));
   const contactBtn = document.getElementById('travelMapContactBtn');
   const hasTg = travel.telegramUsername && travel.telegramUsername !== '@';
   if (contactBtn) contactBtn.disabled = !hasTg;
   document.getElementById('travelMapSheetOverlay')?.classList.add('open');
-  applyCyrillicUI();
 }
 
 function closeTravelMapSheet(){
@@ -4650,6 +4674,7 @@ function switchView(v){
       const needsReseed = mapTestOrders.length && mapTestOrders[0]?._homeRegion !== home;
       if (needsReseed) {
         mapTestOrders.length = 0;
+        mapTestOrderById = null;
         addTestOrders(() => refreshOrderMarkersDebounced());
       }
       applyCyrillicUI();
