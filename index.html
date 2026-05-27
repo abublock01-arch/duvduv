@@ -1824,7 +1824,10 @@ async function updateOrderInFirestore(firestoreId, fields){
 async function deleteOrderFromFirestore(firestoreId){
   if (!db || !firestoreId) return;
   try {
-    await db.collection('orders').doc(firestoreId).delete();
+    await db.collection('orders').doc(firestoreId).update({
+      archived: true,
+      archivedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
   } catch(e){ console.warn('Firestore o\'chirish xatosi:', e); }
 }
 function subscribeFirestoreOrders(){
@@ -1833,6 +1836,7 @@ function subscribeFirestoreOrders(){
     orders.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
+      if (d.archived) return; // arxivlanganlarni o'tkazib yubor
       orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', from: d.from || '', ...d });
     });
     syncShipmentsFromFirestore();
@@ -1873,7 +1877,10 @@ async function updateTravelInFirestore(firestoreId, fields){
 async function deleteTravelFromFirestore(firestoreId){
   if (!db || !firestoreId) return;
   try {
-    await db.collection('travels').doc(firestoreId).delete();
+    await db.collection('travels').doc(firestoreId).update({
+      archived: true,
+      archivedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
   } catch(e){ console.warn('Firestore travel o\'chirish xatosi:', e); }
 }
 function subscribeFirestoreTravels(){
@@ -1882,6 +1889,7 @@ function subscribeFirestoreTravels(){
     travels.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
+      if (d.archived) return; // arxivlanganlarni o'tkazib yubor
       travels.push({ id: doc.id, firestoreId: doc.id, type: 'travel', ...d });
     });
     syncShipmentsFromFirestore();
@@ -4619,9 +4627,8 @@ function initDriverMap(){
   map.on('load', () => {
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
-      addTestOrders();
       setupOrderClusterLayers();
-      refreshOrderMarkersDebounced();
+      addTestOrders(() => refreshOrderMarkersDebounced());
       centerMapOnDriver();
       ensureDriverRegionPicker();
     });
