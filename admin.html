@@ -4,8 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>duvduv Admin Panel</title>
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
@@ -133,12 +133,10 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
 
 /* ── MAP ── */
 #adminMap{width:100%;height:560px}
-.mapboxgl-map{outline:none!important}
-.mapboxgl-canvas{display:block;outline:none!important}
-.mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-bottom-left{display:none!important}
-.mapboxgl-ctrl-top-right{top:12px!important;right:12px!important}
-.mapboxgl-ctrl-group{border-radius:12px!important;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;border:none!important}
-.mapboxgl-ctrl button{width:40px!important;height:40px!important}
+.leaflet-container{font-family:-apple-system,'Segoe UI',sans-serif!important}
+.leaflet-control-zoom{border:none!important;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;border-radius:10px!important;overflow:hidden}
+.leaflet-control-zoom a{width:36px!important;height:36px!important;line-height:36px!important;font-size:16px!important;color:#0f172a!important}
+.leaflet-control-attribution{font-size:10px!important;background:rgba(255,255,255,.7)!important;backdrop-filter:blur(4px)}
 .map-topbar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--white)}
 .map-stat-mini{text-align:center;flex:1;padding:14px 8px;border-right:1px solid var(--border)}
 .map-stat-mini:last-child{border-right:none}
@@ -186,19 +184,20 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
   box-shadow:0 2px 8px rgba(0,0,0,.15);
 }
 
-/* Mapbox popup stil */
-.mapboxgl-popup-content{
+/* Leaflet popup stil */
+.leaflet-popup-content-wrapper{
   border-radius:12px!important;
   padding:0!important;
   box-shadow:0 8px 32px rgba(0,0,0,.14)!important;
   border:1px solid var(--border)!important;
   overflow:hidden;
 }
-.mapboxgl-popup-close-button{
-  font-size:18px!important;right:8px!important;top:4px!important;
-  color:var(--text2)!important;
+.leaflet-popup-content{margin:0!important}
+.leaflet-popup-close-button{
+  font-size:20px!important;right:10px!important;top:6px!important;
+  color:var(--text2)!important;z-index:10;
 }
-.mapboxgl-popup-tip{border-top-color:var(--white)!important}
+.leaflet-popup-tip-container{margin-top:-1px}
 
 /* ── BROADCAST ── */
 .bc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
@@ -459,7 +458,13 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
           <div class="map-stat-mini"><div class="v" id="mPassengers">0</div><div class="l">👤 Mijozlar</div></div>
           <div class="map-stat-mini"><div class="v" id="mOrders">0</div><div class="l">📦 Buyurtmalar</div></div>
         </div>
-        <div id="adminMap"></div>
+        <div id="adminMap" style="position:relative">
+          <div id="mapNoData" style="display:none;position:absolute;inset:0;z-index:500;background:rgba(240,244,248,.88);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;pointer-events:none">
+            <div style="font-size:40px">📍</div>
+            <div style="font-size:14px;font-weight:700;color:#0f172a">GPS ma'lumot yo'q</div>
+            <div style="font-size:12px;color:#64748b">Foydalanuvchilar ilova ochganda joylashuv ko'rinadi</div>
+          </div>
+        </div>
         <div class="map-legend">
           <div class="legend-item">
             <div style="width:14px;height:14px;background:#2AABEE;border:2.5px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(42,171,238,.25);flex-shrink:0"></div>
@@ -561,7 +566,6 @@ firebase.initializeApp({
 const db = firebase.firestore();
 
 // ── CONFIG ──
-const MAPBOX_TOKEN='pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
 
 // ── STATE ──
 let allUsers=[],allOrders=[],allTravels=[],allMsgs=[];
@@ -644,22 +648,29 @@ function go(page,btn){
   const info=PAGES[page]||{};
   setText('pageTitle',info.title||page);
   setText('pageSub',info.sub||'');
-  if(page==='map')initMap();
+  if(page==='map'){
+    initMap();
+    // Leaflet o'lchamini to'g'irlab olsin
+    setTimeout(()=>{if(mapInst)mapInst.invalidateSize()},150);
+  }
 }
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
 
-// ── MAPBOX MAP (mobil bilan bir xil stil) ──
+// ── LEAFLET MAP (CartoDB Voyager — Mapbox streets ga o'xshash) ──
 function initMap(){
   if(mapInst)return;
-  mapboxgl.accessToken=MAPBOX_TOKEN;
-  mapInst=new mapboxgl.Map({
-    container:'adminMap',
-    style:'mapbox://styles/mapbox/streets-v12',
-    center:[64.5,41.3],
-    zoom:5.5
+  mapInst=L.map('adminMap',{
+    center:[41.3,64.5],
+    zoom:6,
+    zoomControl:true
   });
-  mapInst.addControl(new mapboxgl.NavigationControl({showCompass:false}),'top-right');
-  mapInst.on('load',updMarkers);
+  // CartoDB Voyager — streets-v12 ga eng yaqin bepul stil
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    attribution:'© <a href="https://carto.com">CARTO</a>',
+    subdomains:'abcd',
+    maxZoom:19
+  }).addTo(mapInst);
+  updMarkers();
 }
 
 function makePopupHTML(u){
@@ -667,6 +678,8 @@ function makePopupHTML(u){
   const on=online(u);
   const chatId=u.chatId||u.id;
   const name=u.firstName||"Noma'lum";
+  const safeId=String(chatId).replace(/'/g,"\\'");
+  const safeName=name.replace(/'/g,"\\'");
   return `<div style="padding:14px 16px 16px;font-family:-apple-system,'Segoe UI',sans-serif;min-width:200px">
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
       <div>
@@ -680,40 +693,63 @@ function makePopupHTML(u){
       <span style="font-size:11px;font-weight:600;color:${on?'#10b981':'#94a3b8'}">${on?'● Onlayn':'● Oflayn'}</span>
     </div>
     ${isD?`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:6px 10px;font-size:12px;color:#475569;margin-bottom:10px">🛣 <b>${u.routeFrom}</b> → <b>${u.routeTo}</b></div>`:''}
-    <button onclick="window._msgUser('${chatId}','${name.replace(/'/g,"\\'")}');this.closest('.mapboxgl-popup').querySelector('.mapboxgl-popup-close-button').click()" style="width:100%;padding:8px 0;background:#2AABEE;color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:5px">
+    <button onclick="window._msgUser('${safeId}','${safeName}')" style="width:100%;padding:8px 0;background:#2AABEE;color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:5px">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Xabar yuborish
     </button>
   </div>`;
 }
 
 function updMarkers(){
-  if(!mapInst||!mapInst.loaded())return;
-  mapMarkers.forEach(m=>m.remove());
+  if(!mapInst)return;
+  // Eski markerlarni o'chir
+  mapMarkers.forEach(m=>mapInst.removeLayer(m));
   mapMarkers=[];
-  allUsers.forEach(u=>{
-    if(!u.location?.lat||!u.location?.lng)return;
-    const isD=u.routeFrom&&u.routeTo;
+
+  const usersWithLoc=allUsers.filter(u=>u.location?.lat&&u.location?.lng);
+
+  usersWithLoc.forEach(u=>{
+    const isD=!!(u.routeFrom&&u.routeTo);
     const on=online(u);
+
     const el=document.createElement('div');
     if(isD){
-      // Haydovchi — moviy glow marker (mobil bilan bir xil)
       el.className='map-driver-marker'+(on?'':' offline');
     }else{
-      // Yo'lovchi/mijoz — orange pulse marker (mobil bilan bir xil)
       el.className='map-order-marker'+(on?'':' offline');
       el.innerHTML='<div class="map-order-marker-pulse"></div><div class="map-order-marker-dot"></div>';
     }
-    const popup=new mapboxgl.Popup({offset:isD?18:28,closeButton:true,maxWidth:'260px'})
-      .setHTML(makePopupHTML(u));
-    const mk=new mapboxgl.Marker({element:el,anchor:'center'})
-      .setLngLat([u.location.lng,u.location.lat])
-      .setPopup(popup)
+
+    const icon=L.divIcon({
+      className:'',
+      html:el.outerHTML,
+      iconSize: isD?[22,22]:[48,48],
+      iconAnchor: isD?[11,11]:[24,24],
+      popupAnchor: isD?[0,-14]:[0,-28]
+    });
+
+    const mk=L.marker([u.location.lat,u.location.lng],{icon})
+      .bindPopup(makePopupHTML(u),{
+        maxWidth:260,
+        className:'admin-popup'
+      })
       .addTo(mapInst);
     mapMarkers.push(mk);
   });
+
+  // "GPS yo'q" xabarini ko'rsat/yashir
+  const noData=document.getElementById('mapNoData');
+  if(noData)noData.style.display=usersWithLoc.length===0?'flex':'none';
+
+  // GPS bor foydalanuvchilar bo'lsa xaritani ularga qarata
+  if(usersWithLoc.length>0&&mapMarkers.length>0){
+    const group=L.featureGroup(mapMarkers);
+    mapInst.fitBounds(group.getBounds().pad(0.25),{maxZoom:13,animate:true});
+  }
 }
 
 window._msgUser=(id,name)=>{
+  // Barcha popuplarni yop
+  mapMarkers.forEach(m=>{try{m.closePopup()}catch(e){}});
   go('broadcast',document.querySelectorAll('.sb-item')[4]);
   document.querySelectorAll('.rc-btn')[3].click();
   const si=document.getElementById('singleId');
