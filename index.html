@@ -178,10 +178,22 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .shipment-type-icon--travel svg{width:22px;height:22px}
 .shipment-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.shipment-dest{
-  font-size:16px;font-weight:800;color:#0f172a;letter-spacing:-.02em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.2;
+.shipment-route{display:flex;flex-direction:column;gap:3px;min-width:0}
+.shipment-route--travel{gap:0}
+.shipment-route-leg{display:flex;align-items:center;gap:6px;min-width:0}
+.shipment-route-place{
+  font-size:15px;font-weight:700;color:#0f172a;letter-spacing:-.01em;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;
 }
+.shipment-route-place--to{color:#0B5CAD}
+.shipment-route-sub{
+  font-size:12px;font-weight:600;color:#64748b;line-height:1.2;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.shipment-route-arrow{
+  flex-shrink:0;width:14px;height:14px;margin:1px 0 1px 2px;color:#94a3b8;
+}
+.shipment-route-arrow svg{display:block;width:100%;height:100%}
 .shipment-date{font-size:11px;color:#9ca3af;font-weight:500}
 .shipment-status{
   display:inline-block;font-size:11px;font-weight:700;color:var(--tg-blue);
@@ -829,7 +841,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   --script-morph-h:1.25em;display:inline-block;vertical-align:middle;
 }
 .shipments-head .script-morph,.upload-title .script-morph{--script-morph-h:1.2em;display:inline-block}
-.shipment-dest .script-morph,.shipment-date .script-morph,.shipment-status .script-morph{--script-morph-h:1.15em;display:inline-block}
+.shipment-route .script-morph,.shipment-date .script-morph,.shipment-status .script-morph{--script-morph-h:1.15em;display:inline-block}
 .toast .script-morph{--script-morph-h:1.2em;display:inline-block}
 .send-thumb{width:80px;height:80px;border-radius:14px;object-fit:cover;border:1px solid #EEE}
 .send-thumb:not([src]),.send-thumb[src=""]{display:none;}
@@ -1062,7 +1074,9 @@ body.view-sender.theme-telegram .toggle,
   border-color:rgba(42,171,238,.14)!important;
   box-shadow:0 4px 20px rgba(42,171,238,.08)!important;
 }
-.theme-telegram .shipment-dest{color:var(--tg-text)!important}
+.theme-telegram .shipment-route-place{color:var(--tg-text)!important}
+.theme-telegram .shipment-route-place--to{color:var(--tg-link)!important}
+.theme-telegram .shipment-route-sub{color:var(--tg-hint)!important}
 .theme-telegram .shipment-status{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
@@ -5144,6 +5158,32 @@ function shipmentRouteLabels(s){
   };
 }
 
+const SHIPMENT_ROUTE_ARROW_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>';
+
+function shipmentCardRouteHtml(s, route){
+  if (s.type === 'travel') {
+    return `<div class="shipment-route shipment-route--travel">
+      <div class="shipment-route-leg">
+        <span class="shipment-route-place">${escapeHtml(route.from)}</span>
+      </div>
+      <span class="shipment-route-arrow" aria-hidden="true">${SHIPMENT_ROUTE_ARROW_SVG}</span>
+      <div class="shipment-route-leg">
+        <span class="shipment-route-place shipment-route-place--to">${escapeHtml(route.to)}</span>
+      </div>
+    </div>`;
+  }
+  const leg = parseRouteLegCyrillic(s.dest || route.to || '');
+  if (leg.sub) {
+    return `<div class="shipment-route shipment-route--order">
+      <span class="shipment-route-place">${escapeHtml(leg.main)}</span>
+      <span class="shipment-route-sub">${escapeHtml(leg.sub)}</span>
+    </div>`;
+  }
+  return `<div class="shipment-route shipment-route--order">
+    <span class="shipment-route-place">${escapeHtml(route.to)}</span>
+  </div>`;
+}
+
 function shipmentStatusLabel(s){
   if (s.type === 'travel') return 'Йўловчи';
   return UI_PHRASE_CYRILLIC[s.status] || latinToCyrillic(s.status || 'Aktiv');
@@ -5232,15 +5272,12 @@ function renderShipments(){
   list.innerHTML = mine.map(s => {
     const key = escapeHtml(getShipmentKey(s));
     const route = shipmentRouteLabels(s);
-    const destLine = s.type === 'travel'
-      ? `${route.from} → ${route.to}`
-      : route.to;
     return `
     <div class="shipment-card" data-id="${key}" role="button" tabindex="0">
       <div class="shipment-card-left">
         <div class="shipment-type-icon${s.type === 'travel' ? ' shipment-type-icon--travel' : ''}">${s.type === 'travel' ? ICON_PASSENGER : ICON_BOX_SMALL}</div>
         <div class="shipment-body">
-          <div class="shipment-dest">${escapeHtml(destLine)}</div>
+          ${shipmentCardRouteHtml(s, route)}
           <span class="shipment-status ${s.type === 'travel' ? 'shipment-status--travel' : ''}">${escapeHtml(shipmentStatusLabel(s))}</span>
         </div>
       </div>
