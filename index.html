@@ -2940,7 +2940,7 @@ function runPickerSwipeHint(track, wrap, token){
       railH * 0.5,
       Math.max(32, Math.abs(scrollDelta) * (railH / Math.max(track.clientHeight, 1)))
     );
-    rail._pickerHintFrame = { y0: railH * 0.16, y1: railH * 0.16 + handTravel };
+    rail._pickerHintFrame = { y0: railH * 0.16 + handTravel, y1: railH * 0.16 };
   }
   track.dataset.pickerProgrammatic = '1';
   const start = performance.now();
