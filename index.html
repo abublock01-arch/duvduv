@@ -2266,6 +2266,11 @@ let refreshMarkersTimer = null;
 const orders = [];
 const mapTestOrders = [];
 let mapTestOrderById = null;
+let mapTestOrdersOnly = [];
+let mapTestTravelsOnly = [];
+let cachedMapGeo = null;
+let cachedMapGeoKey = '';
+let mapMarkersRefreshPending = false;
 let activeSheetOrder = null;
 let activeSheetTravel = null;
 let locationPickerMap = null;
@@ -3228,9 +3233,26 @@ function refreshSendPickersVisuals(){
   }
 }
 
+function invalidateMapGeoCache(){
+  cachedMapGeo = null;
+  cachedMapGeoKey = '';
+}
+
+function isMapMarkersRefreshPaused(){
+  return document.getElementById('travelMapSheetOverlay')?.classList.contains('open')
+    || document.getElementById('sheetOverlay')?.classList.contains('open');
+}
+
+function flushPendingMapMarkersRefresh(){
+  if (!mapMarkersRefreshPending) return;
+  mapMarkersRefreshPending = false;
+  refreshOrderMarkersDebounced();
+}
+
 function refreshOrderMarkersDebounced(){
   clearTimeout(refreshMarkersTimer);
-  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 150);
+  const delay = mapTestOrders.length > 3000 ? 600 : 150;
+  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), delay);
 }
 
 function isDriverMapReady(){
@@ -4102,8 +4124,24 @@ function mapItemMatchesDriverFilter(item){
   return destMatchesDriverRegion(dest) && destMatchesDriverDistrict(dest) && itemOriginMatchesDriver(item);
 }
 
+function getMapGeoCacheKey(){
+  return [
+    selectedDriverRegion || '',
+    selectedDriverDistrict || '',
+    userLocationRegion || '',
+    orders.length,
+    travels.length,
+    mapTestOrders.length,
+    mapTestOrders[0]?._seedV || '',
+    orderLayersVisible ? '1' : '0'
+  ].join('|');
+}
+
 function buildMapGeoCollections(){
-  const orderFeatures = [...orders, ...mapTestOrders.filter(o => o.type !== 'travel')]
+  const key = getMapGeoCacheKey();
+  if (cachedMapGeo && cachedMapGeoKey === key) return cachedMapGeo;
+
+  const orderFeatures = [...orders, ...mapTestOrdersOnly]
     .filter(mapItemMatchesDriverFilter)
     .map(o => ({
       type: 'Feature',
@@ -4111,7 +4149,7 @@ function buildMapGeoCollections(){
       properties: mapItemProps(o, 'order')
     }));
 
-  const travelFeatures = [...travels, ...mapTestOrders.filter(o => o.type === 'travel')]
+  const travelFeatures = [...travels, ...mapTestTravelsOnly]
     .filter(mapItemMatchesDriverFilter)
     .map(t => {
       const coords = travelMapCoords(t);
@@ -4124,18 +4162,25 @@ function buildMapGeoCollections(){
     })
     .filter(Boolean);
 
-  return {
+  cachedMapGeo = {
     orders: { type: 'FeatureCollection', features: orderFeatures },
     travels: { type: 'FeatureCollection', features: travelFeatures }
   };
+  cachedMapGeoKey = key;
+  return cachedMapGeo;
 }
 
 function rebuildMapTestOrderIndex(){
   mapTestOrderById = new Map();
+  mapTestOrdersOnly = [];
+  mapTestTravelsOnly = [];
   mapTestOrders.forEach(o => {
     mapTestOrderById.set(String(o.id), o);
     if (o.firestoreId) mapTestOrderById.set(String(o.firestoreId), o);
+    if (o.type === 'travel') mapTestTravelsOnly.push(o);
+    else mapTestOrdersOnly.push(o);
   });
+  invalidateMapGeoCache();
 }
 
 function findOrderByMapId(orderId){
@@ -4182,6 +4227,9 @@ function seedMapTestOrders(done){
   mapTestOrdersSeeding = true;
   mapTestOrders.length = 0;
   mapTestOrderById = null;
+  mapTestOrdersOnly = [];
+  mapTestTravelsOnly = [];
+  invalidateMapGeoCache();
   const homeRegion = userLocationRegion || 'Toshkent shahar';
   const homeCenter = REGION_CENTERS[homeRegion] || REGION_CENTERS['Toshkent shahar'];
   const homeDistricts = getDistrictsForRegion(homeRegion);
@@ -4241,6 +4289,9 @@ function addTestOrders(done){
   }
   mapTestOrders.length = 0;
   mapTestOrderById = null;
+  mapTestOrdersOnly = [];
+  mapTestTravelsOnly = [];
+  invalidateMapGeoCache();
   seedMapTestOrders(done);
 }
 
@@ -4561,6 +4612,11 @@ async function centerMapOnDriver(){
 
 function refreshOrderMarkers(){
   if (!map || !map.isStyleLoaded()) return;
+  if (isMapMarkersRefreshPaused()) {
+    mapMarkersRefreshPending = true;
+    return;
+  }
+  mapMarkersRefreshPending = false;
   if (!map.getSource('map-orders')) {
     setupOrderClusterLayers();
     return;
@@ -4625,6 +4681,7 @@ function openTravelMapSheet(travel){
 function closeTravelMapSheet(){
   document.getElementById('travelMapSheetOverlay')?.classList.remove('open');
   activeSheetTravel = null;
+  flushPendingMapMarkersRefresh();
 }
 
 function openTravelMapTelegram(){
@@ -4789,6 +4846,7 @@ async function saveLocationPicker(){
 function closeSheet(){
   document.getElementById('sheetOverlay').classList.remove('open');
   activeSheetOrder = null;
+  flushPendingMapMarkersRefresh();
 }
 async function acceptOrder(){
   const order = activeSheetOrder;
