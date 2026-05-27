@@ -4452,29 +4452,19 @@ function bindOrderMapEvents(){
   map.on('click', e => {
     const clusterFeat = map.queryRenderedFeatures(e.point, { layers: clusterLayers })[0];
     if (clusterFeat?.properties?.cluster_id != null) {
-      const sourceId = clusterFeat.layer.id.startsWith('map-travels') ? 'map-travels' : 'map-orders';
-      const src = map.getSource(sourceId);
-      const clusterId = clusterFeat.properties.cluster_id;
       const center = clusterFeat.geometry.coordinates;
       const count = Number(clusterFeat.properties.point_count) || 0;
-      if (count > 40) {
-        map.easeTo({
-          center,
-          zoom: Math.min(map.getZoom() + 1.5, 15),
-          duration: 400
-        });
-        return;
-      }
-      Promise.resolve(src.getClusterExpansionZoom(clusterId))
-        .then(zoom => {
-          map.easeTo({ center, zoom: Math.min(zoom, 18), duration: 450 });
-        })
-        .catch(err => console.warn('Cluster zoom:', err));
+      const cur = map.getZoom();
+      // Markerlar ko'ringuncha progressiv yaqinlashish (getClusterExpansionZoom ishlatilmaydi — freeze qiladi)
+      const step = count > 200 ? 1.5 : count > 50 ? 2 : 2.8;
+      map.easeTo({ center, zoom: Math.min(cur + step, 18), duration: 420 });
       return;
     }
     const iconFeat = map.queryRenderedFeatures(e.point, { layers: iconLayers })[0];
     if (!iconFeat) return;
-    const orderId = iconFeat.properties.orderId;
+    const orderId = String(iconFeat.properties.orderId || '');
+    // Test markerlarini bossangiz sheet ochilmasin — faqat haqiqiy e'lonlar
+    if (orderId.startsWith('test-')) return;
     const itemType = iconFeat.properties.itemType;
     requestAnimationFrame(() => {
       const item = findOrderByMapId(orderId);
