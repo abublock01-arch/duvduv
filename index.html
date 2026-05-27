@@ -2590,11 +2590,34 @@ function expandPickerRegions(track, regions){
   return out;
 }
 
+function pickNearestPickerItem(track, items){
+  if (!items.length) return null;
+  const vertical = !!track.closest('.region-picker--vertical');
+  const center = vertical
+    ? track.scrollTop + track.clientHeight / 2
+    : track.scrollLeft + track.clientWidth / 2;
+  let best = items[0];
+  let bestDist = Infinity;
+  items.forEach(item => {
+    const mid = vertical
+      ? item.offsetTop + item.offsetHeight / 2
+      : item.offsetLeft + item.offsetWidth / 2;
+    const d = Math.abs(mid - center);
+    if (d < bestDist) { bestDist = d; best = item; }
+  });
+  return best;
+}
+
 function pickerItemForRegion(track, region){
   const loopLen = parseInt(track.dataset.pickerLoopLen, 10);
   const matches = [...track.querySelectorAll('.region-picker-item')].filter(i => i.dataset.region === region);
-  if (loopLen && matches.length >= loopLen) return matches[loopLen];
-  return matches[0] || null;
+  if (!matches.length) return null;
+  if (loopLen && matches.length >= loopLen) {
+    return isDriverHorizontalTrack(track)
+      ? pickNearestPickerItem(track, matches)
+      : matches[loopLen];
+  }
+  return matches[0];
 }
 
 function wrapPickerLoopScroll(track){
@@ -2957,9 +2980,8 @@ function schedulePickerSwipeHint(sheetKind){
   });
 }
 
-function scrollPickerToRegion(track, region, smooth){
-  const el = pickerItemForRegion(track, region);
-  if (!el) return;
+function scrollPickerToItem(track, el, smooth){
+  if (!track || !el) return;
   const vertical = track.closest('.region-picker--vertical');
   if (vertical) {
     const top = el.offsetTop - (track.clientHeight / 2) + (el.offsetHeight / 2);
@@ -2970,6 +2992,18 @@ function scrollPickerToRegion(track, region, smooth){
     const max = track.scrollWidth - track.clientWidth;
     track.scrollTo({ left: Math.min(left, max), behavior: smooth ? 'smooth' : 'auto' });
   }
+}
+
+function scrollPickerToRegion(track, region, smooth, preferMiddle){
+  const loopLen = parseInt(track.dataset.pickerLoopLen, 10);
+  const matches = [...track.querySelectorAll('.region-picker-item')].filter(i => i.dataset.region === region);
+  let el = null;
+  if (matches.length) {
+    if (preferMiddle && loopLen && matches.length >= loopLen) el = matches[loopLen];
+    else el = pickerItemForRegion(track, region);
+  }
+  if (!el) return;
+  scrollPickerToItem(track, el, smooth);
 }
 
 function getHorizontalPickerCenterItem(track){
@@ -2987,6 +3021,7 @@ function getHorizontalPickerCenterItem(track){
 }
 
 function settleDriverRegionPicker(track, onCommit){
+  if (track.dataset.pickerProgrammatic) return;
   wrapPickerLoopScroll(track);
   const closest = getHorizontalPickerCenterItem(track);
   if (!closest) return;
@@ -3005,7 +3040,13 @@ function settleDriverRegionPicker(track, onCommit){
 function bindDriverRegionPickerScroll(track, onCommit){
   track.querySelectorAll('.region-picker-item').forEach(btn => {
     btn.addEventListener('click', () => {
-      scrollPickerToRegion(track, btn.dataset.region, !prefersReducedMotion());
+      track.dataset.pickerProgrammatic = '1';
+      scrollPickerToItem(track, btn, false);
+      wrapPickerLoopScroll(track);
+      updateRegionPickerVisuals(true, track, onCommit);
+      const region = btn.dataset.region;
+      if (region) track.dataset.committedRegion = region;
+      requestAnimationFrame(() => delete track.dataset.pickerProgrammatic);
     });
   });
   const isDistrict = track.id === 'driverDistrictPickerTrack';
@@ -3278,7 +3319,7 @@ function ensureDriverDistrictPicker(){
     const t = document.getElementById('driverDistrictPickerTrack');
     if (!t) return;
     layoutHorizontalPickerSpacers(t);
-    scrollPickerToRegion(t, scrollTarget, false);
+    scrollPickerToRegion(t, scrollTarget, false, true);
     t.dataset.committedRegion = scrollTarget;
     updateRegionPickerVisuals(true, t, null);
   };
@@ -3348,7 +3389,7 @@ function ensureDriverRegionPicker(){
   morphPickerTrack('#regionPickerTrack', scriptLatin);
   const finishLayout = () => {
     layoutHorizontalPickerSpacers(track);
-    scrollPickerToRegion(track, selectedDriverRegion, false);
+    scrollPickerToRegion(track, selectedDriverRegion, false, true);
     track.dataset.committedRegion = selectedDriverRegion;
     updateRegionPickerVisuals(true, track, null);
     refreshOrderMarkersDebounced();
