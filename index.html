@@ -84,17 +84,27 @@ body.view-sender .header{background:var(--app-bg)!important}
 .logo{display:none}
 .logo-dot{display:none}
 
-/* TOGGLE */
+/* TOGGLE — yashirilgan, haydovchi icon orqali boshqariladi */
 .header > .toggle{
   margin-bottom:0;
 }
 .toggle{
-  background:#fff;
-  border:1px solid rgba(255,255,255,.95);
-  border-radius:20px;padding:7px;display:flex;gap:0;
-  box-shadow:0 4px 16px rgba(42,171,238,.1);
-  max-width:352px;width:100%;margin:0 auto 0;
+  display:none!important;
 }
+
+/* DRIVER MODE ICON */
+.driver-mode-btn{
+  width:40px;height:40px;border:none;background:transparent;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;border-radius:50%;padding:0;
+  transition:opacity .2s,color .2s,background .18s;
+  color:var(--navy);opacity:.22;
+  -webkit-tap-highlight-color:transparent;
+  flex-shrink:0;
+}
+.driver-mode-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;display:block}
+.driver-mode-btn.active{opacity:1;color:var(--tg-blue)}
+.driver-mode-btn:active{transform:scale(.9)}
 .toggle-btn{
   flex:1;padding:13px 13px;border-radius:16px;border:none;font-size:19px;font-weight:600;
   cursor:pointer;transition:all .22s;font-family:inherit;letter-spacing:.02em;
@@ -1396,6 +1406,15 @@ body.view-sender.theme-telegram .toggle,
           <button type="button" class="header-eye map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
           </button>
+          <button type="button" class="driver-mode-btn" id="driverModeBtn" onclick="toggleDriverMode()" aria-label="Haydovchi rejimi" title="Haydovchi rejimi">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9.5"/>
+              <circle cx="12" cy="12" r="2.5"/>
+              <line x1="12" y1="2.5" x2="12" y2="9.5"/>
+              <line x1="3.8" y1="16.5" x2="9.8" y2="13.2"/>
+              <line x1="20.2" y1="16.5" x2="14.2" y2="13.2"/>
+            </svg>
+          </button>
         </div>
       </div>
       <div class="toggle">
@@ -2484,14 +2503,29 @@ function validateDriverDistrict(){
   }
 }
 
-function itemOriginMatchesDriver(item){
-  if (!userLocationRegion) return true;
-  const from = item.from || '';
-  if (!from) return true;
-  return destToRegion(from) === userLocationRegion;
+function mapItemHasMapCoords(item){
+  if (item.lng != null && item.lat != null) return true;
+  if (item.type === 'travel') return !!travelMapCoords(item);
+  return false;
+}
+
+function maybeReseedMapTestOrdersForHomeRegion(){
+  const home = userLocationRegion || 'Toshkent shahar';
+  const needsReseed = mapTestOrders.length > 0 && mapTestOrders[0]?._homeRegion !== home;
+  if (!needsReseed) return false;
+  mapTestOrders.length = 0;
+  mapTestOrderById = null;
+  mapTestOrdersOnly = [];
+  mapTestTravelsOnly = [];
+  invalidateMapGeoCache();
+  if (map && document.body.classList.contains('view-driver')) {
+    addTestOrders(() => refreshOrderMarkersDebounced());
+  }
+  return true;
 }
 
 async function refreshUserLocationRegion(){
+  const prevRegion = userLocationRegion;
   try {
     const perm = await getGeolocationPermissionState();
     if (perm !== 'granted') {
@@ -2505,6 +2539,12 @@ async function refreshUserLocationRegion(){
   } catch (_) {
     userCoords = null;
     userLocationRegion = null;
+  }
+  if (userLocationRegion !== prevRegion) {
+    invalidateMapGeoCache();
+    if (!maybeReseedMapTestOrdersForHomeRegion() && map) {
+      refreshOrderMarkersDebounced();
+    }
   }
 }
 
@@ -4114,14 +4154,14 @@ function mapItemProps(item, itemType){
 
 function mapItemMatchesDriverFilter(item){
   if (!isActiveListing(item)) return false;
-  if (item.lat == null || item.lng == null) return false;
+  if (!mapItemHasMapCoords(item)) return false;
   if (!selectedDriverRegion) return true;
   if (item.type === 'travel') {
     const to = item.to || item.dest || '';
-    return destMatchesDriverRegion(to) && destMatchesDriverDistrict(to) && itemOriginMatchesDriver(item);
+    return destMatchesDriverRegion(to) && destMatchesDriverDistrict(to);
   }
   const dest = item.dest || '';
-  return destMatchesDriverRegion(dest) && destMatchesDriverDistrict(dest) && itemOriginMatchesDriver(item);
+  return destMatchesDriverRegion(dest) && destMatchesDriverDistrict(dest);
 }
 
 function getMapGeoCacheKey(){
@@ -4132,6 +4172,8 @@ function getMapGeoCacheKey(){
     orders.length,
     travels.length,
     mapTestOrders.length,
+    mapTestOrdersOnly.length,
+    mapTestTravelsOnly.length,
     mapTestOrders[0]?._seedV || '',
     orderLayersVisible ? '1' : '0'
   ].join('|');
@@ -4576,11 +4618,13 @@ function initDriverMap(){
   });
   map.on('load', () => {
     removeDriverRadiusLayers();
-    addTestOrders();
-    setupOrderClusterLayers();
-    refreshOrderMarkersDebounced();
-    centerMapOnDriver();
-    ensureDriverRegionPicker();
+    refreshUserLocationRegion().then(() => {
+      addTestOrders();
+      setupOrderClusterLayers();
+      refreshOrderMarkersDebounced();
+      centerMapOnDriver();
+      ensureDriverRegionPicker();
+    });
   });
 }
 
@@ -4704,6 +4748,11 @@ function openTelegramChat(){
   window.open('https://t.me/' + uname.replace('@', ''));
 }
 
+function toggleDriverMode(){
+  const isDriver = document.body.classList.contains('view-driver');
+  switchView(isDriver ? 'sender' : 'driver');
+}
+
 function switchView(v){
   if (telegramUser.id != null) {
     saveUserRole(v === 'driver' ? 'driver' : 'sender');
@@ -4714,6 +4763,9 @@ function switchView(v){
   document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
   document.body.classList.toggle('view-driver', v === 'driver');
   document.body.classList.toggle('view-sender', v === 'sender');
+  // Driver mode icon yangilash
+  const dmb = document.getElementById('driverModeBtn');
+  if(dmb) dmb.classList.toggle('active', v === 'driver');
   if (v === 'driver') {
     ensureDriverRegionPicker();
     scheduleDriverDistrictReveal();
@@ -4727,13 +4779,7 @@ function switchView(v){
       }, 280);
     }
     refreshUserLocationRegion().then(() => {
-      const home = userLocationRegion || 'Toshkent shahar';
-      const needsReseed = mapTestOrders.length && mapTestOrders[0]?._homeRegion !== home;
-      if (needsReseed) {
-        mapTestOrders.length = 0;
-        mapTestOrderById = null;
-        addTestOrders(() => refreshOrderMarkersDebounced());
-      }
+      maybeReseedMapTestOrdersForHomeRegion();
       applyCyrillicUI();
     });
   } else {
