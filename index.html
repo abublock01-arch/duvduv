@@ -430,9 +430,6 @@ body.view-sender .header{background:var(--app-bg)!important}
 .picker-swipe-rail .picker-hand svg{
   display:block;width:100%;height:100%;
 }
-.picker-wrap.picker-hint-running .region-picker-item{
-  transition:none!important;
-}
 .region-picker--vertical{
   height:196px;margin:4px 0 16px;
 }
@@ -2668,6 +2665,7 @@ function clearPickerLoopMeta(track){
   delete track.dataset.pickerLoop;
   delete track.dataset.pickerLoopLen;
   delete track.dataset.pickerWrapping;
+  delete track._pickerVisualIdx;
 }
 
 function expandPickerRegions(track, regions){
@@ -2811,60 +2809,6 @@ function getSelectedValueForTrack(track){
   return '';
 }
 
-function easePickerSwipe(t){
-  return 1 - Math.pow(1 - t, 2.35);
-}
-
-function pickerVisualStrength(dist, radius){
-  const x = Math.min(1, Math.max(0, dist / radius));
-  return 1 - x * x * (3 - 2 * x);
-}
-
-function lerpHexColor(a, b, t){
-  const p = (hex, i) => parseInt(hex.slice(i, i + 2), 16);
-  const r = Math.round(p(a, 1) + (p(b, 1) - p(a, 1)) * t);
-  const g = Math.round(p(a, 3) + (p(b, 3) - p(a, 3)) * t);
-  const bl = Math.round(p(a, 5) + (p(b, 5) - p(a, 5)) * t);
-  return `rgb(${r},${g},${bl})`;
-}
-
-function updateVerticalPickerVisualsInterpolated(track){
-  if (!track?.closest('.region-picker--vertical')) {
-    updateRegionPickerVisuals(false, track, null);
-    return;
-  }
-  const items = [...track.querySelectorAll('.region-picker-item')];
-  const centerY = track.scrollTop + track.clientHeight / 2;
-  items.forEach(item => {
-    const mid = item.offsetTop + item.offsetHeight / 2;
-    const dist = Math.abs(mid - centerY);
-    const radius = Math.max((item.offsetHeight || 44) * 1.05, 40);
-    const s = pickerVisualStrength(dist, radius);
-    item.style.opacity = String(0.38 + 0.62 * s);
-    item.style.transform = `scale(${0.82 + 0.18 * s})`;
-    item.style.fontSize = `${17 + 11 * s}px`;
-    item.style.fontWeight = s > 0.72 ? '900' : (s > 0.38 ? '700' : '600');
-    item.style.color = s > 0.55
-      ? lerpHexColor('#6b7280', '#0B5CAD', (s - 0.55) / 0.45)
-      : lerpHexColor('#9ca3af', '#6b7280', s / 0.55);
-    const morph = item.querySelector('.script-morph--region');
-    if (morph) morph.style.setProperty('--script-morph-h', `${28 + 8 * s}px`);
-  });
-}
-
-function clearVerticalPickerItemInlineVisuals(track){
-  if (!track) return;
-  track.querySelectorAll('.region-picker-item').forEach(item => {
-    item.style.opacity = '';
-    item.style.transform = '';
-    item.style.fontSize = '';
-    item.style.fontWeight = '';
-    item.style.color = '';
-    const morph = item.querySelector('.script-morph--region');
-    if (morph) morph.style.removeProperty('--script-morph-h');
-  });
-}
-
 function getVerticalPickerCenterIndex(track){
   const items = [...track.querySelectorAll('.region-picker-item')];
   if (!items.length) return 0;
@@ -2915,22 +2859,28 @@ function cancelPickerDemo(){
   pickerDemoToken++;
 }
 
-function cleanupPickerHintVisuals(wrap){
-  if (!wrap) return;
-  wrap.classList.remove('picker-hint-running');
-  const hand = wrap.querySelector('.picker-hand');
+function finishPickerSwipeHint(track, wrap, hand, rail, startScroll){
+  if (track) {
+    track.scrollTop = startScroll;
+    track.style.scrollSnapType = '';
+    delete track._pickerVisualIdx;
+    delete track.dataset.pickerProgrammatic;
+    delete track.dataset.pickerDemoCancelled;
+    updateRegionPickerVisuals(false, track, null);
+  }
   if (hand) {
     hand.style.opacity = '0';
     hand.style.transform = '';
   }
-  const rail = wrap.querySelector('.picker-swipe-rail');
   if (rail) delete rail._pickerHintFrame;
+}
+
+function cleanupPickerHintVisuals(wrap, startScroll){
+  if (!wrap) return;
+  const hand = wrap.querySelector('.picker-hand');
+  const rail = wrap.querySelector('.picker-swipe-rail');
   const track = wrap.querySelector('.region-picker-track');
-  if (track) {
-    clearVerticalPickerItemInlineVisuals(track);
-    delete track.dataset.pickerProgrammatic;
-    delete track.dataset.pickerDemoCancelled;
-  }
+  finishPickerSwipeHint(track, wrap, hand, rail, startScroll ?? track?.scrollTop ?? 0);
 }
 
 function finalizeVerticalPickerOpen(track, after){
@@ -2978,20 +2928,17 @@ function runPickerSwipeHint(track, wrap, token){
   if (!track || !wrap || prefersReducedMotion()) return;
   const items = [...track.querySelectorAll('.region-picker-item')];
   if (items.length < 2) return;
-  const onCommit = getVerticalPickerOnCommit(track);
   const rail = wrap.querySelector('.picker-swipe-rail');
   const hand = rail ? ensurePickerHandInRail(rail) : null;
-  const startIdx = 0;
-  const nextIdx = 1;
-  scrollVerticalPickerToIndex(track, startIdx);
-  items.forEach(item => item.classList.remove('is-center', 'is-adjacent'));
-  updateVerticalPickerVisualsInterpolated(track);
+  scrollVerticalPickerToIndex(track, 0);
+  updateRegionPickerVisuals(false, track, null);
   const startScroll = track.scrollTop;
-  scrollVerticalPickerToIndex(track, nextIdx);
+  scrollVerticalPickerToIndex(track, 1);
   const endScroll = track.scrollTop;
   const scrollDelta = endScroll - startScroll;
   track.scrollTop = startScroll;
-  wrap.classList.add('picker-hint-running');
+  updateRegionPickerVisuals(false, track, null);
+  delete track._pickerVisualIdx;
   if (rail) {
     const railH = rail.clientHeight || track.clientHeight || 196;
     const handBase = railH * PICKER_HAND_BASE_RATIO;
@@ -3002,35 +2949,22 @@ function runPickerSwipeHint(track, wrap, token){
     rail._pickerHintFrame = { y0: handBase + handTravel, y1: handBase };
   }
   track.dataset.pickerProgrammatic = '1';
+  track.style.scrollSnapType = 'none';
   const start = performance.now();
   const tick = now => {
     if (token !== pickerDemoToken || track.dataset.pickerDemoCancelled) {
-      cleanupPickerHintVisuals(wrap);
-      const region = getSelectedValueForTrack(track);
-      if (region) scrollPickerToRegion(track, region, false);
-      updateRegionPickerVisuals(true, track, onCommit);
+      finishPickerSwipeHint(track, wrap, hand, rail, startScroll);
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
-    const p = easePickerSwipe(t);
-    track.scrollTop = startScroll + scrollDelta * p;
-    updateVerticalPickerVisualsInterpolated(track);
-    setPickerHandPose(hand, rail, p, t);
+    track.scrollTop = startScroll + scrollDelta * t;
+    updateRegionPickerVisuals(false, track, null);
+    setPickerHandPose(hand, rail, t, t);
     if (t < 1) {
       requestAnimationFrame(tick);
       return;
     }
-    track.scrollTop = endScroll;
-    wrap.classList.remove('picker-hint-running');
-    clearVerticalPickerItemInlineVisuals(track);
-    updateRegionPickerVisuals(true, track, onCommit);
-    if (hand) {
-      hand.style.opacity = '0';
-      hand.style.transform = '';
-    }
-    if (rail) delete rail._pickerHintFrame;
-    delete track.dataset.pickerProgrammatic;
-    delete track.dataset.pickerDemoCancelled;
+    finishPickerSwipeHint(track, wrap, hand, rail, startScroll);
   };
   requestAnimationFrame(tick);
 }
@@ -3304,10 +3238,16 @@ function updateRegionPickerVisuals(commit, trackEl, onCommit){
     });
   }
 
-  items.forEach(item => item.classList.remove('is-center', 'is-adjacent'));
-  if (!closest) return;
+  if (!closest) {
+    delete track._pickerVisualIdx;
+    return;
+  }
 
   const idx = items.indexOf(closest);
+  if (!commit && track._pickerVisualIdx === idx) return;
+  track._pickerVisualIdx = idx;
+
+  items.forEach(item => item.classList.remove('is-center', 'is-adjacent'));
   closest.classList.add('is-center');
   if (items[idx - 1]) items[idx - 1].classList.add('is-adjacent');
   if (items[idx + 1]) items[idx + 1].classList.add('is-adjacent');
