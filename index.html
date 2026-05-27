@@ -2705,18 +2705,17 @@ function ensurePickerHandInRail(rail){
   return hand;
 }
 
-function setPickerHandPose(hand, rail, t){
+function setPickerHandPose(hand, rail, progress, timeLinear){
   if (!hand || !rail) return;
-  const h = rail.clientHeight || 172;
-  const handH = hand.offsetHeight || 80;
-  const y0 = h * 0.14;
-  const y1 = Math.max(y0 + 20, h * 0.5 - handH * 0.32);
-  const eased = easePickerSwipe(Math.min(1, Math.max(0, t)));
-  const y = y0 + (y1 - y0) * eased;
-  let opacity = 1;
-  if (t < 0.12) opacity = t / 0.12;
-  else if (t > 0.88) opacity = (1 - t) / 0.12;
+  const frame = rail._pickerHintFrame;
+  if (!frame) return;
+  const p = Math.min(1, Math.max(0, progress));
+  const y = frame.y0 + (frame.y1 - frame.y0) * p;
   hand.style.transform = `translateY(${y}px)`;
+  let opacity = 1;
+  const t = timeLinear ?? p;
+  if (t < 0.1) opacity = t / 0.1;
+  else if (t > 0.92) opacity = (1 - t) / 0.08;
   hand.style.opacity = String(Math.min(1, Math.max(0, opacity)));
 }
 
@@ -2737,21 +2736,31 @@ function runPickerSwipeHint(track, wrap, token){
   const startScroll = track.scrollTop;
   scrollVerticalPickerToIndex(track, nextIdx);
   const endScroll = track.scrollTop;
+  const scrollDelta = endScroll - startScroll;
   track.scrollTop = startScroll;
+  if (rail) {
+    const railH = rail.clientHeight || track.clientHeight || 196;
+    const handTravel = Math.min(
+      railH * 0.5,
+      Math.max(32, Math.abs(scrollDelta) * (railH / Math.max(track.clientHeight, 1)))
+    );
+    rail._pickerHintFrame = { y0: railH * 0.16, y1: railH * 0.16 + handTravel };
+  }
   track.dataset.pickerProgrammatic = '1';
   const start = performance.now();
   const tick = now => {
     if (token !== pickerDemoToken || track.dataset.pickerDemoCancelled) {
       if (hand) { hand.style.opacity = '0'; hand.style.transform = ''; }
+      if (rail) delete rail._pickerHintFrame;
       delete track.dataset.pickerProgrammatic;
       delete track.dataset.pickerDemoCancelled;
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
-    const eased = easePickerSwipe(t);
-    track.scrollTop = startScroll + (endScroll - startScroll) * eased;
+    const p = easePickerSwipe(t);
+    track.scrollTop = startScroll + scrollDelta * p;
     updateRegionPickerVisuals(false, track, null);
-    setPickerHandPose(hand, rail, t);
+    setPickerHandPose(hand, rail, p, t);
     if (t < 1) {
       requestAnimationFrame(tick);
       return;
@@ -2762,6 +2771,7 @@ function runPickerSwipeHint(track, wrap, token){
       hand.style.opacity = '0';
       hand.style.transform = '';
     }
+    if (rail) delete rail._pickerHintFrame;
     delete track.dataset.pickerProgrammatic;
     delete track.dataset.pickerDemoCancelled;
   };
