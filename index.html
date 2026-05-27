@@ -431,6 +431,17 @@ body.view-sender .header{background:var(--app-bg)!important}
   --script-morph-h:36px;
 }
 .travel-sheet-head{text-align:center;padding:8px 0 12px}
+.sheet-pick-back{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:calc(100% - 8px);max-width:340px;margin:0 auto 10px;padding:9px 14px;
+  border-radius:12px;border:1px solid rgba(42,171,238,.28);
+  background:rgba(42,171,238,.07);color:#2AABEE;
+  font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+.sheet-pick-back[hidden]{display:none!important}
+.sheet-pick-back:active{background:rgba(42,171,238,.14)}
+.sheet-pick-back-arrow{font-size:16px;line-height:1;opacity:.9}
 .travel-dest-title{
   font-size:clamp(34px,10vw,48px);font-weight:800;color:var(--navy);
   letter-spacing:-.04em;line-height:1.1;margin:0;
@@ -1496,6 +1507,10 @@ body.view-sender.theme-telegram .toggle,
     <form class="send-form" id="sendForm" onsubmit="onSendFormSubmit(event)">
       <div class="travel-sheet-head send-sheet-head">
         <h2 class="travel-dest-title" id="sendDestTitle">Qayerga?</h2>
+        <button type="button" class="sheet-pick-back" id="sendPickBack" hidden onclick="sendSheetBackToRegion()">
+          <span class="sheet-pick-back-arrow" aria-hidden="true">←</span>
+          <span id="sendPickBackText">Viloyatni almashtirish</span>
+        </button>
       </div>
       <div class="send-thumb-wrap">
         <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
@@ -1536,6 +1551,10 @@ body.view-sender.theme-telegram .toggle,
     <form class="send-form" id="travelForm" onsubmit="onTravelFormSubmit(event)">
       <div class="travel-sheet-head">
         <h2 class="travel-dest-title" id="travelDestTitle">Qayerga borasiz?</h2>
+        <button type="button" class="sheet-pick-back" id="travelPickBack" hidden onclick="travelSheetBackToRegion()">
+          <span class="sheet-pick-back-arrow" aria-hidden="true">←</span>
+          <span id="travelPickBackText">Viloyatni almashtirish</span>
+        </button>
       </div>
       <div id="travelStepRegion">
         <div class="picker-wrap">
@@ -2273,6 +2292,8 @@ const SEND_TITLE_LATIN = 'Qayerga?';
 const SEND_TITLE_CYRILLIC = 'Қайерга?';
 const SEND_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const SEND_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
+const PICK_BACK_REGION_LATIN = 'Viloyatni almashtirish';
+const PICK_BACK_REGION_CYRILLIC = 'Вилоятни алмаштириш';
 const EDIT_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
 const EDIT_NOTE_PH_CYRILLIC = "Қўшимча (ихтиёрий)";
 let scriptLatin = false;
@@ -2739,8 +2760,11 @@ function cleanupPickerHintVisuals(wrap){
   }
 }
 
-function finalizeVerticalPickerOpen(track){
-  if (!track) return;
+function finalizeVerticalPickerOpen(track, after){
+  if (!track) {
+    if (after) after();
+    return;
+  }
   const onCommit = getVerticalPickerOnCommit(track);
   const region = getSelectedValueForTrack(track);
   const apply = () => {
@@ -2749,8 +2773,36 @@ function finalizeVerticalPickerOpen(track){
     if (region) scrollPickerToRegion(track, region, false);
     updateRegionPickerVisuals(true, track, onCommit);
     delete track.dataset.pickerProgrammatic;
+    if (after) after();
   };
   requestAnimationFrame(() => requestAnimationFrame(apply));
+}
+
+function resetVerticalPickerTrackToStart(track){
+  if (!track) return;
+  cleanupPickerHintVisuals(track.closest('.picker-wrap'));
+  scrollVerticalPickerToIndex(track, 0);
+  track.querySelectorAll('.region-picker-item').forEach(el => {
+    el.classList.remove('is-center', 'is-adjacent');
+  });
+  const first = track.querySelector('.region-picker-item');
+  if (first) first.classList.add('is-center');
+}
+
+function getDefaultPickerRegion(){
+  const regions = getPickerRegions();
+  return regions[0] || '';
+}
+
+function updateSheetPickBackButtons(){
+  const sendBtn = document.getElementById('sendPickBack');
+  const travelBtn = document.getElementById('travelPickBack');
+  const sendText = document.getElementById('sendPickBackText');
+  const travelText = document.getElementById('travelPickBackText');
+  if (sendText) setI18nText(sendText, PICK_BACK_REGION_LATIN, PICK_BACK_REGION_CYRILLIC);
+  if (travelText) setI18nText(travelText, PICK_BACK_REGION_LATIN, PICK_BACK_REGION_CYRILLIC);
+  if (sendBtn) sendBtn.hidden = sendSheetStep !== 2;
+  if (travelBtn) travelBtn.hidden = travelSheetStep !== 2;
 }
 
 function runPickerSwipeHint(track, wrap, token){
@@ -2760,9 +2812,10 @@ function runPickerSwipeHint(track, wrap, token){
   const onCommit = getVerticalPickerOnCommit(track);
   const rail = wrap.querySelector('.picker-swipe-rail');
   const hand = rail ? ensurePickerHandInRail(rail) : null;
-  const startIdx = getVerticalPickerCenterIndex(track);
-  const nextIdx = Math.min(startIdx + 1, items.length - 1);
-  if (nextIdx === startIdx) return;
+  const startIdx = 0;
+  const nextIdx = 1;
+  scrollVerticalPickerToIndex(track, startIdx);
+  updateRegionPickerVisuals(false, track, null);
   const startScroll = track.scrollTop;
   scrollVerticalPickerToIndex(track, nextIdx);
   const endScroll = track.scrollTop;
@@ -3602,6 +3655,7 @@ function applyCyrillicUI(){
     scriptMorphTimer = null;
   }
   applyAllScriptMorphs(false);
+  updateSheetPickBackButtons();
 }
 
 function refreshScriptMorphLoop(){
@@ -3622,7 +3676,7 @@ function initSendRegionPicker(){
   const regions = getPickerRegions();
   if (!regions.length) return;
   if (!selectedSendRegion || !regions.includes(selectedSendRegion)) {
-    selectedSendRegion = regions[0];
+    selectedSendRegion = getDefaultPickerRegion();
   }
   const key = regions.join('|');
   if (!sendRegionPickerBuilt || lastSendPickerKey !== key) {
@@ -3683,10 +3737,11 @@ async function prepareSendSheet(){
 }
 
 function openSendRegionPickerStep(){
+  const def = getDefaultPickerRegion();
+  if (def) selectedSendRegion = def;
   initSendRegionPicker();
   const track = document.getElementById('sendRegionPickerTrack');
-  finalizeVerticalPickerOpen(track);
-  schedulePickerSwipeHint('send');
+  finalizeVerticalPickerOpen(track, () => schedulePickerSwipeHint('send'));
 }
 
 function initTravelRegionPicker(){
@@ -3695,7 +3750,7 @@ function initTravelRegionPicker(){
   const regions = getPickerRegions();
   if (!regions.length) return;
   if (!selectedTravelRegion || !regions.includes(selectedTravelRegion)) {
-    selectedTravelRegion = regions[0];
+    selectedTravelRegion = getDefaultPickerRegion();
   }
   const key = regions.join('|');
   if (!travelRegionPickerBuilt || lastTravelPickerKey !== key) {
@@ -3822,16 +3877,22 @@ function resetSendSheetSteps(){
   if (d) d.hidden = true;
   setSendSheetTitle(SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC);
   updateSendActionBtn();
+  updateSheetPickBackButtons();
   ['sendRegion', 'sendDistrict', 'sendDest'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  resetVerticalPickerTrackToStart(document.getElementById('sendRegionPickerTrack'));
+  resetVerticalPickerTrackToStart(document.getElementById('sendDistrictPickerTrack'));
 }
 
 function resetTravelSheetSteps(){
   travelSheetStep = 1;
+  travelRegionPickerBuilt = false;
+  lastTravelPickerKey = '';
   travelDistrictPickerBuilt = false;
   lastTravelDistrictKey = '';
+  selectedTravelRegion = '';
   selectedTravelDistrict = '';
   setTravelSheetTitle(TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC);
   const r = document.getElementById('travelStepRegion');
@@ -3844,10 +3905,13 @@ function resetTravelSheetSteps(){
     btn.setAttribute('onclick', 'onTravelActionClick()');
     setI18nText(btn, 'Keyingi');
   }
+  updateSheetPickBackButtons();
   ['travelRegion', 'travelDistrict', 'travelTo'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
+  resetVerticalPickerTrackToStart(document.getElementById('travelRegionPickerTrack'));
+  resetVerticalPickerTrackToStart(document.getElementById('travelDistrictPickerTrack'));
 }
 
 function sendSheetGoToDistrict(region){
@@ -3861,9 +3925,26 @@ function sendSheetGoToDistrict(region){
   setSendSheetTitle(SEND_DISTRICT_TITLE_LATIN, SEND_DISTRICT_TITLE_CYRILLIC);
   initSendDistrictPicker();
   updateSendActionBtn();
+  updateSheetPickBackButtons();
   applyCyrillicUI();
   syncSendDraft();
   refreshSendPickersVisuals();
+}
+
+function sendSheetBackToRegion(){
+  cancelPickerDemo();
+  sendSheetStep = 1;
+  document.getElementById('sendStepRegion').hidden = false;
+  document.getElementById('sendStepDistrict').hidden = true;
+  selectedSendDistrict = '';
+  document.getElementById('sendDistrict').value = '';
+  setSendSheetTitle(SEND_TITLE_LATIN, SEND_TITLE_CYRILLIC);
+  updateSendActionBtn();
+  updateSheetPickBackButtons();
+  initSendRegionPicker();
+  finalizeVerticalPickerOpen(document.getElementById('sendRegionPickerTrack'));
+  applyCyrillicUI();
+  syncSendDraft();
 }
 
 function travelSheetNext(){
@@ -3885,6 +3966,23 @@ function travelSheetNext(){
   btn.type = 'button';
   btn.setAttribute('onclick', 'onTravelActionClick()');
   setI18nText(btn, 'Yuborish');
+  updateSheetPickBackButtons();
+  applyCyrillicUI();
+}
+
+function travelSheetBackToRegion(){
+  cancelPickerDemo();
+  travelSheetStep = 1;
+  document.getElementById('travelStepRegion').hidden = false;
+  document.getElementById('travelStepDistrict').hidden = true;
+  selectedTravelDistrict = '';
+  document.getElementById('travelDistrict').value = '';
+  setTravelSheetTitle(TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC);
+  const btn = document.getElementById('travelActionBtn');
+  setI18nText(btn, 'Keyingi');
+  updateSheetPickBackButtons();
+  initTravelRegionPicker();
+  finalizeVerticalPickerOpen(document.getElementById('travelRegionPickerTrack'));
   applyCyrillicUI();
 }
 
@@ -5500,9 +5598,11 @@ async function openTravelSheet(){
   document.getElementById('travelSheetOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
   applyCyrillicUI();
+  selectedTravelRegion = getDefaultPickerRegion();
   initTravelRegionPicker();
-  finalizeVerticalPickerOpen(document.getElementById('travelRegionPickerTrack'));
-  schedulePickerSwipeHint('travel');
+  finalizeVerticalPickerOpen(document.getElementById('travelRegionPickerTrack'), () => {
+    schedulePickerSwipeHint('travel');
+  });
 }
 
 function closeTravelSheet(){
