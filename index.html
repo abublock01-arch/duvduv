@@ -376,14 +376,11 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .picker-swipe-rail{
   position:absolute;right:0;top:0;bottom:0;width:72px;
-  z-index:3;touch-action:none;cursor:grab;
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;
+  z-index:3;pointer-events:none;
 }
-.picker-swipe-rail:active{cursor:grabbing}
 .picker-swipe-rail .picker-hand{
-  position:absolute;left:50%;margin-left:-57px;top:0;
-  width:114px;height:114px;pointer-events:none;
+  position:absolute;left:50%;margin-left:-40px;top:0;
+  width:80px;height:80px;pointer-events:none;
   color:rgba(42,171,238,.85);
   filter:drop-shadow(0 2px 10px rgba(42,171,238,.22));
   opacity:0;will-change:transform,opacity;
@@ -407,13 +404,16 @@ body.view-sender .header{background:var(--app-bg)!important}
 .region-picker--vertical .region-picker-track{
   flex-direction:column;overflow-x:hidden;overflow-y:auto;
   scroll-snap-type:y mandatory;height:196px;width:100%;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  touch-action:pan-y;
 }
 .region-picker--vertical .region-picker-spacer{
   flex:0 0 calc(50% - 28px);min-height:44px;min-width:0;width:100%;
 }
 .region-picker--vertical .region-picker-item{
   width:100%;text-align:center;padding:10px 12px;
-  scroll-snap-stop:always;
+  scroll-snap-stop:normal;
   transition:color .28s ease,opacity .28s ease,transform .28s ease,font-size .28s ease;
 }
 .region-picker--vertical .region-picker-item.is-adjacent{
@@ -2177,7 +2177,7 @@ const DRIVER_DISTRICT_DELAY_MS = 3000;
 const DRIVER_DISTRICT_COLLAPSE_MS = 0; // auto-collapse o'chirilgan
 const DRIVER_DISTRICT_ALL = 'Hammasi';
 const PICKER_LOOP_COPIES = 3;
-const PICKER_SWIPE_HINT_MS = 1000;
+const PICKER_SWIPE_HINT_MS = 1450;
 const PICKER_HAND_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11.24V7.5a2.5 2.5 0 0 1 5 0v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.98l-3.43-1.72c-.41-.2-.87-.12-1.2.21l-.79.8 7.9 7.9c.78.78 2.05.78 2.83 0l6.01-6.01c.49-.49.49-1.28 0-1.77z"/></svg>';
 const DRIVER_PICKER_SETTLE_MS = 110;
 const VERTICAL_PICKER_SETTLE_MS = 140;
@@ -2670,7 +2670,7 @@ function getSelectedValueForTrack(track){
 }
 
 function easePickerSwipe(t){
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  return 1 - Math.pow(1 - t, 2.35);
 }
 
 function getVerticalPickerCenterIndex(track){
@@ -2708,9 +2708,9 @@ function ensurePickerHandInRail(rail){
 function setPickerHandPose(hand, rail, t){
   if (!hand || !rail) return;
   const h = rail.clientHeight || 172;
-  const handH = hand.offsetHeight || 114;
-  const y0 = h * 0.12;
-  const y1 = Math.max(y0 + 24, h * 0.52 - handH * 0.35);
+  const handH = hand.offsetHeight || 80;
+  const y0 = h * 0.14;
+  const y1 = Math.max(y0 + 20, h * 0.5 - handH * 0.32);
   const eased = easePickerSwipe(Math.min(1, Math.max(0, t)));
   const y = y0 + (y1 - y0) * eased;
   let opacity = 1;
@@ -2768,16 +2768,22 @@ function runPickerSwipeHint(track, wrap, token){
   requestAnimationFrame(tick);
 }
 
-let pickerRailDrag = null;
-
-function settlePickerRailScroll(track, smooth){
+function getVerticalPickerSnapTop(track, idx){
   const items = [...track.querySelectorAll('.region-picker-item')];
+  const target = items[Math.max(0, Math.min(items.length - 1, idx))];
+  if (!target) return track.scrollTop;
+  return Math.max(0, Math.min(
+    track.scrollHeight - track.clientHeight,
+    target.offsetTop - (track.clientHeight / 2) + (target.offsetHeight / 2)
+  ));
+}
+
+function settleVerticalRegionPicker(track, onCommit){
+  if (track.dataset.pickerProgrammatic) return;
   const idx = getVerticalPickerCenterIndex(track);
-  const region = items[idx]?.dataset.region;
-  if (region) scrollPickerToRegion(track, region, smooth);
-  else scrollVerticalPickerToIndex(track, idx);
-  if (smooth) {
-    const onCommit = getVerticalPickerOnCommit(track);
+  const idealTop = getVerticalPickerSnapTop(track, idx);
+  if (Math.abs(track.scrollTop - idealTop) > 1.5) {
+    track.scrollTo({ top: idealTop, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     const finish = () => updateRegionPickerVisuals(true, track, onCommit);
     if ('onscrollend' in window) {
       let done = false;
@@ -2788,57 +2794,55 @@ function settlePickerRailScroll(track, smooth){
         finish();
       };
       track.addEventListener('scrollend', once, { passive: true });
-      setTimeout(once, VERTICAL_PICKER_SETTLE_MS + 280);
+      setTimeout(once, 320);
     } else {
-      setTimeout(finish, VERTICAL_PICKER_SETTLE_MS + 80);
+      setTimeout(finish, 220);
     }
-  } else {
-    updateRegionPickerVisuals(true, track, getVerticalPickerOnCommit(track));
+    return;
   }
+  updateRegionPickerVisuals(true, track, onCommit);
 }
 
-function bindPickerSwipeRails(){
-  if (document.body.dataset.pickerRailBound) return;
-  document.body.dataset.pickerRailBound = '1';
-  document.body.addEventListener('pointerdown', e => {
-    const rail = e.target.closest('.picker-swipe-rail');
-    if (!rail || e.button > 0) return;
-    const track = rail.closest('.picker-wrap')?.querySelector('.region-picker-track');
-    if (!track || track.closest('[hidden]')) return;
-    pickerRailDrag = {
-      rail, track, pointerId: e.pointerId,
-      lastY: e.clientY, raf: 0, pendingDy: 0
-    };
-    rail.setPointerCapture(e.pointerId);
-    e.preventDefault();
+function bindVerticalRegionPickerScroll(track, onCommit){
+  track.querySelectorAll('.region-picker-item').forEach(btn => {
+    btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, !prefersReducedMotion()));
   });
-  const flushRailDragScroll = () => {
-    if (!pickerRailDrag) return;
-    const { track, pendingDy } = pickerRailDrag;
-    if (pendingDy) track.scrollBy({ top: pendingDy, behavior: 'auto' });
-    pickerRailDrag.pendingDy = 0;
-    pickerRailDrag.raf = 0;
+  let paintRaf = 0;
+  let settleTimer = 0;
+  let settling = false;
+
+  const paint = () => {
+    paintRaf = 0;
+    if (settling || track.dataset.pickerProgrammatic) return;
+    updateRegionPickerVisuals(false, track, null);
   };
-  document.body.addEventListener('pointermove', e => {
-    if (!pickerRailDrag || e.pointerId !== pickerRailDrag.pointerId) return;
-    const dy = pickerRailDrag.lastY - e.clientY;
-    pickerRailDrag.lastY = e.clientY;
-    pickerRailDrag.pendingDy += dy;
-    if (!pickerRailDrag.raf) {
-      pickerRailDrag.raf = requestAnimationFrame(flushRailDragScroll);
-    }
+
+  const scheduleSettle = () => {
+    if (track.dataset.pickerProgrammatic) return;
+    clearTimeout(settleTimer);
+    settleTimer = setTimeout(() => {
+      settling = true;
+      settleVerticalRegionPicker(track, onCommit);
+      requestAnimationFrame(() => { settling = false; });
+    }, 'onscrollend' in window ? 0 : VERTICAL_PICKER_SETTLE_MS);
+  };
+
+  track.addEventListener('scroll', () => {
+    if (!paintRaf) paintRaf = requestAnimationFrame(paint);
+    if (!('onscrollend' in window)) scheduleSettle();
   }, { passive: true });
-  const endRailDrag = e => {
-    if (!pickerRailDrag || e.pointerId !== pickerRailDrag.pointerId) return;
-    const { rail, track, raf, pendingDy } = pickerRailDrag;
-    if (raf) cancelAnimationFrame(raf);
-    if (pendingDy) track.scrollBy({ top: pendingDy, behavior: 'auto' });
-    try { rail.releasePointerCapture(e.pointerId); } catch (_) {}
-    pickerRailDrag = null;
-    settlePickerRailScroll(track, !prefersReducedMotion());
-  };
-  document.body.addEventListener('pointerup', endRailDrag);
-  document.body.addEventListener('pointercancel', endRailDrag);
+
+  if ('onscrollend' in window) {
+    track.addEventListener('scrollend', () => {
+      clearTimeout(settleTimer);
+      settling = true;
+      settleVerticalRegionPicker(track, onCommit);
+      requestAnimationFrame(() => { settling = false; });
+    }, { passive: true });
+  } else {
+    track.addEventListener('touchend', scheduleSettle, { passive: true });
+    track.addEventListener('pointerup', scheduleSettle, { passive: true });
+  }
 }
 
 function schedulePickerSwipeHint(sheetKind){
@@ -2955,6 +2959,10 @@ function bindRegionPickerScroll(track, onCommit){
   track.dataset.pickerBound = '1';
   if (isDriverHorizontalTrack(track)) {
     bindDriverRegionPickerScroll(track, onCommit);
+    return;
+  }
+  if (track.closest('.region-picker--vertical')) {
+    bindVerticalRegionPickerScroll(track, onCommit);
     return;
   }
   track.querySelectorAll('.region-picker-item').forEach(btn => {
@@ -5614,7 +5622,6 @@ initFirebase();
 initRegionSelects();
 initCtaIcons();
 initAllMorphTexts();
-bindPickerSwipeRails();
 applyCyrillicUI();
 refreshUserLocationRegion();
 loadPersistedData();
