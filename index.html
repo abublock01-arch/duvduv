@@ -195,7 +195,8 @@ body.view-sender .header{background:var(--app-bg)!important}
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .shipment-route-connector{
-  display:flex;align-items:center;gap:5px;padding:0 2px;width:fit-content;
+  display:flex;flex-direction:column;align-items:center;
+  gap:0;padding:2px 0 2px 10px;width:fit-content;
 }
 .shipment-route-pin{
   width:7px;height:7px;border-radius:50%;flex-shrink:0;
@@ -203,15 +204,15 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-route-pin--from{background:#2AABEE;box-shadow:0 0 0 2px rgba(42,171,238,.25)}
 .shipment-route-pin--to{background:#FF8C00;box-shadow:0 0 0 2px rgba(255,140,0,.22)}
 .shipment-route-stem{
-  width:32px;height:2px;border-radius:2px;flex-shrink:0;
-  background:linear-gradient(90deg,#2AABEE 0%,#FF8C00 100%);
+  width:2px;height:18px;border-radius:2px;flex-shrink:0;
+  background:linear-gradient(180deg,#2AABEE 0%,#FF8C00 100%);
   position:relative;
 }
 .shipment-route-stem::after{
-  content:'';position:absolute;right:-1px;top:50%;
-  width:0;height:0;margin-top:-3px;
-  border-top:3px solid transparent;border-bottom:3px solid transparent;
-  border-left:5px solid #FF8C00;
+  content:'';position:absolute;left:50%;bottom:-1px;
+  width:0;height:0;margin-left:-3px;
+  border-left:3px solid transparent;border-right:3px solid transparent;
+  border-top:5px solid #FF8C00;
 }
 .shipment-date{font-size:11px;color:#9ca3af;font-weight:500}
 .shipment-status{
@@ -1777,6 +1778,7 @@ async function saveOrderToFirestore(order){
   try {
     const doc = {
       type: 'order',
+      from: order.from || '',
       dest: order.dest || '',
       note: order.note || '',
       thumbUrl: order.thumbUrl || '',
@@ -1812,7 +1814,7 @@ function subscribeFirestoreOrders(){
     orders.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
-      orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', ...d });
+      orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', from: d.from || '', ...d });
     });
     syncShipmentsFromFirestore();
     refreshOrderMarkersDebounced();
@@ -5059,6 +5061,7 @@ function loadPersistedData(){
     (data.shipments || []).forEach(s => shipments.push(s));
     (data.orders || []).forEach(o => orders.push(o));
     (data.travels || []).forEach(t => travels.push(t));
+    dedupeMyShipments();
     shipments.forEach(s => {
       if (!s.firestoreId) {
         const match = orders.find(o =>
@@ -5116,25 +5119,47 @@ function findShipment(key){
 }
 
 function mergeFirestoreShipment(item, defaultType){
-  const fsId = item.firestoreId || item.id;
+  const fsId = item.firestoreId || (typeof item.id === 'string' && item.id.length > 12 ? item.id : null);
   const type = item.type || defaultType;
-  const idx = shipments.findIndex(s =>
-    (s.firestoreId && s.firestoreId === fsId) ||
-    String(s.id) === String(item.id)
-  );
+  const idx = shipments.findIndex(s => {
+    if (fsId && s.firestoreId === fsId) return true;
+    if (fsId && String(s.id) === String(fsId)) return true;
+    if (String(s.telegramId) !== String(item.telegramId)) return false;
+    if (String(s.id) === String(item.id)) return true;
+    return false;
+  });
   const normalized = {
     ...item,
     type,
-    id: item.id || (idx >= 0 ? shipments[idx].id : Date.now()),
-    firestoreId: fsId
+    id: fsId || item.id || (idx >= 0 ? shipments[idx].id : Date.now()),
+    firestoreId: fsId || item.firestoreId || null
   };
   if (type === 'travel') {
     normalized.from = item.from || '';
     normalized.to = item.to || item.dest || '';
     normalized.dest = normalized.to;
   }
+  if (type === 'order') {
+    normalized.from = item.from || '';
+    normalized.dest = item.dest || '';
+  }
   if (idx >= 0) shipments[idx] = { ...shipments[idx], ...normalized };
   else shipments.push(normalized);
+}
+
+function dedupeMyShipments(){
+  if (telegramUser.id == null) return;
+  const myId = String(telegramUser.id);
+  const seen = new Set();
+  for (let i = shipments.length - 1; i >= 0; i--) {
+    const s = shipments[i];
+    if (String(s.telegramId) !== myId) continue;
+    const key = s.firestoreId
+      ? `${s.type}:fs:${s.firestoreId}`
+      : `${s.type}:id:${s.id}`;
+    if (seen.has(key)) shipments.splice(i, 1);
+    else seen.add(key);
+  }
 }
 
 function syncShipmentsFromFirestore(){
@@ -5143,6 +5168,7 @@ function syncShipmentsFromFirestore(){
     .forEach(o => mergeFirestoreShipment(o, 'order'));
   travels.filter(t => String(t.telegramId) === String(telegramUser.id))
     .forEach(t => mergeFirestoreShipment(t, 'travel'));
+  dedupeMyShipments();
   persistData();
   renderShipments();
 }
@@ -5189,19 +5215,22 @@ function shipmentRouteEndHtml(destStr, isTo){
   return `<div class="shipment-route-end"><span class="shipment-route-place${placeClass}">${escapeHtml(leg.main)}</span></div>`;
 }
 
-function shipmentCardRouteHtml(s, route){
-  if (s.type === 'travel') {
-    return `<div class="shipment-route shipment-route--travel">
-      ${shipmentRouteEndHtml(s.from || '—', false)}
-      <div class="shipment-route-connector" aria-hidden="true">
-        <span class="shipment-route-pin shipment-route-pin--from"></span>
-        <span class="shipment-route-stem"></span>
-        <span class="shipment-route-pin shipment-route-pin--to"></span>
-      </div>
-      ${shipmentRouteEndHtml(s.to || s.dest || '—', true)}
-    </div>`;
-  }
-  return `<div class="shipment-route shipment-route--order">${shipmentRouteEndHtml(s.dest || route.to || '—', false)}</div>`;
+function shipmentCardRouteHtml(s){
+  const from = s.type === 'travel'
+    ? (s.from || '—')
+    : (s.from || userLocationRegion || '—');
+  const to = s.type === 'travel'
+    ? (s.to || s.dest || '—')
+    : (s.dest || '—');
+  return `<div class="shipment-route shipment-route--travel">
+    ${shipmentRouteEndHtml(from, false)}
+    <div class="shipment-route-connector" aria-hidden="true">
+      <span class="shipment-route-pin shipment-route-pin--from"></span>
+      <span class="shipment-route-stem"></span>
+      <span class="shipment-route-pin shipment-route-pin--to"></span>
+    </div>
+    ${shipmentRouteEndHtml(to, true)}
+  </div>`;
 }
 
 function shipmentStatusLabel(s){
@@ -5291,13 +5320,12 @@ function renderShipments(){
   wrap.classList.add('visible');
   list.innerHTML = mine.map(s => {
     const key = escapeHtml(getShipmentKey(s));
-    const route = shipmentRouteLabels(s);
     return `
     <div class="shipment-card" data-id="${key}" role="button" tabindex="0">
       <div class="shipment-card-left">
         <div class="shipment-type-icon${s.type === 'travel' ? ' shipment-type-icon--travel' : ''}">${s.type === 'travel' ? ICON_PASSENGER : ICON_BOX_SMALL}</div>
         <div class="shipment-body">
-          ${shipmentCardRouteHtml(s, route)}
+          ${shipmentCardRouteHtml(s)}
           <span class="shipment-status ${s.type === 'travel' ? 'shipment-status--travel' : ''}">${escapeHtml(shipmentStatusLabel(s))}</span>
         </div>
       </div>
@@ -5754,9 +5782,12 @@ async function submitTravel(e){
     telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
   };
   const firestoreId = await saveTravelToFirestore(travel);
-  if (firestoreId) travel.firestoreId = firestoreId;
-  shipments.unshift(travel);
-  travels.unshift({ id: firestoreId || String(travel.id), firestoreId: firestoreId || null, ...travel });
+  if (firestoreId) {
+    travel.firestoreId = firestoreId;
+    travel.id = firestoreId;
+  }
+  mergeFirestoreShipment(travel, 'travel');
+  dedupeMyShipments();
   persistData();
   renderShipments();
   refreshOrderMarkersDebounced();
@@ -5793,10 +5824,13 @@ function submitOrder(e){
 
   async function saveOrder(coords){
     const storedThumb = await thumbToStorable(thumbUrl);
+    let from = userLocationRegion || '';
+    if (!from && coords) from = detectRegionFromCoords(coords.longitude, coords.latitude);
     const order = {
       id: Date.now(),
       type: 'order',
       thumbUrl: storedThumb,
+      from,
       dest,
       note: '',
       status: 'Aktiv',
@@ -5806,9 +5840,12 @@ function submitOrder(e){
       telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
     };
     const firestoreId = await saveOrderToFirestore(order);
-    if (firestoreId) order.firestoreId = firestoreId;
-    shipments.unshift(order);
-    orders.unshift({ id: firestoreId || String(order.id), firestoreId: firestoreId || null, ...order });
+    if (firestoreId) {
+      order.firestoreId = firestoreId;
+      order.id = firestoreId;
+    }
+    mergeFirestoreShipment(order, 'order');
+    dedupeMyShipments();
     persistData();
     previewObjectUrl = null;
     selectedPhotoFile = null;
