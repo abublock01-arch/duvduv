@@ -4,8 +4,8 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>duvduv Admin Panel</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <style>
@@ -132,7 +132,13 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
 .pager-btn:disabled{opacity:.35;cursor:not-allowed}
 
 /* ── MAP ── */
-#adminMap{width:100%;height:540px}
+#adminMap{width:100%;height:560px}
+.mapboxgl-map{outline:none!important}
+.mapboxgl-canvas{display:block;outline:none!important}
+.mapboxgl-ctrl-bottom-right,.mapboxgl-ctrl-bottom-left{display:none!important}
+.mapboxgl-ctrl-top-right{top:12px!important;right:12px!important}
+.mapboxgl-ctrl-group{border-radius:12px!important;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,.12)!important;border:none!important}
+.mapboxgl-ctrl button{width:40px!important;height:40px!important}
 .map-topbar{display:flex;gap:0;border-bottom:1px solid var(--border);background:var(--white)}
 .map-stat-mini{text-align:center;flex:1;padding:14px 8px;border-right:1px solid var(--border)}
 .map-stat-mini:last-child{border-right:none}
@@ -142,10 +148,57 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
 .legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-weight:500}
 .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 
-/* ── LEAFLET popup override ── */
-.leaflet-popup-content-wrapper{border-radius:10px!important;box-shadow:0 8px 24px rgba(0,0,0,.12)!important;border:none!important}
-.leaflet-popup-content{margin:12px 14px!important}
-.leaflet-popup-tip-container{margin-top:-1px}
+/* ── MAP MARKERLAR (mobil bilan bir xil) ── */
+@keyframes markerPulse{
+  0%{transform:scale(.6);opacity:.55}
+  70%{transform:scale(1.6);opacity:0}
+  100%{transform:scale(1.6);opacity:0}
+}
+.map-driver-marker{
+  width:22px;height:22px;background:#2AABEE;border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 0 6px rgba(42,171,238,.28),0 4px 14px rgba(42,171,238,.45);
+  cursor:pointer;
+}
+.map-driver-marker.offline{
+  background:#94a3b8;
+  box-shadow:0 0 0 4px rgba(148,163,184,.2),0 2px 8px rgba(0,0,0,.15);
+}
+.map-order-marker{
+  width:48px;height:48px;position:relative;cursor:pointer;
+  background:transparent;border:none;padding:0;
+  transform-origin:center center;
+}
+.map-order-marker-pulse{
+  position:absolute;inset:2px;border-radius:50%;
+  background:radial-gradient(circle,rgba(211,84,0,.4) 0%,rgba(211,84,0,0) 70%);
+  animation:markerPulse 2.2s ease-out infinite;
+}
+.map-order-marker-dot{
+  position:absolute;inset:10px;border-radius:50%;
+  background:linear-gradient(155deg,#f07a2a 0%,#D35400 50%,#a84300 100%);
+  border:3px solid #fff;
+  box-shadow:0 8px 22px rgba(211,84,0,.5),0 2px 6px rgba(0,0,0,.18);
+}
+.map-order-marker.offline .map-order-marker-pulse{display:none}
+.map-order-marker.offline .map-order-marker-dot{
+  background:#94a3b8;
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+
+/* Mapbox popup stil */
+.mapboxgl-popup-content{
+  border-radius:12px!important;
+  padding:0!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.14)!important;
+  border:1px solid var(--border)!important;
+  overflow:hidden;
+}
+.mapboxgl-popup-close-button{
+  font-size:18px!important;right:8px!important;top:4px!important;
+  color:var(--text2)!important;
+}
+.mapboxgl-popup-tip{border-top-color:var(--white)!important}
 
 /* ── BROADCAST ── */
 .bc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
@@ -381,9 +434,18 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
         </div>
         <div id="adminMap"></div>
         <div class="map-legend">
-          <div class="legend-item"><div class="legend-dot" style="background:#2AABEE;box-shadow:0 0 0 2px rgba(42,171,238,.3)"></div>Haydovchi (GPS onlayn)</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#10b981;box-shadow:0 0 0 2px rgba(16,185,129,.3)"></div>Mijoz (GPS onlayn)</div>
-          <div class="legend-item"><div class="legend-dot" style="background:#94a3b8"></div>Oflayn (oldingi joylashuv)</div>
+          <div class="legend-item">
+            <div style="width:14px;height:14px;background:#2AABEE;border:2.5px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(42,171,238,.25);flex-shrink:0"></div>
+            Haydovchi (onlayn)
+          </div>
+          <div class="legend-item">
+            <div style="width:14px;height:14px;background:linear-gradient(155deg,#f07a2a,#D35400);border:2.5px solid white;border-radius:50%;box-shadow:0 0 0 4px rgba(211,84,0,.2);flex-shrink:0"></div>
+            Mijoz/yo'lovchi (onlayn)
+          </div>
+          <div class="legend-item">
+            <div style="width:12px;height:12px;background:#94a3b8;border:2px solid white;border-radius:50%;flex-shrink:0"></div>
+            Oflayn (oxirgi joylashuv)
+          </div>
         </div>
       </div>
     </div>
@@ -471,13 +533,16 @@ firebase.initializeApp({
 });
 const db = firebase.firestore();
 
+// ── CONFIG ──
+const MAPBOX_TOKEN='pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
+
 // ── STATE ──
 let allUsers=[],allOrders=[],allTravels=[],allMsgs=[];
 let filtUsers=[],filtOrders=[],filtTravels=[];
 const PG=20;
 let pages={users:1,orders:1,travels:1};
 let ufilt='all',ofilt='all',sq={users:'',orders:'',travels:''};
-let rcVal='all',leafMap=null,leafMarkers=[];
+let rcVal='all',mapInst=null,mapMarkers=[];
 let curPage='users';
 
 const PAGES={
@@ -555,68 +620,69 @@ function go(page,btn){
 }
 function toggleSidebar(){document.getElementById('sidebar').classList.toggle('open')}
 
-// ── LEAFLET MAP ──
+// ── MAPBOX MAP (mobil bilan bir xil stil) ──
 function initMap(){
-  if(leafMap)return;
-  leafMap=L.map('adminMap',{center:[41.3,64.5],zoom:6,zoomControl:true});
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-    attribution:'© OpenStreetMap contributors',
-    maxZoom:19
-  }).addTo(leafMap);
-  updMarkers();
+  if(mapInst)return;
+  mapboxgl.accessToken=MAPBOX_TOKEN;
+  mapInst=new mapboxgl.Map({
+    container:'adminMap',
+    style:'mapbox://styles/mapbox/streets-v12',
+    center:[64.5,41.3],
+    zoom:5.5
+  });
+  mapInst.addControl(new mapboxgl.NavigationControl({showCompass:false}),'top-right');
+  mapInst.on('load',updMarkers);
 }
 
-function makeMarkerIcon(color,size){
-  return L.divIcon({
-    className:'',
-    html:`<div style="width:${size}px;height:${size}px;border-radius:50%;background:${color};border:2.5px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)"></div>`,
-    iconSize:[size,size],
-    iconAnchor:[size/2,size/2]
-  });
+function makePopupHTML(u){
+  const isD=u.routeFrom&&u.routeTo;
+  const on=online(u);
+  const chatId=u.chatId||u.id;
+  const name=u.firstName||"Noma'lum";
+  return `<div style="padding:14px 16px 16px;font-family:-apple-system,'Segoe UI',sans-serif;min-width:200px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:10px">
+      <div>
+        <div style="font-weight:700;font-size:14px;color:#0f172a;margin-bottom:2px">${name}</div>
+        ${u.username?`<div style="font-size:11px;color:#2AABEE;font-weight:500">@${u.username}</div>`:''}
+      </div>
+      <span style="background:${isD?'#dbeafe':'#d1fae5'};color:${isD?'#1d4ed8':'#065f46'};font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;white-space:nowrap;flex-shrink:0">${isD?'🚗 Haydovchi':'👤 Mijoz'}</span>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${isD?'8px':'12px'}">
+      <span style="font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:#64748b;font-family:monospace">${chatId}</span>
+      <span style="font-size:11px;font-weight:600;color:${on?'#10b981':'#94a3b8'}">${on?'● Onlayn':'● Oflayn'}</span>
+    </div>
+    ${isD?`<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:7px;padding:6px 10px;font-size:12px;color:#475569;margin-bottom:10px">🛣 <b>${u.routeFrom}</b> → <b>${u.routeTo}</b></div>`:''}
+    <button onclick="window._msgUser('${chatId}','${name.replace(/'/g,"\\'")}');this.closest('.mapboxgl-popup').querySelector('.mapboxgl-popup-close-button').click()" style="width:100%;padding:8px 0;background:#2AABEE;color:white;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;justify-content:center;gap:5px">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg> Xabar yuborish
+    </button>
+  </div>`;
 }
 
 function updMarkers(){
-  if(!leafMap)return;
-  leafMarkers.forEach(m=>m.remove());
-  leafMarkers=[];
-  let hasLoc=false;
+  if(!mapInst||!mapInst.loaded())return;
+  mapMarkers.forEach(m=>m.remove());
+  mapMarkers=[];
   allUsers.forEach(u=>{
     if(!u.location?.lat||!u.location?.lng)return;
-    hasLoc=true;
     const isD=u.routeFrom&&u.routeTo;
     const on=online(u);
-    const color=on?(isD?'#2AABEE':'#10b981'):'#94a3b8';
-    const size=on?16:10;
-    const marker=L.marker([u.location.lat,u.location.lng],{icon:makeMarkerIcon(color,size)});
-    const name=u.firstName||"Noma'lum";
-    const uname=u.username?`<div style="color:#2AABEE;font-size:11px;margin-top:2px">@${u.username}</div>`:'';
-    const typeTag=isD?`<span style="background:#dbeafe;color:#1d4ed8;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px">🚗 Haydovchi</span>`:`<span style="background:#d1fae5;color:#065f46;font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px">👤 Mijoz</span>`;
-    const onTag=on?`<span style="color:#10b981;font-size:11px;font-weight:600">● Onlayn</span>`:`<span style="color:#94a3b8;font-size:11px">● Oflayn</span>`;
-    const routeInfo=isD?`<div style="font-size:11px;color:#64748b;margin-top:4px">🛣 ${u.routeFrom} → ${u.routeTo}</div>`:'';
-    const chatId=u.chatId||u.id;
-    marker.bindPopup(`
-      <div style="min-width:190px;font-family:-apple-system,sans-serif">
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <div>
-            <div style="font-weight:700;font-size:13px;color:#0f172a">${name}</div>
-            ${uname}
-          </div>
-          ${typeTag}
-        </div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-          <code style="font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:#64748b">${chatId}</code>
-          ${onTag}
-        </div>
-        ${routeInfo}
-        <button onclick="window._msgUser('${chatId}','${name.replace(/'/g,"\\'")}')" style="width:100%;margin-top:10px;padding:7px;background:#2AABEE;color:white;border:none;border-radius:7px;cursor:pointer;font-size:12px;font-weight:700;letter-spacing:.2px">✉️ Xabar yuborish</button>
-      </div>`);
-    marker.addTo(leafMap);
-    leafMarkers.push(marker);
+    const el=document.createElement('div');
+    if(isD){
+      // Haydovchi — moviy glow marker (mobil bilan bir xil)
+      el.className='map-driver-marker'+(on?'':' offline');
+    }else{
+      // Yo'lovchi/mijoz — orange pulse marker (mobil bilan bir xil)
+      el.className='map-order-marker'+(on?'':' offline');
+      el.innerHTML='<div class="map-order-marker-pulse"></div><div class="map-order-marker-dot"></div>';
+    }
+    const popup=new mapboxgl.Popup({offset:isD?18:28,closeButton:true,maxWidth:'260px'})
+      .setHTML(makePopupHTML(u));
+    const mk=new mapboxgl.Marker({element:el,anchor:'center'})
+      .setLngLat([u.location.lng,u.location.lat])
+      .setPopup(popup)
+      .addTo(mapInst);
+    mapMarkers.push(mk);
   });
-  if(hasLoc&&leafMarkers.length>0){
-    const group=L.featureGroup(leafMarkers);
-    leafMap.fitBounds(group.getBounds().pad(0.2),{maxZoom:12});
-  }
 }
 
 window._msgUser=(id,name)=>{
