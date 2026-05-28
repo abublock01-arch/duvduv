@@ -2266,7 +2266,7 @@ const DRIVER_DISTRICT_DELAY_MS = 3000;
 const DRIVER_DISTRICT_COLLAPSE_MS = 0; // auto-collapse o'chirilgan
 const DRIVER_DISTRICT_ALL = 'Hammasi';
 const PICKER_LOOP_COPIES = 3;
-const PICKER_SWIPE_HINT_MS = 1450;
+const PICKER_SWIPE_HINT_MS = 1120;
 const PICKER_HAND_BASE_RATIO = 0.32;
 const PICKER_HAND_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M9 11.24V7.5a2.5 2.5 0 0 1 5 0v3.74c1.21-.81 2-2.18 2-3.74C16 5.01 13.99 3 11.5 3S7 5.01 7 7.5c0 1.56.79 2.93 2 3.74zm9.84 4.63-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.98l-3.43-1.72c-.41-.2-.87-.12-1.2.21l-.79.8 7.9 7.9c.78.78 2.05.78 2.83 0l6.01-6.01c.49-.49.49-1.28 0-1.77z"/></svg>';
 const DRIVER_PICKER_SETTLE_MS = 110;
@@ -2958,9 +2958,10 @@ function runPickerSwipeHint(track, wrap, token){
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
-    track.scrollTop = startScroll + scrollDelta * t;
+    const p = t * t * (3 - 2 * t);
+    track.scrollTop = startScroll + scrollDelta * p;
     updateRegionPickerVisuals(false, track, null);
-    setPickerHandPose(hand, rail, t, t);
+    setPickerHandPose(hand, rail, p, t);
     if (t < 1) {
       requestAnimationFrame(tick);
       return;
