@@ -3041,43 +3041,30 @@ function runPickerSwipeHint(track, wrap, token){
   if (!track || !wrap || prefersReducedMotion()) return;
   const items = [...track.querySelectorAll('.region-picker-item')];
   if (items.length < 2) return;
-  const onCommit = getVerticalPickerOnCommit(track);
   const rail = wrap.querySelector('.picker-swipe-rail');
   const hand = rail ? ensurePickerHandInRail(rail) : null;
-  const startScroll = getVerticalPickerSnapTop(track, 0);
-  const endScroll = getVerticalPickerSnapTop(track, 1);
-  const scrollDelta = endScroll - startScroll;
-  track.scrollTop = startScroll;
-  updateRegionPickerVisuals(false, track, null);
-  delete track._pickerVisualIdx;
+  const holdScroll = track.scrollTop;
   if (rail) {
     const railH = rail.clientHeight || track.clientHeight || 196;
     const handBase = railH * PICKER_HAND_BASE_RATIO;
-    const handTravel = Math.min(
-      railH * 0.5,
-      Math.max(32, Math.abs(scrollDelta) * (railH / Math.max(track.clientHeight, 1)))
-    );
+    const handTravel = Math.min(railH * 0.5, Math.max(40, railH * 0.36));
     rail._pickerHintFrame = { y0: handBase + handTravel, y1: handBase };
   }
   track.dataset.pickerProgrammatic = '1';
-  track.style.scrollSnapType = 'none';
   const start = performance.now();
   const tick = now => {
     if (token !== pickerDemoToken || track.dataset.pickerDemoCancelled) {
-      finishPickerSwipeHint(track, wrap, hand, rail, startScroll);
+      finishPickerSwipeHint(track, wrap, hand, rail, holdScroll);
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
     const p = 1 - Math.pow(1 - t, 3);
-    const virtScroll = t >= 1 ? endScroll : startScroll + scrollDelta * p;
-    track.scrollTop = virtScroll;
-    updateVerticalPickerVisualsForHint(track, virtScroll);
     setPickerHandPose(hand, rail, p, p);
     if (t < 1) {
       requestAnimationFrame(tick);
       return;
     }
-    finishPickerSwipeHint(track, wrap, hand, rail, endScroll, onCommit);
+    finishPickerSwipeHint(track, wrap, hand, rail, holdScroll);
   };
   requestAnimationFrame(tick);
 }

@@ -434,12 +434,11 @@ async function notifySender(telegramId, from, to, type) {
 }
 
 // ── Haydovchilarga yangi e'lon xabari ────────────────────────────────────
-async function notifyDrivers(from, to, type, senderUsername) {
+async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
   if (!from || !to) { console.log('⚠️ notifyDrivers: from yoki to yo\'q'); return; }
-  console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}`);
+  console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}, jo'natuvchi: ${senderChatId}`);
 
-  // Barcha chatId bor foydalanuvchilarni olamiz — role va route xotirada tekshiramiz
-  // (role:driver saqlanmagan eski foydalanuvchilar ham tushsin)
+  // Barcha chatId bor foydalanuvchilarni olamiz
   const usersSnap = await db.collection('users')
     .where('chatId', '>', 0)
     .get();
@@ -465,17 +464,17 @@ async function notifyDrivers(from, to, type, senderUsername) {
     const driver = doc.data();
     if (!driver.chatId) continue;
 
-    // Bildirishnoma o'chirilgan — o'tkazib yuboramiz
-    if (driver.notifications === false) continue;
-
-    // Haydovchi ekanligini tekshiramiz: role:driver YOKI routeFrom bor
-    const isDriver = driver.role === 'driver' || (driver.routeFrom && driver.routeTo);
-    if (!isDriver) {
-      console.log(`⏭ ${doc.id}: haydovchi emas (role=${driver.role}, route=${driver.routeFrom}→${driver.routeTo})`);
+    // Jo'natuvchining o'ziga ikki marta xabar ketmasin
+    if (senderChatId && Number(driver.chatId) === Number(senderChatId)) {
+      console.log(`⏭ ${doc.id}: jo'natuvchining o'zi, o'tkazildi`);
       continue;
     }
 
-    // Marshrut mos kelishini tekshiramiz (belgilangan bo'lsa)
+    // Bildirishnoma o'chirilgan — o'tkazib yuboramiz
+    if (driver.notifications === false) continue;
+
+    // Marshrut filtri: faqat belgilangan bo'lsa tekshiramiz
+    // Belgilanmagan (routeFrom/To yo'q) bo'lsa — barcha e'lonlarni oladi
     const driverFrom = normalizeRegion(driver.routeFrom || '');
     const driverTo   = normalizeRegion(driver.routeTo   || '');
     if (driverFrom && driverTo) {
@@ -486,8 +485,8 @@ async function notifyDrivers(from, to, type, senderUsername) {
         continue;
       }
     }
-    // routeFrom/routeTo yo'q bo'lsa — barcha yo'nalishlarga tayyor haydovchi, xabar yuboramiz
 
+    console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
     await bot.sendMessage(driver.chatId,
       `🔔 *Янги эълон*\n\n` +
       `${icon}  ${label}\n` +
@@ -498,7 +497,7 @@ async function notifyDrivers(from, to, type, senderUsername) {
         parse_mode: 'Markdown',
         reply_markup: appBtn()
       }
-    );
+    ).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
   }
 }
 
@@ -520,7 +519,7 @@ db.collection('orders').orderBy('createdAt', 'desc')
       console.log(`📦 Order: from="${from}" to="${to}" telegramId=${d.telegramId} type=${type}`);
       if (!from || !to) console.warn('⚠️  from yoki to bo\'sh! Manba tekshiring.');
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
-      await notifyDrivers(from, to, type, d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
+      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers xato:', e.message));
     }
   }, err => console.error('orders listener xato:', err.message));
 
@@ -541,7 +540,7 @@ db.collection('travels').orderBy('createdAt', 'desc')
       console.log(`🚐 Travel: from="${from}" to="${to}" telegramId=${d.telegramId}`);
       if (!from || !to) console.warn('⚠️  from yoki to bo\'sh! Manba tekshiring.');
       await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
-      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
+      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers xato:', e.message));
     }
   }, err => console.error('travels listener xato:', err.message));
 
