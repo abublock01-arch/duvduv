@@ -4,7 +4,6 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 const admin = require('firebase-admin');
-const https = require('https');
 
 // ── Firebase ──────────────────────────────────────────────────────────────
 const serviceAccount = require('./yolcar-30649-firebase-adminsdk-fbsvc-491c85b007.json');
@@ -12,87 +11,32 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   projectId: 'yolcar-30649',
 });
-const db = admin.firestore(); // faqat yozish uchun (notifySender/notifyDrivers/users)
+const db = admin.firestore();
+// gRPC yo'q — faqat REST ishlatamiz (Railway uchun)
+db.settings({ preferRest: true });
 
-// ── Firestore REST API (o'qish uchun — gRPC muammosini chetlab o'tish) ──
-const PROJECT = 'yolcar-30649';
-const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
-
-// OAuth token cache — Firebase Admin credential bilan (manual JWT kerak emas)
-let _cachedToken = null;
-let _tokenExpiry = 0;
-
-async function fsToken() {
-  if (_cachedToken && Date.now() < _tokenExpiry - 60000) return _cachedToken;
-  const tokenObj = await admin.app().options.credential.getAccessToken();
-  _cachedToken = tokenObj.access_token;
-  _tokenExpiry = Date.now() + ((tokenObj.expires_in || 3600) * 1000);
-  return _cachedToken;
-}
-
-function httpsPost(url, body, token) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body);
-    const u = new URL(url);
-    const req = https.request({
-      hostname: u.hostname, path: u.pathname + u.search,
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data)
-      }
-    }, res => {
-      let s = '';
-      res.on('data', c => s += c);
-      res.on('end', () => { try { resolve(JSON.parse(s)); } catch(e) { reject(e); } });
-    });
-    req.on('error', reject);
-    req.write(data);
-    req.end();
-  });
+// Firestore snapshot → oddiy object
+function docToObj(doc) {
+  const d = doc.data();
+  return {
+    from:             d.from || '',
+    to:               d.to || d.dest || '',
+    dest:             d.dest || '',
+    type:             d.type || '',
+    telegramId:       Number(d.telegramId) || 0,
+    telegramUsername: d.telegramUsername || '',
+    archived:         d.archived === true,
+    createdAt:        d.createdAt?.toMillis ? d.createdAt.toMillis() : (d.createdAt || 0),
+  };
 }
 
 async function fsQuery(collectionId, afterMs) {
-  const token = await fsToken();
-  const ts = new Date(afterMs).toISOString();
-  const body = {
-    structuredQuery: {
-      from: [{ collectionId }],
-      where: {
-        fieldFilter: {
-          field: { fieldPath: 'createdAt' },
-          op: 'GREATER_THAN',
-          value: { timestampValue: ts }
-        }
-      },
-      orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'ASCENDING' }]
-    }
-  };
-  const result = await httpsPost(`${FS_BASE}:runQuery`, body, token);
-  if (!Array.isArray(result)) return [];
-  return result
-    .filter(r => r.document)
-    .map(r => {
-      const f = r.document.fields || {};
-      const get = (k) => {
-        const v = f[k];
-        if (!v) return '';
-        return v.stringValue ?? v.integerValue ?? v.booleanValue ?? v.timestampValue ?? '';
-      };
-      return {
-        from:            get('from'),
-        to:              get('to'),
-        dest:            get('dest'),
-        type:            get('type'),
-        telegramId:      Number(get('telegramId')) || 0,
-        telegramUsername:get('telegramUsername'),
-        archived:        f.archived?.booleanValue === true,
-        createdAt:       f.createdAt?.timestampValue
-          ? new Date(f.createdAt.timestampValue).getTime()
-          : 0
-      };
-    });
+  const ts = admin.firestore.Timestamp.fromMillis(afterMs);
+  const snap = await db.collection(collectionId)
+    .where('createdAt', '>', ts)
+    .orderBy('createdAt', 'asc')
+    .get();
+  return snap.docs.map(docToObj);
 }
 
 // ── Bot ───────────────────────────────────────────────────────────────────
