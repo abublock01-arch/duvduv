@@ -1824,6 +1824,8 @@ function initFirebase(){
     db = firebase.firestore();
     subscribeFirestoreOrders();
     subscribeFirestoreTravels();
+    // Firebase tayyor — endi ruxsat so'rash va chatId saqlash xavfsiz
+    setTimeout(() => { try { requestNotificationPermission(); } catch(_) {} }, 800);
   } catch(e){ console.warn('Firebase init xatosi:', e); }
 }
 async function saveOrderToFirestore(order){
@@ -2176,31 +2178,57 @@ function initRouteBtn(){
 }
 
 function requestNotificationPermission(){
-  if (!telegramUser.id || !db) return;
-  // Har qanday holatda ham chatId va notifications Firestore'ga saqlanadi
-  // (bot /start qilingan userlarga xabar yuborishga shu orqali topadi)
+  if (!telegramUser.id) return;
+
+  const PERM_KEY = 'duvduv_notif_asked_' + telegramUser.id;
+
+  // Har doim chatId ni Firestore'ga saqlaymiz — bot /start bosgan userga yozishi uchun
+  // (Firestore ready bo'lmasa kechroq qayta urinadi)
   const saveToFirestore = () => {
-    db.collection('users').doc(String(telegramUser.id)).set({
-      chatId: telegramUser.id,
-      notifications: true,
-      firstName: telegramUser.first_name || '',
-      username: telegramUser.username || ''
-    }, { merge: true }).catch(() => {});
+    if (!db) return;
+    try {
+      db.collection('users').doc(String(telegramUser.id)).set({
+        chatId      : telegramUser.id,
+        notifications: true,
+        firstName   : telegramUser.first_name || '',
+        username    : telegramUser.username   || ''
+      }, { merge: true }).catch(() => {});
+    } catch(_) {}
   };
 
-  try {
-    if (window.Telegram?.WebApp?.requestWriteAccess) {
-      // Yangi Telegram versiyalari — ruxsat oynasi ko'rsatiladi
-      Telegram.WebApp.requestWriteAccess(granted => {
-        if (granted) saveToFirestore();
-      });
-    } else {
-      // Eski Telegram versiyalari — ruxsat oynasisiz to'g'ridan saqlaymiz
-      // (foydalanuvchi /start bosgan bo'lsa bot yuborishga haqli)
+  // requestWriteAccess — faqat bir marta so'raymiz (xotiraga saqlanadi)
+  const alreadyAsked = localStorage.getItem(PERM_KEY);
+
+  const askPermission = () => {
+    try {
+      if (window.Telegram?.WebApp?.requestWriteAccess) {
+        Telegram.WebApp.requestWriteAccess(granted => {
+          try {
+            localStorage.setItem(PERM_KEY, '1');
+            if (granted) saveToFirestore();
+            else {
+              // Rad etsa ham chatId saqlaymiz — /start bosgan bo'lsa bot yozadi
+              saveToFirestore();
+            }
+          } catch(_) {}
+        });
+      } else {
+        // Eski Telegram (requestWriteAccess yo'q) — shunchaki saqlaymiz
+        saveToFirestore();
+        try { localStorage.setItem(PERM_KEY, '1'); } catch(_) {}
+      }
+    } catch(_) {
+      // Har qanday xato — sezilmay saqlaymiz
       saveToFirestore();
     }
-  } catch(e) {
-    saveToFirestore(); // xato bo'lsa ham saqlaymiz
+  };
+
+  if (!alreadyAsked) {
+    // Birinchi kirish — ruxsat so'raymiz
+    askPermission();
+  } else {
+    // Avval so'ralgan — faqat Firestore yangilaymiz (dialog chiqmaydi)
+    saveToFirestore();
   }
 }
 
@@ -2242,8 +2270,6 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
-    // Firebase tayyor bo'lganidan keyin ruxsat so'raymiz
-    setTimeout(() => requestNotificationPermission(), 1500);
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
