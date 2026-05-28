@@ -1832,6 +1832,7 @@ async function saveOrderToFirestore(order){
     const doc = {
       type: 'order',
       from: order.from || '',
+      to: order.dest || '',      // bot uchun 'to' ham saqlanadi
       dest: order.dest || '',
       note: order.note || '',
       thumbUrl: order.thumbUrl || '',

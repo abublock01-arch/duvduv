@@ -66,6 +66,34 @@ const appBtn = () => ({
   inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }]]
 });
 
+// ── Latin → Kirill normalizatsiya (mini app Latin, bot Kirill yozadi) ────
+const LATIN_TO_CYR = {
+  'Toshkent shahar' : 'Тошкент',
+  'Toshkent viloyat': 'Тошкент',
+  'Toshkent'        : 'Тошкент',
+  'Samarqand'       : 'Самарқанд',
+  "Farg'ona"        : 'Фарғона',
+  'Fargona'         : 'Фарғона',
+  'Andijon'         : 'Андижон',
+  'Namangan'        : 'Наманган',
+  'Buxoro'          : 'Бухоро',
+  'Xorazm'          : 'Хоразм',
+  'Surxondaryo'     : 'Сурхондарё',
+  "Qashqadaryo"     : 'Қашқадарё',
+  'Qashqadaryo'     : 'Қашқадарё',
+  'Sirdaryo'        : 'Сирдарё',
+  'Jizzax'          : 'Жиззах',
+  'Navoiy'          : 'Навоий',
+  "Qoraqalpog'iston": 'Қорақалпоғистон',
+  'Qoraqalpogiston' : 'Қорақалпоғистон',
+};
+
+/** Viloyat nomini kanonik Kirill ko'rinishiga keltiradi */
+function normalizeRegion(r) {
+  if (!r) return '';
+  return LATIN_TO_CYR[r] || r;
+}
+
 // ── Viloyatlar ────────────────────────────────────────────────────────────
 const REGIONS = [
   'Тошкент', 'Самарқанд', 'Бухоро', 'Андижон',
@@ -373,12 +401,15 @@ async function notifyDrivers(from, to, type, senderUsername) {
     const driver = doc.data();
     if (!driver.chatId) continue;
 
-    const driverFrom = driver.routeFrom || '';
-    const driverTo   = driver.routeTo   || '';
+    const driverFrom = normalizeRegion(driver.routeFrom || '');
+    const driverTo   = normalizeRegion(driver.routeTo   || '');
     if (driverFrom && driverTo) {
       const match = (driverFrom === from && driverTo === to) ||
                     (driverFrom === to   && driverTo === from);
-      if (!match) continue;
+      if (!match) {
+        console.log(`⏭ Driver ${doc.id}: yo'nalish mos kelmadi (${driverFrom}→${driverTo} vs ${from}→${to})`);
+        continue;
+      }
     }
 
     await bot.sendMessage(driver.chatId,
@@ -408,8 +439,9 @@ db.collection('orders').orderBy('createdAt', 'desc')
       console.log(`📦 Yangi order: from=${d.from} to=${d.to} age=${age}ms`);
       if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
       const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
-      const from = d.from || '';
-      const to   = d.to   || '';
+      const from = normalizeRegion(d.from  || '');
+      const to   = normalizeRegion(d.to || d.dest || '');   // 'to' yo'q bo'lsa 'dest' ishlatiladi
+      console.log(`📦 Normalized: from="${from}" to="${to}"`);
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
       await notifyDrivers(from, to, type, d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
     }
@@ -427,8 +459,9 @@ db.collection('travels').orderBy('createdAt', 'desc')
       const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
       console.log(`🚐 Yangi travel: from=${d.from} to=${d.to} age=${age}ms`);
       if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
-      const from = d.from      || '';
-      const to   = d.to || d.dest || '';
+      const from = normalizeRegion(d.from || '');
+      const to   = normalizeRegion(d.to || d.dest || '');
+      console.log(`🚐 Normalized: from="${from}" to="${to}"`);
       await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
       await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
     }
