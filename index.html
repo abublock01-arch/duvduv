@@ -2875,6 +2875,31 @@ function finishPickerSwipeHint(track, wrap, hand, rail, startScroll){
   if (rail) delete rail._pickerHintFrame;
 }
 
+function updateVerticalPickerVisualsForHint(track){
+  if (!track) return;
+  const items = [...track.querySelectorAll('.region-picker-item')];
+  if (!items.length) return;
+  const centerY = track.scrollTop + track.clientHeight / 2;
+  let idx = 0;
+  let best = Infinity;
+  items.forEach((item, i) => {
+    const mid = item.offsetTop + item.offsetHeight / 2;
+    const dist = Math.abs(mid - centerY);
+    if (dist < best) {
+      best = dist;
+      idx = i;
+    }
+  });
+  if (track._pickerVisualIdx === idx) return;
+  track._pickerVisualIdx = idx;
+  items.forEach(item => item.classList.remove('is-center', 'is-adjacent'));
+  const center = items[idx];
+  if (!center) return;
+  center.classList.add('is-center');
+  if (items[idx - 1]) items[idx - 1].classList.add('is-adjacent');
+  if (items[idx + 1]) items[idx + 1].classList.add('is-adjacent');
+}
+
 function cleanupPickerHintVisuals(wrap, startScroll){
   if (!wrap) return;
   const hand = wrap.querySelector('.picker-hand');
@@ -2960,7 +2985,7 @@ function runPickerSwipeHint(track, wrap, token){
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
     const p = t * t * (3 - 2 * t);
     track.scrollTop = startScroll + scrollDelta * p;
-    updateRegionPickerVisuals(false, track, null);
+    updateVerticalPickerVisualsForHint(track);
     setPickerHandPose(hand, rail, p, t);
     if (t < 1) {
       requestAnimationFrame(tick);
