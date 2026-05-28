@@ -4583,8 +4583,8 @@ function mapItemMatchesDriverFilter(item){
     const iTo   = toCanonRegion(item.to || item.dest || '');
     const dFrom = toCanonRegion(route.from);
     const dTo   = toCanonRegion(route.to);
-    // To'g'ri yoki teskari yo'nalish (yoki bitta tomonlama mos)
-    return (iFrom === dFrom || iFrom === dTo) && (iTo === dTo || iTo === dFrom);
+    // Faqat to'g'ri (A→B) yoki teskari (B→A) yo'nalish
+    return (iFrom === dFrom && iTo === dTo) || (iFrom === dTo && iTo === dFrom);
   }
 
   // Eski region filtri (A/B tanlanmagan bo'lsa)
