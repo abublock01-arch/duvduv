@@ -68,6 +68,7 @@ const appBtn = () => ({
 
 // ── Latin → Kirill normalizatsiya (mini app Latin, bot Kirill yozadi) ────
 const LATIN_TO_CYR = {
+  // === Lotin (mini app UZ_REGIONS) → Kanonik Kirill ===
   'Toshkent shahar' : 'Тошкент',
   'Toshkent viloyat': 'Тошкент',
   'Toshkent'        : 'Тошкент',
@@ -79,13 +80,30 @@ const LATIN_TO_CYR = {
   'Buxoro'          : 'Бухоро',
   'Xorazm'          : 'Хоразм',
   'Surxondaryo'     : 'Сурхондарё',
-  "Qashqadaryo"     : 'Қашқадарё',
   'Qashqadaryo'     : 'Қашқадарё',
   'Sirdaryo'        : 'Сирдарё',
   'Jizzax'          : 'Жиззах',
   'Navoiy'          : 'Навоий',
   "Qoraqalpog'iston": 'Қорақалпоғистон',
   'Qoraqalpogiston' : 'Қорақалпоғистон',
+
+  // === Kirill variantlari (mini app ROUTE_REGIONS) → Kanonik Kirill ===
+  'Тошкент шаҳри'   : 'Тошкент',
+  'Тошкент шаҳар'   : 'Тошкент',
+  'Тошкент вилояти' : 'Тошкент',
+  'Тошкент шаҳар вилояти': 'Тошкент',
+  'Самарқанд'       : 'Самарқанд',
+  'Фарғона'         : 'Фарғона',
+  'Андижон'         : 'Андижон',
+  'Наманган'        : 'Наманган',
+  'Бухоро'          : 'Бухоро',
+  'Хоразм'          : 'Хоразм',
+  'Сурхондарё'      : 'Сурхондарё',
+  'Қашқадарё'       : 'Қашқадарё',
+  'Сирдарё'         : 'Сирдарё',
+  'Жиззах'          : 'Жиззах',
+  'Навоий'          : 'Навоий',
+  'Қорақалпоғистон' : 'Қорақалпоғистон',
 };
 
 /** Viloyat nomini kanonik Kirill ko'rinishiga keltiradi */

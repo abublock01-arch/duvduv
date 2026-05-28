@@ -2155,9 +2155,13 @@ function saveRoute(){
   localStorage.setItem(routeKey(), JSON.stringify({ from, to }));
 
   if (telegramUser.id && db) {
-    db.collection('users').doc(String(telegramUser.id)).set(
-      { routeFrom: from, routeTo: to }, { merge: true }
-    );
+    db.collection('users').doc(String(telegramUser.id)).set({
+      routeFrom: from,
+      routeTo: to,
+      role: 'driver',           // bot shu fielddan qidiradi
+      chatId: telegramUser.id,  // bot shu yerga xabar yuboradi
+      notifications: true
+    }, { merge: true });
   }
 
   document.getElementById('routeSetBtn').classList.add('has-route');
@@ -2172,18 +2176,32 @@ function initRouteBtn(){
 }
 
 function requestNotificationPermission(){
+  if (!telegramUser.id || !db) return;
+  // Har qanday holatda ham chatId va notifications Firestore'ga saqlanadi
+  // (bot /start qilingan userlarga xabar yuborishga shu orqali topadi)
+  const saveToFirestore = () => {
+    db.collection('users').doc(String(telegramUser.id)).set({
+      chatId: telegramUser.id,
+      notifications: true,
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || ''
+    }, { merge: true }).catch(() => {});
+  };
+
   try {
-    if (!window.Telegram?.WebApp?.requestWriteAccess) return;
-    Telegram.WebApp.requestWriteAccess(granted => {
-      try {
-        if (granted && telegramUser.id && db) {
-          db.collection('users').doc(String(telegramUser.id)).set(
-            { notifications: true, chatId: telegramUser.id }, { merge: true }
-          );
-        }
-      } catch(e) {}
-    });
-  } catch(e) {}
+    if (window.Telegram?.WebApp?.requestWriteAccess) {
+      // Yangi Telegram versiyalari — ruxsat oynasi ko'rsatiladi
+      Telegram.WebApp.requestWriteAccess(granted => {
+        if (granted) saveToFirestore();
+      });
+    } else {
+      // Eski Telegram versiyalari — ruxsat oynasisiz to'g'ridan saqlaymiz
+      // (foydalanuvchi /start bosgan bo'lsa bot yuborishga haqli)
+      saveToFirestore();
+    }
+  } catch(e) {
+    saveToFirestore(); // xato bo'lsa ham saqlaymiz
+  }
 }
 
 function getTelegramName(){
@@ -2224,15 +2242,8 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
-    setTimeout(() => {
-      Telegram.WebApp.requestWriteAccess(granted => {
-        if (granted && telegramUser.id && db) {
-          db.collection('users').doc(String(telegramUser.id)).set(
-            { notifications: true, chatId: telegramUser.id }, { merge: true }
-          );
-        }
-      });
-    }, 1200);
+    // Firebase tayyor bo'lganidan keyin ruxsat so'raymiz
+    setTimeout(() => requestNotificationPermission(), 1500);
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
@@ -4867,6 +4878,16 @@ function toggleDriverMode(){
 function switchView(v){
   if (telegramUser.id != null) {
     saveUserRole(v === 'driver' ? 'driver' : 'sender');
+  }
+  // Driver modega o'tganda Firestore'ga role saqlash (bot shu yerdan qidiradi)
+  if (v === 'driver' && telegramUser.id && db) {
+    db.collection('users').doc(String(telegramUser.id)).set({
+      role: 'driver',
+      chatId: telegramUser.id,
+      notifications: true,
+      firstName: telegramUser.first_name || '',
+      username: telegramUser.username || ''
+    }, { merge: true }).catch(() => {});
   }
   document.getElementById('senderView').style.display = v==='sender'?'flex':'none';
   document.getElementById('driverView').style.display = v==='driver'?'flex':'none';
