@@ -380,18 +380,93 @@ body.view-sender .header{background:var(--app-bg)!important}
 /* ══ DRIVER VIEW ══ */
 #driverView{
   display:none;flex-direction:column;align-items:stretch;
-  padding:8px 12px 0;height:100%;min-height:0;flex:1;gap:0;
+  padding:0;height:100%;min-height:0;flex:1;gap:0;
   background:var(--app-bg);overflow:hidden;
 }
 #driverView .map-wrap{
-  order:1;flex:1 1 0;min-height:0;height:auto;
-  width:calc(100% + 24px);margin-left:-12px;margin-right:-12px;
-  border-radius:28px 28px 0 0;
+  order:2;flex:1 1 0;min-height:0;height:auto;
+  width:100%;margin:0;
+  border-radius:0;
   border:none;box-shadow:none;
 }
 #driverView .driver-picker-zone{
-  order:2;flex:0 0 auto;width:100%;min-height:0;margin-top:auto;
+  display:none!important;
 }
+
+/* ── Yangi driver route bar (xarita ustida) ── */
+.driver-route-bar{
+  order:1;flex:0 0 auto;
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px 10px;
+  background:#fff;
+  border-bottom:1.5px solid #e8edf2;
+  z-index:20;position:relative;
+}
+.drv-route-btn{
+  flex:1;display:flex;align-items:center;gap:10px;
+  padding:12px 14px;border-radius:14px;
+  border:2px solid #e2e8f0;background:#f8fafc;
+  cursor:pointer;font-size:15px;font-weight:600;color:#9ca3af;
+  text-align:left;transition:border-color .18s,background .18s,color .18s;
+  min-width:0;
+}
+.drv-route-btn.has-value{
+  border-color:#2AABEE;background:#f0f9ff;color:#0f172a;
+}
+.drv-dot{
+  width:11px;height:11px;border-radius:50%;flex-shrink:0;
+}
+.drv-dot--a{background:#2AABEE;}
+.drv-dot--b{background:#ef4444;}
+.drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.drv-route-arrow{flex-shrink:0;color:#cbd5e1;font-size:18px;font-weight:300;}
+
+/* ── Driver region picker overlay ── */
+#driverRegionPickerOverlay{
+  position:fixed;inset:0;background:#fff;z-index:500;
+  flex-direction:column;display:none;
+}
+#driverRegionPickerOverlay.open{display:flex;}
+.drv-picker-header{
+  display:flex;align-items:center;gap:12px;
+  padding:max(16px,env(safe-area-inset-top)) 16px 14px;
+  border-bottom:1.5px solid #e8edf2;flex-shrink:0;
+}
+.drv-picker-back{
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:#f1f5f9;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;color:#374151;
+}
+#driverPickerTitle{
+  font-size:17px;font-weight:700;flex:1;margin:0;
+}
+.drv-picker-grid{
+  flex:1;overflow-y:auto;padding:14px 12px;
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;
+  align-content:start;
+}
+.drv-region-btn{
+  padding:20px 10px;border-radius:16px;
+  border:2px solid #e2e8f0;background:#f8fafc;
+  font-size:15px;font-weight:600;color:#1e293b;
+  cursor:pointer;text-align:center;
+  transition:all .15s;-webkit-tap-highlight-color:transparent;
+  line-height:1.25;
+}
+.drv-region-btn:active{transform:scale(.97);}
+.drv-region-btn.selected{
+  border-color:#2AABEE;background:#2AABEE;color:#fff;
+}
+/* Route saqlandi banner */
+.drv-saved-banner{
+  position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));
+  left:50%;transform:translateX(-50%) translateY(20px);
+  background:#22c55e;color:#fff;padding:12px 24px;
+  border-radius:14px;font-size:14px;font-weight:600;
+  z-index:600;opacity:0;transition:opacity .25s,transform .25s;
+  white-space:nowrap;pointer-events:none;
+}
+.drv-saved-banner.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #driverView .region-picker{width:100%;margin:0;--picker-fade:#fff}
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
@@ -1513,6 +1588,19 @@ body.view-sender.theme-telegram .toggle,
 
       <!-- DRIVER -->
       <div id="driverView">
+        <!-- Yangi route bar — xarita ustida ikki tugma -->
+        <div class="driver-route-bar">
+          <button class="drv-route-btn" id="driverFromBtn" onclick="openDriverRegionPicker('from')">
+            <div class="drv-dot drv-dot--a"></div>
+            <span id="driverFromLabel">Қаердан?</span>
+          </button>
+          <div class="drv-route-arrow">→</div>
+          <button class="drv-route-btn" id="driverToBtn" onclick="openDriverRegionPicker('to')">
+            <div class="drv-dot drv-dot--b"></div>
+            <span id="driverToLabel">Қаерга?</span>
+          </button>
+        </div>
+
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
           <div class="map-controls">
@@ -1522,21 +1610,19 @@ body.view-sender.theme-telegram .toggle,
           <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
             <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
           </button>
-          <button type="button" class="map-route-btn" id="routeSetBtn" onclick="openRouteSheet()" aria-label="Yo'nalish">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M6 17V9a6 6 0 0 1 6-6h0"/><path d="M18 7v8a6 6 0 0 1-6 6h0"/></svg>
-          </button>
-          <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden onclick="expandDriverDistrictPanel()" aria-label="Tuman tanlash">
-            <span id="driverDistrictChipText" data-i18n-latin="Tuman" data-i18n-cyrillic="Туман">Tuman</span>
-          </button>
+          <!-- Eski tugmalar saqlanmoqda (JS ular bilan ishlaydi) -->
+          <button type="button" class="map-route-btn" id="routeSetBtn" style="display:none" aria-label="Yo'nalish"></button>
+          <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden></button>
         </div>
-        <div class="driver-picker-zone">
+        <!-- Eski picker — yashirildi, JS uchun saqlanmoqda -->
+        <div class="driver-picker-zone" aria-hidden="true">
           <div class="driver-picker-stack">
             <div class="driver-district-panel" id="driverDistrictPanel" hidden>
-              <div class="region-picker region-picker--horizontal driver-district-picker" id="driverDistrictPicker" aria-label="Tuman tanlash">
+              <div class="region-picker region-picker--horizontal driver-district-picker" id="driverDistrictPicker">
                 <div class="region-picker-track" id="driverDistrictPickerTrack"></div>
               </div>
             </div>
-            <div class="region-picker region-picker--horizontal" id="regionPicker" aria-label="Viloyat tanlash">
+            <div class="region-picker region-picker--horizontal" id="regionPicker">
               <div class="region-picker-track" id="regionPickerTrack"></div>
             </div>
           </div>
@@ -1729,6 +1815,16 @@ body.view-sender.theme-telegram .toggle,
     <button class="route-save" onclick="saveRoute()">Сақлаш</button>
   </div>
 </div>
+
+<!-- DRIVER VILOYAT TANLASH OVERLAY -->
+<div id="driverRegionPickerOverlay">
+  <div class="drv-picker-header">
+    <button class="drv-picker-back" onclick="closeDriverRegionPicker()">←</button>
+    <h2 id="driverPickerTitle">Қаердан?</h2>
+  </div>
+  <div class="drv-picker-grid" id="driverPickerGrid"></div>
+</div>
+<div class="drv-saved-banner" id="drvSavedBanner"></div>
 
 <!-- JO'NATMA DETAL SHEET -->
 <div class="sheet-overlay sheet-overlay--detail" id="detailSheetOverlay" onclick="if(event.target===this)closeShipmentDetail()">
@@ -2232,6 +2328,95 @@ function initRouteBtn(){
   const saved = JSON.parse(localStorage.getItem(routeKey())||'{}');
   const btn = document.getElementById('routeSetBtn');
   if (btn) btn.classList.toggle('has-route', !!(saved.from && saved.to));
+  loadDriverRouteState();
+}
+
+// ── Yangi driver route UI ─────────────────────────────────────────────────
+let dvrPickingFor = null; // 'from' | 'to'
+
+function openDriverRegionPicker(forWhat) {
+  dvrPickingFor = forWhat;
+  const isFrom = forWhat === 'from';
+  document.getElementById('driverPickerTitle').textContent =
+    isFrom ? '🟢  Қаердан йўл оласиз?' : '🔴  Қаерга борасиз?';
+
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  const current = isFrom ? saved.from : saved.to;
+  const grid = document.getElementById('driverPickerGrid');
+  grid.innerHTML = '';
+  ROUTE_REGIONS.forEach(region => {
+    const btn = document.createElement('button');
+    btn.className = 'drv-region-btn' + (region === current ? ' selected' : '');
+    btn.textContent = region;
+    btn.onclick = () => selectDriverRegion(region);
+    grid.appendChild(btn);
+  });
+  document.getElementById('driverRegionPickerOverlay').classList.add('open');
+}
+
+function closeDriverRegionPicker() {
+  document.getElementById('driverRegionPickerOverlay').classList.remove('open');
+  dvrPickingFor = null;
+}
+
+function selectDriverRegion(region) {
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (dvrPickingFor === 'from') {
+    saved.from = region;
+    const lbl = document.getElementById('driverFromLabel');
+    if (lbl) lbl.textContent = region;
+    document.getElementById('driverFromBtn')?.classList.add('has-value');
+  } else {
+    saved.to = region;
+    const lbl = document.getElementById('driverToLabel');
+    if (lbl) lbl.textContent = region;
+    document.getElementById('driverToBtn')?.classList.add('has-value');
+  }
+  localStorage.setItem(routeKey(), JSON.stringify(saved));
+  closeDriverRegionPicker();
+
+  // Ikkala yo'nalish tanlanganda — avtomatik saqlash
+  if (saved.from && saved.to && saved.from !== saved.to) {
+    _saveDriverRouteToFirestore(saved.from, saved.to);
+    showDrvSavedBanner(`${saved.from} → ${saved.to}`);
+    // Eski routeSetBtn ni ham yangilash
+    document.getElementById('routeSetBtn')?.classList.add('has-route');
+  }
+}
+
+function _saveDriverRouteToFirestore(from, to) {
+  if (!db || !telegramUser.id) return;
+  db.collection('users').doc(String(telegramUser.id)).set({
+    routeFrom: from,
+    routeTo: to,
+    role: 'driver',
+    chatId: telegramUser.id,
+    notifications: true,
+    firstName: telegramUser.first_name || '',
+    username: telegramUser.username || ''
+  }, { merge: true }).catch(() => {});
+}
+
+function showDrvSavedBanner(text) {
+  const el = document.getElementById('drvSavedBanner');
+  if (!el) return;
+  el.textContent = '✅  Йўналиш сақланди: ' + text;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function loadDriverRouteState() {
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (saved.from) {
+    const lbl = document.getElementById('driverFromLabel');
+    if (lbl) lbl.textContent = saved.from;
+    document.getElementById('driverFromBtn')?.classList.add('has-value');
+  }
+  if (saved.to) {
+    const lbl = document.getElementById('driverToLabel');
+    if (lbl) lbl.textContent = saved.to;
+    document.getElementById('driverToBtn')?.classList.add('has-value');
+  }
 }
 
 function requestNotificationPermission(){
@@ -4964,6 +5149,7 @@ function switchView(v){
   const dmb = document.getElementById('driverModeBtn');
   if(dmb) dmb.classList.toggle('active', v === 'driver');
   if (v === 'driver') {
+    loadDriverRouteState();
     ensureDriverRegionPicker();
     scheduleDriverDistrictReveal();
     if (!map) initDriverMap();

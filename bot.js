@@ -109,7 +109,14 @@ const LATIN_TO_CYR = {
 /** Viloyat nomini kanonik Kirill ko'rinishiga keltiradi */
 function normalizeRegion(r) {
   if (!r) return '';
-  return LATIN_TO_CYR[r] || r;
+  // To'liq qiymat bo'yicha qidirish
+  if (LATIN_TO_CYR[r]) return LATIN_TO_CYR[r];
+  // "Andijon — Andijon shahar" → "Andijon" (dash dan oldingi qism)
+  const beforeDash = r.split('—')[0].trim();
+  if (LATIN_TO_CYR[beforeDash]) return LATIN_TO_CYR[beforeDash];
+  // " shahar" / " viloyat" / " shahri" qo'shimchasini olib tashlash
+  const clean = beforeDash.replace(/\s+(shahar|viloyat|shahri|viloyati)$/i, '').trim();
+  return LATIN_TO_CYR[clean] || clean || r;
 }
 
 // ── Viloyatlar ────────────────────────────────────────────────────────────
