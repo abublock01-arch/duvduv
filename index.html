@@ -3098,9 +3098,27 @@ function settleVerticalRegionPicker(track, onCommit){
   updateRegionPickerVisuals(true, track, onCommit);
 }
 
+function onVerticalRegionPickerItemClick(track, btn){
+  const region = btn.dataset.region;
+  if (!region) return;
+  const trackId = track.id;
+  const isRegionPicker = trackId === 'sendRegionPickerTrack' || trackId === 'travelRegionPickerTrack';
+  if (isRegionPicker && btn.classList.contains('is-center')) {
+    const onRegionStep = trackId === 'sendRegionPickerTrack' ? sendSheetStep === 1 : travelSheetStep === 1;
+    if (onRegionStep) {
+      const commit = getVerticalPickerOnCommit(track);
+      if (commit) commit(region);
+      if (trackId === 'sendRegionPickerTrack') sendSheetGoToDistrict(region);
+      else travelSheetNext();
+      return;
+    }
+  }
+  scrollPickerToRegion(track, region, !prefersReducedMotion());
+}
+
 function bindVerticalRegionPickerScroll(track, onCommit){
   track.querySelectorAll('.region-picker-item').forEach(btn => {
-    btn.addEventListener('click', () => scrollPickerToRegion(track, btn.dataset.region, !prefersReducedMotion()));
+    btn.addEventListener('click', () => onVerticalRegionPickerItemClick(track, btn));
   });
   let paintRaf = 0;
   let settleTimer = 0;
