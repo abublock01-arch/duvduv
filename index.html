@@ -2375,6 +2375,10 @@ function selectDriverRegion(region) {
   localStorage.setItem(routeKey(), JSON.stringify(saved));
   closeDriverRegionPicker();
 
+  // Xaritani route ga qarab yangilash
+  invalidateMapGeoCache();
+  refreshOrderMarkersDebounced();
+
   // Ikkala yo'nalish tanlanganda — avtomatik saqlash
   if (saved.from && saved.to && saved.from !== saved.to) {
     _saveDriverRouteToFirestore(saved.from, saved.to);
@@ -2416,6 +2420,11 @@ function loadDriverRouteState() {
     const lbl = document.getElementById('driverToLabel');
     if (lbl) lbl.textContent = saved.to;
     document.getElementById('driverToBtn')?.classList.add('has-value');
+  }
+  // Saqlangan route bo'lsa — xaritani shu yo'nalishda filtrlash
+  if (saved.from && saved.to) {
+    invalidateMapGeoCache();
+    refreshOrderMarkersDebounced();
   }
 }
 
@@ -4535,9 +4544,33 @@ function mapItemProps(item, itemType){
   };
 }
 
+function getDriverRouteFilter(){
+  try { return JSON.parse(localStorage.getItem(routeKey()) || '{}'); } catch(e) { return {}; }
+}
+
+function normalizeRegionSimple(r){
+  if (!r) return '';
+  return r.split('—')[0].trim().split(' ')[0];  // "Andijon — shahar" → "Andijon"
+}
+
 function mapItemMatchesDriverFilter(item){
   if (!isActiveListing(item)) return false;
   if (!mapItemHasMapCoords(item)) return false;
+
+  // Yangi A→B yo'nalish filtri
+  const route = getDriverRouteFilter();
+  if (route.from && route.to) {
+    const iFrom = normalizeRegionSimple(item.from || '');
+    const iTo   = normalizeRegionSimple(item.to || item.dest || '');
+    const dFrom = normalizeRegionSimple(route.from);
+    const dTo   = normalizeRegionSimple(route.to);
+    // To'g'ri yoki teskari yo'nalish
+    const match = (iFrom === dFrom && iTo === dTo) || (iFrom === dTo && iTo === dFrom)
+               || iFrom === dFrom || iTo === dTo || iFrom === dTo || iTo === dFrom;
+    return match;
+  }
+
+  // Eski region filtri (A/B tanlanmagan bo'lsa)
   if (!selectedDriverRegion) return true;
   if (item.type === 'travel') {
     const to = item.to || item.dest || '';
@@ -4548,10 +4581,13 @@ function mapItemMatchesDriverFilter(item){
 }
 
 function getMapGeoCacheKey(){
+  const route = getDriverRouteFilter();
   return [
     selectedDriverRegion || '',
     selectedDriverDistrict || '',
     userLocationRegion || '',
+    route.from || '',
+    route.to || '',
     orders.length,
     travels.length,
     mapTestOrders.length,
