@@ -2893,10 +2893,17 @@ function cancelPickerDemo(){
   pickerDemoToken++;
 }
 
-function finishPickerSwipeHint(track, wrap, hand, rail, startScroll){
+function finishPickerSwipeHint(track, wrap, hand, rail, finalScroll, completeOnCommit){
   if (track) {
-    track.scrollTop = startScroll;
-    track.style.scrollSnapType = '';
+    track.scrollTop = finalScroll;
+    delete track._pickerVisualIdx;
+    delete track.dataset.pickerProgrammatic;
+    delete track.dataset.pickerDemoCancelled;
+    if (completeOnCommit) {
+      updateRegionPickerVisuals(true, track, completeOnCommit);
+    } else {
+      updateRegionPickerVisuals(false, track, null);
+    }
     track.querySelectorAll('.region-picker-item').forEach(item => {
       item.style.opacity = '';
       item.style.transform = '';
@@ -2906,10 +2913,7 @@ function finishPickerSwipeHint(track, wrap, hand, rail, startScroll){
       const morph = item.querySelector('.script-morph--region');
       if (morph) morph.style.removeProperty('--script-morph-h');
     });
-    delete track._pickerVisualIdx;
-    delete track.dataset.pickerProgrammatic;
-    delete track.dataset.pickerDemoCancelled;
-    updateRegionPickerVisuals(false, track, null);
+    track.style.scrollSnapType = '';
   }
   if (hand) {
     hand.style.opacity = '0';
@@ -3046,7 +3050,7 @@ function runPickerSwipeHint(track, wrap, token){
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
     const p = 1 - Math.pow(1 - t, 3);
-    const virtScroll = startScroll + scrollDelta * p;
+    const virtScroll = t >= 1 ? endScroll : startScroll + scrollDelta * p;
     track.scrollTop = virtScroll;
     updateVerticalPickerVisualsForHint(track, virtScroll);
     setPickerHandPose(hand, rail, p, p);
@@ -3054,8 +3058,7 @@ function runPickerSwipeHint(track, wrap, token){
       requestAnimationFrame(tick);
       return;
     }
-    finishPickerSwipeHint(track, wrap, hand, rail, endScroll);
-    updateRegionPickerVisuals(true, track, onCommit);
+    finishPickerSwipeHint(track, wrap, hand, rail, endScroll, onCommit);
   };
   requestAnimationFrame(tick);
 }

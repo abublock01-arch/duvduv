@@ -1,5 +1,5 @@
 /**
- * duvduv Bot — chiroyli, qulay, professional
+ * duvduv Bot — professional, tushunarli, Кирилл
  */
 
 const TelegramBot = require('node-telegram-bot-api');
@@ -31,7 +31,6 @@ console.log('✅ duvduv bot ishga tushdi');
 // ── Polling xatolarini ushlab, avtomatik qayta ulanish ───────────────────
 bot.on('polling_error', (err) => {
   const code = err.code || '';
-  // ETIMEDOUT, ECONNRESET, EFATAL — tarmoq uzilishi, qayta ulanamiz
   if (['ETIMEDOUT','ECONNRESET','ENOTFOUND','EFATAL'].includes(code) ||
       (err.message && err.message.includes('ETIMEDOUT'))) {
     console.warn(`⚠️ Polling uzildi (${code}), 5 soniyada qayta ulanadi...`);
@@ -45,55 +44,26 @@ bot.on('polling_error', (err) => {
   }
 });
 
-// Menu tugmasi — «Қани бошладик» (pastdagi ko'k tugma, URL emas)
-const MENU_BTN_TEXT = 'Қани бошладик';
+// ── Tugmalar ──────────────────────────────────────────────────────────────
+const APP_BTN_TEXT  = '▶️  Иловани очиш';
+const MENU_BTN_TEXT = 'Қани бошладик';   // keyboard pastki tugма матни (ўзгармайди)
+
 bot.setChatMenuButton({
   menu_button: { type: 'web_app', text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
 })
-  .then(() => console.log('✅ Menu tugmasi:', MENU_BTN_TEXT))
+  .then(() => console.log('✅ Menu tugmasi sozlandi'))
   .catch(err => console.warn('Menu tugmasi:', err.message));
 
-// ── Persistent klaviatura ───────────────────────────────────────────────
+// Pastki doimiy klaviatura
 const persistentKeyboard = {
-  keyboard: [[
-    { text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
-  ]],
+  keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }]],
   resize_keyboard: true,
   persistent: true
 };
 
-const openAppInline = {
-  inline_keyboard: [[
-    { text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
-  ]]
-};
-
-// ── Yordamchi funksiyalar ─────────────────────────────────────────────────
-const mainMenu = () => ({
-  inline_keyboard: [
-    [{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }],
-    [{ text: '🔔 Хабарномалар: ёқилган', callback_data: 'notif_off' }],
-    [{ text: '🔄 Ролни ўзгартириш', callback_data: 'change_role' }],
-  ]
-});
-
-const roleMenu = {
-  inline_keyboard: [
-    [
-      { text: '🚗 Ҳайдовчи', callback_data: 'role_driver' },
-      { text: '📦 Жўнатувчи', callback_data: 'role_sender' },
-    ]
-  ]
-};
-
-const notifMenu = (notif) => ({
-  inline_keyboard: [
-    [{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }],
-    notif
-      ? [{ text: '🔔 Хабарномалар: ёқилган ✓', callback_data: 'notif_off' }]
-      : [{ text: '🔕 Хабарномалар: ўчирилган', callback_data: 'notif_on' }],
-    [{ text: '🔄 Ролни ўзгартириш', callback_data: 'change_role' }],
-  ]
+// Standart inline "Иловани очиш" tugmasi
+const appBtn = () => ({
+  inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }]]
 });
 
 // ── Viloyatlar ────────────────────────────────────────────────────────────
@@ -114,7 +84,25 @@ const regionKeyboard = (prefix) => ({
   ]
 });
 
-// Vaqtinchalik sessiya (A manzilni saqlash)
+// Rol tugmalari
+const roleMenu = {
+  inline_keyboard: [[
+    { text: '🚐  Ҳайдовчи', callback_data: 'role_driver' },
+    { text: '📦  Жўнатувчи', callback_data: 'role_sender' },
+  ]]
+};
+
+// Xabarnoma menyu
+const notifMenu = (notif) => ({
+  inline_keyboard: [
+    [{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }],
+    notif
+      ? [{ text: '🔔  Билдиришномалар: ёқилган', callback_data: 'notif_off' }]
+      : [{ text: '🔕  Билдиришномалар: ўчирилган', callback_data: 'notif_on' }],
+  ]
+});
+
+// ── Vaqtinchalik sessiya ───────────────────────────────────────────────────
 const driverSession = {};
 
 async function getUser(telegramId) {
@@ -138,7 +126,7 @@ async function saveUser(user, extra = {}) {
 // ── /start ────────────────────────────────────────────────────────────────
 bot.onText(/\/start/, async (msg) => {
   const user = msg.from;
-  const name = user.first_name || 'Дўст';
+  const name = user.first_name || 'Фойдаланувчи';
   const chatId = msg.chat.id;
 
   try {
@@ -146,40 +134,28 @@ bot.onText(/\/start/, async (msg) => {
     const existing = await getUser(user.id);
 
     if (existing && existing.role) {
-      // Қайтган фойдаланувчи
+      // Qaytgan foydalanuvchi
       await bot.sendMessage(chatId,
         `👋 Хуш келибсиз, *${name}*!\n\n` +
-        `🚀 duvduv — юк ва йўловчи топиш платформаси\n\n` +
-        `Қуйидаги тугмани босиб иловани очинг 👇`,
+        `Иловани очинг:`,
         {
           parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '🚀  Қани бошладик  →', web_app: { url: APP_URL } }
-            ]]
-          }
+          reply_markup: appBtn()
         }
       );
     } else {
-      // Янги фойдаланувчи — хабарнома рухсати
+      // Yangi foydalanuvchi
       await bot.sendMessage(chatId,
         `👋 Салом, *${name}*!\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `🔔 *Хабарнома рухсати*\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n\n` +
-        `duvduv сизга муҳим хабарлар юборади:\n\n` +
-        `   📦  Юкингизга ҳайдовчи топилганда\n` +
-        `   👤  Йўловчи сўрови келганда\n` +
-        `   ⏰  Эълон муддати тугаётганда\n\n` +
-        `━━━━━━━━━━━━━━━━━━━━\n` +
-        `_Рухсат бериш учун тугмани босинг_ 👇`,
+        `*duvduv* — юк ва йўловчи топиш иловаси.\n\n` +
+        `Билдиришномаларни ёқиш учун иловани очинг:\n` +
+        `📦  Юкингизга ҳайдовчи топилганда\n` +
+        `🧍  Йўловчи сўрови келганда\n` +
+        `🔔  Янги мос эълонларда\n\n` +
+        `Рухсат бериш учун иловани очинг:`,
         {
           parse_mode: 'Markdown',
-          reply_markup: {
-            inline_keyboard: [[
-              { text: '✅  Ҳа, рухсат бераман  →', web_app: { url: APP_URL } }
-            ]]
-          }
+          reply_markup: appBtn()
         }
       );
     }
@@ -199,17 +175,17 @@ bot.onText(/\/menu/, async (msg) => {
 
   const keyboard = {
     inline_keyboard: [
-      [{ text: '🚀  Қани бошладик  →', web_app: { url: APP_URL } }],
-      ...(isDriver ? [[{ text: `🗺 Йўналиш: ${fromCity} → ${toCity}`, callback_data: 'set_route' }]] : []),
+      [{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }],
+      ...(isDriver ? [[{ text: `🛣  ${fromCity} → ${toCity}`, callback_data: 'set_route' }]] : []),
       [notif
-        ? { text: '🔔 Хабарномалар: ёқилган ✓', callback_data: 'notif_off' }
-        : { text: '🔕 Хабарномалар: ўчирилган', callback_data: 'notif_on' }
+        ? { text: '🔔  Билдиришномалар: ёқилган', callback_data: 'notif_off' }
+        : { text: '🔕  Билдиришномалар: ўчирилган', callback_data: 'notif_on' }
       ],
     ]
   };
 
   await bot.sendMessage(msg.chat.id,
-    `📋 *Менюм*`,
+    `⚙️ *Созламалар*`,
     { parse_mode: 'Markdown', reply_markup: keyboard }
   );
 });
@@ -221,7 +197,8 @@ bot.onText(/\/stop/, async (msg) => {
     { merge: true }
   );
   await bot.sendMessage(msg.chat.id,
-    `🔕 Хабарномалар ўчирилди.\n\nҚайта ёқиш учун /menu юборинг.`
+    `🔕 *Билдиришномалар ўчирилди.*\n\nҚайта ёқиш учун /menu юборинг.`,
+    { parse_mode: 'Markdown' }
   );
 });
 
@@ -236,21 +213,20 @@ bot.on('callback_query', async (query) => {
     // Rol tanlash
     if (data === 'role_driver' || data === 'role_sender') {
       const role = data === 'role_driver' ? 'driver' : 'sender';
-      const roleText = role === 'driver' ? '🚗 Ҳайдовчи' : '📦 Жўнатувчи';
-
       await saveUser(user, { role });
 
       if (role === 'driver') {
         await bot.editMessageText(
-          `✅ Ажойиб, *${user.first_name}*! Сиз ҳайдовчисиз 🚗\n\n📍 Қаердан кетасиз? *(А нуқта)*`,
+          `🚐 *Ҳайдовчи сифатида рўйхатдан ўтдингиз.*\n\n` +
+          `📍 Маршрутингизни белгиланг.\n` +
+          `Жўнаш нуқтасини танланг:`,
           { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: regionKeyboard('from') }
         );
       } else {
         await bot.editMessageText(
-          `✅ Ажойиб, *${user.first_name}*!\n\nЮк ёки одам жўнатиш учун иловани очинг 📦`,
-          { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown',
-            reply_markup: { inline_keyboard: [[{ text: '🚀 Қани бошладик →', web_app: { url: APP_URL } }]] }
-          }
+          `📦 *Жўнатувчи сифатида рўйхатдан ўтдингиз.*\n\n` +
+          `Юк ёки йўловчи жўнатиш учун иловани очинг:`,
+          { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: appBtn() }
         );
       }
     }
@@ -258,7 +234,8 @@ bot.on('callback_query', async (query) => {
     // Yo'nalish o'rnatish
     if (data === 'set_route') {
       await bot.editMessageText(
-        `🗺 *Йўналишни танланг*\n\n📍 Қаердан кетасиз? *(А нуқта)*`,
+        `🛣 *Маршрутни янгилаш*\n\n` +
+        `📍 Жўнаш нуқтасини танланг:`,
         { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: regionKeyboard('from') }
       );
     }
@@ -268,7 +245,8 @@ bot.on('callback_query', async (query) => {
       const city = data.split(':')[1];
       driverSession[user.id] = { from: city };
       await bot.editMessageText(
-        `✅ *А нуқта:* ${city}\n\n📍 Қаерга кетасиз? *(Б нуқта)*`,
+        `✅ *Жўнаш нуқтаси:* ${city}\n\n` +
+        `📍 Борадиган манзилни танланг:`,
         { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: regionKeyboard('to') }
       );
     }
@@ -285,51 +263,39 @@ bot.on('callback_query', async (query) => {
       );
 
       await bot.editMessageText(
-        `✅ *Йўналиш сақланди!*\n\n` +
-        `🚗 ${fromCity} → ${city}\n\n` +
-        `Энди бу йўналишдаги эълонлар ҳақида хабардор қиламиз 🔔`,
-        { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown',
-          reply_markup: { inline_keyboard: [[{ text: '🚀 Қани бошладик →', web_app: { url: APP_URL } }]] }
+        `✅ *Маршрут сақланди*\n\n` +
+        `🛣  ${fromCity} → ${city}\n\n` +
+        `Ушбу йўналишдаги янги эълонлар ҳақида хабардор бўласиз.`,
+        {
+          chat_id: chatId, message_id: msgId, parse_mode: 'Markdown',
+          reply_markup: appBtn()
         }
       );
     }
 
     if (data === 'change_role') {
       await bot.editMessageText(
-        `🔄 Янги ролни танланг:`,
-        {
-          chat_id: chatId,
-          message_id: msgId,
-          reply_markup: roleMenu
-        }
+        `👤 *Ролни танланг:*`,
+        { chat_id: chatId, message_id: msgId, parse_mode: 'Markdown', reply_markup: roleMenu }
       );
     }
 
     // Xabarnomani o'chirish
     if (data === 'notif_off') {
       await db.collection('users').doc(String(user.id)).set(
-        { notifications: false },
-        { merge: true }
+        { notifications: false }, { merge: true }
       );
-      const existing = await getUser(user.id);
-      await bot.editMessageReplyMarkup(notifMenu(false), {
-        chat_id: chatId,
-        message_id: msgId,
-      });
-      await bot.answerCallbackQuery(query.id, { text: '🔕 Хабарномалар ўчирилди' });
+      await bot.editMessageReplyMarkup(notifMenu(false), { chat_id: chatId, message_id: msgId });
+      await bot.answerCallbackQuery(query.id, { text: '🔕 Билдиришномалар ўчирилди' });
     }
 
     // Xabarnomani yoqish
     if (data === 'notif_on') {
       await db.collection('users').doc(String(user.id)).set(
-        { notifications: true },
-        { merge: true }
+        { notifications: true }, { merge: true }
       );
-      await bot.editMessageReplyMarkup(notifMenu(true), {
-        chat_id: chatId,
-        message_id: msgId,
-      });
-      await bot.answerCallbackQuery(query.id, { text: '🔔 Хабарномалар ёқилди' });
+      await bot.editMessageReplyMarkup(notifMenu(true), { chat_id: chatId, message_id: msgId });
+      await bot.answerCallbackQuery(query.id, { text: '🔔 Билдиришномалар ёқилди' });
     }
 
     await bot.answerCallbackQuery(query.id);
@@ -339,20 +305,36 @@ bot.on('callback_query', async (query) => {
 });
 
 
-// ── Yangi travel → mos haydovchilarga xabar ──────────────────────────────
-// Mijozga tasdiqlash xabari
+// ── Foydalanuvchiga tasdiqlash xabari (e'lon qo'yganidan keyin) ──────────
 async function notifySender(telegramId, from, to, type) {
   if (!telegramId) { console.log('⚠️ notifySender: telegramId yo\'q'); return; }
   console.log(`📨 Sender ga xabar: chatId=${telegramId}`);
+
+  // type qiymatiga qarab matn
+  let icon, label, reply;
+  if (type === '🚗 Сафар') {
+    icon  = '🚐';
+    label = 'Ҳайдовчи';
+    reply = 'Мос йўловчи ёки юк топилса хабар берамиз.';
+  } else if (type === '👤 Йўловчи') {
+    icon  = '🧍';
+    label = 'Йўловчи';
+    reply = 'Мос ҳайдовчи боғланганда хабар берамиз.';
+  } else {
+    icon  = '📦';
+    label = 'Юк жўнатиш';
+    reply = 'Мос ҳайдовчи боғланганда хабар берамиз.';
+  }
+
   try {
     await bot.sendMessage(telegramId,
-      `✅ *Эълонингиз қабул қилинди!*\n\n` +
-      `${type}\n` +
-      `📍 ${from} → ${to}\n\n` +
-      `Ҳайдовчи топилганда хабар берамиз 🔔`,
+      `✅ *Эълонингиз жойлаштирилди*\n\n` +
+      `${icon}  ${label}\n` +
+      `🛣  ${from} → ${to}\n\n` +
+      `${reply}`,
       {
         parse_mode: 'Markdown',
-        reply_markup: { inline_keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }]] }
+        reply_markup: appBtn()
       }
     );
   } catch(e) {
@@ -360,18 +342,36 @@ async function notifySender(telegramId, from, to, type) {
   }
 }
 
-async function notifyDrivers(from, to, type, sender) {
+// ── Haydovchilarga yangi e'lon xabari ────────────────────────────────────
+async function notifyDrivers(from, to, type, senderUsername) {
   if (!from || !to) { console.log('⚠️ notifyDrivers: from yoki to yo\'q'); return; }
   console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}`);
+
   const usersSnap = await db.collection('users')
     .where('role', '==', 'driver')
     .where('notifications', '==', true)
     .get();
 
   console.log(`👥 Topilgan haydovchilar: ${usersSnap.size} ta`);
+
+  // type qiymatiga qarab
+  let icon, label;
+  if (type === '👤 Йўловчи') {
+    icon  = '🧍';
+    label = 'Йўловчи бор';
+  } else if (type === '🚗 Сафар') {
+    icon  = '🚐';
+    label = 'Ҳайдовчи маршрути';
+  } else {
+    icon  = '📦';
+    label = 'Юк жўнатиш бор';
+  }
+
+  const senderLine = senderUsername ? `👤  @${senderUsername}\n` : '';
+
   for (const doc of usersSnap.docs) {
     const driver = doc.data();
-    if (!driver.chatId) { console.log(`⚠️ Driver ${doc.id}: chatId yo'q`); continue; }
+    if (!driver.chatId) continue;
 
     const driverFrom = driver.routeFrom || '';
     const driverTo   = driver.routeTo   || '';
@@ -381,56 +381,60 @@ async function notifyDrivers(from, to, type, sender) {
       if (!match) continue;
     }
 
-    const text =
-      `🔔 *Янги эълон!*\n\n` +
-      `${type}\n` +
-      `📍 ${from} → ${to}\n` +
-      (sender ? `👤 ${sender}\n` : '') +
-      `\n_Mini appda batafsil ko'ring_ 👇`;
-
-    await bot.sendMessage(driver.chatId, text, {
-      parse_mode: 'Markdown',
-      reply_markup: { inline_keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }]] }
-    });
+    await bot.sendMessage(driver.chatId,
+      `🔔 *Янги эълон*\n\n` +
+      `${icon}  ${label}\n` +
+      `🛣  ${from} → ${to}\n` +
+      `${senderLine}\n` +
+      `Батафсил маълумот ва боғланиш учун иловани очинг:`,
+      {
+        parse_mode: 'Markdown',
+        reply_markup: appBtn()
+      }
+    );
   }
 }
 
+// ── Orders listener ───────────────────────────────────────────────────────
 let initOrders = false;
-db.collection('orders').orderBy('createdAt','desc')
+db.collection('orders').orderBy('createdAt', 'desc')
   .onSnapshot(async snap => {
     if (!initOrders) { initOrders = true; console.log('✅ orders listener tayyor'); return; }
     for (const ch of snap.docChanges()) {
       if (ch.type !== 'added') continue;
       const d = ch.doc.data();
+      if (d.archived) continue;
       const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
-      console.log(`📦 Yangi order: from=${d.from} to=${d.to} telegramId=${d.telegramId} yoshi=${age}ms`);
+      console.log(`📦 Yangi order: from=${d.from} to=${d.to} age=${age}ms`);
       if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
       const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
       const from = d.from || '';
       const to   = d.to   || '';
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
-      await notifyDrivers(from, to, type, d.telegramUsername||'').catch(e => console.error('notifyDrivers xato:', e.message));
+      await notifyDrivers(from, to, type, d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
     }
   }, err => console.error('orders listener xato:', err.message));
 
+// ── Travels listener ──────────────────────────────────────────────────────
 let initTravels = false;
-db.collection('travels').orderBy('createdAt','desc')
+db.collection('travels').orderBy('createdAt', 'desc')
   .onSnapshot(async snap => {
     if (!initTravels) { initTravels = true; console.log('✅ travels listener tayyor'); return; }
     for (const ch of snap.docChanges()) {
       if (ch.type !== 'added') continue;
       const d = ch.doc.data();
+      if (d.archived) continue;
       const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
-      console.log(`🚗 Yangi travel: from=${d.from} to=${d.to} telegramId=${d.telegramId} yoshi=${age}ms`);
+      console.log(`🚐 Yangi travel: from=${d.from} to=${d.to} age=${age}ms`);
       if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
-      const from = d.from  || '';
+      const from = d.from      || '';
       const to   = d.to || d.dest || '';
       await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
-      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername||'').catch(e => console.error('notifyDrivers xato:', e.message));
+      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
     }
   }, err => console.error('travels listener xato:', err.message));
 
-// ── Admin broadcast xabarlari ─────────────────────────────────────────────────
+// ── Admin broadcast ───────────────────────────────────────────────────────
 let initAdminMsg = false;
 db.collection('admin_messages').where('sent', '==', false).orderBy('createdAt', 'asc')
   .onSnapshot(async snap => {
@@ -440,7 +444,7 @@ db.collection('admin_messages').where('sent', '==', false).orderBy('createdAt', 
       const ref = ch.doc.ref;
       const d   = ch.doc.data();
       const text = d.text || '';
-      const to   = d.to || 'all'; // 'all' | 'drivers' | 'passengers' | chatId
+      const to   = d.to || 'all';
       if (!text) { await ref.update({ sent: true, error: 'bo\'sh xabar' }); continue; }
       try {
         let chatIds = [];
@@ -451,12 +455,10 @@ db.collection('admin_messages').where('sent', '==', false).orderBy('createdAt', 
           const snap2 = await db.collection('users').where('routeFrom', '!=', '').get();
           chatIds = snap2.docs.map(d => d.data().chatId).filter(Boolean);
         } else if (to === 'passengers') {
-          // orders da type === 'person' bo'lgan unique telegramId lar
           const snap2 = await db.collection('orders').where('type', '==', 'person').get();
           const ids = [...new Set(snap2.docs.map(d => d.data().telegramId).filter(Boolean))];
           chatIds = ids;
         } else {
-          // Alohida chatId
           chatIds = [Number(to) || to];
         }
         let sent = 0, failed = 0;
@@ -469,7 +471,12 @@ db.collection('admin_messages').where('sent', '==', false).orderBy('createdAt', 
             failed++;
           }
         }
-        await ref.update({ sent: true, sentCount: sent, failedCount: failed, sentAt: admin.firestore.FieldValue.serverTimestamp() });
+        await ref.update({
+          sent: true,
+          sentCount: sent,
+          failedCount: failed,
+          sentAt: admin.firestore.FieldValue.serverTimestamp()
+        });
         console.log(`📢 Broadcast: ${sent} ta yuborildi, ${failed} ta xato`);
       } catch (e) {
         console.error('Broadcast xatosi:', e.message);
