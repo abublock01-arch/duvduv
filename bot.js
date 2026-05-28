@@ -236,6 +236,43 @@ bot.onText(/\/menu/, async (msg) => {
   );
 });
 
+// ── /test — tekshirish buyrug'i ───────────────────────────────────────────
+bot.onText(/\/test/, async (msg) => {
+  const chatId = msg.chat.id;
+  const uid    = String(msg.from.id);
+  try {
+    // 1. Firestore'da user ma'lumotlari
+    const userDoc = await db.collection('users').doc(uid).get();
+    const u = userDoc.exists ? userDoc.data() : null;
+
+    // 2. So'nggi order
+    const ordSnap = await db.collection('orders').orderBy('createdAt','desc').limit(1).get();
+    const lastOrd = ordSnap.empty ? null : ordSnap.docs[0].data();
+
+    const lines = [
+      `🔧 *Bot diagnostika*\n`,
+      `👤 Siz: \`${uid}\``,
+      `📋 Firestore user: ${u ? '✅ topildi' : '❌ topilmadi'}`,
+      u ? `   role: \`${u.role || '—'}\`` : '',
+      u ? `   chatId: \`${u.chatId || '—'}\`` : '',
+      u ? `   routeFrom: \`${u.routeFrom || '—'}\`` : '',
+      u ? `   routeTo: \`${u.routeTo || '—'}\`` : '',
+      u ? `   notifications: \`${u.notifications}\`` : '',
+      ``,
+      `📦 So'nggi order: ${lastOrd ? '✅' : '❌ yo\'q'}`,
+      lastOrd ? `   from: \`${lastOrd.from}\`  to: \`${lastOrd.to || lastOrd.dest}\`` : '',
+      lastOrd ? `   telegramId: \`${lastOrd.telegramId || '—'}\`` : '',
+      lastOrd ? `   archived: \`${lastOrd.archived || false}\`` : '',
+      ``,
+      `✅ Bot ishlayapti!`
+    ].filter(l => l !== null && l !== undefined);
+
+    await bot.sendMessage(chatId, lines.join('\n'), { parse_mode: 'Markdown' });
+  } catch(e) {
+    await bot.sendMessage(chatId, `❌ Xato: ${e.message}`);
+  }
+});
+
 // ── /stop ─────────────────────────────────────────────────────────────────
 bot.onText(/\/stop/, async (msg) => {
   await db.collection('users').doc(String(msg.from.id)).set(
@@ -398,7 +435,7 @@ async function notifyDrivers(from, to, type, senderUsername) {
     .where('notifications', '==', true)
     .get();
 
-  console.log(`👥 Topilgan haydovchilar: ${usersSnap.size} ta`);
+  console.log(`👥 Firestore'da role=driver, notifications=true: ${usersSnap.size} ta topildi`);
 
   // type qiymatiga qarab
   let icon, label;
@@ -455,11 +492,12 @@ db.collection('orders').orderBy('createdAt', 'desc')
       if (d.archived) continue;
       const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
       console.log(`📦 Yangi order: from=${d.from} to=${d.to} age=${age}ms`);
-      if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
+      if (age > 30000) { console.log(`⏭ Eski order (${Math.round(age/1000)}s), o'tkazib yuborildi`); continue; }
       const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
       const from = normalizeRegion(d.from  || '');
-      const to   = normalizeRegion(d.to || d.dest || '');   // 'to' yo'q bo'lsa 'dest' ishlatiladi
-      console.log(`📦 Normalized: from="${from}" to="${to}"`);
+      const to   = normalizeRegion(d.to || d.dest || '');
+      console.log(`📦 Order: from="${from}" to="${to}" telegramId=${d.telegramId} type=${type}`);
+      if (!from || !to) console.warn('⚠️  from yoki to bo\'sh! Manba tekshiring.');
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
       await notifyDrivers(from, to, type, d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
     }
@@ -476,10 +514,11 @@ db.collection('travels').orderBy('createdAt', 'desc')
       if (d.archived) continue;
       const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
       console.log(`🚐 Yangi travel: from=${d.from} to=${d.to} age=${age}ms`);
-      if (age > 30000) { console.log('⏭ Eski hujjat, o\'tkazib yuborildi'); continue; }
+      if (age > 30000) { console.log(`⏭ Eski travel (${Math.round(age/1000)}s), o'tkazib yuborildi`); continue; }
       const from = normalizeRegion(d.from || '');
       const to   = normalizeRegion(d.to || d.dest || '');
-      console.log(`🚐 Normalized: from="${from}" to="${to}"`);
+      console.log(`🚐 Travel: from="${from}" to="${to}" telegramId=${d.telegramId}`);
+      if (!from || !to) console.warn('⚠️  from yoki to bo\'sh! Manba tekshiring.');
       await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
       await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '').catch(e => console.error('notifyDrivers xato:', e.message));
     }
