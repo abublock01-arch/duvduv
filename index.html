@@ -2180,54 +2180,35 @@ function initRouteBtn(){
 function requestNotificationPermission(){
   if (!telegramUser.id) return;
 
-  const PERM_KEY = 'duvduv_notif_asked_' + telegramUser.id;
-
-  // Har doim chatId ni Firestore'ga saqlaymiz — bot /start bosgan userga yozishi uchun
-  // (Firestore ready bo'lmasa kechroq qayta urinadi)
+  // chatId ni har doim Firestore'ga saqlaymiz
+  // Bot /start bosgan userga dialog kerak emas — to'g'ridan yozishi mumkin
   const saveToFirestore = () => {
     if (!db) return;
     try {
       db.collection('users').doc(String(telegramUser.id)).set({
-        chatId      : telegramUser.id,
+        chatId       : telegramUser.id,
         notifications: true,
-        firstName   : telegramUser.first_name || '',
-        username    : telegramUser.username   || ''
+        firstName    : telegramUser.first_name || '',
+        username     : telegramUser.username   || ''
       }, { merge: true }).catch(() => {});
     } catch(_) {}
   };
 
-  // requestWriteAccess — faqat bir marta so'raymiz (xotiraga saqlanadi)
-  const alreadyAsked = localStorage.getItem(PERM_KEY);
-
-  const askPermission = () => {
-    try {
-      if (window.Telegram?.WebApp?.requestWriteAccess) {
-        Telegram.WebApp.requestWriteAccess(granted => {
-          try {
-            localStorage.setItem(PERM_KEY, '1');
-            if (granted) saveToFirestore();
-            else {
-              // Rad etsa ham chatId saqlaymiz — /start bosgan bo'lsa bot yozadi
-              saveToFirestore();
-            }
-          } catch(_) {}
-        });
-      } else {
-        // Eski Telegram (requestWriteAccess yo'q) — shunchaki saqlaymiz
+  try {
+    if (window.Telegram?.WebApp?.requestWriteAccess) {
+      // Telegram o'zi eslab qoladi: ruxsat allaqachon berilgan bo'lsa dialog CHIQMAYDI
+      // Birinchi marta ochsa — dialog chiqadi
+      Telegram.WebApp.requestWriteAccess(() => {
+        // granted yoki yo'q — har ikki holatda ham saqlaymiz
+        // /start bosgan user uchun bot yozish huquqiga ega
         saveToFirestore();
-        try { localStorage.setItem(PERM_KEY, '1'); } catch(_) {}
-      }
-    } catch(_) {
-      // Har qanday xato — sezilmay saqlaymiz
+      });
+    } else {
+      // Eski Telegram versiyasi — requestWriteAccess yo'q, shunchaki saqlaymiz
       saveToFirestore();
     }
-  };
-
-  if (!alreadyAsked) {
-    // Birinchi kirish — ruxsat so'raymiz
-    askPermission();
-  } else {
-    // Avval so'ralgan — faqat Firestore yangilaymiz (dialog chiqmaydi)
+  } catch(_) {
+    // Hech qanday xato ko'rinmaydi — jim saqlaymiz
     saveToFirestore();
   }
 }
