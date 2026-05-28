@@ -12,7 +12,6 @@ admin.initializeApp({
   projectId: 'yolcar-30649',
 });
 const db = admin.firestore();
-db.settings({ preferRest: true });
 
 // ── Bot ───────────────────────────────────────────────────────────────────
 const TOKEN = process.env.BOT_TOKEN;
