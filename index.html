@@ -274,6 +274,24 @@ body.view-sender .header{background:var(--app-bg)!important}
   font-size:12px;font-weight:700;color:var(--tg-blue);
   background:rgba(42,171,238,.14);padding:6px 12px;border-radius:10px;
 }
+.detail-divider{height:1px;background:#e5e7eb;margin:2px 0}
+.detail-info-row{
+  display:flex;align-items:center;gap:8px;
+  font-size:14px;font-weight:600;color:#4b5563;
+}
+.detail-label{
+  margin:0;font-size:13px;font-weight:600;color:#9ca3af;
+}
+.detail-gender-pills{display:flex;gap:8px;flex-wrap:wrap}
+.detail-gender-pill{
+  border:1px solid #d1d5db;background:#f9fafb;color:#4b5563;
+  border-radius:999px;padding:8px 12px;line-height:1;
+  font-size:14px;font-weight:700;font-family:inherit;cursor:pointer;
+  transition:all .15s ease;
+}
+.detail-gender-pill.is-active{
+  background:var(--tg-blue);border-color:var(--tg-blue);color:#fff;
+}
 .detail-actions{display:flex;flex-direction:column;gap:10px}
 .detail-action-btn{
   width:100%;padding:16px 18px;border:none;border-radius:16px;
@@ -1123,6 +1141,14 @@ body.view-sender.theme-telegram .toggle,
   background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
 }
 .theme-telegram .detail-action-btn--delete{color:#E74C3C!important;background:rgba(231,76,60,.12)!important}
+.theme-telegram .detail-divider{background:#edf0f2!important}
+.theme-telegram .detail-label{color:var(--tg-hint)!important}
+.theme-telegram .detail-gender-pill{
+  background:#f3f4f6!important;border-color:#d7dce2!important;color:#6b7280!important;
+}
+.theme-telegram .detail-gender-pill.is-active{
+  background:var(--tg-btn)!important;border-color:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
+}
 .theme-telegram .map-ctrl-btn,
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
@@ -1680,10 +1706,18 @@ body.view-sender.theme-telegram .toggle,
       <span class="detail-route-to" id="detailTo"></span>
     </div>
     <span class="detail-status-badge" id="detailStatus"></span>
+    <div class="detail-divider" aria-hidden="true"></div>
+    <div class="detail-info-row" id="detailApplicantsRow">👥 Hali haydovchi yo'q</div>
+    <div class="detail-divider" aria-hidden="true"></div>
+    <p class="detail-label" id="detailGenderLabel">Haydovchi jinsi:</p>
+    <div class="detail-gender-pills" id="detailGenderPills">
+      <button type="button" class="detail-gender-pill" data-gender="any" onclick="onDetailGenderPick('any')">Farqi yo'q</button>
+      <button type="button" class="detail-gender-pill" data-gender="male" onclick="onDetailGenderPick('male')">👨 Erkak</button>
+      <button type="button" class="detail-gender-pill" data-gender="female" onclick="onDetailGenderPick('female')">👩 Ayol</button>
+    </div>
+    <div class="detail-divider" aria-hidden="true"></div>
     <div class="detail-actions">
-      <button type="button" class="detail-action-btn" id="detailEditBtn" onclick="onDetailEditClick()">✏️ O'zgartirish</button>
-      <button type="button" class="detail-action-btn" id="detailMapBtn" onclick="onDetailMapClick()">📍 Manzilni xaritada o'zgartirish</button>
-      <button type="button" class="detail-action-btn detail-action-btn--delete" id="detailDeleteBtn" onclick="onDetailDeleteClick()">O'chirish</button>
+      <button type="button" class="detail-action-btn detail-action-btn--delete" id="detailDeleteBtn" onclick="onDetailDeleteClick()">🗑️ O'chirish</button>
     </div>
   </div>
 </div>
@@ -5412,6 +5446,18 @@ function shipmentStatusLabel(s){
   return UI_PHRASE_CYRILLIC[s.status] || latinToCyrillic(s.status || 'Aktiv');
 }
 
+function detailApplicantsText(count){
+  const n = Number(count) || 0;
+  if (n <= 0) return "👥 Hali haydovchi yo'q";
+  return `👥 ${n} ta haydovchi yozdi`;
+}
+
+function renderDetailGenderPills(gender){
+  const value = (gender === 'male' || gender === 'female' || gender === 'any') ? gender : 'any';
+  const pills = [...(document.getElementById('detailGenderPills')?.querySelectorAll('.detail-gender-pill') || [])];
+  pills.forEach(btn => btn.classList.toggle('is-active', btn.dataset.gender === value));
+}
+
 function openShipmentDetail(key){
   const s = findShipment(key);
   if (!s) return;
@@ -5420,18 +5466,22 @@ function openShipmentDetail(key){
   const fromEl = document.getElementById('detailFrom');
   const toEl = document.getElementById('detailTo');
   const statusEl = document.getElementById('detailStatus');
-  const mapBtn = document.getElementById('detailMapBtn');
-  const editBtn = document.getElementById('detailEditBtn');
   const delBtn = document.getElementById('detailDeleteBtn');
+  const applicantsRow = document.getElementById('detailApplicantsRow');
+  const genderLabel = document.getElementById('detailGenderLabel');
+  const genderPills = document.getElementById('detailGenderPills');
   if (fromEl) fromEl.textContent = route.from;
   if (toEl) toEl.textContent = route.to;
   if (statusEl) {
     statusEl.textContent = shipmentStatusLabel(s);
     statusEl.classList.toggle('shipment-status--travel', s.type === 'travel');
   }
-  if (editBtn) setI18nText(editBtn, "✏️ O'zgartirish");
-  if (mapBtn) setI18nText(mapBtn, "📍 Manzilni xaritada o'zgartirish");
-  if (delBtn) setI18nText(delBtn, "O'chirish");
+  if (applicantsRow) setI18nText(applicantsRow, detailApplicantsText(s.applicantsCount));
+  if (genderLabel) setI18nText(genderLabel, 'Haydovchi jinsi:');
+  if (genderPills) genderPills.hidden = s.type !== 'order';
+  if (genderLabel) genderLabel.hidden = s.type !== 'order';
+  renderDetailGenderPills(s.gender || 'any');
+  if (delBtn) setI18nText(delBtn, "🗑️ O'chirish");
   applyCyrillicUI();
   document.getElementById('detailSheetOverlay')?.classList.add('open');
 }
@@ -5451,6 +5501,24 @@ function onDetailEditClick(){
   const key = detailShipmentKey;
   closeShipmentDetail();
   if (key) editShipment(key);
+}
+
+async function onDetailGenderPick(gender){
+  if (!detailShipmentKey) return;
+  const value = (gender === 'male' || gender === 'female') ? gender : 'any';
+  const s = findShipment(detailShipmentKey);
+  if (!s || s.type !== 'order') return;
+  s.gender = value;
+  const o = orders.find(x => String(x.firestoreId || x.id) === String(s.firestoreId || s.id));
+  if (o) o.gender = value;
+  renderDetailGenderPills(value);
+  persistData();
+  if (!s.firestoreId || !db) return;
+  try {
+    await db.collection('orders').doc(s.firestoreId).update({ gender: value });
+  } catch (e) {
+    console.warn("Gender yangilash xatosi:", e);
+  }
 }
 
 function onDetailDeleteClick(){
