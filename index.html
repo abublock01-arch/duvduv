@@ -2884,8 +2884,8 @@ function setPickerHandPose(hand, rail, progress, timeLinear){
   hand.style.transform = `translateY(${y}px)`;
   let opacity = 1;
   const t = timeLinear ?? p;
-  if (t < 0.1) opacity = t / 0.1;
-  else if (t > 0.92) opacity = (1 - t) / 0.08;
+  if (t < 0.12) opacity = t / 0.12;
+  else if (t > 0.88) opacity = (1 - t) / 0.12;
   hand.style.opacity = String(Math.min(1, Math.max(0, opacity)));
 }
 
@@ -3020,11 +3020,8 @@ function runPickerSwipeHint(track, wrap, token){
   const onCommit = getVerticalPickerOnCommit(track);
   const rail = wrap.querySelector('.picker-swipe-rail');
   const hand = rail ? ensurePickerHandInRail(rail) : null;
-  scrollVerticalPickerToIndex(track, 0);
-  updateRegionPickerVisuals(false, track, null);
-  const startScroll = track.scrollTop;
-  scrollVerticalPickerToIndex(track, 1);
-  const endScroll = track.scrollTop;
+  const startScroll = getVerticalPickerSnapTop(track, 0);
+  const endScroll = getVerticalPickerSnapTop(track, 1);
   const scrollDelta = endScroll - startScroll;
   track.scrollTop = startScroll;
   updateRegionPickerVisuals(false, track, null);
@@ -3047,7 +3044,7 @@ function runPickerSwipeHint(track, wrap, token){
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
-    const p = t * t * (3 - 2 * t);
+    const p = 1 - Math.pow(1 - t, 3);
     track.scrollTop = startScroll + scrollDelta * p;
     updateVerticalPickerVisualsForHint(track);
     setPickerHandPose(hand, rail, p, t);
