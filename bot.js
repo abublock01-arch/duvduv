@@ -5,7 +5,6 @@
 const TelegramBot = require('node-telegram-bot-api');
 const admin = require('firebase-admin');
 const https = require('https');
-const crypto = require('crypto');
 
 // ── Firebase ──────────────────────────────────────────────────────────────
 const serviceAccount = require('./yolcar-30649-firebase-adminsdk-fbsvc-491c85b007.json');
@@ -19,49 +18,16 @@ const db = admin.firestore(); // faqat yozish uchun (notifySender/notifyDrivers/
 const PROJECT = 'yolcar-30649';
 const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
 
-// OAuth token cache
+// OAuth token cache — Firebase Admin credential bilan (manual JWT kerak emas)
 let _cachedToken = null;
 let _tokenExpiry = 0;
 
 async function fsToken() {
   if (_cachedToken && Date.now() < _tokenExpiry - 60000) return _cachedToken;
-
-  const now = Math.floor(Date.now() / 1000);
-  const header  = Buffer.from(JSON.stringify({ alg:'RS256', typ:'JWT', kid: serviceAccount.private_key_id })).toString('base64url');
-  const payload = Buffer.from(JSON.stringify({
-    iss: serviceAccount.client_email,
-    sub: serviceAccount.client_email,
-    aud: 'https://oauth2.googleapis.com/token',
-    iat: now, exp: now + 3600,
-    scope: 'https://www.googleapis.com/auth/datastore'
-  })).toString('base64url');
-
-  const sign = crypto.createSign('RSA-SHA256');
-  sign.update(`${header}.${payload}`);
-  const sig = sign.sign(serviceAccount.private_key, 'base64url');
-  const jwt = `${header}.${payload}.${sig}`;
-
-  const body = `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`;
-
-  return new Promise((resolve, reject) => {
-    const req = https.request({
-      hostname: 'oauth2.googleapis.com', path: '/token', method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) }
-    }, res => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => {
-        const r = JSON.parse(d);
-        if (r.error) return reject(new Error(r.error + ': ' + r.error_description));
-        _cachedToken = r.access_token;
-        _tokenExpiry = (now + (r.expires_in || 3600)) * 1000;
-        resolve(_cachedToken);
-      });
-    });
-    req.on('error', reject);
-    req.write(body);
-    req.end();
-  });
+  const tokenObj = await admin.app().options.credential.getAccessToken();
+  _cachedToken = tokenObj.access_token;
+  _tokenExpiry = Date.now() + ((tokenObj.expires_in || 3600) * 1000);
+  return _cachedToken;
 }
 
 function httpsPost(url, body, token) {
