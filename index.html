@@ -4548,9 +4548,28 @@ function getDriverRouteFilter(){
   try { return JSON.parse(localStorage.getItem(routeKey()) || '{}'); } catch(e) { return {}; }
 }
 
-function normalizeRegionSimple(r){
+// Latin va Kirill nomlarini bir xil kalit ga keltiradi
+const _REGION_CANON = {
+  'Toshkent shahar':'toshkent','Toshkent viloyat':'toshkent',
+  'Тошкент шаҳри':'toshkent','Тошкент шаҳар':'toshkent','Тошкент вилояти':'toshkent',
+  'Тошкент шаҳар вилояти':'toshkent',
+  'Samarqand':'samarqand','Самарқанд':'samarqand',
+  "Farg'ona":'fargona','Fargona':'fargona','Фарғона':'fargona',
+  'Andijon':'andijon','Андижон':'andijon',
+  'Namangan':'namangan','Наманган':'namangan',
+  'Buxoro':'buxoro','Бухоро':'buxoro',
+  'Xorazm':'xorazm','Хоразм':'xorazm',
+  'Surxondaryo':'surxondaryo','Сурхондарё':'surxondaryo',
+  'Qashqadaryo':'qashqadaryo','Қашқадарё':'qashqadaryo',
+  'Sirdaryo':'sirdaryo','Сирдарё':'sirdaryo',
+  'Jizzax':'jizzax','Жиззах':'jizzax',
+  'Navoiy':'navoiy','Навоий':'navoiy',
+  "Qoraqalpog'iston":'qoraqalpogiston','Қорақалпоғистон':'qoraqalpogiston'
+};
+function toCanonRegion(r){
   if (!r) return '';
-  return r.split('—')[0].trim().split(' ')[0];  // "Andijon — shahar" → "Andijon"
+  const base = r.split(' — ')[0].trim();
+  return _REGION_CANON[base] || base.toLowerCase().split(' ')[0];
 }
 
 function mapItemMatchesDriverFilter(item){
@@ -4560,14 +4579,12 @@ function mapItemMatchesDriverFilter(item){
   // Yangi A→B yo'nalish filtri
   const route = getDriverRouteFilter();
   if (route.from && route.to) {
-    const iFrom = normalizeRegionSimple(item.from || '');
-    const iTo   = normalizeRegionSimple(item.to || item.dest || '');
-    const dFrom = normalizeRegionSimple(route.from);
-    const dTo   = normalizeRegionSimple(route.to);
-    // To'g'ri yoki teskari yo'nalish
-    const match = (iFrom === dFrom && iTo === dTo) || (iFrom === dTo && iTo === dFrom)
-               || iFrom === dFrom || iTo === dTo || iFrom === dTo || iTo === dFrom;
-    return match;
+    const iFrom = toCanonRegion(item.from || '');
+    const iTo   = toCanonRegion(item.to || item.dest || '');
+    const dFrom = toCanonRegion(route.from);
+    const dTo   = toCanonRegion(route.to);
+    // To'g'ri yoki teskari yo'nalish (yoki bitta tomonlama mos)
+    return (iFrom === dFrom || iFrom === dTo) && (iTo === dTo || iTo === dFrom);
   }
 
   // Eski region filtri (A/B tanlanmagan bo'lsa)
