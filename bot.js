@@ -6,7 +6,14 @@ const TelegramBot = require('node-telegram-bot-api');
 const admin = require('firebase-admin');
 
 // ── Firebase ──────────────────────────────────────────────────────────────
-const serviceAccount = require('./yolcar-30649-firebase-adminsdk-fbsvc-491c85b007.json');
+// Kalit Railway environment variable dan o'qiladi (JSON string)
+let serviceAccount;
+if (process.env.FIREBASE_SA) {
+  serviceAccount = JSON.parse(process.env.FIREBASE_SA);
+} else {
+  // Lokal ishlab chiqish uchun (git ga solinmaydi)
+  serviceAccount = require('./newkeyfirebase.json');
+}
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   projectId: 'yolcar-30649',
