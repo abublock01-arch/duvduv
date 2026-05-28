@@ -2928,6 +2928,7 @@ function runPickerSwipeHint(track, wrap, token){
   if (!track || !wrap || prefersReducedMotion()) return;
   const items = [...track.querySelectorAll('.region-picker-item')];
   if (items.length < 2) return;
+  const onCommit = getVerticalPickerOnCommit(track);
   const rail = wrap.querySelector('.picker-swipe-rail');
   const hand = rail ? ensurePickerHandInRail(rail) : null;
   scrollVerticalPickerToIndex(track, 0);
@@ -2964,7 +2965,8 @@ function runPickerSwipeHint(track, wrap, token){
       requestAnimationFrame(tick);
       return;
     }
-    finishPickerSwipeHint(track, wrap, hand, rail, startScroll);
+    finishPickerSwipeHint(track, wrap, hand, rail, endScroll);
+    updateRegionPickerVisuals(true, track, onCommit);
   };
   requestAnimationFrame(tick);
 }
