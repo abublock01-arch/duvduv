@@ -261,122 +261,86 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet--edit{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .sheet--travel{padding-top:12px;padding-bottom:max(28px,env(safe-area-inset-bottom))}
 .sheet--detail{
-  padding:8px 16px max(24px,env(safe-area-inset-bottom));
-  display:flex;flex-direction:column;gap:10px;
+  padding:0 0 max(16px,env(safe-area-inset-bottom));
+  background:#f2f2f7;border-radius:20px 20px 0 0;
 }
-.detail-sheet{display:flex;flex-direction:column;gap:10px}
-.detail-card{
-  background:linear-gradient(180deg,#fff 0%,#f6f8fb 100%);
-  border:1px solid rgba(15,23,42,.06);
-  border-radius:18px;padding:14px 14px;
-  box-shadow:0 10px 28px rgba(15,23,42,.08),0 1px 0 rgba(255,255,255,.9) inset;
+.detail-sheet{display:flex;flex-direction:column;gap:0;background:#f2f2f7}
+.detail-route{
+  padding:4px 18px 12px;
 }
-.detail-card--route{padding:16px 14px 14px}
-.detail-route-stack{display:flex;flex-direction:column;gap:0}
-.detail-route-node{display:flex;align-items:flex-start;gap:10px}
-.detail-route-dot{
-  width:10px;height:10px;border-radius:50%;margin-top:5px;flex-shrink:0;
-  box-shadow:0 0 0 3px rgba(42,171,238,.18);
+.detail-route-from{
+  font-size:17px;font-weight:700;color:#000;letter-spacing:-.02em;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.detail-route-dot--from{background:#2AABEE}
-.detail-route-dot--to{background:#0B5CAD;box-shadow:0 0 0 3px rgba(11,92,173,.15)}
-.detail-route-line{
-  width:2px;height:18px;margin:2px 0 2px 4px;border-radius:2px;
-  background:linear-gradient(180deg,#2AABEE,#0B5CAD);opacity:.35;
+.detail-route-to{
+  margin-top:2px;font-size:15px;font-weight:600;color:#2AABEE;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.detail-route-text{flex:1;min-width:0;text-align:left}
-.detail-route-kicker{
-  display:block;font-size:11px;font-weight:700;color:#9ca3af;
-  text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;
+.detail-route-pill{
+  display:inline-flex;margin-top:8px;padding:3px 9px;border-radius:6px;
+  font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
+  color:#2AABEE;background:rgba(42,171,238,.12);
 }
-.detail-route-main{
-  display:block;font-size:17px;font-weight:800;color:#0f172a;
-  letter-spacing:-.02em;line-height:1.25;
+.detail-route-pill--travel{color:#e67e22;background:rgba(230,126,34,.12)}
+.detail-group{
+  margin:0 12px 8px;background:#fff;border-radius:12px;overflow:hidden;
 }
-.detail-type-badge{
-  display:inline-flex;margin-top:12px;padding:5px 10px;border-radius:999px;
-  font-size:11px;font-weight:800;color:#2AABEE;
-  background:rgba(42,171,238,.12);letter-spacing:.02em;
+.detail-group--danger{margin-top:4px}
+.detail-sep{height:.5px;background:rgba(60,60,67,.12);margin-left:16px}
+.detail-cell{
+  display:flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;
+  width:100%;border:none;background:transparent;font-family:inherit;text-align:left;
 }
-.detail-type-badge--travel{color:#d35400;background:rgba(211,84,0,.12)}
-.detail-card--stat,.detail-card--action{
-  display:flex;align-items:center;gap:12px;text-align:left;
+.detail-cell--tap{cursor:pointer;-webkit-tap-highlight-color:transparent}
+.detail-cell--tap:active{background:rgba(0,0,0,.04)}
+.detail-cell-lbl{
+  font-size:16px;font-weight:400;color:#000;line-height:1.2;flex-shrink:0;
 }
-.detail-card--action{
-  width:100%;font:inherit;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;transition:transform .15s,box-shadow .15s;
+.detail-cell-lbl--grow{flex:1;min-width:0}
+.detail-cell-spacer{flex:1;min-width:8px}
+.detail-cell-chev{
+  flex-shrink:0;font-size:20px;font-weight:400;color:#c7c7cc;line-height:1;
 }
-.detail-card--action:active{transform:scale(.985)}
-.detail-card-icon{
-  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+.detail-pin{
+  width:28px;height:28px;border-radius:7px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(180deg,rgba(42,171,238,.14),rgba(42,171,238,.06));
-  color:#2AABEE;
-  box-shadow:0 4px 12px rgba(42,171,238,.12),inset 0 1px 0 rgba(255,255,255,.7);
+  background:rgba(42,171,238,.12);color:#2AABEE;
 }
-.detail-card-icon svg{width:20px;height:20px;display:block}
-.detail-card-icon--map{color:#0B5CAD;background:linear-gradient(180deg,rgba(11,92,173,.12),rgba(42,171,238,.06))}
-.detail-card-body{flex:1;min-width:0}
-.detail-card-title{display:block;font-size:15px;font-weight:800;color:#0f172a;line-height:1.25}
-.detail-card-sub{display:block;margin-top:2px;font-size:12px;font-weight:600;color:#6b7280;line-height:1.3}
-.detail-card-chevron{font-size:22px;font-weight:700;color:#9ca3af;line-height:1}
-.detail-card-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.detail-pin svg{width:16px;height:16px;display:block}
 .detail-stepper{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  background:#f3f6f9;border-radius:14px;padding:6px;
-  box-shadow:inset 0 1px 3px rgba(15,23,42,.06);
+  display:flex;align-items:center;gap:6px;margin-left:auto;flex-shrink:0;
 }
 .detail-stepper-btn{
-  width:44px;height:44px;border:none;border-radius:12px;
-  background:linear-gradient(180deg,#fff,#eef2f6);
-  color:#0f172a;font-size:22px;font-weight:700;font-family:inherit;
-  cursor:pointer;box-shadow:0 4px 10px rgba(15,23,42,.08);
-  -webkit-tap-highlight-color:transparent;
+  width:32px;height:32px;border:none;border-radius:8px;
+  background:#f2f2f7;color:#000;font-size:18px;font-weight:500;font-family:inherit;
+  line-height:1;cursor:pointer;-webkit-tap-highlight-color:transparent;
 }
-.detail-stepper-btn:active{transform:scale(.96)}
+.detail-stepper-btn:active{background:#e5e5ea}
 .detail-stepper-btn:disabled{opacity:.35;pointer-events:none}
 .detail-stepper-val{
-  font-size:22px;font-weight:900;color:#0f172a;min-width:36px;text-align:center;
+  min-width:20px;text-align:center;font-size:17px;font-weight:600;color:#000;
 }
-.detail-seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.detail-seg-btn{
-  border:1px solid rgba(15,23,42,.08);
-  background:linear-gradient(180deg,#fff,#f4f6f8);
-  border-radius:14px;padding:10px 6px 8px;
-  display:flex;flex-direction:column;align-items:center;gap:6px;
-  font-size:11px;font-weight:700;color:#6b7280;line-height:1.15;
-  cursor:pointer;font-family:inherit;
-  box-shadow:0 3px 8px rgba(15,23,42,.05);
-  -webkit-tap-highlight-color:transparent;transition:all .15s ease;
+.detail-gender-seg{
+  display:flex;margin-left:auto;flex-shrink:0;
+  background:#f2f2f7;border-radius:9px;padding:3px;gap:2px;
 }
-.detail-seg-btn:active{transform:scale(.97)}
-.detail-seg-ico{
-  width:28px;height:28px;border-radius:10px;
+.detail-gender-btn{
+  width:38px;height:34px;border:none;border-radius:7px;background:transparent;
   display:flex;align-items:center;justify-content:center;
-  background:rgba(42,171,238,.08);color:#2AABEE;
+  color:#aeaeb2;cursor:pointer;padding:0;
+  -webkit-tap-highlight-color:transparent;transition:background .15s,color .15s;
 }
-.detail-seg-ico svg{width:18px;height:18px;display:block}
-.detail-seg-btn.is-active{
-  border-color:#2AABEE;color:#0B5CAD;
-  background:linear-gradient(180deg,#e8f6fe,#d4edfc);
-  box-shadow:0 6px 16px rgba(42,171,238,.2),inset 0 1px 0 rgba(255,255,255,.8);
+.detail-gender-btn:active{opacity:.8}
+.detail-gender-btn.is-active{
+  background:#fff;color:#2AABEE;
+  box-shadow:0 1px 3px rgba(0,0,0,.12);
 }
-.detail-seg-btn.is-active .detail-seg-ico{
-  background:#2AABEE;color:#fff;
-  box-shadow:0 4px 10px rgba(42,171,238,.35);
-}
-.detail-delete-btn{
-  width:100%;margin-top:2px;padding:15px 16px;border:none;border-radius:16px;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  font-size:15px;font-weight:800;font-family:inherit;cursor:pointer;
-  color:#dc2626;background:linear-gradient(180deg,#fff5f5,#ffe8e8);
-  border:1px solid rgba(239,68,68,.18);
-  box-shadow:0 8px 20px rgba(239,68,68,.12),inset 0 1px 0 rgba(255,255,255,.8);
+.detail-gender-btn svg{width:22px;height:22px;display:block}
+.detail-cell--danger{
+  justify-content:center;font-size:17px;color:#ff3b30;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
 }
-.detail-delete-btn:active{transform:scale(.985)}
-.detail-delete-ico{display:flex;color:#dc2626}
-.detail-delete-ico svg{width:18px;height:18px}
+.detail-cell--danger:active{opacity:.65}
 /* CTA */
 #senderView .cta-wrap{
   position:sticky;bottom:0;z-index:3;
@@ -1204,28 +1168,22 @@ body.view-sender.theme-telegram .toggle,
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important;
 }
 .theme-telegram .shipment-icon-btn--delete svg{stroke:#E74C3C!important}
-.theme-telegram .detail-card{
-  background:var(--tg-section)!important;border-color:rgba(0,0,0,.06)!important;
-  box-shadow:0 8px 24px rgba(0,0,0,.08),inset 0 1px 0 rgba(255,255,255,.5)!important;
-}
-.theme-telegram .detail-route-main,.theme-telegram .detail-card-title{color:var(--tg-text)!important}
-.theme-telegram .detail-route-kicker,.theme-telegram .detail-card-sub{color:var(--tg-hint)!important}
-.theme-telegram .detail-type-badge{
+.theme-telegram .sheet--detail,.theme-telegram .detail-sheet{background:var(--tg-bg)!important}
+.theme-telegram .detail-route-from,.theme-telegram .detail-cell-lbl,.theme-telegram .detail-stepper-val{color:var(--tg-text)!important}
+.theme-telegram .detail-route-to{color:var(--tg-link)!important}
+.theme-telegram .detail-route-pill{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 14%,transparent)!important;
 }
-.theme-telegram .detail-type-badge--travel{color:#d35400!important;background:rgba(211,84,0,.12)!important}
-.theme-telegram .detail-card-icon{color:var(--tg-btn)!important}
-.theme-telegram .detail-seg-btn.is-active{
-  border-color:var(--tg-btn)!important;color:var(--tg-btn)!important;
-  background:color-mix(in srgb,var(--tg-btn) 12%,var(--tg-section))!important;
+.theme-telegram .detail-route-pill--travel{color:#e67e22!important;background:rgba(230,126,34,.14)!important}
+.theme-telegram .detail-group{background:var(--tg-section)!important}
+.theme-telegram .detail-pin{color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important}
+.theme-telegram .detail-gender-seg{background:var(--tg-bg)!important}
+.theme-telegram .detail-gender-btn.is-active{
+  background:var(--tg-section)!important;color:var(--tg-btn)!important;
+  box-shadow:0 1px 2px rgba(0,0,0,.08)!important;
 }
-.theme-telegram .detail-seg-btn.is-active .detail-seg-ico{
-  background:var(--tg-btn)!important;color:var(--tg-btn-text)!important;
-}
-.theme-telegram .detail-stepper{background:var(--tg-bg)!important}
-.theme-telegram .detail-delete-btn{
-  color:#E74C3C!important;background:rgba(231,76,60,.1)!important;
-}
+.theme-telegram .detail-stepper-btn{background:var(--tg-bg)!important;color:var(--tg-text)!important}
+.theme-telegram .detail-cell--danger{color:#ff3b30!important}
 .theme-telegram .map-ctrl-btn,
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
@@ -1777,73 +1735,44 @@ body.view-sender.theme-telegram .toggle,
   <div class="sheet sheet--detail detail-sheet" onclick="event.stopPropagation()">
     <button type="button" class="sheet-close" onclick="closeShipmentDetail()" aria-label="Yopish">×</button>
     <div class="sheet-drag"></div>
-    <div class="detail-card detail-card--route">
-      <div class="detail-route-stack">
-        <div class="detail-route-node">
-          <span class="detail-route-dot detail-route-dot--from" aria-hidden="true"></span>
-          <div class="detail-route-text">
-            <span class="detail-route-kicker" id="detailFromLbl">Qayerdan</span>
-            <span class="detail-route-main" id="detailFrom"></span>
+    <div class="detail-route">
+      <div class="detail-route-from" id="detailFrom"></div>
+      <div class="detail-route-to" id="detailTo"></div>
+      <span class="detail-route-pill" id="detailStatus"></span>
+    </div>
+    <div class="detail-group" id="detailSettingsGroup">
+      <div id="detailPassengersBlock" hidden>
+        <div class="detail-cell">
+          <span class="detail-cell-lbl detail-cell-lbl--grow" id="detailPassengersLabel">Yo'lovchilar</span>
+          <div class="detail-stepper">
+            <button type="button" class="detail-stepper-btn" id="detailPassengersMinus" onclick="onDetailPassengersDelta(-1)" aria-label="Kamaytirish">−</button>
+            <span class="detail-stepper-val" id="detailPassengersVal">1</span>
+            <button type="button" class="detail-stepper-btn" id="detailPassengersPlus" onclick="onDetailPassengersDelta(1)" aria-label="Oshirish">+</button>
           </div>
         </div>
-        <div class="detail-route-line" aria-hidden="true"></div>
-        <div class="detail-route-node">
-          <span class="detail-route-dot detail-route-dot--to" aria-hidden="true"></span>
-          <div class="detail-route-text">
-            <span class="detail-route-kicker" id="detailToLbl">Qayerga</span>
-            <span class="detail-route-main" id="detailTo"></span>
-          </div>
+        <div class="detail-sep" aria-hidden="true"></div>
+      </div>
+      <div class="detail-cell">
+        <span class="detail-cell-lbl" id="detailGenderLabel">Jins</span>
+        <div class="detail-gender-seg" id="detailGenderPills">
+          <button type="button" class="detail-gender-btn" data-gender="any" onclick="onDetailGenderPick('any')" aria-label="Farqi yo'q" data-gender-ico="any"></button>
+          <button type="button" class="detail-gender-btn" data-gender="male" onclick="onDetailGenderPick('male')" aria-label="Erkak" data-gender-ico="male"></button>
+          <button type="button" class="detail-gender-btn" data-gender="female" onclick="onDetailGenderPick('female')" aria-label="Ayol" data-gender-ico="female"></button>
         </div>
       </div>
-      <span class="detail-type-badge" id="detailStatus"></span>
+      <div class="detail-sep" aria-hidden="true"></div>
+      <button type="button" class="detail-cell detail-cell--tap" id="detailMapBtn" onclick="onDetailMapClick()">
+        <span class="detail-pin" id="detailMapIcon" aria-hidden="true"></span>
+        <span class="detail-cell-lbl" id="detailMapTitle">Joylash</span>
+        <span class="detail-cell-spacer" aria-hidden="true"></span>
+        <span class="detail-cell-chev" aria-hidden="true">›</span>
+      </button>
     </div>
-    <div class="detail-card detail-card--stat" id="detailStatCard">
-      <span class="detail-card-icon" id="detailStatIcon" aria-hidden="true"></span>
-      <div class="detail-card-body">
-        <span class="detail-card-title" id="detailStatTitle"></span>
-        <span class="detail-card-sub" id="detailStatSub"></span>
-      </div>
+    <div class="detail-group detail-group--danger">
+      <button type="button" class="detail-cell detail-cell--danger" id="detailDeleteBtn" onclick="onDetailDeleteClick()">
+        <span id="detailDeleteText">O'chirish</span>
+      </button>
     </div>
-    <button type="button" class="detail-card detail-card--action" id="detailMapBtn" onclick="onDetailMapClick()">
-      <span class="detail-card-icon detail-card-icon--map" id="detailMapIcon" aria-hidden="true"></span>
-      <div class="detail-card-body">
-        <span class="detail-card-title" id="detailMapTitle">Turgan joyni xaritada belgilash</span>
-        <span class="detail-card-sub" id="detailMapSub">Pinni surib aniq manzilni tanlang</span>
-      </div>
-      <span class="detail-card-chevron" aria-hidden="true">›</span>
-    </button>
-    <div class="detail-card" id="detailPassengersCard" hidden>
-      <div class="detail-card-head">
-        <span class="detail-card-icon" id="detailPassengersIcon" aria-hidden="true"></span>
-        <span class="detail-card-title" id="detailPassengersLabel">Yo'lovchilar soni</span>
-      </div>
-      <div class="detail-stepper">
-        <button type="button" class="detail-stepper-btn" id="detailPassengersMinus" onclick="onDetailPassengersDelta(-1)" aria-label="Kamaytirish">−</button>
-        <span class="detail-stepper-val" id="detailPassengersVal">1</span>
-        <button type="button" class="detail-stepper-btn" id="detailPassengersPlus" onclick="onDetailPassengersDelta(1)" aria-label="Oshirish">+</button>
-      </div>
-    </div>
-    <div class="detail-card" id="detailGenderCard">
-      <div class="detail-card-head">
-        <span class="detail-card-icon" id="detailGenderHeadIcon" aria-hidden="true"></span>
-        <span class="detail-card-title" id="detailGenderLabel">Haydovchi jinsi</span>
-      </div>
-      <div class="detail-seg" id="detailGenderPills">
-        <button type="button" class="detail-seg-btn" data-gender="any" onclick="onDetailGenderPick('any')">
-          <span class="detail-seg-ico" data-gender-ico="any"></span><span>Farqi yo'q</span>
-        </button>
-        <button type="button" class="detail-seg-btn" data-gender="male" onclick="onDetailGenderPick('male')">
-          <span class="detail-seg-ico" data-gender-ico="male"></span><span>Erkak</span>
-        </button>
-        <button type="button" class="detail-seg-btn" data-gender="female" onclick="onDetailGenderPick('female')">
-          <span class="detail-seg-ico" data-gender-ico="female"></span><span>Ayol</span>
-        </button>
-      </div>
-    </div>
-    <button type="button" class="detail-delete-btn" id="detailDeleteBtn" onclick="onDetailDeleteClick()">
-      <span class="detail-delete-ico" id="detailDeleteIcon" aria-hidden="true"></span>
-      <span id="detailDeleteText">O'chirish</span>
-    </button>
   </div>
 </div>
 
@@ -2491,13 +2420,10 @@ let locationPickerPin = null;
 const SHIPMENT_ICON_EDIT = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 6.5-6.5z"/></svg>';
 const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="10" r="2.8"/></svg>';
 const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></svg>';
-const DETAIL_ICON_USERS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>';
-const DETAIL_ICON_MAP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s7-4.35 7-11a7 7 0 1 0-14 0c0 6.65 7 11 7 11z"/><circle cx="12" cy="11" r="2.5"/></svg>';
-const DETAIL_ICON_PASSENGERS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="7" r="3"/><path d="M3 21v-2a5 5 0 0 1 5-5h2"/><circle cx="17" cy="8" r="2.5"/><path d="M21 21v-1.5a4 4 0 0 0-3-3.87"/></svg>';
-const DETAIL_ICON_GENDER = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M6 20v-1a6 6 0 0 1 12 0v1"/></svg>';
-const DETAIL_ICON_ANY = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="8" cy="8" r="2.5"/><circle cx="16" cy="9" r="2.5"/><path d="M4 20v-1a4 4 0 0 1 4-4"/><path d="M20 20v-1a4 4 0 0 0-4-4"/></svg>';
-const DETAIL_ICON_MALE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10" cy="14" r="4"/><path d="M14 10l5-5"/><path d="M16 5h3v3"/></svg>';
-const DETAIL_ICON_FEMALE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="9" r="4"/><path d="M12 13v7"/><path d="M9 17h6"/></svg>';
+const DETAIL_ICON_MAP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>';
+const DETAIL_ICON_ANY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M8 5.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5zm9 1a2 2 0 1 1 0-4 2 2 0 0 1 0 4zM5 12c-1.1 0-2 .9-2 2v4h2v-4h2v4h2v-4h2v4h2v-4c0-1.1-.9-2-2-2H5zm11 0c-1.1 0-2 .9-2 2v4h2v-4h2v4h2v-4c0-1.1-.9-2-2-2h-4z"/></svg>';
+const DETAIL_ICON_MALE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zm-6 9c-2.21 0-4 1.79-4 4v3h2v-3c0-.55.45-1 1-1h2v4h2v-4h6v4h2v-4c0-.55.45-1 1-1h2v3h2v-3c0-2.21-1.79-4-4-4H6z"/></svg>';
+const DETAIL_ICON_FEMALE = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 4a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM7 14l-1 8h2l.6-4.8h2.8l.6 4.8h2l-.6-4.8h2.8L17 22h2l-1-8H7z"/></svg>';
 let detailSheetIconsReady = false;
 
 const UZ_REGIONS = [
@@ -5630,29 +5556,14 @@ function shipmentStatusLabel(s){
 function ensureDetailSheetIcons(){
   if (detailSheetIconsReady) return;
   detailSheetIconsReady = true;
-  const map = {
-    detailStatIcon: DETAIL_ICON_USERS,
-    detailMapIcon: DETAIL_ICON_MAP,
-    detailPassengersIcon: DETAIL_ICON_PASSENGERS,
-    detailGenderHeadIcon: DETAIL_ICON_GENDER,
-    detailDeleteIcon: SHIPMENT_ICON_TRASH
-  };
-  Object.entries(map).forEach(([id, svg]) => {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = svg;
-  });
-  document.querySelectorAll('[data-gender-ico]').forEach(el => {
+  const mapIcon = document.getElementById('detailMapIcon');
+  if (mapIcon) mapIcon.innerHTML = DETAIL_ICON_MAP;
+  document.querySelectorAll('.detail-gender-btn[data-gender-ico]').forEach(el => {
     const k = el.dataset.genderIco;
     if (k === 'male') el.innerHTML = DETAIL_ICON_MALE;
     else if (k === 'female') el.innerHTML = DETAIL_ICON_FEMALE;
     else el.innerHTML = DETAIL_ICON_ANY;
   });
-}
-
-function detailApplicantsTitle(count){
-  const n = Number(count) || 0;
-  if (n <= 0) return "Hali haydovchi yo'q";
-  return `${n} ta haydovchi yozdi`;
 }
 
 function clampDetailPassengers(n){
@@ -5671,7 +5582,7 @@ function renderDetailPassengers(count){
 
 function renderDetailGenderPills(gender){
   const value = (gender === 'male' || gender === 'female' || gender === 'any') ? gender : 'any';
-  const pills = [...(document.getElementById('detailGenderPills')?.querySelectorAll('.detail-seg-btn') || [])];
+  const pills = [...(document.getElementById('detailGenderPills')?.querySelectorAll('.detail-gender-btn') || [])];
   pills.forEach(btn => btn.classList.toggle('is-active', btn.dataset.gender === value));
 }
 
@@ -5684,29 +5595,21 @@ function openShipmentDetail(key){
   const isTravel = s.type === 'travel';
   const fromEl = document.getElementById('detailFrom');
   const toEl = document.getElementById('detailTo');
-  const fromLbl = document.getElementById('detailFromLbl');
-  const toLbl = document.getElementById('detailToLbl');
   const statusEl = document.getElementById('detailStatus');
-  const statTitle = document.getElementById('detailStatTitle');
-  const statSub = document.getElementById('detailStatSub');
-  const passengersCard = document.getElementById('detailPassengersCard');
+  const passengersBlock = document.getElementById('detailPassengersBlock');
   const genderLabel = document.getElementById('detailGenderLabel');
   const mapTitle = document.getElementById('detailMapTitle');
-  const mapSub = document.getElementById('detailMapSub');
+  const passengersLabel = document.getElementById('detailPassengersLabel');
   if (fromEl) fromEl.textContent = route.from;
   if (toEl) toEl.textContent = route.to;
-  if (fromLbl) setI18nText(fromLbl, isTravel ? 'Qayerdan' : "Jo'natuvchi");
-  if (toLbl) setI18nText(toLbl, isTravel ? 'Qayerga' : 'Manzil');
   if (statusEl) {
     statusEl.textContent = shipmentStatusLabel(s);
-    statusEl.classList.toggle('detail-type-badge--travel', isTravel);
+    statusEl.classList.toggle('detail-route-pill--travel', isTravel);
   }
-  if (statTitle) setI18nText(statTitle, detailApplicantsTitle(s.applicantsCount));
-  if (statSub) setI18nText(statSub, isTravel ? "Haydovchilar bog'lanishini kutmoqda" : 'Aktiv e\'lon');
-  if (passengersCard) passengersCard.hidden = !isTravel;
-  if (genderLabel) setI18nText(genderLabel, isTravel ? 'Haydovchi jinsi' : 'Haydovchi jinsi');
-  if (mapTitle) setI18nText(mapTitle, isTravel ? 'Turgan joyni xaritada belgilash' : 'Manzilni xaritada belgilash');
-  if (mapSub) setI18nText(mapSub, 'Pinni surib aniq nuqtani tanlang');
+  if (passengersBlock) passengersBlock.hidden = !isTravel;
+  if (genderLabel) setI18nText(genderLabel, 'Jins');
+  if (passengersLabel) setI18nText(passengersLabel, "Yo'lovchilar");
+  if (mapTitle) setI18nText(mapTitle, 'Joylash');
   renderDetailPassengers(s.passengersCount ?? 1);
   renderDetailGenderPills(s.gender || 'any');
   const delText = document.getElementById('detailDeleteText');
