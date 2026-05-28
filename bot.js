@@ -509,48 +509,65 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
   }
 }
 
-// ── Orders listener ───────────────────────────────────────────────────────
-let initOrders = false;
-db.collection('orders').orderBy('createdAt', 'desc')
-  .onSnapshot(async snap => {
-    if (!initOrders) { initOrders = true; console.log('✅ orders listener tayyor'); return; }
-    for (const ch of snap.docChanges()) {
-      if (ch.type !== 'added') continue;
-      const d = ch.doc.data();
+// ── Polling (onSnapshot o'rniga — Railway gRPC muammosi) ─────────────────
+const POLL_INTERVAL = 5000; // 5 soniya
+let lastOrderTime   = Date.now();
+let lastTravelTime  = Date.now();
+
+async function pollOrders() {
+  try {
+    const cutoff = admin.firestore.Timestamp.fromMillis(lastOrderTime - 1000);
+    const snap = await db.collection('orders')
+      .where('createdAt', '>', cutoff)
+      .orderBy('createdAt', 'asc')
+      .get();
+    for (const doc of snap.docs) {
+      const d = doc.data();
       if (d.archived) continue;
-      const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
-      console.log(`📦 Yangi order: from=${d.from} to=${d.to} age=${age}ms`);
-      if (age > 30000) { console.log(`⏭ Eski order (${Math.round(age/1000)}s), o'tkazib yuborildi`); continue; }
+      const ts = d.createdAt?.toMillis?.() || 0;
+      if (ts <= lastOrderTime) continue;
+      lastOrderTime = ts;
+      const age = Date.now() - ts;
+      if (age > 60000) continue;
       const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
-      const from = normalizeRegion(d.from  || '');
+      const from = normalizeRegion(d.from || '');
       const to   = normalizeRegion(d.to || d.dest || '');
-      console.log(`📦 Order: from="${from}" to="${to}" telegramId=${d.telegramId} type=${type}`);
-      if (!from || !to) console.warn('⚠️  from yoki to bo\'sh! Manba tekshiring.');
+      console.log(`📦 Order: from="${from}" to="${to}" telegramId=${d.telegramId}`);
+      if (!from || !to) { console.warn('⚠️ from yoki to bo\'sh'); continue; }
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
       await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers xato:', e.message));
     }
-  }, err => console.error('orders listener xato:', err.message));
+  } catch(e) { console.error('pollOrders xato:', e.message); }
+}
 
-// ── Travels listener ──────────────────────────────────────────────────────
-let initTravels = false;
-db.collection('travels').orderBy('createdAt', 'desc')
-  .onSnapshot(async snap => {
-    if (!initTravels) { initTravels = true; console.log('✅ travels listener tayyor'); return; }
-    for (const ch of snap.docChanges()) {
-      if (ch.type !== 'added') continue;
-      const d = ch.doc.data();
+async function pollTravels() {
+  try {
+    const cutoff = admin.firestore.Timestamp.fromMillis(lastTravelTime - 1000);
+    const snap = await db.collection('travels')
+      .where('createdAt', '>', cutoff)
+      .orderBy('createdAt', 'asc')
+      .get();
+    for (const doc of snap.docs) {
+      const d = doc.data();
       if (d.archived) continue;
-      const age = Date.now() - (d.createdAt?.toDate?.() || new Date(0)).getTime();
-      console.log(`🚐 Yangi travel: from=${d.from} to=${d.to} age=${age}ms`);
-      if (age > 30000) { console.log(`⏭ Eski travel (${Math.round(age/1000)}s), o'tkazib yuborildi`); continue; }
+      const ts = d.createdAt?.toMillis?.() || 0;
+      if (ts <= lastTravelTime) continue;
+      lastTravelTime = ts;
+      const age = Date.now() - ts;
+      if (age > 60000) continue;
       const from = normalizeRegion(d.from || '');
       const to   = normalizeRegion(d.to || d.dest || '');
       console.log(`🚐 Travel: from="${from}" to="${to}" telegramId=${d.telegramId}`);
-      if (!from || !to) console.warn('⚠️  from yoki to bo\'sh! Manba tekshiring.');
+      if (!from || !to) { console.warn('⚠️ from yoki to bo\'sh'); continue; }
       await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
       await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers xato:', e.message));
     }
-  }, err => console.error('travels listener xato:', err.message));
+  } catch(e) { console.error('pollTravels xato:', e.message); }
+}
+
+setInterval(pollOrders,  POLL_INTERVAL);
+setInterval(pollTravels, POLL_INTERVAL);
+console.log('✅ orders + travels polling tayyor (har 5 soniya)');
 
 // ── Admin broadcast ───────────────────────────────────────────────────────
 let initAdminMsg = false;
