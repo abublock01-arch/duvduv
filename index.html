@@ -2903,8 +2903,8 @@ function setPickerHandPose(hand, rail, progress, timeLinear){
   hand.style.transform = `translateY(${y}px)`;
   let opacity = 1;
   const t = timeLinear ?? p;
-  if (t < 0.12) opacity = t / 0.12;
-  else if (t > 0.88) opacity = (1 - t) / 0.12;
+  if (t < 0.1) opacity = t / 0.1;
+  else if (t > 0.9) opacity = (1 - t) / 0.1;
   hand.style.opacity = String(Math.min(1, Math.max(0, opacity)));
 }
 
@@ -3058,8 +3058,15 @@ function runPickerSwipeHint(track, wrap, token){
       return;
     }
     const t = Math.min(1, (now - start) / PICKER_SWIPE_HINT_MS);
-    const p = 1 - Math.pow(1 - t, 3);
-    setPickerHandPose(hand, rail, p, p);
+    let moveP;
+    if (t <= 0.5) {
+      const u = t * 2;
+      moveP = 1 - Math.pow(1 - u, 3);
+    } else {
+      const u = (t - 0.5) * 2;
+      moveP = Math.pow(1 - u, 3);
+    }
+    setPickerHandPose(hand, rail, moveP, t);
     if (t < 1) {
       requestAnimationFrame(tick);
       return;
