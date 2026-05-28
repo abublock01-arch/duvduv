@@ -245,9 +245,15 @@ bot.onText(/\/test/, async (msg) => {
     const userDoc = await db.collection('users').doc(uid).get();
     const u = userDoc.exists ? userDoc.data() : null;
 
-    // 2. So'nggi order
-    const ordSnap = await db.collection('orders').orderBy('createdAt','desc').limit(1).get();
-    const lastOrd = ordSnap.empty ? null : ordSnap.docs[0].data();
+    // 2. So'nggi arxivlanmagan order
+    const ordSnap = await db.collection('orders').orderBy('createdAt','desc').limit(5).get();
+    const lastOrd = ordSnap.docs.map(d => d.data()).find(d => !d.archived) || null;
+
+    // 3. Jami haydovchilar soni (chatId bor + driver/route bor)
+    const allSnap = await db.collection('users').where('chatId', '>', 0).get();
+    const drivers = allSnap.docs.map(d => d.data()).filter(u =>
+      u.role === 'driver' || (u.routeFrom && u.routeTo)
+    );
 
     const lines = [
       `🔧 *Bot diagnostika*\n`,
@@ -259,10 +265,12 @@ bot.onText(/\/test/, async (msg) => {
       u ? `   routeTo: \`${u.routeTo || '—'}\`` : '',
       u ? `   notifications: \`${u.notifications}\`` : '',
       ``,
-      `📦 So'nggi order: ${lastOrd ? '✅' : '❌ yo\'q'}`,
+      `🚐 Bildirishnoma oladigan haydovchilar: *${drivers.length} ta*`,
+      ...drivers.map(d => `   • \`${d.chatId}\` ${d.routeFrom || '?'} → ${d.routeTo || 'har yer'}`),
+      ``,
+      `📦 So'nggi aktiv order: ${lastOrd ? '✅' : '❌ yo\'q'}`,
       lastOrd ? `   from: \`${lastOrd.from}\`  to: \`${lastOrd.to || lastOrd.dest}\`` : '',
       lastOrd ? `   telegramId: \`${lastOrd.telegramId || '—'}\`` : '',
-      lastOrd ? `   archived: \`${lastOrd.archived || false}\`` : '',
       ``,
       `✅ Bot ishlayapti!`
     ].filter(l => l !== null && l !== undefined);
@@ -430,12 +438,13 @@ async function notifyDrivers(from, to, type, senderUsername) {
   if (!from || !to) { console.log('⚠️ notifyDrivers: from yoki to yo\'q'); return; }
   console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}`);
 
+  // Barcha chatId bor foydalanuvchilarni olamiz — role va route xotirada tekshiramiz
+  // (role:driver saqlanmagan eski foydalanuvchilar ham tushsin)
   const usersSnap = await db.collection('users')
-    .where('role', '==', 'driver')
-    .where('notifications', '==', true)
+    .where('chatId', '>', 0)
     .get();
 
-  console.log(`👥 Firestore'da role=driver, notifications=true: ${usersSnap.size} ta topildi`);
+  console.log(`👥 Jami chatId bor foydalanuvchilar: ${usersSnap.size} ta`);
 
   // type qiymatiga qarab
   let icon, label;
@@ -456,16 +465,28 @@ async function notifyDrivers(from, to, type, senderUsername) {
     const driver = doc.data();
     if (!driver.chatId) continue;
 
+    // Bildirishnoma o'chirilgan — o'tkazib yuboramiz
+    if (driver.notifications === false) continue;
+
+    // Haydovchi ekanligini tekshiramiz: role:driver YOKI routeFrom bor
+    const isDriver = driver.role === 'driver' || (driver.routeFrom && driver.routeTo);
+    if (!isDriver) {
+      console.log(`⏭ ${doc.id}: haydovchi emas (role=${driver.role}, route=${driver.routeFrom}→${driver.routeTo})`);
+      continue;
+    }
+
+    // Marshrut mos kelishini tekshiramiz (belgilangan bo'lsa)
     const driverFrom = normalizeRegion(driver.routeFrom || '');
     const driverTo   = normalizeRegion(driver.routeTo   || '');
     if (driverFrom && driverTo) {
       const match = (driverFrom === from && driverTo === to) ||
                     (driverFrom === to   && driverTo === from);
       if (!match) {
-        console.log(`⏭ Driver ${doc.id}: yo'nalish mos kelmadi (${driverFrom}→${driverTo} vs ${from}→${to})`);
+        console.log(`⏭ ${doc.id}: marshrut mos kelmadi (${driverFrom}→${driverTo} vs ${from}→${to})`);
         continue;
       }
     }
+    // routeFrom/routeTo yo'q bo'lsa — barcha yo'nalishlarga tayyor haydovchi, xabar yuboramiz
 
     await bot.sendMessage(driver.chatId,
       `🔔 *Янги эълон*\n\n` +
