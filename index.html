@@ -1824,8 +1824,6 @@ function initFirebase(){
     db = firebase.firestore();
     subscribeFirestoreOrders();
     subscribeFirestoreTravels();
-    // Firebase tayyor — endi ruxsat so'rash va chatId saqlash xavfsiz
-    setTimeout(() => { try { requestNotificationPermission(); } catch(_) {} }, 800);
   } catch(e){ console.warn('Firebase init xatosi:', e); }
 }
 async function saveOrderToFirestore(order){
@@ -2251,6 +2249,8 @@ if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
     initTelegramUser();
+    // telegramUser.id tayyor, Firebase 1.5s da tayyor bo'ladi — keyin ruxsat so'raymiz
+    setTimeout(() => { try { requestNotificationPermission(); } catch(_) {} }, 1500);
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
