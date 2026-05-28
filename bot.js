@@ -4,6 +4,8 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 const admin = require('firebase-admin');
+const { GoogleAuth } = require('google-auth-library');
+const https = require('https');
 
 // ── Firebase ──────────────────────────────────────────────────────────────
 const serviceAccount = require('./yolcar-30649-firebase-adminsdk-fbsvc-491c85b007.json');
@@ -11,7 +13,87 @@ admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   projectId: 'yolcar-30649',
 });
-const db = admin.firestore();
+const db = admin.firestore(); // faqat yozish uchun (notifySender/notifyDrivers/users)
+
+// ── Firestore REST API (o'qish uchun — gRPC muammosini chetlab o'tish) ──
+const PROJECT = 'yolcar-30649';
+const FS_BASE = `https://firestore.googleapis.com/v1/projects/${PROJECT}/databases/(default)/documents`;
+
+const googleAuth = new GoogleAuth({
+  credentials: serviceAccount,
+  scopes: ['https://www.googleapis.com/auth/datastore']
+});
+
+async function fsToken() {
+  const client = await googleAuth.getClient();
+  const t = await client.getAccessToken();
+  return t.token;
+}
+
+function httpsPost(url, body, token) {
+  return new Promise((resolve, reject) => {
+    const data = JSON.stringify(body);
+    const u = new URL(url);
+    const req = https.request({
+      hostname: u.hostname, path: u.pathname + u.search,
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Content-Length': Buffer.byteLength(data)
+      }
+    }, res => {
+      let s = '';
+      res.on('data', c => s += c);
+      res.on('end', () => { try { resolve(JSON.parse(s)); } catch(e) { reject(e); } });
+    });
+    req.on('error', reject);
+    req.write(data);
+    req.end();
+  });
+}
+
+async function fsQuery(collectionId, afterMs) {
+  const token = await fsToken();
+  const ts = new Date(afterMs).toISOString();
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: 'createdAt' },
+          op: 'GREATER_THAN',
+          value: { timestampValue: ts }
+        }
+      },
+      orderBy: [{ field: { fieldPath: 'createdAt' }, direction: 'ASCENDING' }]
+    }
+  };
+  const result = await httpsPost(`${FS_BASE}:runQuery`, body, token);
+  if (!Array.isArray(result)) return [];
+  return result
+    .filter(r => r.document)
+    .map(r => {
+      const f = r.document.fields || {};
+      const get = (k) => {
+        const v = f[k];
+        if (!v) return '';
+        return v.stringValue ?? v.integerValue ?? v.booleanValue ?? v.timestampValue ?? '';
+      };
+      return {
+        from:            get('from'),
+        to:              get('to'),
+        dest:            get('dest'),
+        type:            get('type'),
+        telegramId:      Number(get('telegramId')) || 0,
+        telegramUsername:get('telegramUsername'),
+        archived:        f.archived?.booleanValue === true,
+        createdAt:       f.createdAt?.timestampValue
+          ? new Date(f.createdAt.timestampValue).getTime()
+          : 0
+      };
+    });
+}
 
 // ── Bot ───────────────────────────────────────────────────────────────────
 const TOKEN = process.env.BOT_TOKEN;
@@ -508,65 +590,53 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
   }
 }
 
-// ── Polling (onSnapshot o'rniga — Railway gRPC muammosi) ─────────────────
-const POLL_INTERVAL = 5000; // 5 soniya
-let lastOrderTime   = Date.now();
-let lastTravelTime  = Date.now();
+// ── Polling (REST API orqali — gRPC bypass) ───────────────────────────────
+const POLL_MS     = 6000;
+let lastOrderMs   = Date.now();
+let lastTravelMs  = Date.now();
 
 async function pollOrders() {
   try {
-    const cutoff = admin.firestore.Timestamp.fromMillis(lastOrderTime - 1000);
-    const snap = await db.collection('orders')
-      .where('createdAt', '>', cutoff)
-      .orderBy('createdAt', 'asc')
-      .get();
-    for (const doc of snap.docs) {
-      const d = doc.data();
+    const docs = await fsQuery('orders', lastOrderMs);
+    for (const d of docs) {
       if (d.archived) continue;
-      const ts = d.createdAt?.toMillis?.() || 0;
-      if (ts <= lastOrderTime) continue;
-      lastOrderTime = ts;
-      const age = Date.now() - ts;
-      if (age > 60000) continue;
+      if (d.createdAt <= lastOrderMs) continue;
+      lastOrderMs = d.createdAt;
+      const age = Date.now() - d.createdAt;
+      if (age > 120000) continue;
       const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
       const from = normalizeRegion(d.from || '');
       const to   = normalizeRegion(d.to || d.dest || '');
-      console.log(`📦 Order: from="${from}" to="${to}" telegramId=${d.telegramId}`);
-      if (!from || !to) { console.warn('⚠️ from yoki to bo\'sh'); continue; }
-      await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender xato:', e.message));
-      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers xato:', e.message));
+      console.log(`📦 Order: "${from}"→"${to}" id=${d.telegramId}`);
+      if (!from || !to) continue;
+      await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender:', e.message));
+      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollOrders xato:', e.message); }
 }
 
 async function pollTravels() {
   try {
-    const cutoff = admin.firestore.Timestamp.fromMillis(lastTravelTime - 1000);
-    const snap = await db.collection('travels')
-      .where('createdAt', '>', cutoff)
-      .orderBy('createdAt', 'asc')
-      .get();
-    for (const doc of snap.docs) {
-      const d = doc.data();
+    const docs = await fsQuery('travels', lastTravelMs);
+    for (const d of docs) {
       if (d.archived) continue;
-      const ts = d.createdAt?.toMillis?.() || 0;
-      if (ts <= lastTravelTime) continue;
-      lastTravelTime = ts;
-      const age = Date.now() - ts;
-      if (age > 60000) continue;
+      if (d.createdAt <= lastTravelMs) continue;
+      lastTravelMs = d.createdAt;
+      const age = Date.now() - d.createdAt;
+      if (age > 120000) continue;
       const from = normalizeRegion(d.from || '');
       const to   = normalizeRegion(d.to || d.dest || '');
-      console.log(`🚐 Travel: from="${from}" to="${to}" telegramId=${d.telegramId}`);
-      if (!from || !to) { console.warn('⚠️ from yoki to bo\'sh'); continue; }
-      await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender xato:', e.message));
-      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers xato:', e.message));
+      console.log(`🚐 Travel: "${from}"→"${to}" id=${d.telegramId}`);
+      if (!from || !to) continue;
+      await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender:', e.message));
+      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollTravels xato:', e.message); }
 }
 
-setInterval(pollOrders,  POLL_INTERVAL);
-setInterval(pollTravels, POLL_INTERVAL);
-console.log('✅ orders + travels polling tayyor (har 5 soniya)');
+setInterval(pollOrders,  POLL_MS);
+setInterval(pollTravels, POLL_MS);
+console.log('✅ REST polling tayyor (har 6 soniya)');
 
 // ── Admin broadcast ───────────────────────────────────────────────────────
 let initAdminMsg = false;
