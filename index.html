@@ -265,46 +265,82 @@ body.view-sender .header{background:var(--app-bg)!important}
   background:#f2f2f7;border-radius:20px 20px 0 0;
 }
 .detail-sheet{display:flex;flex-direction:column;gap:0;background:#f2f2f7}
-.detail-route{padding:2px 16px 14px}
+.detail-route{padding:0}
+.detail-group--route{padding-top:10px;padding-bottom:2px}
+.detail-route-head{padding:0 16px 6px}
 .detail-route-pill{
-  display:inline-flex;margin-bottom:10px;padding:3px 9px;border-radius:6px;
+  display:inline-flex;padding:4px 10px;border-radius:8px;
   font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;
   color:#2AABEE;background:rgba(42,171,238,.12);
+  border:1px solid rgba(42,171,238,.16);
 }
-.detail-route-pill--travel{color:#e67e22;background:rgba(230,126,34,.12)}
+.detail-route-pill--travel{color:#e67e22;background:rgba(230,126,34,.12);border-color:rgba(230,126,34,.18)}
 .detail-route-leg{
-  display:flex;align-items:flex-start;gap:12px;padding:5px 0;
+  display:flex;align-items:center;gap:12px;padding:11px 16px;width:100%;
+  border:none;background:transparent;font-family:inherit;text-align:left;
 }
+.detail-route-leg--tap{
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.detail-route-leg--tap:active{background:rgba(0,0,0,.035)}
+.detail-route-leg.is-active{background:rgba(42,171,238,.07)}
+.detail-route-dot{
+  width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:1px;
+}
+.detail-route-dot--from{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.18)}
+.detail-route-dot--to{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.16)}
+.detail-route-content{flex:1;min-width:0}
 .detail-route-lbl{
-  width:76px;flex-shrink:0;font-size:15px;font-weight:400;color:#8e8e93;line-height:1.35;
+  display:block;font-size:13px;font-weight:500;color:#8e8e93;line-height:1.2;margin-bottom:3px;
 }
-.detail-route-body{flex:1;min-width:0}
+.detail-route-val{
+  display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;
+  gap:6px;min-width:0;width:100%;
+}
 .detail-route-main{
-  display:block;font-size:16px;font-weight:600;color:#000;line-height:1.3;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:16px;font-weight:600;color:#000;line-height:1.25;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;
 }
 .detail-route-sub{
-  display:inline-flex;margin-top:4px;max-width:100%;
-  font-size:13px;font-weight:500;color:#636366;line-height:1.2;
-  padding:2px 8px;border-radius:6px;background:rgba(0,0,0,.06);
+  display:inline-flex;align-self:flex-start;max-width:100%;
+  font-size:12px;font-weight:600;color:#475569;line-height:1.2;
+  padding:2px 8px;border-radius:7px;background:rgba(42,171,238,.1);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
-.detail-note-wrap{padding:10px 16px 12px}
+.detail-route-leg--to .detail-route-sub{background:rgba(255,140,0,.12);color:#bf6516}
+.detail-route-chev{
+  flex-shrink:0;font-size:20px;font-weight:400;color:#c7c7cc;line-height:1;
+}
+.detail-sep--route{margin-left:37px}
+.detail-picker-panel{
+  margin:2px 12px 10px;padding:8px 0 4px;
+  border-radius:12px;background:rgba(242,242,247,.92);
+  border:1px solid rgba(0,0,0,.05);
+}
+.detail-picker-panel[hidden]{display:none!important}
+.detail-picker-lbl{
+  padding:0 12px 6px;font-size:13px;font-weight:600;color:#8e8e93;text-align:center;
+}
+.picker-wrap--detail{margin:0}
+.picker-wrap--detail .region-picker--vertical{height:156px;margin:0}
+.detail-note-wrap{padding:12px 16px}
 .detail-note-lbl{
-  display:block;font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:6px;
+  display:block;font-size:13px;font-weight:600;color:#8e8e93;margin-bottom:8px;
 }
 .detail-note{
-  width:100%;min-height:72px;padding:10px 12px;border:none;border-radius:10px;
-  background:#f2f2f7;font-size:16px;font-weight:400;line-height:1.35;color:#000;
-  font-family:inherit;resize:none;outline:none;
-  -webkit-tap-highlight-color:transparent;
+  width:100%;min-height:76px;padding:11px 12px;border:1px solid rgba(0,0,0,.06);
+  border-radius:10px;background:#f2f2f7;font-size:16px;font-weight:400;line-height:1.35;
+  color:#000;font-family:inherit;resize:none;outline:none;
+  -webkit-tap-highlight-color:transparent;transition:border-color .15s,background .15s;
 }
 .detail-note::placeholder{color:#aeaeb2}
-.detail-note:focus{background:#ebebf0}
+.detail-note:focus{border-color:rgba(42,171,238,.35);background:#fff}
 .detail-group{
-  margin:0 12px 8px;background:#fff;border-radius:12px;overflow:hidden;
+  margin:0 12px 10px;background:#fff;border-radius:14px;overflow:hidden;
+  border:1px solid rgba(0,0,0,.05);
+  box-shadow:0 2px 14px rgba(15,23,42,.06);
 }
-.detail-group--danger{margin-top:4px}
+.detail-group--danger{margin-top:2px;border-color:rgba(255,59,48,.08);box-shadow:0 2px 10px rgba(255,59,48,.05)}
 .detail-sep{height:.5px;background:rgba(60,60,67,.12);margin-left:16px}
 .detail-cell{
   display:flex;align-items:center;gap:10px;min-height:44px;padding:0 16px;
@@ -1247,17 +1283,21 @@ body.view-sender.theme-telegram .toggle,
 }
 .theme-telegram .shipment-icon-btn--delete svg{stroke:#E74C3C!important}
 .theme-telegram .sheet--detail,.theme-telegram .detail-sheet{background:var(--tg-bg)!important}
-.theme-telegram .detail-route-lbl,.theme-telegram .detail-note-lbl{color:var(--tg-hint)!important}
+.theme-telegram .detail-route-lbl,.theme-telegram .detail-note-lbl,.theme-telegram .detail-picker-lbl{color:var(--tg-hint)!important}
 .theme-telegram .detail-route-main,.theme-telegram .detail-cell-lbl,.theme-telegram .detail-stepper-val{color:var(--tg-text)!important}
-.theme-telegram .detail-route-sub{color:var(--tg-hint)!important;background:var(--tg-bg)!important}
+.theme-telegram .detail-route-sub{color:var(--tg-hint)!important;background:color-mix(in srgb,var(--tg-btn) 10%,transparent)!important}
+.theme-telegram .detail-route-leg--to .detail-route-sub{background:rgba(255,140,0,.12)!important;color:#e67e22!important}
 .theme-telegram .detail-route-pill{
   color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 14%,transparent)!important;
+  border-color:color-mix(in srgb,var(--tg-btn) 22%,transparent)!important;
 }
-.theme-telegram .detail-route-pill--travel{color:#e67e22!important;background:rgba(230,126,34,.14)!important}
-.theme-telegram .detail-group{background:var(--tg-section)!important}
+.theme-telegram .detail-route-pill--travel{color:#e67e22!important;background:rgba(230,126,34,.14)!important;border-color:rgba(230,126,34,.2)!important}
+.theme-telegram .detail-group{background:var(--tg-section)!important;border-color:rgba(0,0,0,.06)!important;box-shadow:none!important}
+.theme-telegram .detail-route-leg.is-active{background:color-mix(in srgb,var(--tg-btn) 8%,transparent)!important}
+.theme-telegram .detail-picker-panel{background:var(--tg-bg)!important;border-color:rgba(0,0,0,.06)!important}
 .theme-telegram .detail-pin{color:var(--tg-btn)!important;background:color-mix(in srgb,var(--tg-btn) 12%,transparent)!important}
-.theme-telegram .detail-note{background:var(--tg-bg)!important;color:var(--tg-text)!important}
-.theme-telegram .detail-note:focus{background:color-mix(in srgb,var(--tg-bg) 88%,var(--tg-hint))!important}
+.theme-telegram .detail-note{background:var(--tg-bg)!important;color:var(--tg-text)!important;border-color:rgba(0,0,0,.08)!important}
+.theme-telegram .detail-note:focus{border-color:color-mix(in srgb,var(--tg-btn) 40%,transparent)!important;background:var(--tg-section)!important}
 .theme-telegram .detail-note::placeholder{color:var(--tg-hint)!important}
 .theme-telegram .detail-stepper-btn{background:var(--tg-bg)!important;color:var(--tg-text)!important}
 .theme-telegram .detail-cell--danger{color:#ff3b30!important}
@@ -1833,20 +1873,42 @@ body.view-sender.theme-telegram .toggle,
   <div class="sheet sheet--detail detail-sheet" onclick="event.stopPropagation()">
     <button type="button" class="sheet-close" onclick="closeShipmentDetail()" aria-label="Yopish">×</button>
     <div class="sheet-drag"></div>
-    <div class="detail-route">
-      <span class="detail-route-pill" id="detailStatus"></span>
-      <div class="detail-route-leg">
-        <span class="detail-route-lbl" id="detailFromLbl">Qayerdan</span>
-        <div class="detail-route-body">
-          <span class="detail-route-main" id="detailFromMain"></span>
-          <span class="detail-route-sub" id="detailFromSub" hidden></span>
-        </div>
+    <div class="detail-group detail-group--route" id="detailRouteGroup">
+      <div class="detail-route-head">
+        <span class="detail-route-pill" id="detailStatus"></span>
       </div>
-      <div class="detail-route-leg">
-        <span class="detail-route-lbl" id="detailToLbl">Qayerga</span>
-        <div class="detail-route-body">
-          <span class="detail-route-main" id="detailToMain"></span>
-          <span class="detail-route-sub" id="detailToSub" hidden></span>
+      <button type="button" class="detail-route-leg detail-route-leg--tap" id="detailFromBtn" onclick="onDetailRouteLegTap('from')">
+        <span class="detail-route-dot detail-route-dot--from" aria-hidden="true"></span>
+        <div class="detail-route-content">
+          <span class="detail-route-lbl" id="detailFromLbl">Qayerdan</span>
+          <div class="detail-route-val">
+            <span class="detail-route-main" id="detailFromMain"></span>
+            <span class="detail-route-sub" id="detailFromSub" hidden></span>
+          </div>
+        </div>
+        <span class="detail-route-chev" id="detailFromChev" hidden aria-hidden="true">›</span>
+      </button>
+      <div class="detail-sep detail-sep--route" aria-hidden="true"></div>
+      <button type="button" class="detail-route-leg detail-route-leg--tap" id="detailToBtn" onclick="onDetailRouteLegTap('to')">
+        <span class="detail-route-dot detail-route-dot--to" aria-hidden="true"></span>
+        <div class="detail-route-content">
+          <span class="detail-route-lbl" id="detailToLbl">Qayerga</span>
+          <div class="detail-route-val">
+            <span class="detail-route-main" id="detailToMain"></span>
+            <span class="detail-route-sub" id="detailToSub" hidden></span>
+          </div>
+        </div>
+        <span class="detail-route-chev" id="detailToChev" aria-hidden="true">›</span>
+      </button>
+      <div class="detail-picker-panel" id="detailRoutePickerPanel" hidden>
+        <div class="detail-picker-lbl" id="detailPickerStepLbl">Viloyat tanlash</div>
+        <div class="picker-wrap picker-wrap--detail">
+          <div class="picker-wrap__main">
+            <div class="region-picker region-picker--vertical" id="detailRoutePicker" aria-label="Manzil tanlash">
+              <div class="region-picker-track" id="detailRoutePickerTrack"></div>
+            </div>
+          </div>
+          <div class="picker-swipe-rail" aria-hidden="true"></div>
         </div>
       </div>
     </div>
@@ -2626,6 +2688,11 @@ const SHIPMENT_ICON_PIN = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="
 const SHIPMENT_ICON_TRASH = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 13h8l1-13"/><path d="M10 11v5M14 11v5"/></svg>';
 const DETAIL_ICON_MAP = '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6a2.5 2.5 0 0 1 0 5.5z"/></svg>';
 let detailSheetIconsReady = false;
+let detailRouteEditLeg = null;
+let detailRouteEditStep = 1;
+let detailRouteEditRegion = '';
+let detailRouteEditDistrict = '';
+let detailRoutePickerKey = '';
 
 const UZ_REGIONS = [
   'Toshkent shahar', 'Toshkent viloyat', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
@@ -3114,6 +3181,12 @@ function getVerticalPickerOnCommit(track){
       if (el) el.value = district;
     };
   }
+  if (id === 'detailRoutePickerTrack') {
+    return value => {
+      if (detailRouteEditStep === 1) detailRouteEditRegion = value;
+      else detailRouteEditDistrict = value;
+    };
+  }
   return null;
 }
 
@@ -3124,6 +3197,9 @@ function getSelectedValueForTrack(track){
   if (id === 'travelRegionPickerTrack') return selectedTravelRegion || document.getElementById('travelRegion')?.value || '';
   if (id === 'sendDistrictPickerTrack') return selectedSendDistrict || document.getElementById('sendDistrict')?.value || '';
   if (id === 'travelDistrictPickerTrack') return selectedTravelDistrict || document.getElementById('travelDistrict')?.value || '';
+  if (id === 'detailRoutePickerTrack') {
+    return detailRouteEditStep === 1 ? detailRouteEditRegion : detailRouteEditDistrict;
+  }
   return '';
 }
 
@@ -3380,16 +3456,23 @@ function onVerticalRegionPickerItemClick(track, btn){
   const region = btn.dataset.region;
   if (!region) return;
   const trackId = track.id;
-  const isRegionPicker = trackId === 'sendRegionPickerTrack' || trackId === 'travelRegionPickerTrack';
+  const isRegionPicker = trackId === 'sendRegionPickerTrack' || trackId === 'travelRegionPickerTrack' || (trackId === 'detailRoutePickerTrack' && detailRouteEditStep === 1);
   if (isRegionPicker && btn.classList.contains('is-center')) {
-    const onRegionStep = trackId === 'sendRegionPickerTrack' ? sendSheetStep === 1 : travelSheetStep === 1;
+    const onRegionStep = trackId === 'sendRegionPickerTrack' ? sendSheetStep === 1 : (trackId === 'travelRegionPickerTrack' ? travelSheetStep === 1 : detailRouteEditStep === 1);
     if (onRegionStep) {
       const commit = getVerticalPickerOnCommit(track);
       if (commit) commit(region);
       if (trackId === 'sendRegionPickerTrack') sendSheetGoToDistrict(region);
-      else travelSheetNext();
+      else if (trackId === 'travelRegionPickerTrack') travelSheetNext();
+      else detailRoutePickerGoDistrict();
       return;
     }
+  }
+  if (trackId === 'detailRoutePickerTrack' && detailRouteEditStep === 2 && btn.classList.contains('is-center')) {
+    const commit = getVerticalPickerOnCommit(track);
+    if (commit) commit(region);
+    commitDetailRouteEdit();
+    return;
   }
   scrollPickerToRegion(track, region, !prefersReducedMotion());
 }
@@ -3960,7 +4043,7 @@ const UI_PHRASE_CYRILLIC = {
   "Yo'lovchi": 'Йўловчи',
   'Qayerdan': 'Қайердан', 'Qayerga': 'Қайерга',
   "Yo'lovchi soni": 'Йўловчи сони',
-  "Joylashuvni o'zgartirish": 'Жойлашuvни ўзгартириш',
+  "Joylashuvni o'zgartirish": 'Жойлашувни ўзгартириш',
   "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing": 'Йўловчи билан боғланиб, йўл ҳақида келишинг',
   'Aktiv': 'Актив', 'Bugun': 'Бугун',
   'Viloyatni tanlang': 'Вилоятни танланг', 'Viloyat tanlash': 'Вилоят танлаш',
@@ -4020,7 +4103,12 @@ const MORPH_UI_ENTRIES = [
   ['#driverDistrictChipText', 'Tuman'],
   ['#travelMapHint', "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing"],
   ['#travelMapContactBtnText', 'Telegramda yozish'],
-  ['#sheetAcceptBtn', 'Buyurtmani Qabul Qilish']
+  ['#sheetAcceptBtn', 'Buyurtmani Qabul Qilish'],
+  ['#detailFromLbl', 'Qayerdan'], ['#detailToLbl', 'Qayerga'],
+  ['#detailPassengersLabel', "Yo'lovchi soni"],
+  ['#detailNoteLabel', 'Izoh'],
+  ['#detailMapTitle', "Joylashuvni o'zgartirish", 'Жойлашувни ўзгартириш'],
+  ['#detailPickerStepLbl', 'Viloyat tanlash', 'Вилоят танлаш']
 ];
 
 function latinToCyrillic(text){
@@ -4127,6 +4215,7 @@ function initAllMorphTexts(){
   });
 
   registerMorphAttr(document.getElementById('editNote'), 'placeholder', EDIT_NOTE_PH_LATIN, EDIT_NOTE_PH_CYRILLIC);
+  registerMorphAttr(document.getElementById('detailNote'), 'placeholder', EDIT_NOTE_PH_LATIN, EDIT_NOTE_PH_CYRILLIC);
   registerMorphAttr(document.getElementById('headerCloseBtn'), 'aria-label', 'Yopish');
   registerMorphAttr(document.getElementById('mapLayersBtn'), 'aria-label', "Buyurtmalarni ko'rsatish");
   [
@@ -5797,14 +5886,150 @@ function shipmentDetailRouteLegs(s){
   };
 }
 
+function parseRouteLegDisplay(destStr){
+  if (!destStr) return { main: '—', sub: '' };
+  const sep = destStr.indexOf(' — ');
+  const reg = sep >= 0 ? destStr.slice(0, sep) : destStr;
+  const dist = sep >= 0 ? destStr.slice(sep + 3) : '';
+  if (scriptLatin) return { main: reg || '—', sub: dist };
+  return {
+    main: regionPickerLabel(reg) || '—',
+    sub: dist ? districtPickerLabel(dist) : ''
+  };
+}
+
 function renderDetailRouteLeg(prefix, destStr){
-  const leg = parseRouteLegCyrillic(destStr || '');
+  const leg = parseRouteLegDisplay(destStr || '');
   const mainEl = document.getElementById('detail' + prefix + 'Main');
   const subEl = document.getElementById('detail' + prefix + 'Sub');
   if (mainEl) mainEl.textContent = leg.main;
   if (subEl) {
     subEl.textContent = leg.sub;
     subEl.hidden = !leg.sub;
+  }
+}
+
+function closeDetailRoutePicker(){
+  detailRouteEditLeg = null;
+  detailRouteEditStep = 1;
+  detailRoutePickerKey = '';
+  const panel = document.getElementById('detailRoutePickerPanel');
+  if (panel) panel.hidden = true;
+  document.getElementById('detailFromBtn')?.classList.remove('is-active');
+  document.getElementById('detailToBtn')?.classList.remove('is-active');
+}
+
+function initDetailRoutePicker(){
+  const track = document.getElementById('detailRoutePickerTrack');
+  if (!track || !detailRouteEditLeg) return;
+  const isRegion = detailRouteEditStep === 1;
+  const list = isRegion ? getPickerRegions() : getDistrictPickerList(detailRouteEditRegion);
+  if (!list.length) return;
+  let selected = isRegion ? detailRouteEditRegion : detailRouteEditDistrict;
+  if (!selected || !list.includes(selected)) selected = isRegion ? getDefaultPickerRegion() : list[0];
+  if (isRegion) detailRouteEditRegion = selected;
+  else detailRouteEditDistrict = selected;
+  const key = (isRegion ? 'r:' : 'd:' + detailRouteEditRegion + ':') + list.join('|');
+  if (detailRoutePickerKey !== key) {
+    detailRoutePickerKey = key;
+    delete track.dataset.pickerBound;
+    buildRegionPickerTrack(track, list);
+    bindRegionPickerScroll(track, value => {
+      if (detailRouteEditStep === 1) detailRouteEditRegion = value;
+      else detailRouteEditDistrict = value;
+    });
+  }
+  track.dataset.pickerProgrammatic = '1';
+  scrollPickerToRegion(track, selected, false);
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => delete track.dataset.pickerProgrammatic);
+  });
+  refreshPickerVisualsDeferred(track, value => {
+    if (detailRouteEditStep === 1) detailRouteEditRegion = value;
+    else detailRouteEditDistrict = value;
+  });
+  finalizeVerticalPickerOpen(track);
+  applyCyrillicUI();
+}
+
+function detailRoutePickerGoDistrict(){
+  if (!detailRouteEditRegion) return;
+  detailRouteEditStep = 2;
+  const districts = getDistrictPickerList(detailRouteEditRegion);
+  if (!detailRouteEditDistrict || !districts.includes(detailRouteEditDistrict)) {
+    detailRouteEditDistrict = districts[0] || '';
+  }
+  const lbl = document.getElementById('detailPickerStepLbl');
+  if (lbl) setI18nText(lbl, TRAVEL_DISTRICT_TITLE_LATIN, TRAVEL_DISTRICT_TITLE_CYRILLIC);
+  detailRoutePickerKey = '';
+  initDetailRoutePicker();
+}
+
+function onDetailRouteLegTap(leg){
+  const s = findShipment(detailShipmentKey);
+  if (!s) return;
+  if (leg === 'from' && s.type !== 'travel') return;
+  if (detailRouteEditLeg === leg) {
+    closeDetailRoutePicker();
+    return;
+  }
+  closeDetailRoutePicker();
+  detailRouteEditLeg = leg;
+  detailRouteEditStep = 1;
+  const route = shipmentDetailRouteLegs(s);
+  const destStr = leg === 'from' ? route.from : route.to;
+  detailRouteEditRegion = destToRegion(destStr) || getDefaultPickerRegion();
+  detailRouteEditDistrict = destToDistrict(destStr) || '';
+  const panel = document.getElementById('detailRoutePickerPanel');
+  if (panel) panel.hidden = false;
+  document.getElementById('detailFromBtn')?.classList.toggle('is-active', leg === 'from');
+  document.getElementById('detailToBtn')?.classList.toggle('is-active', leg === 'to');
+  const lbl = document.getElementById('detailPickerStepLbl');
+  if (lbl) setI18nText(lbl, 'Viloyat tanlash', 'Вилоят танлаш');
+  detailRoutePickerKey = '';
+  initDetailRoutePicker();
+}
+
+async function commitDetailRouteEdit(){
+  const s = findShipment(detailShipmentKey);
+  if (!s || !detailRouteEditLeg) return;
+  const value = formatDest(detailRouteEditRegion, detailRouteEditDistrict);
+  if (detailRouteEditLeg === 'from') {
+    s.from = value;
+    if (s.type === 'travel') {
+      const t = travels.find(x => String(x.firestoreId || x.id) === String(s.firestoreId || s.id));
+      if (t) t.from = value;
+    }
+  } else {
+    s.to = value;
+    s.dest = value;
+    if (s.type === 'travel') {
+      const t = travels.find(x => String(x.firestoreId || x.id) === String(s.firestoreId || s.id));
+      if (t) { t.to = value; t.dest = value; }
+    } else {
+      const o = orders.find(x => String(x.firestoreId || x.id) === String(s.firestoreId || s.id));
+      if (o) o.dest = value;
+      syncOrderFromShipment(s);
+    }
+  }
+  persistData();
+  renderDetailRouteLeg('From', shipmentDetailRouteLegs(s).from);
+  renderDetailRouteLeg('To', shipmentDetailRouteLegs(s).to);
+  renderShipments();
+  refreshOrderMarkersDebounced();
+  closeDetailRoutePicker();
+  if (!s.firestoreId || !db) return;
+  try {
+    if (s.type === 'travel') {
+      const fields = detailRouteEditLeg === 'from'
+        ? { from: value }
+        : { to: value, dest: value };
+      await updateTravelInFirestore(s.firestoreId, fields);
+    } else {
+      await updateOrderInFirestore(s.firestoreId, { dest: value });
+    }
+  } catch (e) {
+    console.warn('Manzil yangilash xatosi:', e);
   }
 }
 
@@ -5868,6 +6093,7 @@ function openShipmentDetail(key){
   const s = findShipment(key);
   if (!s) return;
   ensureDetailSheetIcons();
+  closeDetailRoutePicker();
   detailShipmentKey = key;
   const route = shipmentDetailRouteLegs(s);
   const isTravel = s.type === 'travel';
@@ -5879,6 +6105,10 @@ function openShipmentDetail(key){
   const noteLabel = document.getElementById('detailNoteLabel');
   const fromLbl = document.getElementById('detailFromLbl');
   const toLbl = document.getElementById('detailToLbl');
+  const fromBtn = document.getElementById('detailFromBtn');
+  const toBtn = document.getElementById('detailToBtn');
+  const fromChev = document.getElementById('detailFromChev');
+  const toChev = document.getElementById('detailToChev');
   renderDetailRouteLeg('From', route.from);
   renderDetailRouteLeg('To', route.to);
   if (statusEl) {
@@ -5886,10 +6116,14 @@ function openShipmentDetail(key){
     statusEl.classList.toggle('detail-route-pill--travel', isTravel);
   }
   if (passengersBlock) passengersBlock.hidden = !isTravel;
+  if (fromBtn) fromBtn.classList.toggle('detail-route-leg--tap', isTravel);
+  if (fromChev) fromChev.hidden = !isTravel;
+  if (toBtn) toBtn.classList.add('detail-route-leg--tap');
+  if (toChev) toChev.hidden = false;
   if (fromLbl) setI18nText(fromLbl, 'Qayerdan');
   if (toLbl) setI18nText(toLbl, 'Qayerga');
   if (passengersLabel) setI18nText(passengersLabel, "Yo'lovchi soni");
-  if (mapTitle) setI18nText(mapTitle, "Joylashuvni o'zgartirish");
+  if (mapTitle) setI18nText(mapTitle, "Joylashuvni o'zgartirish", 'Жойлашувни ўзгартириш');
   if (noteLabel) setI18nText(noteLabel, 'Izoh');
   if (noteEl) noteEl.value = s.note || '';
   renderDetailPassengers(s.passengersCount ?? 1);
@@ -5900,6 +6134,7 @@ function openShipmentDetail(key){
 }
 
 function closeShipmentDetail(){
+  closeDetailRoutePicker();
   document.getElementById('detailSheetOverlay')?.classList.remove('open');
   detailShipmentKey = null;
 }
