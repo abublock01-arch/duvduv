@@ -5452,11 +5452,28 @@ async function openLocationPicker(key){
   document.body.style.overflow = 'hidden';
   let lng = s.lng;
   let lat = s.lat;
+
+  // from viloyatiga mos keladigan markaz koordinatasini topish
+  // s.from = "Surxondaryo — Termiz" formatida bo'lishi mumkin, shuning uchun destToRegion ishlatamiz
+  const fromRegion = destToRegion(s.from || '');
+  const destRegion = s.type === 'travel'
+    ? destToRegion(s.to || s.dest || '')
+    : destToRegion(s.dest || '');
+
+  // Agar koordinatlar bor bo'lsa — from viloyatiga mos keladimi tekshir
+  if (lng != null && lat != null && fromRegion) {
+    const savedRegion = detectRegionFromCoords(lng, lat);
+    if (savedRegion !== fromRegion) {
+      // from o'zgardi — yangi viloyat markaziga ko'chish
+      const center = REGION_CENTERS[fromRegion];
+      if (center) { lng = center[0]; lat = center[1]; }
+    }
+  }
+
   if (lng == null || lat == null) {
-    const region = s.type === 'travel'
-      ? destToRegion(s.to || s.dest || '')
-      : destToRegion(s.dest || '');
-    const center = REGION_CENTERS[region];
+    // Avval from viloyati, keyin dest viloyati, keyin GPS, keyin Toshkent
+    const regionKey = fromRegion || destRegion;
+    const center = REGION_CENTERS[regionKey];
     if (center) {
       [lng, lat] = center;
     } else {
