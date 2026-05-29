@@ -152,6 +152,25 @@ function normalizeRegion(r) {
   return LATIN_TO_CYR[clean] || clean || r;
 }
 
+/** MarkdownV2 uchun maxsus belgilarni escape qilish */
+function esc(t) {
+  return String(t).replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, '\\$&');
+}
+
+/** "Toshkent shahar" → "Тошкент Ш", "Toshkent viloyat" → "Тошкент В" */
+function shortRegion(r) {
+  if (!r) return '';
+  const cyr = normalizeRegion(r); // avval Kirillga o'tkazamiz
+  const low = r.toLowerCase();
+  if (low.includes('shahar') || low.includes('шаҳар') || low.includes('шаҳри') || low.includes('sh.') ) {
+    return cyr + ' Ш';
+  }
+  if (low.includes('viloyat') || low.includes('вилоят') || low.includes('вилояти')) {
+    return cyr + ' В';
+  }
+  return cyr;
+}
+
 // ── Viloyatlar ────────────────────────────────────────────────────────────
 const REGIONS = [
   'Тошкент', 'Самарқанд', 'Бухоро', 'Андижон',
@@ -441,32 +460,33 @@ async function notifySender(telegramId, from, to, type) {
   if (!telegramId) { console.log('⚠️ notifySender: telegramId yo\'q'); return; }
   console.log(`📨 Sender ga xabar: chatId=${telegramId}`);
 
-  // type qiymatiga qarab matn
   let icon, label, reply;
   if (type === '🚗 Сафар') {
     icon  = '🚐';
-    label = 'Ҳайдовчи';
-    reply = 'Мос йўловчи ёки юк топилса хабар берамиз.';
+    label = 'Сафар эълони';
+    reply = '🔔 Йўналишингизга мос йўловчи ёки юк топилганда дарҳол хабар берамиз.';
   } else if (type === '👤 Йўловчи') {
     icon  = '🧍';
-    label = 'Йўловчи';
-    reply = 'Мос ҳайдовчи боғланганда хабар берамиз.';
+    label = 'Йўловчи эълони';
+    reply = '🔔 Мос ҳайдовчи топилганда дарҳол хабар берамиз.';
   } else {
     icon  = '📦';
-    label = 'Юк жўнатиш';
-    reply = 'Мос ҳайдовчи боғланганда хабар берамиз.';
+    label = 'Юк эълони';
+    reply = '🔔 Мос ҳайдовчи топилганда дарҳол хабар берамиз.';
   }
 
+  const fromS = esc(shortRegion(from));
+  const toS   = esc(shortRegion(to));
   try {
     await bot.sendMessage(telegramId,
-      `✅ *Эълонингиз жойлаштирилди*\n\n` +
-      `${icon}  ${label}\n` +
-      `🛣  ${from} → ${to}\n\n` +
-      `${reply}`,
-      {
-        parse_mode: 'Markdown',
-        reply_markup: appBtn()
-      }
+      `✅ *Эълонингиз қабул қилинди\\!*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🛣  *${fromS} ➜ ${toS}*\n` +
+      `${icon}  ${esc(label)}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `${esc(reply)}\n\n` +
+      `_Иловани очиб эълонингизни кўришингиз мумкин_ 👇`,
+      { parse_mode: 'MarkdownV2', reply_markup: appBtn() }
     );
   } catch(e) {
     console.error('Sender notification xatosi:', e.message);
@@ -526,15 +546,20 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
       }
     }
 
+    const fromS = esc(shortRegion(from));
+    const toS   = esc(shortRegion(to));
+    const mijoz = senderUsername ? `👤  Мижоз: @${esc(senderUsername)}\n` : '';
     console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
     await bot.sendMessage(driver.chatId,
-      `🔔 *Янги эълон*\n\n` +
-      `${icon}  ${label}\n` +
-      `🛣  ${from} → ${to}\n` +
-      `${senderLine}\n` +
-      `Батафсил маълумот ва боғланиш учун иловани очинг:`,
+      `🔔 *ЯНГИ ЭЪЛОН — СИЗНИНГ ЙЎНАЛИШИНГИЗДА\\!*\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      `🛣  *${fromS} ➜ ${toS}*\n` +
+      `${icon}  ${esc(label)}\n` +
+      `━━━━━━━━━━━━━━━━━━━━\n` +
+      mijoz +
+      `📲 Батафсил маълумот ва боғланиш учун:`,
       {
-        parse_mode: 'Markdown',
+        parse_mode: 'MarkdownV2',
         reply_markup: appBtn()
       }
     ).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
