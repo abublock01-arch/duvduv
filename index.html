@@ -331,11 +331,18 @@ body.view-sender .header{background:var(--app-bg)!important}
   padding:max(12px,env(safe-area-inset-top)) 14px 10px;flex-shrink:0;
 }
 .detail-route-list-back,.detail-route-list-close{
-  width:38px;height:38px;border-radius:50%;border:none;
-  background:#fff;font-size:20px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;color:#374151;
+  width:40px;height:40px;border-radius:50%;border:none;
+  background:transparent;font-size:20px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
   flex-shrink:0;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 1px 4px rgba(0,0,0,.06);
+}
+.detail-route-list-back{
+  color:#2AABEE;padding:0;
+}
+.detail-route-list-back svg{width:26px;height:26px;display:block;stroke:#2AABEE;stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.detail-route-list-close{
+  color:#FF3B30;font-size:30px;font-weight:300;line-height:1;
+  background:transparent;box-shadow:none;
 }
 .detail-route-list-title{
   flex:1;text-align:center;font-size:17px;font-weight:600;color:#000;
@@ -352,8 +359,8 @@ body.view-sender .header{background:var(--app-bg)!important}
 .detail-route-list-item{
   display:flex;align-items:center;gap:10px;width:100%;
   min-height:46px;padding:0 16px;border:none;background:transparent;
-  font-family:inherit;font-size:17px;font-weight:400;color:#2AABEE;
-  text-align:left;cursor:pointer;
+  font-family:inherit;font-size:17px;font-weight:400;color:#000;
+  text-align:left;cursor:pointer;touch-action:manipulation;
   border-bottom:.5px solid rgba(60,60,67,.1);
   -webkit-tap-highlight-color:transparent;
 }
@@ -363,6 +370,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   color:#2AABEE;font-weight:600;
 }
 .detail-route-list-item.is-selected .detail-route-list-text{color:#2AABEE}
+.detail-route-list-text{color:inherit}
 .detail-route-list-check{
   margin-left:auto;flex-shrink:0;width:22px;height:22px;
   display:flex;align-items:center;justify-content:center;
@@ -1349,12 +1357,13 @@ body.view-sender.theme-telegram .toggle,
     linear-gradient(145deg,color-mix(in srgb,var(--tg-btn) 42%,transparent) 0%,color-mix(in srgb,var(--tg-btn) 18%,transparent) 42%,rgba(255,140,0,.32) 100%) border-box!important;
 }
 .theme-telegram .detail-route-leg.is-active{background:color-mix(in srgb,var(--tg-btn) 10%,transparent)!important}
-.theme-telegram .detail-route-list-back,
-.theme-telegram .detail-route-list-close{background:var(--tg-section)!important;color:var(--tg-text)!important}
 .theme-telegram .detail-route-overlay{background:var(--tg-bg)!important}
+.theme-telegram .detail-route-list-back{background:transparent!important;color:#2AABEE!important}
+.theme-telegram .detail-route-list-back svg{stroke:#2AABEE!important}
+.theme-telegram .detail-route-list-close{background:transparent!important;color:#FF3B30!important}
 .theme-telegram .detail-route-list-title{color:var(--tg-text)!important}
 .theme-telegram .detail-route-list-group{background:var(--tg-section)!important;border-color:color-mix(in srgb,var(--tg-btn) 18%,transparent)!important}
-.theme-telegram .detail-route-list-item{color:#2AABEE!important}
+.theme-telegram .detail-route-list-item{color:#000!important}
 .theme-telegram .detail-route-list-item.is-selected{color:#2AABEE!important;font-weight:600}
 .theme-telegram .detail-route-list-item.is-selected .detail-route-list-text{color:#2AABEE!important}
 .theme-telegram .detail-route-list-check{color:#2AABEE!important}
@@ -1993,7 +2002,7 @@ body.view-sender.theme-telegram .toggle,
 <!-- DETAIL MANZIL RO'YXAT OVERLAY -->
 <div class="detail-route-overlay" id="detailRoutePickerOverlay" aria-hidden="true">
   <div class="detail-route-list-head">
-    <button type="button" class="detail-route-list-back" onclick="onDetailRoutePickerBack()" aria-label="Orqaga">←</button>
+    <button type="button" class="detail-route-list-back" onclick="onDetailRoutePickerBack()" aria-label="Orqaga"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6.5L9 12l5.5 5.5"/></svg></button>
     <span class="detail-route-list-title" id="detailRoutePickerStepLbl">Viloyat tanlash</span>
     <button type="button" class="detail-route-list-close" onclick="closeDetailRoutePicker()" aria-label="Yopish">×</button>
   </div>
@@ -5980,6 +5989,26 @@ function renderDetailRouteLeg(prefix, destStr){
   if (legBtn) legBtn.classList.toggle('has-value', !!(destStr && destStr !== '—'));
 }
 
+let detailRoutePickerBound = false;
+
+function getDetailRoutePickerRegions(){
+  return getDriverPickerRegions();
+}
+
+function setupDetailRoutePickerEvents(){
+  if (detailRoutePickerBound) return;
+  const list = document.getElementById('detailRoutePickerList');
+  if (!list) return;
+  detailRoutePickerBound = true;
+  list.addEventListener('click', e => {
+    const btn = e.target.closest('.detail-route-list-item');
+    if (!btn || !list.contains(btn)) return;
+    e.preventDefault();
+    const value = btn.dataset.value;
+    if (value) onDetailRouteGridPick(value);
+  });
+}
+
 function updateDetailRoutePickerStepLabel(){
   const lbl = document.getElementById('detailRoutePickerStepLbl');
   if (!lbl) return;
@@ -5995,18 +6024,18 @@ function renderDetailRouteList(){
   if (!list) return;
   list.innerHTML = '';
   const items = detailRouteEditStep === 1
-    ? getPickerRegions()
+    ? getDetailRoutePickerRegions()
     : getDistrictPickerList(detailRouteEditRegion);
   const current = detailRouteEditStep === 1 ? detailRouteEditRegion : detailRouteEditDistrict;
   items.forEach(item => {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'detail-route-list-item' + (item === current ? ' is-selected' : '');
+    btn.dataset.value = item;
     const label = scriptLatin
       ? item
       : (detailRouteEditStep === 1 ? regionPickerLabel(item) : districtPickerLabel(item));
     btn.innerHTML = `<span class="detail-route-list-text">${escapeHtml(label)}</span><span class="detail-route-list-check" aria-hidden="true">✓</span>`;
-    btn.onclick = () => onDetailRouteGridPick(item);
     list.appendChild(btn);
   });
 }
@@ -6016,7 +6045,7 @@ function loadDetailRouteEditFromShipment(leg){
   if (!s) return;
   const route = shipmentDetailRouteLegs(s);
   const destStr = leg === 'from' ? route.from : route.to;
-  detailRouteEditRegion = destToRegion(destStr) || getDefaultPickerRegion();
+  detailRouteEditRegion = destToRegion(destStr) || getDetailRoutePickerRegions()[0] || '';
   detailRouteEditDistrict = destToDistrict(destStr) || '';
   detailRouteEditStep = 1;
 }
@@ -6038,7 +6067,7 @@ function closeDetailRoutePicker(){
 function openDetailRoutePicker(leg){
   const s = findShipment(detailShipmentKey);
   if (!s) return;
-  if (leg === 'from' && s.type !== 'travel') return;
+  setupDetailRoutePickerEvents();
   detailRouteEditLeg = leg;
   loadDetailRouteEditFromShipment(leg);
   const overlay = document.getElementById('detailRoutePickerOverlay');
@@ -6050,7 +6079,6 @@ function openDetailRoutePicker(leg){
   document.getElementById('detailToBtn')?.classList.toggle('is-active', leg === 'to');
   updateDetailRoutePickerStepLabel();
   renderDetailRouteList();
-  applyCyrillicUI();
 }
 
 function onDetailRoutePickerBack(){
@@ -6096,6 +6124,10 @@ async function commitDetailRouteEdit(closeAfter){
     if (s.type === 'travel') {
       const t = travels.find(x => String(x.firestoreId || x.id) === String(s.firestoreId || s.id));
       if (t) t.from = value;
+    } else {
+      const o = orders.find(x => String(x.firestoreId || x.id) === String(s.firestoreId || s.id));
+      if (o) o.from = value;
+      syncOrderFromShipment(s);
     }
   } else {
     s.to = value;
@@ -6129,7 +6161,10 @@ async function commitDetailRouteEdit(closeAfter){
         : { to: value, dest: value, lat: s.lat, lng: s.lng };
       await updateTravelInFirestore(s.firestoreId, fields);
     } else {
-      await updateOrderInFirestore(s.firestoreId, { dest: value, lat: s.lat, lng: s.lng });
+      const fields = leg === 'from'
+        ? { from: value }
+        : { dest: value, lat: s.lat, lng: s.lng };
+      await updateOrderInFirestore(s.firestoreId, fields);
     }
   } catch (e) {
     console.warn('Manzil yangilash xatosi:', e);
@@ -6227,8 +6262,8 @@ function openShipmentDetail(key){
   renderDetailRouteLeg('To', route.to);
   renderDetailStatusBadge(s, statusEl);
   if (passengersBlock) passengersBlock.hidden = !isTravel;
-  if (fromBtn) fromBtn.classList.toggle('detail-route-leg--tap', isTravel);
-  if (fromEditIco) fromEditIco.hidden = !isTravel;
+  if (fromBtn) fromBtn.classList.add('detail-route-leg--tap');
+  if (fromEditIco) fromEditIco.hidden = false;
   if (toBtn) toBtn.classList.add('detail-route-leg--tap');
   if (toEditIco) toEditIco.hidden = false;
   if (passengersLabel) setI18nText(passengersLabel, "Yo'lovchi soni");
@@ -6361,6 +6396,7 @@ function renderShipments(){
   initMorphInContainer(list);
   applyAllScriptMorphs(false);
   setupShipmentsListEvents();
+setupDetailRoutePickerEvents();
 }
 
 function editShipment(key){
@@ -6946,6 +6982,7 @@ applyCyrillicUI();
 refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
+setupDetailRoutePickerEvents();
 initTelegramUser();
 initRouteBtn();
 setTimeout(startGpsTracking, 1200);
