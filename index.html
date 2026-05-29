@@ -5252,7 +5252,7 @@ function initDriverMap(){
         // Deep link: ?order=ID — xaritada shu e'lonni ko'rsat
         openOrderFromUrlParam();
       });
-      centerMapOnDriver();
+      centerMapOnRouteFrom();
       ensureDriverRegionPicker();
     });
   });
@@ -5285,6 +5285,21 @@ function openOrderFromUrlParam(){
   setTimeout(tryOpen, 500);
 }
 
+
+async function centerMapOnRouteFrom(){
+  if (!map) return;
+  // Marshrut A nuqtasi bor bo'lsa — o'sha viloyat markaziga qaraymiz
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  const fromRegion = saved.from ? destToRegion(saved.from) : null;
+  if (fromRegion && REGION_CENTERS[fromRegion]) {
+    const [lng, lat] = REGION_CENTERS[fromRegion];
+    removeDriverRadiusLayers();
+    map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+    return;
+  }
+  // Marshrut yo'q — GPS ga qaraymiz
+  centerMapOnDriver();
+}
 
 async function centerMapOnDriver(){
   if (!map) return;
