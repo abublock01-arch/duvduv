@@ -467,7 +467,9 @@ async function notifySender(telegramId, from, to, type) {
   if (!telegramId) { console.log('⚠️ notifySender: telegramId yo\'q'); return; }
   console.log(`📨 Sender ga xabar: chatId=${telegramId}`);
 
-  const typeLabel = (type === '👤 Йўловчи') ? '👤 Йўловчи' : '📦 Юк ва почта';
+  const typeLabel = type === 'travel' ? '👤 Йўловчи'
+                  :                    '📦 Юк ва почта';
+
   const fromS = shortRegion(from).toUpperCase();
   const toS   = shortRegion(to).toUpperCase();
 
@@ -491,7 +493,9 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId, order
   const usersSnap = await db.collection('users').where('chatId', '>', 0).get();
   console.log(`👥 Jami chatId bor foydalanuvchilar: ${usersSnap.size} ta`);
 
-  const typeLabel = (type === '👤 Йўловчи') ? '👤 Йўловчи' : '📦 Юк ва почта';
+  const typeLabel = type === 'travel' ? '👤 Йўловчи'
+                  :                    '📦 Юк ва почта';
+
   const fromS = shortRegion(from).toUpperCase();
   const toS   = shortRegion(to).toUpperCase();
 
@@ -554,7 +558,7 @@ async function pollOrders() {
       lastOrderMs = d.createdAt;
       const age = Date.now() - d.createdAt;
       if (age > 120000) continue;
-      const type = d.type === 'person' ? '👤 Йўловчи' : '📦 Жўнатма';
+      const type = d.type === 'person' ? 'person' : 'package';
       const from = normalizeRegion(d.from || '');
       const to   = normalizeRegion(d.to || d.dest || '');
       console.log(`📦 Order: "${from}"→"${to}" id=${d.telegramId}`);
@@ -578,8 +582,8 @@ async function pollTravels() {
       const to   = normalizeRegion(d.to || d.dest || '');
       console.log(`🚐 Travel: "${from}"→"${to}" id=${d.telegramId}`);
       if (!from || !to) continue;
-      await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender:', e.message));
-      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId, d.id, d.phone || '').catch(e => console.error('notifyDrivers:', e.message));
+      await notifySender(d.telegramId, from, to, 'travel').catch(e => console.error('notifySender:', e.message));
+      await notifyDrivers(from, to, 'travel', d.telegramUsername || '', d.telegramId, d.id, d.phone || '').catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollTravels xato:', e.message); }
 }
