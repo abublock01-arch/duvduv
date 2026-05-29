@@ -5046,11 +5046,42 @@ function initDriverMap(){
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
       setupOrderClusterLayers();
-      addTestOrders(() => refreshOrderMarkersDebounced());
+      addTestOrders(() => {
+        refreshOrderMarkersDebounced();
+        // Deep link: ?order=ID — xaritada shu e'lonni ko'rsat
+        openOrderFromUrlParam();
+      });
       centerMapOnDriver();
       ensureDriverRegionPicker();
     });
   });
+}
+
+function openOrderFromUrlParam(){
+  const params = new URLSearchParams(window.location.search);
+  const targetId = params.get('order');
+  if (!targetId) return;
+
+  // Biroz kuting — markerlar yuklansin
+  let attempts = 0;
+  const tryOpen = () => {
+    const item = findOrderByMapId(targetId);
+    if (item) {
+      // Koordinatani topib, xaritani u yerga yo'naltir
+      const lng = item.lng ?? item.longitude ?? item.coords?.lng;
+      const lat = item.lat ?? item.latitude ?? item.coords?.lat;
+      if (lng && lat) {
+        map.flyTo({ center: [lng, lat], zoom: 14, duration: 800, essential: true });
+      }
+      setTimeout(() => {
+        if (item.type === 'travel') openTravelMapSheet(item);
+        else openOrderSheet(item);
+      }, 900);
+    } else if (attempts++ < 10) {
+      setTimeout(tryOpen, 400);
+    }
+  };
+  setTimeout(tryOpen, 500);
 }
 
 

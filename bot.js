@@ -26,12 +26,14 @@ db.settings({ preferRest: true });
 function docToObj(doc) {
   const d = doc.data();
   return {
+    id:               doc.id,
     from:             d.from || '',
     to:               d.to || d.dest || '',
     dest:             d.dest || '',
     type:             d.type || '',
     telegramId:       Number(d.telegramId) || 0,
     telegramUsername: d.telegramUsername || '',
+    phone:            d.phone || '',
     archived:         d.archived === true,
     createdAt:        d.createdAt?.toMillis ? d.createdAt.toMillis() : (d.createdAt || 0),
   };
@@ -97,6 +99,11 @@ const persistentKeyboard = {
 // Standart inline "Иловани очиш" tugmasi
 const appBtn = () => ({
   inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }]]
+});
+
+// E'lon ID bilan — xaritada ochiladi
+const orderBtn = (orderId) => ({
+  inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: `${APP_URL}?order=${orderId}` } }]]
 });
 
 // ── Latin → Kirill normalizatsiya (mini app Latin, bot Kirill yozadi) ────
@@ -460,29 +467,15 @@ async function notifySender(telegramId, from, to, type) {
   if (!telegramId) { console.log('⚠️ notifySender: telegramId yo\'q'); return; }
   console.log(`📨 Sender ga xabar: chatId=${telegramId}`);
 
-  let icon, label, reply;
-  if (type === '🚗 Сафар') {
-    icon  = '🚐';
-    label = 'Сафар эълони';
-    reply = '🔔 Йўналишингизга мос йўловчи ёки юк топилганда дарҳол хабар берамиз.';
-  } else if (type === '👤 Йўловчи') {
-    icon  = '🧍';
-    label = 'Йўловчи эълони';
-    reply = '🔔 Мос ҳайдовчи топилганда дарҳол хабар берамиз.';
-  } else {
-    icon  = '📦';
-    label = 'Юк эълони';
-    reply = '🔔 Мос ҳайдовчи топилганда дарҳол хабар берамиз.';
-  }
-
+  const typeLabel = (type === '👤 Йўловчи') ? '👤 Йўловчи' : '📦 Юк ва почта';
   const fromS = shortRegion(from).toUpperCase();
   const toS   = shortRegion(to).toUpperCase();
+
   try {
     await bot.sendMessage(telegramId,
-      `${icon} <b>${fromS} ➜ ${toS}</b>\n` +
-      `▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱\n` +
-      `✅ Эълонингиз қабул қилинди\n\n` +
-      `${reply}`,
+      `🔔 <b>${fromS} <a href="${APP_URL}">➜</a> ${toS}</b>\n` +
+      `${typeLabel}\n` +
+      `✅ Эълонингиз қабул қилинди`,
       { parse_mode: 'HTML', reply_markup: appBtn() }
     );
   } catch(e) {
@@ -491,47 +484,40 @@ async function notifySender(telegramId, from, to, type) {
 }
 
 // ── Haydovchilarga yangi e'lon xabari ────────────────────────────────────
-async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
+async function notifyDrivers(from, to, type, senderUsername, senderChatId, orderId, senderPhone) {
   if (!from || !to) { console.log('⚠️ notifyDrivers: from yoki to yo\'q'); return; }
   console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}, jo'natuvchi: ${senderChatId}`);
 
-  // Barcha chatId bor foydalanuvchilarni olamiz
-  const usersSnap = await db.collection('users')
-    .where('chatId', '>', 0)
-    .get();
-
+  const usersSnap = await db.collection('users').where('chatId', '>', 0).get();
   console.log(`👥 Jami chatId bor foydalanuvchilar: ${usersSnap.size} ta`);
 
-  // type qiymatiga qarab
-  let icon, label;
-  if (type === '👤 Йўловчи') {
-    icon  = '🧍';
-    label = 'Йўловчи бор';
-  } else if (type === '🚗 Сафар') {
-    icon  = '🚐';
-    label = 'Ҳайдовчи маршрути';
-  } else {
-    icon  = '📦';
-    label = 'Юк жўнатиш бор';
-  }
+  const typeLabel = (type === '👤 Йўловчи') ? '👤 Йўловчи' : '📦 Юк ва почта';
+  const fromS = shortRegion(from).toUpperCase();
+  const toS   = shortRegion(to).toUpperCase();
 
-  const senderLine = senderUsername ? `👤  @${senderUsername}\n` : '';
+  const phoneLine = senderPhone ? `📞 ${senderPhone}\n` : '';
+  const userLine  = senderUsername ? `Telegram: @${senderUsername}\n` : '';
+
+  const text =
+    `🔔 <b>${fromS} <a href="${APP_URL}">➜</a> ${toS}</b>\n` +
+    `${typeLabel}\n` +
+    userLine +
+    phoneLine;
+
+  // Tugma: order ID bilan — xaritada ochiladi
+  const btn = orderId ? orderBtn(orderId) : appBtn();
 
   for (const doc of usersSnap.docs) {
     const driver = doc.data();
     if (!driver.chatId) continue;
 
-    // Jo'natuvchining o'ziga ikki marta xabar ketmasin
     if (senderChatId && Number(driver.chatId) === Number(senderChatId)) {
       console.log(`⏭ ${doc.id}: jo'natuvchining o'zi, o'tkazildi`);
       continue;
     }
 
-    // Bildirishnoma o'chirilgan — o'tkazib yuboramiz
     if (driver.notifications === false) continue;
 
-    // Marshrut filtri: faqat belgilangan bo'lsa tekshiramiz
-    // Belgilanmagan (routeFrom/To yo'q) bo'lsa — barcha e'lonlarni oladi
     const driverFrom = normalizeRegion(driver.routeFrom || '');
     const driverTo   = normalizeRegion(driver.routeTo   || '');
     if (driverFrom && driverTo) {
@@ -543,20 +529,11 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
       }
     }
 
-    const fromS = shortRegion(from).toUpperCase();
-    const toS   = shortRegion(to).toUpperCase();
-    const mijoz = senderUsername ? `👤 @${senderUsername}\n` : '';
     console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
-    await bot.sendMessage(driver.chatId,
-      `${icon} <b>${fromS} ➜ ${toS}</b>\n` +
-      `▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱\n` +
-      mijoz +
-      `📲 Боғланиш учун иловани очинг:`,
-      {
-        parse_mode: 'HTML',
-        reply_markup: appBtn()
-      }
-    ).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
+    await bot.sendMessage(driver.chatId, text, {
+      parse_mode: 'HTML',
+      reply_markup: btn
+    }).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
   }
 }
 
@@ -580,7 +557,7 @@ async function pollOrders() {
       console.log(`📦 Order: "${from}"→"${to}" id=${d.telegramId}`);
       if (!from || !to) continue;
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender:', e.message));
-      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers:', e.message));
+      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId, d.id, d.phone || '').catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollOrders xato:', e.message); }
 }
@@ -599,7 +576,7 @@ async function pollTravels() {
       console.log(`🚐 Travel: "${from}"→"${to}" id=${d.telegramId}`);
       if (!from || !to) continue;
       await notifySender(d.telegramId, from, to, '🚗 Сафар').catch(e => console.error('notifySender:', e.message));
-      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId).catch(e => console.error('notifyDrivers:', e.message));
+      await notifyDrivers(from, to, '🚗 Сафар', d.telegramUsername || '', d.telegramId, d.id, d.phone || '').catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollTravels xato:', e.message); }
 }
