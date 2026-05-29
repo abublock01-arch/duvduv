@@ -4,6 +4,11 @@
 
 const TelegramBot = require('node-telegram-bot-api');
 const admin = require('firebase-admin');
+const fs    = require('fs');
+const path  = require('path');
+
+// Bell rasm yo'li
+const BELL_IMG = path.join(__dirname, 'assets', 'bell_notify.png');
 
 // ── Firebase ──────────────────────────────────────────────────────────────
 // Kalit Railway environment variable dan o'qiladi (JSON string)
@@ -475,19 +480,21 @@ async function notifySender(telegramId, from, to, type) {
     reply = '🔔 Мос ҳайдовчи топилганда дарҳол хабар берамиз.';
   }
 
-  const fromS = esc(shortRegion(from));
-  const toS   = esc(shortRegion(to));
+  const fromS = shortRegion(from).toUpperCase();
+  const toS   = shortRegion(to).toUpperCase();
+  const caption =
+    `${icon} <b>${fromS} ➜ ${toS}</b>\n` +
+    `▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱\n` +
+    `✅ Эълонингиз қабул қилинди\n\n` +
+    `${reply}`;
   try {
-    await bot.sendMessage(telegramId,
-      `✅ *Эълонингиз қабул қилинди\\!*\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `🛣  *${fromS} ➜ ${toS}*\n` +
-      `${icon}  ${esc(label)}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `${esc(reply)}\n\n` +
-      `_Иловани очиб эълонингизни кўришингиз мумкин_ 👇`,
-      { parse_mode: 'MarkdownV2', reply_markup: appBtn() }
-    );
+    if (fs.existsSync(BELL_IMG)) {
+      await bot.sendPhoto(telegramId, fs.createReadStream(BELL_IMG), {
+        caption, parse_mode: 'HTML', reply_markup: appBtn()
+      });
+    } else {
+      await bot.sendMessage(telegramId, caption, { parse_mode: 'HTML', reply_markup: appBtn() });
+    }
   } catch(e) {
     console.error('Sender notification xatosi:', e.message);
   }
@@ -546,23 +553,24 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId) {
       }
     }
 
-    const fromS = esc(shortRegion(from));
-    const toS   = esc(shortRegion(to));
-    const mijoz = senderUsername ? `👤  Мижоз: @${esc(senderUsername)}\n` : '';
-    console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
-    await bot.sendMessage(driver.chatId,
-      `🔔 *ЯНГИ ЭЪЛОН — СИЗНИНГ ЙЎНАЛИШИНГИЗДА\\!*\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
-      `🛣  *${fromS} ➜ ${toS}*\n` +
-      `${icon}  ${esc(label)}\n` +
-      `━━━━━━━━━━━━━━━━━━━━\n` +
+    const fromS = shortRegion(from).toUpperCase();
+    const toS   = shortRegion(to).toUpperCase();
+    const mijoz = senderUsername ? `👤 @${senderUsername}\n` : '';
+    const dCaption =
+      `${icon} <b>${fromS} ➜ ${toS}</b>\n` +
+      `▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱\n` +
       mijoz +
-      `📲 Батафсил маълумот ва боғланиш учун:`,
-      {
-        parse_mode: 'MarkdownV2',
-        reply_markup: appBtn()
-      }
-    ).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
+      `📲 Боғланиш учун иловани очинг:`;
+    console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
+    if (fs.existsSync(BELL_IMG)) {
+      await bot.sendPhoto(driver.chatId, fs.createReadStream(BELL_IMG), {
+        caption: dCaption, parse_mode: 'HTML', reply_markup: appBtn()
+      }).catch(e => console.error(`sendPhoto xato (${driver.chatId}):`, e.message));
+    } else {
+      await bot.sendMessage(driver.chatId, dCaption, {
+        parse_mode: 'HTML', reply_markup: appBtn()
+      }).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
+    }
   }
 }
 
