@@ -2342,9 +2342,12 @@ function saveNotifPermissionGranted(granted){
 
 // ── GPS real-time tracking ────────────────────────────────────────────────────
 let _gpsWatchId = null;
-function startGpsTracking() {
+async function startGpsTracking() {
   if (!navigator.geolocation || !telegramUser.id || !db) return;
   if (_gpsWatchId !== null) return; // allaqachon ishlamoqda
+  // Faqat ruxsat berilgan bo'lsa watch boshlaymiz — dialog chiqarmaymiz
+  const perm = await getGeolocationPermissionState();
+  if (perm !== 'granted') return;
   _gpsWatchId = navigator.geolocation.watchPosition(
     pos => {
       db.collection('users').doc(String(telegramUser.id)).set({
@@ -2987,21 +2990,68 @@ function maybeReseedMapTestOrdersForHomeRegion(){
   return true;
 }
 
+// ── Lokatsiya onboarding ──────────────────────────────────────────────────
+function locAskedKey(){
+  return userPrefKey('loc_asked') || 'duvduv_loc_asked';
+}
+function hasAskedLocation(){
+  return !!localStorage.getItem(locAskedKey());
+}
+function markLocationAsked(){
+  localStorage.setItem(locAskedKey(), '1');
+}
+
+async function requestLocationOnce(){
+  // Agar allaqachon so'ragan bo'lsak — faqat fonda yangilaymiz
+  if (hasAskedLocation()) {
+    refreshUserLocationRegion();
+    return;
+  }
+  // Birinchi marta — tizim ruxsatini tekshiramiz
+  const perm = await getGeolocationPermissionState();
+  markLocationAsked();
+  if (perm === 'granted') {
+    refreshUserLocationRegion();
+  } else if (perm === 'prompt' || perm === null) {
+    // Bir marta so'raymiz — dialog chiqadi
+    try {
+      const coords = await getCurrentPosition();
+      userCoords = { latitude: coords.latitude, longitude: coords.longitude };
+      userLocationRegion = detectRegionFromCoords(coords.longitude, coords.latitude);
+      invalidateMapGeoCache();
+      saveLastGPS(coords.longitude, coords.latitude);
+    } catch (_) {
+      // Rad etildi — keshdan olamiz yoki viloyatsiz ishlaymiz
+      const cached = loadLastGPS();
+      if (cached) {
+        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+      }
+    }
+  }
+  // 'denied' holatida hech narsa so'ramaymiz
+}
+
 async function refreshUserLocationRegion(){
   const prevRegion = userLocationRegion;
   try {
     const perm = await getGeolocationPermissionState();
     if (perm !== 'granted') {
-      userCoords = null;
-      userLocationRegion = null;
+      // Ruxsat yo'q — keshdan olamiz
+      const cached = loadLastGPS();
+      if (cached && !userLocationRegion) {
+        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+      }
       return;
     }
     const coords = await getCurrentPosition();
     userCoords = { latitude: coords.latitude, longitude: coords.longitude };
     userLocationRegion = detectRegionFromCoords(coords.longitude, coords.latitude);
+    saveLastGPS(coords.longitude, coords.latitude);
   } catch (_) {
-    userCoords = null;
-    userLocationRegion = null;
+    const cached = loadLastGPS();
+    if (cached && !userLocationRegion) {
+      userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+    }
   }
   if (userLocationRegion !== prevRegion) {
     invalidateMapGeoCache();
@@ -6832,14 +6882,11 @@ async function submitTravel(e){
   }
   const to = formatDest(region, district);
   document.getElementById('travelTo').value = to;
+  // Cached coords ishlatamiz — dialog chiqarmaymiz
   let coords = userCoords;
   if (!coords) {
-    try {
-      const c = await getCurrentPosition();
-      coords = { latitude: c.latitude, longitude: c.longitude };
-      userCoords = coords;
-      userLocationRegion = detectRegionFromCoords(c.longitude, c.latitude);
-    } catch (_) {}
+    const cached = loadLastGPS();
+    if (cached) coords = { latitude: cached.lat, longitude: cached.lng };
   }
   const from = userLocationRegion || (coords ? detectRegionFromCoords(coords.longitude, coords.latitude) : '');
   const note = '';
@@ -6950,9 +6997,14 @@ function submitOrder(e){
     showSuccessCheck();
   }
 
-  getCurrentPosition()
-    .then(coords => saveOrder(coords))
-    .catch(() => saveOrder(null));
+  // Cached coords ishlatamiz — dialog chiqarmaymiz
+  if (userCoords) {
+    saveOrder(userCoords);
+  } else {
+    const cached = loadLastGPS();
+    if (cached) saveOrder({ latitude: cached.lat, longitude: cached.lng });
+    else saveOrder(null);
+  }
 }
 
 function showSuccessCheck(){
@@ -6996,13 +7048,14 @@ initRegionSelects();
 initCtaIcons();
 initAllMorphTexts();
 applyCyrillicUI();
-refreshUserLocationRegion();
 loadPersistedData();
 setupShipmentsListEvents();
 setupDetailRoutePickerEvents();
 initTelegramUser();
 initRouteBtn();
-setTimeout(startGpsTracking, 1200);
+// Birinchi kirish: bir marta so'raymiz. Keyingi kirishlarda faqat fonda yangilaymiz
+setTimeout(() => requestLocationOnce(), 800);
+setTimeout(startGpsTracking, 2000);
 syncShipmentsFromFirestore(); // re-filter with now-known telegramUser.id
 restoreUserPrefs();
 renderShipments();
