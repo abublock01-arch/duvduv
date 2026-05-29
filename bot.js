@@ -473,10 +473,10 @@ async function notifySender(telegramId, from, to, type) {
 
   try {
     await bot.sendMessage(telegramId,
-      `🔔 <b>${fromS} <a href="${APP_URL}">➜</a> ${toS}</b>\n` +
+      `🔔 <b>${fromS} ➜ ${toS}</b>\n` +
       `${typeLabel}\n` +
       `✅ Эълонингиз қабул қилинди`,
-      { parse_mode: 'HTML', reply_markup: appBtn() }
+      { parse_mode: 'HTML', disable_web_page_preview: true, reply_markup: appBtn() }
     );
   } catch(e) {
     console.error('Sender notification xatosi:', e.message);
@@ -496,10 +496,12 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId, order
   const toS   = shortRegion(to).toUpperCase();
 
   const phoneLine = senderPhone ? `📞 ${senderPhone}\n` : '';
-  const userLine  = senderUsername ? `Telegram: @${senderUsername}\n` : '';
+  // username'da @ bo'lsa olib tashlaymiz, biz o'zimiz qo'shamiz
+  const uname = senderUsername ? senderUsername.replace(/^@/, '') : '';
+  const userLine = uname ? `Telegram: @${uname}\n` : '';
 
   const text =
-    `🔔 <b>${fromS} <a href="${APP_URL}">➜</a> ${toS}</b>\n` +
+    `🔔 <b>${fromS} ➜ ${toS}</b>\n` +
     `${typeLabel}\n` +
     userLine +
     phoneLine;
@@ -532,6 +534,7 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId, order
     console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
     await bot.sendMessage(driver.chatId, text, {
       parse_mode: 'HTML',
+      disable_web_page_preview: true,
       reply_markup: btn
     }).catch(e => console.error(`sendMessage xato (${driver.chatId}):`, e.message));
   }
