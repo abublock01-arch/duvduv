@@ -6497,6 +6497,16 @@ function submitOrder(e){
     const storedThumb = await thumbToStorable(thumbUrl);
     let from = userLocationRegion || '';
     if (!from && coords) from = detectRegionFromCoords(coords.longitude, coords.latitude);
+    // GPS yo'q bo'lsa — viloyat markazidan foydalanish
+    let orderLat = coords ? coords.latitude : null;
+    let orderLng = coords ? coords.longitude : null;
+    if ((orderLat == null || orderLng == null) && from) {
+      const center = REGION_CENTERS[from];
+      if (center) {
+        orderLng = center[0] + (Math.random() - 0.5) * 0.04;
+        orderLat = center[1] + (Math.random() - 0.5) * 0.03;
+      }
+    }
     const order = {
       id: Date.now(),
       type: 'order',
@@ -6507,8 +6517,8 @@ function submitOrder(e){
       status: 'Aktiv',
       gender: 'any',
       applicantsCount: 0,
-      lat: coords ? coords.latitude : null,
-      lng: coords ? coords.longitude : null,
+      lat: orderLat,
+      lng: orderLng,
       telegramId: telegramUser.id,
       telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
     };
