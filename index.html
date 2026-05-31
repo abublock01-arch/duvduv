@@ -1722,61 +1722,62 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .notif-onboard-title{color:var(--tg-text,#0f172a)}
 .theme-telegram .notif-onboard-text{color:var(--tg-hint,#64748b)}
 .theme-telegram .notif-onboard-btn{background:var(--tg-btn,#2AABEE);color:var(--tg-btn-text,#fff)}
-/* ── Permission hint (camera / location dialog) ─────────────────── */
-.perm-hint{
-  position:fixed;
-  top:clamp(252px,51.5vh,392px);
-  left:50%;
-  transform:translateX(-50%) translateY(12px);
-  z-index:99999;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;gap:4px;
-  opacity:0;
-  transition:opacity .4s ease,transform .45s cubic-bezier(.34,1.35,.64,1);
-  filter:drop-shadow(0 10px 28px rgba(42,171,238,.32));
+/* ── Permission hint (faqat kamera ruxsati, flip tugmasi ustida) ─── */
+.upload-actions .perm-hint{
+  position:absolute;
+  left:calc(50% + 88px);
+  bottom:calc(100% + 6px);
+  transform:translateX(-50%) translateY(8px);
+  z-index:30;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:0;
+  opacity:0;visibility:hidden;
+  transition:opacity .35s ease,transform .4s cubic-bezier(.34,1.35,.64,1),visibility .35s;
+  filter:drop-shadow(0 6px 18px rgba(42,171,238,.28));
 }
-.perm-hint.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.upload-actions .perm-hint.show{
+  opacity:1;visibility:visible;
+  transform:translateX(-50%) translateY(0);
+}
 .perm-hint-bubble{
-  display:flex;align-items:center;gap:9px;
-  padding:11px 17px;border-radius:16px;
+  display:flex;align-items:center;gap:7px;
+  padding:8px 13px;border-radius:13px;
   background:linear-gradient(135deg,#2AABEE 0%,#1590d4 100%);
-  color:#fff;font-size:14px;font-weight:600;line-height:1.35;
-  text-align:left;max-width:min(292px,calc(100vw - 36px));
-  box-shadow:0 4px 14px rgba(42,171,238,.45),inset 0 1px 0 rgba(255,255,255,.28);
-  animation:permBubblePulse 2.2s ease-in-out infinite;
+  color:#fff;font-size:12px;font-weight:700;line-height:1.25;
+  white-space:nowrap;
+  box-shadow:0 3px 12px rgba(42,171,238,.42),inset 0 1px 0 rgba(255,255,255,.26);
+  animation:permBubblePulse 2s ease-in-out infinite;
 }
 .perm-hint-icon{
-  flex-shrink:0;width:24px;height:24px;
+  flex-shrink:0;width:20px;height:20px;
   display:flex;align-items:center;justify-content:center;
   background:rgba(255,255,255,.24);border-radius:50%;
 }
-.perm-hint-icon svg{width:13px;height:13px;stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.perm-hint-text{display:block}
+.perm-hint-icon svg{width:11px;height:11px;stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .perm-hint-track{
-  position:relative;width:96px;height:42px;
-  margin-left:38%;margin-top:-2px;align-self:flex-start;
+  position:relative;width:44px;height:50px;margin-bottom:-4px;
 }
 .perm-hint-track svg{width:100%;height:100%;overflow:visible}
 .perm-hint-track path{
-  stroke:#2AABEE;stroke-width:3.5;stroke-linecap:round;fill:none;
-  stroke-dasharray:7 5;animation:permDashFlow .9s linear infinite;
-  filter:drop-shadow(0 1px 4px rgba(42,171,238,.55));
+  stroke:#2AABEE;stroke-width:3.2;stroke-linecap:round;fill:none;
+  stroke-dasharray:6 4;animation:permDashFlow .85s linear infinite;
+  filter:drop-shadow(0 1px 4px rgba(42,171,238,.5));
 }
 .perm-hint-head{
-  position:absolute;right:-2px;bottom:2px;
-  width:15px;height:15px;
-  border-right:3.5px solid #2AABEE;border-bottom:3.5px solid #2AABEE;
-  transform:rotate(-45deg);
-  animation:permHeadBounce 1.15s ease-in-out infinite;
-  filter:drop-shadow(0 2px 8px rgba(42,171,238,.65));
+  position:absolute;top:0;left:2px;
+  width:13px;height:13px;
+  border-left:3.2px solid #2AABEE;border-top:3.2px solid #2AABEE;
+  transform:rotate(45deg);
+  animation:permHeadBounceUp 1.1s ease-in-out infinite;
+  filter:drop-shadow(0 2px 6px rgba(42,171,238,.6));
 }
 @keyframes permBubblePulse{
-  0%,100%{transform:scale(1);box-shadow:0 4px 14px rgba(42,171,238,.45),0 0 0 0 rgba(42,171,238,.4)}
-  50%{transform:scale(1.04);box-shadow:0 6px 18px rgba(42,171,238,.5),0 0 0 10px rgba(42,171,238,0)}
+  0%,100%{transform:scale(1);box-shadow:0 3px 12px rgba(42,171,238,.42),0 0 0 0 rgba(42,171,238,.38)}
+  50%{transform:scale(1.05);box-shadow:0 4px 14px rgba(42,171,238,.48),0 0 0 8px rgba(42,171,238,0)}
 }
-@keyframes permDashFlow{to{stroke-dashoffset:-24}}
-@keyframes permHeadBounce{
-  0%,100%{transform:rotate(-45deg) translate(0,0);opacity:.82}
-  50%{transform:rotate(-45deg) translate(5px,5px);opacity:1}
+@keyframes permDashFlow{to{stroke-dashoffset:-20}}
+@keyframes permHeadBounceUp{
+  0%,100%{transform:rotate(45deg) translate(0,0);opacity:.82}
+  50%{transform:rotate(45deg) translate(-4px,-4px);opacity:1}
 }
 /* ─────────────────────────────────────────────────────────────────── */
 </style>
@@ -1973,6 +1974,18 @@ body.view-sender.theme-telegram .toggle,
       <button type="button" class="flip-btn" onclick="flipCamera()" aria-label="Kamerani almashtirish">
         <svg viewBox="0 0 24 24"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><polyline points="8 12 11 15 8 18"/><polyline points="16 6 13 9 16 12"/></svg>
       </button>
+      <div class="perm-hint" id="permArrow" aria-hidden="true">
+        <div class="perm-hint-track" aria-hidden="true">
+          <svg viewBox="0 0 44 50" fill="none"><path d="M38 46 C38 26, 22 10, 6 4"/></svg>
+          <span class="perm-hint-head"></span>
+        </div>
+        <div class="perm-hint-bubble">
+          <span class="perm-hint-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          </span>
+          <span class="perm-hint-text" id="permHintLabel">«Ruxsat» tugmasini bosing</span>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -4356,6 +4369,7 @@ const MORPH_UI_ENTRIES = [
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#uploadSkipBtn', 'Rasmsiz yuborish', 'Расмсиз юбориш'],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
+  ['#permHintLabel', '«Ruxsat» tugmasini bosing'],
   ['#locPickerTitle', 'Lokatsiyani tanlang'], ['.loc-picker-hint', "Xaritani suring — pin o'rtada qoladi"],
   ['#locPickerSaveBtn', 'Saqlash'],
   ['#travelDestTitle', TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC, 'travel-dest-title-morph'],
@@ -5357,9 +5371,6 @@ function getCurrentPosition(){
     }
     // Fallback: navigator.geolocation
     if (!navigator.geolocation) { reject(new Error('Geolocation unavailable')); return; }
-    shouldShowPermHint('geolocation').then(ok => {
-      if (ok) setTimeout(() => showPermArrow(), 380);
-    }).catch(() => {});
     navigator.geolocation.getCurrentPosition(
       pos => resolve(pos.coords),
       err => reject(err),
@@ -6793,34 +6804,44 @@ async function ensureCameraStarted(){
   return cameraStartPromise;
 }
 
-// ── Permission arrow hint ─────────────────────────────────────────────
+// ── Permission hint (faqat kamera, upload ochiq va dialog kutilyapti) ─
 let _permArrowTimer = null;
+let _permHintShowTimer = null;
+let _cameraPermAwaiting = false;
 
-function showPermArrow(){
-  let el = document.getElementById('permArrow');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'permArrow';
-    el.className = 'perm-hint';
-    el.setAttribute('aria-hidden','true');
-    el.innerHTML = `
-      <div class="perm-hint-bubble">
-        <span class="perm-hint-icon" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-        </span>
-        <span class="perm-hint-text" id="permHintLabel">«Ruxsat» tugmasini bosing</span>
-      </div>
-      <div class="perm-hint-track" aria-hidden="true">
-        <svg viewBox="0 0 96 42" fill="none"><path d="M4 6 C32 6 58 28 92 38"/></svg>
-        <span class="perm-hint-head"></span>
-      </div>`;
-    document.body.appendChild(el);
-    initI18nEl(document.getElementById('permHintLabel'), '«Ruxsat» tugmasini bosing');
-  } else {
-    applyI18nEl(document.getElementById('permHintLabel'), scriptLatin);
+function showCameraPermHint(){
+  if (!_cameraPermAwaiting) return;
+  const upload = document.getElementById('uploadOverlay');
+  if (!upload?.classList.contains('open')) return;
+  const el = document.getElementById('permArrow');
+  if (!el) return;
+  const label = document.getElementById('permHintLabel');
+  if (label && !label.dataset.i18nLatin) {
+    initI18nEl(label, '«Ruxsat» tugmasini bosing');
+  } else if (label) {
+    applyI18nEl(label, scriptLatin);
   }
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
-  _permArrowTimer = setTimeout(hidePermArrow, 15000);
+  if (_permArrowTimer) clearTimeout(_permArrowTimer);
+  _permArrowTimer = setTimeout(hidePermArrow, 12000);
+}
+
+function scheduleCameraPermHint(){
+  cancelCameraPermHint(false);
+  _cameraPermAwaiting = true;
+  _permHintShowTimer = setTimeout(() => {
+    _permHintShowTimer = null;
+    showCameraPermHint();
+  }, 450);
+}
+
+function cancelCameraPermHint(hideNow = true){
+  _cameraPermAwaiting = false;
+  if (_permHintShowTimer) {
+    clearTimeout(_permHintShowTimer);
+    _permHintShowTimer = null;
+  }
+  if (hideNow) hidePermArrow();
 }
 
 function hidePermArrow(){
@@ -6828,11 +6849,11 @@ function hidePermArrow(){
   if (el) el.classList.remove('show');
   if (_permArrowTimer) { clearTimeout(_permArrowTimer); _permArrowTimer = null; }
 }
-function hidePermSpotlight(){ hidePermArrow(); }
+function hidePermSpotlight(){ cancelCameraPermHint(); }
 
-async function shouldShowPermHint(name){
+async function isCameraPrompt(){
   try {
-    const p = await navigator.permissions.query({ name });
+    const p = await navigator.permissions.query({ name: 'camera' });
     return p.state === 'prompt';
   } catch(_){ return false; }
 }
@@ -6947,6 +6968,7 @@ async function openOrder(){
 }
 
 function closeUpload(){
+  cancelCameraPermHint();
   const overlay = document.getElementById('uploadOverlay');
   if (!overlay.classList.contains('open')) return;
   const returnToSend = sendAwaitingPhoto && (selectedSendRegion || document.getElementById('sendRegion')?.value);
@@ -6999,19 +7021,20 @@ async function startCamera(){
     { video: true, audio: false }
   ];
 
-  const showPermHint = await shouldShowPermHint('camera');
+  const showPermHint = await isCameraPrompt();
 
   try {
     let stream = null;
     for (const constraints of constraintsList) {
       if (session !== cameraSession) return;
       try {
-        if (showPermHint && !stream) {
-          setTimeout(() => showPermArrow(), 380);
-        }
+        if (showPermHint && !stream) scheduleCameraPermHint();
         stream = await getUserMediaWithTimeout(constraints, 8000);
+        cancelCameraPermHint();
         break;
-      } catch (_) {}
+      } catch (_) {
+        cancelCameraPermHint();
+      }
     }
     if (!stream) throw new Error('no stream');
     if (session !== cameraSession) {
