@@ -5394,7 +5394,7 @@ function openOrderSheet(order){
 function openTravelMapSheet(travel){
   closeSheet();
   activeSheetTravel = travel;
-  fillTravelMapRouteLeg('From', parseRouteLegCyrillic(travel.from || ''));
+  fillTravelMapRouteLeg('From', parseRouteLegCyrillic(resolveShipmentFrom(travel) || ''));
   fillTravelMapRouteLeg('To', parseRouteLegCyrillic(travel.to || travel.dest || ''));
   const contactBtn = document.getElementById('travelMapContactBtn');
   const hasTg = travel.telegramUsername && travel.telegramUsername !== '@';
@@ -6017,17 +6017,39 @@ function setupShipmentsListEvents(){
   });
 }
 
-function shipmentDetailRouteLegs(s){
-  if (s.type === 'travel') {
-    return {
-      from: s.from || '—',
-      to: s.to || s.dest || '—'
-    };
+function resolveShipmentFrom(s){
+  if (!s) return '';
+  const from = String(s.from || '').trim();
+  if (from) return from;
+  if (userLocationRegion) return userLocationRegion;
+  if (s.lng != null && s.lat != null) {
+    const reg = detectRegionFromCoords(s.lng, s.lat);
+    if (reg) return reg;
   }
-  return {
-    from: s.from || userLocationRegion || '—',
-    to: s.dest || '—'
-  };
+  return '';
+}
+
+function ensureShipmentFrom(s){
+  if (!s) return;
+  const from = resolveShipmentFrom(s);
+  if (!from || s.from) return;
+  s.from = from;
+  const key = String(s.firestoreId || s.id);
+  if (s.type === 'travel') {
+    const t = travels.find(x => String(x.firestoreId || x.id) === key);
+    if (t && !t.from) t.from = from;
+  } else {
+    const o = orders.find(x => String(x.firestoreId || x.id) === key);
+    if (o && !o.from) o.from = from;
+  }
+}
+
+function shipmentDetailRouteLegs(s){
+  const from = resolveShipmentFrom(s) || '—';
+  const to = s.type === 'travel'
+    ? (s.to || s.dest || '—')
+    : (s.dest || '—');
+  return { from, to };
 }
 
 function parseRouteLegDisplay(destStr){
@@ -6274,9 +6296,8 @@ function shipmentRouteEndHtml(destStr, isTo){
 }
 
 function shipmentCardRouteHtml(s){
-  const from = s.type === 'travel'
-    ? (s.from || '—')
-    : (s.from || userLocationRegion || '—');
+  ensureShipmentFrom(s);
+  const from = resolveShipmentFrom(s) || '—';
   const to = s.type === 'travel'
     ? (s.to || s.dest || '—')
     : (s.dest || '—');
@@ -6333,6 +6354,7 @@ function renderDetailPassengers(count){
 function openShipmentDetail(key){
   const s = findShipment(key);
   if (!s) return;
+  ensureShipmentFrom(s);
   ensureDetailSheetIcons();
   closeDetailRoutePicker();
   detailShipmentKey = key;
