@@ -1722,6 +1722,54 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .notif-onboard-title{color:var(--tg-text,#0f172a)}
 .theme-telegram .notif-onboard-text{color:var(--tg-hint,#64748b)}
 .theme-telegram .notif-onboard-btn{background:var(--tg-btn,#2AABEE);color:var(--tg-btn-text,#fff)}
+/* ── Permission spotlight ─────────────────────────────────────── */
+#permSpotlight{
+  position:fixed;inset:0;z-index:9999;
+  pointer-events:none;
+  /* Ko'k Telegram gradient, shaffof */
+  background:radial-gradient(ellipse 160px 160px at 50% 42%,
+    transparent 0%,
+    transparent 68px,
+    rgba(10,60,100,.55) 70%,
+    rgba(10,60,100,.72) 100%);
+  opacity:0;transition:opacity .35s ease;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+#permSpotlight.show{opacity:1}
+/* Pulsing halqalar */
+.pspot-ring{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:130px;height:130px;
+  border-radius:50%;
+  border:2.5px solid rgba(255,255,255,.6);
+  animation:pspotPulse 1.8s ease-out infinite;
+}
+.pspot-ring--2{
+  animation-delay:.6s;
+  border-color:rgba(255,255,255,.3);
+}
+@keyframes pspotPulse{
+  0%{transform:translate(-50%,-50%) scale(.7);opacity:.8}
+  100%{transform:translate(-50%,-50%) scale(1.35);opacity:0}
+}
+/* Yo'naltiruvchi matn */
+.pspot-label{
+  position:absolute;
+  top:calc(50% + 80px);left:50%;
+  transform:translateX(-50%);
+  display:flex;align-items:center;gap:6px;
+  color:#fff;font-size:13px;font-weight:600;
+  white-space:nowrap;
+  text-shadow:0 1px 6px rgba(0,0,0,.4);
+  animation:pspotFade 2s ease infinite;
+}
+@keyframes pspotFade{
+  0%,100%{opacity:.7} 50%{opacity:1}
+}
+.pspot-label svg{transform:rotate(180deg);opacity:.8}
+/* ──────────────────────────────────────────────────────────────── */
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -3122,11 +3170,12 @@ async function requestLocationOnce(){
       invalidateMapGeoCache();
       saveLastGPS(coords.longitude, coords.latitude);
     } catch (_) {
-      // Rad etildi — keshdan olamiz yoki viloyatsiz ishlaymiz
       const cached = loadLastGPS();
       if (cached) {
         userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
       }
+    } finally {
+      hidePermSpotlight();
     }
   }
   // 'denied' holatida hech narsa so'ramaymiz
@@ -6734,8 +6783,54 @@ async function ensureCameraStarted(){
   return cameraStartPromise;
 }
 
-function maybeShowCameraPrePerm(){ return Promise.resolve(); }
-function maybeShowLocationPrePerm(){ return Promise.resolve(); }
+// ── Permission spotlight overlay ──────────────────────────────────────
+let _permSpotTimer = null;
+
+function showPermSpotlight(){
+  let el = document.getElementById('permSpotlight');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'permSpotlight';
+    el.setAttribute('aria-hidden','true');
+    el.innerHTML = `
+      <div class="pspot-ring"></div>
+      <div class="pspot-ring pspot-ring--2"></div>
+      <div class="pspot-label">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+        Ruxsat tugmasini bosing
+      </div>`;
+    document.body.appendChild(el);
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+}
+
+function hidePermSpotlight(){
+  const el = document.getElementById('permSpotlight');
+  if (!el) return;
+  el.classList.remove('show');
+  if (_permSpotTimer) { clearTimeout(_permSpotTimer); _permSpotTimer = null; }
+}
+
+async function maybeShowCameraPrePerm(){
+  try {
+    const p = await navigator.permissions.query({ name:'camera' });
+    if (p.state !== 'prompt') return;
+  } catch(_){}
+  showPermSpotlight();
+  _permSpotTimer = setTimeout(hidePermSpotlight, 8000);
+  await new Promise(r => setTimeout(r, 300));
+}
+
+async function maybeShowLocationPrePerm(){
+  try {
+    const p = await navigator.permissions.query({ name:'geolocation' });
+    if (p.state !== 'prompt') return;
+  } catch(_){}
+  showPermSpotlight();
+  _permSpotTimer = setTimeout(hidePermSpotlight, 8000);
+  await new Promise(r => setTimeout(r, 300));
+}
+// ─────────────────────────────────────────────────────────────────────
 
 async function initUploadCamera(){
   if (cameraPermWatcher) {
@@ -6754,10 +6849,12 @@ async function initUploadCamera(){
       await maybeShowCameraPrePerm();
     }
     perm.onchange = () => {
+      hidePermSpotlight();
       if (perm.state === 'granted') ensureCameraStarted();
       else if (perm.state === 'denied') showCameraFallback('Kameraga ruxsat berilmagan');
     };
     await ensureCameraStarted();
+    hidePermSpotlight();
   } catch (_) {
     await ensureCameraStarted();
   }
