@@ -510,10 +510,14 @@ body.view-sender .header{background:var(--app-bg)!important}
 .drv-dot{
   width:11px;height:11px;border-radius:50%;flex-shrink:0;
 }
-.drv-dot--a{background:#2AABEE;}
-.drv-dot--b{background:#ef4444;}
+.drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
+.drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
 .drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.drv-route-arrow{flex-shrink:0;color:#cbd5e1;font-size:18px;font-weight:300;}
+.drv-route-arrow{
+  flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  color:#2AABEE;
+}
+.drv-route-arrow svg{width:26px;height:26px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ── Driver region picker overlay ── */
 #driverRegionPickerOverlay{
@@ -846,7 +850,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet--route .route-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
 .sheet--route .route-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
 .sheet--route .route-dot.a{background:var(--tg-blue)}
-.sheet--route .route-dot.b{background:#ef4444}
+.sheet--route .route-dot.b{background:#FF8C00}
 .sheet--route .route-select{
   flex:1;padding:13px 16px;border-radius:14px;border:1.5px solid #e8e8ed;
   font-size:16px;font-family:inherit;color:#000;background:#f7f7f8;
@@ -1383,6 +1387,8 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram.view-sender .content{background:var(--app-bg)!important}
 .theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
+.theme-telegram .drv-route-arrow{color:var(--tg-btn,#2AABEE)!important}
+.theme-telegram .drv-dot--b{background:#FF8C00!important;box-shadow:0 0 0 3px rgba(255,140,0,.2)!important}
 .theme-telegram #driverView .region-picker--horizontal{
   background:#fff!important;--picker-fade:#fff!important;
   border-color:#2AABEE!important;
@@ -1710,7 +1716,9 @@ body.view-sender.theme-telegram .toggle,
             <div class="drv-dot drv-dot--a"></div>
             <span id="driverFromLabel">Қаердан?</span>
           </button>
-          <div class="drv-route-arrow">→</div>
+          <div class="drv-route-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 12h13"/><path d="M14 7l5 5-5 5"/></svg>
+          </div>
           <button class="drv-route-btn" id="driverToBtn" onclick="openDriverRegionPicker('to')">
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Қаерга?</span>
