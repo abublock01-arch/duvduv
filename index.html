@@ -439,35 +439,56 @@ body.view-sender .header{background:var(--app-bg)!important}
 #senderView .cta-wrap{
   position:sticky;bottom:0;z-index:3;
   flex-shrink:0;width:100%;
-  padding:12px 0 max(28px,env(safe-area-inset-bottom));
+  padding:12px 16px max(28px,env(safe-area-inset-bottom));
   background:transparent;
   border:none;box-shadow:none;
   display:flex;flex-direction:column;gap:13px;
 }
 .cta-wrap{background:transparent;border:none;box-shadow:none}
-.role-hint{
-  text-align:center;padding:4px 16px 0;
-  font-size:13px;font-weight:500;color:#b0b8c8;
-  letter-spacing:.01em;cursor:pointer;
+.role-switch{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  width:100%;min-height:48px;padding:11px 16px 11px 14px;
+  border:1.5px solid rgba(42,171,238,.42);
+  border-radius:14px;
+  background:linear-gradient(180deg,rgba(255,255,255,.98) 0%,rgba(240,249,255,.98) 100%);
+  color:#2AABEE;
+  font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.01em;
+  cursor:pointer;outline:none;
+  box-shadow:
+    0 2px 14px rgba(42,171,238,.14),
+    0 0 0 1px rgba(42,171,238,.06) inset;
   -webkit-tap-highlight-color:transparent;
-  user-select:none;
+  transition:border-color .18s,background .18s,box-shadow .18s,transform .12s;
 }
-.role-hint:active{opacity:.6}
-.role-hint-arrow{font-size:12px;opacity:.7}
-/* Haydovchi ekranida pastda yopishib turadi */
-.driver-role-hint{
-  position:absolute;bottom:max(18px,env(safe-area-inset-bottom));
-  left:50%;transform:translateX(-50%);
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
-  border-radius:20px;padding:7px 18px;
-  font-size:13px;font-weight:500;color:#6b7280;
-  cursor:pointer;white-space:nowrap;
-  box-shadow:0 2px 12px rgba(0,0,0,.10);
-  -webkit-tap-highlight-color:transparent;
-  user-select:none;z-index:10;
+.role-switch:active{
+  transform:scale(.98);
+  background:rgba(240,249,255,1);
+  border-color:rgba(42,171,238,.58);
+  box-shadow:0 1px 8px rgba(42,171,238,.18);
 }
-.driver-role-hint:active{opacity:.7;transform:translateX(-50%) scale(.97)}
+.role-switch-icon{
+  width:32px;height:32px;flex-shrink:0;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(42,171,238,.14);
+  color:#2AABEE;
+}
+.role-switch-icon svg{width:18px;height:18px;display:block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.role-switch-label{flex:1;text-align:left;line-height:1.25}
+.role-switch-chev{
+  flex-shrink:0;width:22px;height:22px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:400;line-height:1;color:rgba(42,171,238,.55);
+}
+.role-switch--float{
+  position:absolute;left:50%;transform:translateX(-50%);
+  bottom:max(16px,env(safe-area-inset-bottom));
+  width:calc(100% - 32px);max-width:340px;
+  z-index:10;
+  margin:0;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+}
+.role-switch--float:active{transform:translateX(-50%) scale(.98)}
+.role-switch--float .role-switch-label{text-align:center;flex:1}
+.role-switch--float .role-switch-chev{transform:rotate(180deg)}
 .cta-btn{
   position:relative;width:100%;
   background:var(--tg-blue);color:#fff;
@@ -1445,6 +1466,17 @@ body.view-sender.theme-telegram .toggle,
   border:none!important;
 }
 .theme-telegram .cta-icon svg{fill:var(--tg-btn-text)!important;stroke:none!important}
+.theme-telegram .role-switch{
+  border-color:color-mix(in srgb,var(--tg-btn) 42%,transparent)!important;
+  background:linear-gradient(180deg,var(--tg-section) 0%,color-mix(in srgb,var(--tg-btn) 8%,var(--tg-section)) 100%)!important;
+  color:var(--tg-btn)!important;
+  box-shadow:0 2px 14px color-mix(in srgb,var(--tg-btn) 14%,transparent)!important;
+}
+.theme-telegram .role-switch-icon{
+  background:color-mix(in srgb,var(--tg-btn) 14%,transparent)!important;
+  color:var(--tg-btn)!important;
+}
+.theme-telegram .role-switch-chev{color:color-mix(in srgb,var(--tg-btn) 55%,transparent)!important}
 .theme-telegram .map-wrap{
   background:var(--tg-section)!important;border-color:var(--tg-secondary)!important;
   box-shadow:none!important;
@@ -1728,9 +1760,13 @@ body.view-sender.theme-telegram .toggle,
             <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
             <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
           </button>
-          <div class="role-hint" onclick="switchView('driver')" role="button" aria-label="Haydovchi ekraniga o'tish">
-            Haydovchimisiz? <span class="role-hint-arrow">→</span>
-          </div>
+          <button type="button" class="role-switch" onclick="switchView('driver')" aria-label="Haydovchi ekraniga o'tish">
+            <span class="role-switch-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 6.5l2.6 1.5M19.8 6.5l-2.6 1.5M4.2 17.5l2.6-1.5M19.8 17.5l-2.6-1.5"/></svg>
+            </span>
+            <span class="role-switch-label" id="roleSwitchDriverLbl">Haydovchimisiz?</span>
+            <span class="role-switch-chev" aria-hidden="true">›</span>
+          </button>
         </div>
       </div>
 
@@ -1753,9 +1789,13 @@ body.view-sender.theme-telegram .toggle,
 
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
-          <div class="driver-role-hint" onclick="switchView('sender')" role="button" aria-label="Mijoz ekraniga o'tish">
-            ← Mijozmisiz?
-          </div>
+          <button type="button" class="role-switch role-switch--float" onclick="switchView('sender')" aria-label="Mijoz ekraniga o'tish">
+            <span class="role-switch-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+            </span>
+            <span class="role-switch-label" id="roleSwitchSenderLbl">Mijozmisiz?</span>
+            <span class="role-switch-chev" aria-hidden="true">›</span>
+          </button>
           <div class="map-controls">
             <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
             <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
@@ -4231,6 +4271,8 @@ const MORPH_MULTI = [
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
   ['#ctaTravelText', 'SAFARNI BOSHLASH'], ['#ctaOrderText', 'POCHTA YUBORISH'],
+  ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
+  ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
   ['#locPickerTitle', 'Lokatsiyani tanlang'], ['.loc-picker-hint', "Xaritani suring — pin o'rtada qoladi"],
