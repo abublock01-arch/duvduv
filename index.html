@@ -6925,14 +6925,18 @@ async function submitTravel(e){
     showToast('Tuman tanlang');
     return;
   }
-  const to = formatDest(region, district);
-  document.getElementById('travelTo').value = to;
-  // Cached coords ishlatamiz — dialog chiqarmaymiz
+  // GPS tekshiruvi — joylashuvsiz e'lon bo'lmaydi
   let coords = userCoords;
   if (!coords) {
     const cached = loadLastGPS();
     if (cached) coords = { latitude: cached.lat, longitude: cached.lng };
   }
+  if (!coords && !userLocationRegion) {
+    showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
+    return;
+  }
+  const to = formatDest(region, district);
+  document.getElementById('travelTo').value = to;
   const from = userLocationRegion || (coords ? detectRegionFromCoords(coords.longitude, coords.latitude) : '');
   const note = '';
   const btn = document.getElementById('travelActionBtn');
@@ -6982,6 +6986,12 @@ function submitOrder(e){
   }
   if (!district) {
     showToast('Tuman tanlang');
+    return;
+  }
+  // GPS tekshiruvi — joylashuvsiz e'lon bo'lmaydi
+  const hasCoords = userCoords || loadLastGPS() || userLocationRegion;
+  if (!hasCoords) {
+    showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
     return;
   }
   const dest = formatDest(region, district);
