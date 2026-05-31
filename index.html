@@ -1722,21 +1722,20 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .notif-onboard-title{color:var(--tg-text,#0f172a)}
 .theme-telegram .notif-onboard-text{color:var(--tg-hint,#64748b)}
 .theme-telegram .notif-onboard-btn{background:var(--tg-btn,#2AABEE);color:var(--tg-btn-text,#fff)}
-/* ── Permission hint (faqat kamera ruxsati, flip tugmasi ustida) ─── */
+/* ── Permission hint (faqat kamera ruxsati, shutter o'ngida) ─────── */
 .upload-actions .perm-hint{
   position:absolute;
-  left:calc(50% + 88px);
-  bottom:calc(100% + 6px);
-  transform:translateX(-50%) translateY(8px);
+  left:calc(50% + 42px);
+  bottom:calc(100% + 4px);
+  transform:translateY(6px);
   z-index:30;pointer-events:none;
-  display:flex;flex-direction:column;align-items:center;gap:0;
   opacity:0;visibility:hidden;
   transition:opacity .35s ease,transform .4s cubic-bezier(.34,1.35,.64,1),visibility .35s;
   filter:drop-shadow(0 6px 18px rgba(42,171,238,.28));
 }
 .upload-actions .perm-hint.show{
   opacity:1;visibility:visible;
-  transform:translateX(-50%) translateY(0);
+  transform:translateY(0);
 }
 .perm-hint-bubble{
   display:flex;align-items:center;gap:7px;
@@ -1753,31 +1752,9 @@ body.view-sender.theme-telegram .toggle,
   background:rgba(255,255,255,.24);border-radius:50%;
 }
 .perm-hint-icon svg{width:11px;height:11px;stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
-.perm-hint-track{
-  position:relative;width:44px;height:50px;margin-bottom:-4px;
-}
-.perm-hint-track svg{width:100%;height:100%;overflow:visible}
-.perm-hint-track path{
-  stroke:#2AABEE;stroke-width:3.2;stroke-linecap:round;fill:none;
-  stroke-dasharray:6 4;animation:permDashFlow .85s linear infinite;
-  filter:drop-shadow(0 1px 4px rgba(42,171,238,.5));
-}
-.perm-hint-head{
-  position:absolute;top:0;left:2px;
-  width:13px;height:13px;
-  border-left:3.2px solid #2AABEE;border-top:3.2px solid #2AABEE;
-  transform:rotate(45deg);
-  animation:permHeadBounceUp 1.1s ease-in-out infinite;
-  filter:drop-shadow(0 2px 6px rgba(42,171,238,.6));
-}
 @keyframes permBubblePulse{
   0%,100%{transform:scale(1);box-shadow:0 3px 12px rgba(42,171,238,.42),0 0 0 0 rgba(42,171,238,.38)}
   50%{transform:scale(1.05);box-shadow:0 4px 14px rgba(42,171,238,.48),0 0 0 8px rgba(42,171,238,0)}
-}
-@keyframes permDashFlow{to{stroke-dashoffset:-20}}
-@keyframes permHeadBounceUp{
-  0%,100%{transform:rotate(45deg) translate(0,0);opacity:.82}
-  50%{transform:rotate(45deg) translate(-4px,-4px);opacity:1}
 }
 /* ─────────────────────────────────────────────────────────────────── */
 </style>
@@ -1961,7 +1938,7 @@ body.view-sender.theme-telegram .toggle,
           <button type="button" onclick="openGallery()">Galereyadan tanlash</button>
         </div>
       </div>
-      <input type="file" accept="image/*" capture="environment" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
+      <input type="file" accept="image/*" class="upload-file-input" id="photoInput" onchange="onPhotoSelected(event)">
     </div>
     <button type="button" class="upload-skip" id="uploadSkipBtn" onclick="skipSendPhoto()" hidden>Rasmsiz yuborish</button>
     <div class="upload-actions">
@@ -1975,10 +1952,6 @@ body.view-sender.theme-telegram .toggle,
         <svg viewBox="0 0 24 24"><path d="M11 19H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h5"/><path d="M13 5h7a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-5"/><polyline points="8 12 11 15 8 18"/><polyline points="16 6 13 9 16 12"/></svg>
       </button>
       <div class="perm-hint" id="permArrow" aria-hidden="true">
-        <div class="perm-hint-track" aria-hidden="true">
-          <svg viewBox="0 0 44 50" fill="none"><path d="M38 46 C38 26, 22 10, 6 4"/></svg>
-          <span class="perm-hint-head"></span>
-        </div>
         <div class="perm-hint-bubble">
           <span class="perm-hint-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
