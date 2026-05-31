@@ -1246,11 +1246,13 @@ body.view-sender .header{background:var(--app-bg)!important}
   letter-spacing:-.04em;line-height:1.15;margin-bottom:8px;text-align:center;
   padding-right:44px;padding-left:44px;
 }
+.upload-inner:has(.upload-sub[hidden]) .upload-title{margin-bottom:4px}
 .upload-sub{
   color:#888;font-size:14px;font-weight:600;
   margin-bottom:12px;text-align:center;
   flex-shrink:0;line-height:1.35;
 }
+.upload-sub[hidden]{display:none!important}
 .upload-zone{
   width:100%;flex:1;min-height:120px;
   border:2px dashed #D4D4D8;
@@ -1307,14 +1309,14 @@ body.view-sender .header{background:var(--app-bg)!important}
 .upload-skip{
   display:block;width:calc(100% - 32px);max-width:360px;margin:0 auto 12px;
   padding:12px 16px;border-radius:14px;
-  border:1.5px solid rgba(42,171,238,.38);
-  background:rgba(42,171,238,.08);
-  color:#2AABEE;font-family:inherit;font-size:15px;font-weight:600;
+  border:1.5px solid rgba(180,83,9,.42);
+  background:rgba(255,193,7,.14);
+  color:#B45309;font-family:inherit;font-size:15px;font-weight:700;
   text-align:center;cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   transition:background .15s,border-color .15s,transform .12s;
 }
-.upload-skip:active{background:rgba(42,171,238,.14);transform:scale(.98)}
+.upload-skip:active{background:rgba(255,193,7,.26);transform:scale(.98)}
 .upload-skip:disabled{opacity:.45;pointer-events:none}
 .upload-skip[hidden]{display:none!important}
 .gallery-btn{
@@ -1529,9 +1531,9 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .upload-close{background:var(--tg-secondary)!important}
 .theme-telegram .upload-close svg{stroke:var(--tg-text)!important}
 .theme-telegram .upload-skip{
-  border-color:color-mix(in srgb,var(--tg-btn) 38%,transparent)!important;
-  background:color-mix(in srgb,var(--tg-btn) 8%,transparent)!important;
-  color:var(--tg-btn)!important;
+  border-color:rgba(180,83,9,.45)!important;
+  background:rgba(255,193,7,.16)!important;
+  color:#B45309!important;
 }
 .theme-telegram .upload-actions{background:var(--tg-bg)!important;border-top-color:var(--tg-secondary)!important}
 .theme-telegram .gallery-btn,
@@ -1677,6 +1679,47 @@ body.view-sender.theme-telegram .toggle,
 }
 
 /* Хабарнома рухсати — ишончли onboarding */
+/* ── Pre-permission ekranlar ─────────────────────────────────────────── */
+.perm-overlay{
+  position:fixed;inset:0;z-index:600;
+  display:flex;align-items:flex-end;justify-content:center;
+  padding:0 0 max(24px,env(safe-area-inset-bottom));
+  background:rgba(15,23,42,.48);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  opacity:0;visibility:hidden;pointer-events:none;
+  transition:opacity .25s ease,visibility .25s ease;
+}
+.perm-overlay.show{opacity:1;visibility:visible;pointer-events:auto}
+.perm-card{
+  width:min(100%,420px);
+  background:#fff;border-radius:24px 24px 20px 20px;
+  padding:28px 24px 20px;text-align:center;
+  box-shadow:0 -4px 40px rgba(15,23,42,.18);
+  animation:slideUp .3s cubic-bezier(.4,0,.2,1);
+}
+@keyframes slideUp{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.perm-icon-wrap{
+  width:72px;height:72px;margin:0 auto 18px;border-radius:22px;
+  display:flex;align-items:center;justify-content:center;
+}
+.perm-icon-wrap--camera{background:linear-gradient(145deg,#2AABEE,#0e8fd6)}
+.perm-icon-wrap--location{background:linear-gradient(145deg,#FF8C00,#e67e00)}
+.perm-icon-wrap svg{width:36px;height:36px;fill:#fff}
+.perm-title{margin:0 0 8px;font-size:21px;font-weight:800;color:#0f172a;letter-spacing:-.02em}
+.perm-desc{margin:0 0 24px;font-size:14px;line-height:1.5;color:#64748b}
+.perm-btn{
+  width:100%;padding:16px;border:none;border-radius:16px;
+  font-size:16px;font-weight:700;font-family:inherit;cursor:pointer;
+  background:var(--tg-blue);color:#fff;margin-bottom:10px;
+  box-shadow:0 6px 18px -4px rgba(42,171,238,.5);
+  transition:transform .15s,opacity .15s;
+}
+.perm-btn:active{transform:scale(.98);opacity:.9}
+.perm-btn--skip{
+  background:transparent;color:#9ca3af;font-size:14px;
+  box-shadow:none;margin-bottom:0;padding:10px;
+}
+/* ───────────────────────────────────────────────────────────────────── */
 .notif-onboard-overlay{
   position:fixed;inset:0;z-index:500;
   display:flex;align-items:center;justify-content:center;
@@ -3111,7 +3154,8 @@ async function requestLocationOnce(){
   if (perm === 'granted') {
     refreshUserLocationRegion();
   } else if (perm === 'prompt' || perm === null) {
-    // Bir marta so'raymiz — dialog chiqadi
+    // Avval bizning chiroyli ekran, keyin tizim dialogi
+    await maybeShowLocationPrePerm();
     try {
       const coords = await getCurrentPosition();
       userCoords = { latitude: coords.latitude, longitude: coords.longitude };
@@ -5736,6 +5780,7 @@ let previewObjectUrl = null;
 let selectedPhotoFile = null;
 let cameraSession = 0;
 let cameraPermWatcher = null;
+let cameraStartPromise = null;
 const SEND_DRAFT_KEY = 'duvduv_send_draft';
 const SEND_DRAFT_TTL_MS = 30 * 60 * 1000;
 
@@ -6713,34 +6758,82 @@ function deleteShipment(key){
   if (confirm('O\'chirilsinmi?')) run();
 }
 
-function getSendDestPreview(){
-  const region = document.getElementById('sendRegion')?.value || selectedSendRegion;
-  const district = selectedSendDistrict || document.getElementById('sendDistrict')?.value;
-  if (!region) return '';
-  if (scriptLatin) return formatDest(region, district);
-  const reg = regionPickerLabel(region);
-  const dist = district ? districtPickerLabel(district) : '';
-  return dist ? `${reg} — ${dist}` : reg;
-}
-
-function setUploadSubForSend(destPreview){
+function setUploadSubVisible(show){
   const sub = document.getElementById('uploadSub');
-  if (!sub) return;
-  const latin = destPreview
-    ? `${destPreview}. Qutini ramka ichida ko'ring yoki rasmsiz yuboring`
-    : "Qutini ramka ichida ko'ring va rasm oling";
-  const cyrillic = destPreview
-    ? `${destPreview}. Қутини рамка ичида кўринг ёки Расмсиз юборинг`
-    : 'Қутини рамка ичида кўринг ва расм олинг';
-  sub.dataset.i18nLatin = latin;
-  sub.dataset.i18nCyrillic = cyrillic;
-  setI18nText(sub, latin, cyrillic);
+  if (sub) sub.hidden = !show;
 }
 
 function setUploadSkipVisible(show){
   const btn = document.getElementById('uploadSkipBtn');
   if (btn) btn.hidden = !show;
 }
+
+async function ensureCameraStarted(){
+  if (cameraStream) return;
+  if (cameraStartPromise) return cameraStartPromise;
+  cameraStartPromise = startCamera().finally(() => { cameraStartPromise = null; });
+  return cameraStartPromise;
+}
+
+// ── Pre-permission ekranlar ───────────────────────────────────────────
+let _cameraPermResolve = null;
+let _locationPermResolve = null;
+
+function showPermOverlay(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.setAttribute('aria-hidden','false');
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+}
+function hidePermOverlay(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('show');
+  el.setAttribute('aria-hidden','true');
+}
+
+function onCameraPermAllow(){
+  hidePermOverlay('cameraPermOverlay');
+  if (_cameraPermResolve) { _cameraPermResolve('allow'); _cameraPermResolve = null; }
+}
+function onCameraPermSkip(){
+  hidePermOverlay('cameraPermOverlay');
+  if (_cameraPermResolve) { _cameraPermResolve('skip'); _cameraPermResolve = null; }
+  // Galereya tanlagichni ochish
+  document.getElementById('galleryInput')?.click();
+}
+function onLocationPermAllow(){
+  hidePermOverlay('locationPermOverlay');
+  if (_locationPermResolve) { _locationPermResolve('allow'); _locationPermResolve = null; }
+}
+function onLocationPermSkip(){
+  hidePermOverlay('locationPermOverlay');
+  if (_locationPermResolve) { _locationPermResolve('skip'); _locationPermResolve = null; }
+}
+
+async function maybeShowCameraPrePerm(){
+  try {
+    const perm = await navigator.permissions.query({ name:'camera' });
+    if (perm.state !== 'prompt') return; // allaqachon granted yoki denied
+  } catch(_){}
+  // prompt holatda — pre-screen ko'rsat
+  await new Promise(resolve => {
+    _cameraPermResolve = resolve;
+    showPermOverlay('cameraPermOverlay');
+  });
+}
+
+async function maybeShowLocationPrePerm(){
+  try {
+    const perm = await navigator.permissions.query({ name:'geolocation' });
+    if (perm.state !== 'prompt') return;
+  } catch(_){}
+  await new Promise(resolve => {
+    _locationPermResolve = resolve;
+    showPermOverlay('locationPermOverlay');
+  });
+}
+// ─────────────────────────────────────────────────────────────────────
 
 async function initUploadCamera(){
   if (cameraPermWatcher) {
@@ -6750,28 +6843,31 @@ async function initUploadCamera(){
   try {
     const perm = await navigator.permissions.query({ name: 'camera' });
     cameraPermWatcher = perm;
-    if (perm.state === 'granted' || perm.state === 'prompt') {
-      startCamera();
-    } else {
+    if (perm.state === 'denied') {
       showCameraFallback('Kameraga ruxsat berilmagan');
+      return;
+    }
+    // Birinchi marta so'rashdan oldin — bizning chiroyli ekran
+    if (perm.state === 'prompt') {
+      await maybeShowCameraPrePerm();
     }
     perm.onchange = () => {
-      if (perm.state === 'granted') startCamera();
+      if (perm.state === 'granted') ensureCameraStarted();
       else if (perm.state === 'denied') showCameraFallback('Kameraga ruxsat berilmagan');
     };
+    await ensureCameraStarted();
   } catch (_) {
-    startCamera();
+    await ensureCameraStarted();
   }
 }
 
 async function openUploadForSend(){
-  const destPreview = getSendDestPreview();
   const overlay = document.getElementById('uploadOverlay');
   resetUploadVisual();
   previewObjectUrl = null;
   selectedPhotoFile = null;
   setI18nText(document.getElementById('uploadTitle'), "Jo'natma rasmi");
-  setUploadSubForSend(destPreview);
+  setUploadSubVisible(false);
   setUploadSkipVisible(true);
   overlay.classList.remove('closing', 'handoff-to-send');
   overlay.classList.add('open');
@@ -6898,7 +6994,6 @@ async function startCamera(){
   if (placeholderText) setI18nText(placeholderText, 'Kamera yuklanmoqda…');
 
   const constraintsList = [
-    { video: { facingMode: { exact: facingMode } }, audio: false },
     { video: { facingMode: { ideal: facingMode } }, audio: false },
     { video: true, audio: false }
   ];
@@ -6937,6 +7032,7 @@ async function startCamera(){
 }
 
 function stopCamera(){
+  cameraStartPromise = null;
   if (cameraStream) {
     cameraStream.getTracks().forEach(t => t.stop());
     cameraStream = null;
@@ -6949,7 +7045,8 @@ function stopCamera(){
 function flipCamera(){
   facingMode = facingMode === 'environment' ? 'user' : 'environment';
   if (document.getElementById('uploadOverlay').classList.contains('open')) {
-    startCamera();
+    stopCamera();
+    ensureCameraStarted();
   }
 }
 
@@ -6984,12 +7081,12 @@ async function capturePhoto(){
     preview.src = '';
     preview.classList.remove('visible');
     captureBtn.classList.remove('captured');
-    startCamera();
+    ensureCameraStarted();
     return;
   }
 
   if (!cameraStream || !video.videoWidth) {
-    await startCamera();
+    await ensureCameraStarted();
     if (!cameraStream || !video.videoWidth) return;
   }
 
@@ -7349,6 +7446,32 @@ if (window.Telegram?.WebApp?.onEvent) {
 }
 recoverSendFlow();
 </script>
+
+<!-- Kamera ruxsati pre-screen -->
+<div class="perm-overlay" id="cameraPermOverlay" aria-hidden="true">
+  <div class="perm-card" role="dialog">
+    <div class="perm-icon-wrap perm-icon-wrap--camera" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+    </div>
+    <h2 class="perm-title">Kamera kerak</h2>
+    <p class="perm-desc">Jo'natma rasmini olish uchun kameraga ruxsat bering. Rasmingiz faqat e'lon uchun ishlatiladi.</p>
+    <button type="button" class="perm-btn" onclick="onCameraPermAllow()">📷 Ruxsat berish</button>
+    <button type="button" class="perm-btn perm-btn--skip" onclick="onCameraPermSkip()">Galereyadan tanlash</button>
+  </div>
+</div>
+
+<!-- Lokatsiya ruxsati pre-screen -->
+<div class="perm-overlay" id="locationPermOverlay" aria-hidden="true">
+  <div class="perm-card" role="dialog">
+    <div class="perm-icon-wrap perm-icon-wrap--location" aria-hidden="true">
+      <svg viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+    </div>
+    <h2 class="perm-title">Joylashuv kerak</h2>
+    <p class="perm-desc">E'lonni to'g'ri joyda ko'rsatish uchun sizning shahringizni bilamiz. Boshqalarga ko'rsatilmaydi.</p>
+    <button type="button" class="perm-btn" onclick="onLocationPermAllow()" style="background:linear-gradient(135deg,#FF8C00,#e67e00);box-shadow:0 6px 18px -4px rgba(255,140,0,.45)">📍 Ruxsat berish</button>
+    <button type="button" class="perm-btn perm-btn--skip" onclick="onLocationPermSkip()">Keyinroq</button>
+  </div>
+</div>
 
 <!-- Хабарнома рухсати (фақат Ҳа) -->
 <div class="notif-onboard-overlay" id="notifOnboardOverlay" hidden aria-hidden="true">
