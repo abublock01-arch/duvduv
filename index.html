@@ -6925,15 +6925,27 @@ async function submitTravel(e){
     showToast('Tuman tanlang');
     return;
   }
-  // GPS tekshiruvi — joylashuvsiz e'lon bo'lmaydi
+  // GPS aniqlanmagan bo'lsa — bir marta sinab ko'ramiz
+  if (!userCoords && !userLocationRegion) {
+    try {
+      const c = await getCurrentPosition();
+      userCoords = { latitude: c.latitude, longitude: c.longitude };
+      userLocationRegion = detectRegionFromCoords(c.longitude, c.latitude);
+      saveLastGPS(c.longitude, c.latitude);
+    } catch (_) {
+      const cached = loadLastGPS();
+      if (cached) {
+        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+      } else {
+        showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
+        return;
+      }
+    }
+  }
   let coords = userCoords;
   if (!coords) {
     const cached = loadLastGPS();
     if (cached) coords = { latitude: cached.lat, longitude: cached.lng };
-  }
-  if (!coords && !userLocationRegion) {
-    showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
-    return;
   }
   const to = formatDest(region, district);
   document.getElementById('travelTo').value = to;
@@ -6972,7 +6984,7 @@ async function submitTravel(e){
   showSuccessCheck();
 }
 
-function submitOrder(e){
+async function submitOrder(e){
   e.preventDefault();
   if (!selectedPhotoFile && !previewObjectUrl) {
     showToast('Avval rasm oling');
@@ -6988,11 +7000,22 @@ function submitOrder(e){
     showToast('Tuman tanlang');
     return;
   }
-  // GPS tekshiruvi — joylashuvsiz e'lon bo'lmaydi
-  const hasCoords = userCoords || loadLastGPS() || userLocationRegion;
-  if (!hasCoords) {
-    showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
-    return;
+  // GPS aniqlanmagan bo'lsa — bir marta sinab ko'ramiz
+  if (!userCoords && !userLocationRegion) {
+    try {
+      const c = await getCurrentPosition();
+      userCoords = { latitude: c.latitude, longitude: c.longitude };
+      userLocationRegion = detectRegionFromCoords(c.longitude, c.latitude);
+      saveLastGPS(c.longitude, c.latitude);
+    } catch (_) {
+      const cached = loadLastGPS();
+      if (cached) {
+        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+      } else {
+        showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
+        return;
+      }
+    }
   }
   const dest = formatDest(region, district);
   document.getElementById('sendDest').value = dest;
