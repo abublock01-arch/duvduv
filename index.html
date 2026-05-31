@@ -1722,28 +1722,60 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .notif-onboard-title{color:var(--tg-text,#0f172a)}
 .theme-telegram .notif-onboard-text{color:var(--tg-hint,#64748b)}
 .theme-telegram .notif-onboard-btn{background:var(--tg-btn,#2AABEE);color:var(--tg-btn-text,#fff)}
-/* ── Permission arrow ───────────────────────────────────────────── */
-#permArrow{
+/* ── Permission hint (camera / location dialog) ─────────────────── */
+.perm-hint{
   position:fixed;
-  bottom:max(88px,env(safe-area-inset-bottom));
-  right:20px;
-  z-index:9998;pointer-events:none;
-  opacity:0;transform:translate(10px,10px);
-  transition:opacity .3s ease,transform .3s ease;
+  top:clamp(252px,51.5vh,392px);
+  left:50%;
+  transform:translateX(-50%) translateY(12px);
+  z-index:99999;pointer-events:none;
+  display:flex;flex-direction:column;align-items:center;gap:4px;
+  opacity:0;
+  transition:opacity .4s ease,transform .45s cubic-bezier(.34,1.35,.64,1);
+  filter:drop-shadow(0 10px 28px rgba(42,171,238,.32));
 }
-#permArrow.show{opacity:1;transform:translate(0,0)}
-#permArrow::before{
-  content:'';display:block;
-  width:44px;height:44px;
-  border-right:4px solid #2AABEE;
-  border-bottom:4px solid #2AABEE;
-  border-radius:0 0 8px 0;
+.perm-hint.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.perm-hint-bubble{
+  display:flex;align-items:center;gap:9px;
+  padding:11px 17px;border-radius:16px;
+  background:linear-gradient(135deg,#2AABEE 0%,#1590d4 100%);
+  color:#fff;font-size:14px;font-weight:600;line-height:1.35;
+  text-align:left;max-width:min(292px,calc(100vw - 36px));
+  box-shadow:0 4px 14px rgba(42,171,238,.45),inset 0 1px 0 rgba(255,255,255,.28);
+  animation:permBubblePulse 2.2s ease-in-out infinite;
+}
+.perm-hint-icon{
+  flex-shrink:0;width:24px;height:24px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.24);border-radius:50%;
+}
+.perm-hint-icon svg{width:13px;height:13px;stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.perm-hint-text{display:block}
+.perm-hint-track{
+  position:relative;width:96px;height:42px;
+  margin-left:38%;margin-top:-2px;align-self:flex-start;
+}
+.perm-hint-track svg{width:100%;height:100%;overflow:visible}
+.perm-hint-track path{
+  stroke:#2AABEE;stroke-width:3.5;stroke-linecap:round;fill:none;
+  stroke-dasharray:7 5;animation:permDashFlow .9s linear infinite;
+  filter:drop-shadow(0 1px 4px rgba(42,171,238,.55));
+}
+.perm-hint-head{
+  position:absolute;right:-2px;bottom:2px;
+  width:15px;height:15px;
+  border-right:3.5px solid #2AABEE;border-bottom:3.5px solid #2AABEE;
   transform:rotate(-45deg);
-  filter:drop-shadow(0 2px 10px rgba(42,171,238,.7));
-  animation:arrowBounce 1s ease-in-out infinite;
+  animation:permHeadBounce 1.15s ease-in-out infinite;
+  filter:drop-shadow(0 2px 8px rgba(42,171,238,.65));
 }
-@keyframes arrowBounce{
-  0%,100%{transform:rotate(-45deg) translate(0,0);opacity:.7}
+@keyframes permBubblePulse{
+  0%,100%{transform:scale(1);box-shadow:0 4px 14px rgba(42,171,238,.45),0 0 0 0 rgba(42,171,238,.4)}
+  50%{transform:scale(1.04);box-shadow:0 6px 18px rgba(42,171,238,.5),0 0 0 10px rgba(42,171,238,0)}
+}
+@keyframes permDashFlow{to{stroke-dashoffset:-24}}
+@keyframes permHeadBounce{
+  0%,100%{transform:rotate(-45deg) translate(0,0);opacity:.82}
   50%{transform:rotate(-45deg) translate(5px,5px);opacity:1}
 }
 /* ─────────────────────────────────────────────────────────────────── */
@@ -3138,8 +3170,6 @@ async function requestLocationOnce(){
   if (perm === 'granted') {
     refreshUserLocationRegion();
   } else if (perm === 'prompt' || perm === null) {
-    // Avval bizning chiroyli ekran, keyin tizim dialogi
-    await maybeShowLocationPrePerm();
     try {
       const coords = await getCurrentPosition();
       userCoords = { latitude: coords.latitude, longitude: coords.longitude };
@@ -5327,6 +5357,9 @@ function getCurrentPosition(){
     }
     // Fallback: navigator.geolocation
     if (!navigator.geolocation) { reject(new Error('Geolocation unavailable')); return; }
+    shouldShowPermHint('geolocation').then(ok => {
+      if (ok) setTimeout(() => showPermArrow(), 380);
+    }).catch(() => {});
     navigator.geolocation.getCurrentPosition(
       pos => resolve(pos.coords),
       err => reject(err),
@@ -6768,11 +6801,26 @@ function showPermArrow(){
   if (!el) {
     el = document.createElement('div');
     el.id = 'permArrow';
+    el.className = 'perm-hint';
     el.setAttribute('aria-hidden','true');
+    el.innerHTML = `
+      <div class="perm-hint-bubble">
+        <span class="perm-hint-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        <span class="perm-hint-text" id="permHintLabel">«Ruxsat» tugmasini bosing</span>
+      </div>
+      <div class="perm-hint-track" aria-hidden="true">
+        <svg viewBox="0 0 96 42" fill="none"><path d="M4 6 C32 6 58 28 92 38"/></svg>
+        <span class="perm-hint-head"></span>
+      </div>`;
     document.body.appendChild(el);
+    initI18nEl(document.getElementById('permHintLabel'), '«Ruxsat» tugmasini bosing');
+  } else {
+    applyI18nEl(document.getElementById('permHintLabel'), scriptLatin);
   }
   requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
-  _permArrowTimer = setTimeout(hidePermArrow, 8000);
+  _permArrowTimer = setTimeout(hidePermArrow, 15000);
 }
 
 function hidePermArrow(){
@@ -6782,22 +6830,11 @@ function hidePermArrow(){
 }
 function hidePermSpotlight(){ hidePermArrow(); }
 
-async function maybeShowCameraPrePerm(){
+async function shouldShowPermHint(name){
   try {
-    const p = await navigator.permissions.query({ name:'camera' });
-    if (p.state !== 'prompt') return;
-  } catch(_){}
-  showPermArrow();
-  await new Promise(r => setTimeout(r, 300));
-}
-
-async function maybeShowLocationPrePerm(){
-  try {
-    const p = await navigator.permissions.query({ name:'geolocation' });
-    if (p.state !== 'prompt') return;
-  } catch(_){}
-  showPermArrow();
-  await new Promise(r => setTimeout(r, 300));
+    const p = await navigator.permissions.query({ name });
+    return p.state === 'prompt';
+  } catch(_){ return false; }
 }
 // ─────────────────────────────────────────────────────────────────────
 
@@ -6812,10 +6849,6 @@ async function initUploadCamera(){
     if (perm.state === 'denied') {
       showCameraFallback('Kameraga ruxsat berilmagan');
       return;
-    }
-    // Birinchi marta so'rashdan oldin — bizning chiroyli ekran
-    if (perm.state === 'prompt') {
-      await maybeShowCameraPrePerm();
     }
     perm.onchange = () => {
       hidePermSpotlight();
@@ -6966,11 +6999,16 @@ async function startCamera(){
     { video: true, audio: false }
   ];
 
+  const showPermHint = await shouldShowPermHint('camera');
+
   try {
     let stream = null;
     for (const constraints of constraintsList) {
       if (session !== cameraSession) return;
       try {
+        if (showPermHint && !stream) {
+          setTimeout(() => showPermArrow(), 380);
+        }
         stream = await getUserMediaWithTimeout(constraints, 8000);
         break;
       } catch (_) {}
