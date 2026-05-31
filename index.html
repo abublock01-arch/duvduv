@@ -2778,7 +2778,7 @@ const UZ_REGIONS = [
   'Toshkent shahar', 'Toshkent viloyat', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
-const MAP_TEST_PER_REGION = 1000;
+const MAP_TEST_PER_REGION = 100;
 const MAP_TEST_SEED_VERSION = 6;
 
 const REGION_CYRILLIC = {
@@ -4918,40 +4918,42 @@ function seedMapTestOrders(done){
   mapTestTravelsOnly = [];
   invalidateMapGeoCache();
   const homeRegion = userLocationRegion || 'Toshkent shahar';
-  const homeCenter = REGION_CENTERS[homeRegion] || REGION_CENTERS['Toshkent shahar'];
-  const homeDistricts = getDistrictsForRegion(homeRegion);
-  const homeFrom = formatDest(homeRegion, homeDistricts[0]);
-  const baseLng = homeCenter[0];
-  const baseLat = homeCenter[1];
   let i = 0;
   const chunk = 500;
   const step = () => {
     const end = Math.min(i + chunk, total);
     for (; i < end; i++) {
-      const regionIdx = Math.floor(i / MAP_TEST_PER_REGION);
+      const fromRegionIdx = Math.floor(i / MAP_TEST_PER_REGION);
       const localIdx = i % MAP_TEST_PER_REGION;
-      const region = UZ_REGIONS[regionIdx];
-      const lng = baseLng + (Math.random() - 0.5) * 0.35;
-      const lat = baseLat + (Math.random() - 0.5) * 0.25;
-      const districts = getDistrictsForRegion(region);
-      const district = districts[localIdx % districts.length];
-      const toDest = formatDest(region, district);
+      // from — har bir viloyat
+      const fromRegion = UZ_REGIONS[fromRegionIdx];
+      const fromCenter = REGION_CENTERS[fromRegion] || REGION_CENTERS['Toshkent shahar'];
+      const fromDistricts = getDistrictsForRegion(fromRegion);
+      const fromDistrict = fromDistricts[localIdx % fromDistricts.length];
+      const fromDest = formatDest(fromRegion, fromDistrict);
+      // to — boshqa viloyat (fromRegion dan farqli)
+      const toRegions = UZ_REGIONS.filter(r => r !== fromRegion);
+      const toRegion = toRegions[(localIdx * 3 + fromRegionIdx * 7) % toRegions.length];
+      const toDistricts = getDistrictsForRegion(toRegion);
+      const toDistrict = toDistricts[localIdx % toDistricts.length];
+      const toDest = formatDest(toRegion, toDistrict);
+      // Koordinatalar from viloyati markazida
+      const lng = fromCenter[0] + (Math.random() - 0.5) * 0.3;
+      const lat = fromCenter[1] + (Math.random() - 0.5) * 0.2;
       const isTravel = localIdx % 2 === 0;
-      const typeOffLng = isTravel ? 0.007 : -0.007;
-      const typeOffLat = isTravel ? 0.005 : -0.005;
       mapTestOrders.push({
-        id: `test-${region}-${localIdx}`,
+        id: `test-${fromRegion}-${localIdx}`,
         _seedV: MAP_TEST_SEED_VERSION,
         _homeRegion: homeRegion,
         type: isTravel ? 'travel' : 'order',
         dest: toDest,
-        from: homeFrom,
+        from: fromDest,
         to: toDest,
         note: '',
         thumbUrl: '',
         status: 'Aktiv',
-        lat: lat + typeOffLat,
-        lng: lng + typeOffLng,
+        lat: lat + (isTravel ? 0.005 : -0.005),
+        lng: lng + (isTravel ? 0.007 : -0.007),
         telegramUsername: '@test'
       });
     }
