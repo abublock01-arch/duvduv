@@ -1722,6 +1722,31 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .notif-onboard-title{color:var(--tg-text,#0f172a)}
 .theme-telegram .notif-onboard-text{color:var(--tg-hint,#64748b)}
 .theme-telegram .notif-onboard-btn{background:var(--tg-btn,#2AABEE);color:var(--tg-btn-text,#fff)}
+/* ── Permission arrow ───────────────────────────────────────────── */
+#permArrow{
+  position:fixed;
+  bottom:max(88px,env(safe-area-inset-bottom));
+  right:20px;
+  z-index:9998;pointer-events:none;
+  opacity:0;transform:translate(10px,10px);
+  transition:opacity .3s ease,transform .3s ease;
+}
+#permArrow.show{opacity:1;transform:translate(0,0)}
+#permArrow::before{
+  content:'';display:block;
+  width:44px;height:44px;
+  border-right:4px solid #2AABEE;
+  border-bottom:4px solid #2AABEE;
+  border-radius:0 0 8px 0;
+  transform:rotate(-45deg);
+  filter:drop-shadow(0 2px 10px rgba(42,171,238,.7));
+  animation:arrowBounce 1s ease-in-out infinite;
+}
+@keyframes arrowBounce{
+  0%,100%{transform:rotate(-45deg) translate(0,0);opacity:.7}
+  50%{transform:rotate(-45deg) translate(5px,5px);opacity:1}
+}
+/* ─────────────────────────────────────────────────────────────────── */
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -6735,9 +6760,46 @@ async function ensureCameraStarted(){
   return cameraStartPromise;
 }
 
-function maybeShowCameraPrePerm(){ return Promise.resolve(); }
-function maybeShowLocationPrePerm(){ return Promise.resolve(); }
-function hidePermSpotlight(){}
+// ── Permission arrow hint ─────────────────────────────────────────────
+let _permArrowTimer = null;
+
+function showPermArrow(){
+  let el = document.getElementById('permArrow');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'permArrow';
+    el.setAttribute('aria-hidden','true');
+    document.body.appendChild(el);
+  }
+  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+  _permArrowTimer = setTimeout(hidePermArrow, 8000);
+}
+
+function hidePermArrow(){
+  const el = document.getElementById('permArrow');
+  if (el) el.classList.remove('show');
+  if (_permArrowTimer) { clearTimeout(_permArrowTimer); _permArrowTimer = null; }
+}
+function hidePermSpotlight(){ hidePermArrow(); }
+
+async function maybeShowCameraPrePerm(){
+  try {
+    const p = await navigator.permissions.query({ name:'camera' });
+    if (p.state !== 'prompt') return;
+  } catch(_){}
+  showPermArrow();
+  await new Promise(r => setTimeout(r, 300));
+}
+
+async function maybeShowLocationPrePerm(){
+  try {
+    const p = await navigator.permissions.query({ name:'geolocation' });
+    if (p.state !== 'prompt') return;
+  } catch(_){}
+  showPermArrow();
+  await new Promise(r => setTimeout(r, 300));
+}
+// ─────────────────────────────────────────────────────────────────────
 
 async function initUploadCamera(){
   if (cameraPermWatcher) {
