@@ -445,6 +445,29 @@ body.view-sender .header{background:var(--app-bg)!important}
   display:flex;flex-direction:column;gap:13px;
 }
 .cta-wrap{background:transparent;border:none;box-shadow:none}
+.role-hint{
+  text-align:center;padding:4px 16px 0;
+  font-size:13px;font-weight:500;color:#b0b8c8;
+  letter-spacing:.01em;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;
+}
+.role-hint:active{opacity:.6}
+.role-hint-arrow{font-size:12px;opacity:.7}
+/* Haydovchi ekranida pastda yopishib turadi */
+.driver-role-hint{
+  position:absolute;bottom:max(18px,env(safe-area-inset-bottom));
+  left:50%;transform:translateX(-50%);
+  background:rgba(255,255,255,.88);
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+  border-radius:20px;padding:7px 18px;
+  font-size:13px;font-weight:500;color:#6b7280;
+  cursor:pointer;white-space:nowrap;
+  box-shadow:0 2px 12px rgba(0,0,0,.10);
+  -webkit-tap-highlight-color:transparent;
+  user-select:none;z-index:10;
+}
+.driver-role-hint:active{opacity:.7;transform:translateX(-50%) scale(.97)}
 .cta-btn{
   position:relative;width:100%;
   background:var(--tg-blue);color:#fff;
@@ -1675,7 +1698,7 @@ body.view-sender.theme-telegram .toggle,
           </button>
         </div>
       </div>
-      <div class="toggle">
+      <div class="toggle" style="display:none" aria-hidden="true">
         <button class="toggle-btn active" id="btnSender" onclick="switchView('sender')">Jo'natuvchi</button>
         <button class="toggle-btn" id="btnDriver" onclick="switchView('driver')">Haydovchi</button>
       </div>
@@ -1705,6 +1728,9 @@ body.view-sender.theme-telegram .toggle,
             <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
             <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
           </button>
+          <div class="role-hint" onclick="switchView('driver')" role="button" aria-label="Haydovchi ekraniga o'tish">
+            Haydovchimisiz? <span class="role-hint-arrow">→</span>
+          </div>
         </div>
       </div>
 
@@ -1727,6 +1753,9 @@ body.view-sender.theme-telegram .toggle,
 
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
+          <div class="driver-role-hint" onclick="switchView('sender')" role="button" aria-label="Mijoz ekraniga o'tish">
+            ← Mijozmisiz?
+          </div>
           <div class="map-controls">
             <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
             <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
