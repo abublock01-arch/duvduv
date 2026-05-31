@@ -1679,34 +1679,6 @@ body.view-sender.theme-telegram .toggle,
 }
 
 /* Хабарнома рухсати — ишончли onboarding */
-/* ── Permission hint animatsiya ──────────────────────────────────────── */
-.perm-hint{
-  position:fixed;top:50%;left:50%;
-  transform:translate(-50%,-50%) scale(.85);
-  z-index:600;
-  background:rgba(15,23,42,.82);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  border-radius:20px;padding:20px 24px;
-  text-align:center;pointer-events:none;
-  opacity:0;transition:opacity .22s ease,transform .22s ease;
-  min-width:220px;
-}
-.perm-hint.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.perm-hint-icon{font-size:36px;margin-bottom:10px;display:block;
-  animation:permBounce 1s ease infinite}
-@keyframes permBounce{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-6px)}
-}
-.perm-hint-text{
-  font-size:14px;font-weight:600;color:#fff;
-  line-height:1.4;letter-spacing:.01em;
-}
-.perm-hint-sub{
-  font-size:12px;color:rgba(255,255,255,.55);
-  margin-top:4px;
-}
-/* ─────────────────────────────────────────────────────────────────────── */
 .notif-onboard-overlay{
   position:fixed;inset:0;z-index:500;
   display:flex;align-items:center;justify-content:center;
@@ -6762,48 +6734,8 @@ async function ensureCameraStarted(){
   return cameraStartPromise;
 }
 
-// ── Permission hint (avtomatik, bossiz) ──────────────────────────────
-let _permHintTimer = null;
-
-function showPermHint(icon, text, sub){
-  const el = document.getElementById('permHint');
-  if (!el) return;
-  document.getElementById('permHintIcon').textContent = icon;
-  document.getElementById('permHintText').textContent = text;
-  document.getElementById('permHintSub').textContent = sub || 'Paydo bo\'lgan oynada "Ruxsat" ni bosing';
-  el.setAttribute('aria-hidden','false');
-  requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
-}
-function hidePermHint(){
-  const el = document.getElementById('permHint');
-  if (!el) return;
-  el.classList.remove('show');
-  setTimeout(() => el.setAttribute('aria-hidden','true'), 250);
-  if (_permHintTimer) { clearTimeout(_permHintTimer); _permHintTimer = null; }
-}
-
-async function maybeShowCameraPrePerm(){
-  try {
-    const perm = await navigator.permissions.query({ name:'camera' });
-    if (perm.state !== 'prompt') return;
-  } catch(_){}
-  // Hint ko'rsat, 400ms keyin tizim dialogi chiqadi
-  showPermHint('📷', 'Kamera uchun ruxsat bering');
-  await new Promise(r => setTimeout(r, 400));
-  // Tizim dialogi chiqishi bilan hint avtomatik yo'qoladi
-  _permHintTimer = setTimeout(hidePermHint, 3000);
-}
-
-async function maybeShowLocationPrePerm(){
-  try {
-    const perm = await navigator.permissions.query({ name:'geolocation' });
-    if (perm.state !== 'prompt') return;
-  } catch(_){}
-  showPermHint('📍', 'Joylashuv uchun ruxsat bering');
-  await new Promise(r => setTimeout(r, 400));
-  _permHintTimer = setTimeout(hidePermHint, 3000);
-}
-// ─────────────────────────────────────────────────────────────────────
+function maybeShowCameraPrePerm(){ return Promise.resolve(); }
+function maybeShowLocationPrePerm(){ return Promise.resolve(); }
 
 async function initUploadCamera(){
   if (cameraPermWatcher) {
@@ -6822,12 +6754,10 @@ async function initUploadCamera(){
       await maybeShowCameraPrePerm();
     }
     perm.onchange = () => {
-      hidePermHint();
       if (perm.state === 'granted') ensureCameraStarted();
       else if (perm.state === 'denied') showCameraFallback('Kameraga ruxsat berilmagan');
     };
     await ensureCameraStarted();
-    hidePermHint();
   } catch (_) {
     await ensureCameraStarted();
   }
@@ -7418,13 +7348,6 @@ if (window.Telegram?.WebApp?.onEvent) {
 }
 recoverSendFlow();
 </script>
-
-<!-- Permission hint (avtomatik, bossiz) -->
-<div class="perm-hint" id="permHint" aria-hidden="true">
-  <span class="perm-hint-icon" id="permHintIcon">📷</span>
-  <div class="perm-hint-text" id="permHintText">Ruxsat bering</div>
-  <div class="perm-hint-sub" id="permHintSub">Paydo bo'lgan oynada "Ruxsat" ni bosing</div>
-</div>
 
 <!-- Хабарнома рухсати (фақат Ҳа) -->
 <div class="notif-onboard-overlay" id="notifOnboardOverlay" hidden aria-hidden="true">
