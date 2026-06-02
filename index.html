@@ -2792,16 +2792,18 @@ function getTelegramName(){
 const TG_THEME_VARS = ['--tg-bg','--tg-secondary','--tg-text','--tg-hint','--tg-btn','--tg-btn-text','--tg-section'];
 
 function applyTelegramThemeVars(){
-  const tp = (window.Telegram && Telegram.WebApp && Telegram.WebApp.themeParams) || {};
   const root = document.documentElement;
-  const pick = (key, fb) => (tp[key] && String(tp[key]).trim()) || fb;
-  root.style.setProperty('--tg-bg', pick('bg_color', '#ffffff'));
-  root.style.setProperty('--tg-secondary', pick('secondary_bg_color', '#ffffff'));
-  root.style.setProperty('--tg-text', pick('text_color', '#000000'));
-  root.style.setProperty('--tg-hint', pick('hint_color', '#999999'));
-  root.style.setProperty('--tg-btn', '#2AABEE');
-  root.style.setProperty('--tg-btn-text', '#ffffff');
-  root.style.setProperty('--tg-section', pick('section_bg_color', '#ffffff'));
+  // Ilova faqat light mode — dark theme o'zgaruvchilarini qabul qilmaymiz
+  root.style.setProperty('--tg-bg',        '#ffffff');
+  root.style.setProperty('--tg-secondary', '#f2f2f7');
+  root.style.setProperty('--tg-text',      '#000000');
+  root.style.setProperty('--tg-hint',      '#6b7280');
+  root.style.setProperty('--tg-btn',       '#2AABEE');
+  root.style.setProperty('--tg-btn-text',  '#ffffff');
+  root.style.setProperty('--tg-section',   '#ffffff');
+  root.style.setProperty('--app-bg',       '#ffffff');
+  root.style.setProperty('--card-bg',      '#ffffff');
+  root.style.setProperty('--navy',         '#0f172a');
 }
 
 function clearTelegramThemeVars(){
