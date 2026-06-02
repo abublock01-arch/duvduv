@@ -15,11 +15,45 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* ── Har qanday qurilmada, dark mode bo'lsa ham — light majburiy ── */
 :root{
+  color-scheme: light only;
   --tg-blue:#2AABEE;
   --app-bg:#fff;
   --navy:#0f172a;
   --card-bg:#fff;
+  /* Telegram dark theme o'zgaruvchilarini qayta yozamiz */
+  --tg-theme-bg-color:#ffffff !important;
+  --tg-theme-secondary-bg-color:#f2f2f7 !important;
+  --tg-theme-text-color:#000000 !important;
+  --tg-theme-hint-color:#6b7280 !important;
+  --tg-theme-link-color:#2AABEE !important;
+  --tg-theme-button-color:#2AABEE !important;
+  --tg-theme-button-text-color:#ffffff !important;
+  --tg-section:#ffffff;
+  --tg-section-bg:#f2f2f7;
+  --tg-text:#000000;
+  --tg-hint:#6b7280;
+  --tg-btn:#2AABEE;
+  --tg-btn-text:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    color-scheme: light only;
+    --tg-theme-bg-color:#ffffff !important;
+    --tg-theme-secondary-bg-color:#f2f2f7 !important;
+    --tg-theme-text-color:#000000 !important;
+    --app-bg:#fff !important;
+    --card-bg:#fff !important;
+    --navy:#0f172a !important;
+    --tg-section:#ffffff !important;
+    --tg-section-bg:#f2f2f7 !important;
+    --tg-text:#000000 !important;
+    --tg-hint:#6b7280 !important;
+    --tg-btn:#2AABEE !important;
+    --tg-btn-text:#ffffff !important;
+  }
+  html,body{background:#fff !important;color:#000 !important}
 }
 html,body{
   height:100%;background:var(--app-bg);
@@ -2785,6 +2819,9 @@ if (window.Telegram && Telegram.WebApp) {
   try {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
+    // Dark mode ni o'chiramiz — ilova faqat light uchun
+    if (Telegram.WebApp.setBackgroundColor) Telegram.WebApp.setBackgroundColor('#ffffff');
+    if (Telegram.WebApp.setHeaderColor) Telegram.WebApp.setHeaderColor('#ffffff');
     initTelegramUser();
     // telegramUser.id tayyor, Firebase 1.5s da tayyor bo'ladi — keyin ruxsat so'raymiz
     setTimeout(() => { try { requestNotificationPermission(); } catch(_) {} }, 1500);
