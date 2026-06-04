@@ -2825,8 +2825,7 @@ if (window.Telegram && Telegram.WebApp) {
     if (Telegram.WebApp.setBackgroundColor) Telegram.WebApp.setBackgroundColor('#ffffff');
     if (Telegram.WebApp.setHeaderColor) Telegram.WebApp.setHeaderColor('#ffffff');
     initTelegramUser();
-    // telegramUser.id tayyor, Firebase 1.5s da tayyor bo'ladi — keyin ruxsat so'raymiz
-    setTimeout(() => { try { requestNotificationPermission(); } catch(_) {} }, 1500);
+    // Bildirishnoma: birinchi e'lon qo'ygandan keyin so'raladi (maybeAskNotifAfterSubmit)
     if (!document.documentElement.classList.contains('theme-telegram')) {
       toggleTelegramTheme();
     }
@@ -5638,6 +5637,8 @@ function switchView(v){
   const dmb = document.getElementById('driverModeBtn');
   if(dmb) dmb.classList.toggle('active', v === 'driver');
   if (v === 'driver') {
+    // Haydovchi modega o'tganda GPS so'raymiz — xarita uchun kerak
+    requestLocationOnce();
     loadDriverRouteState();
     ensureDriverRegionPicker();
     scheduleDriverDistrictReveal();
@@ -7290,6 +7291,14 @@ async function submitTravel(e){
     telegramId: telegramUser.id,
     telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
   };
+  // Telefon raqam so'rash (ixtiyoriy) — submit dan oldin
+  const savedPhone = localStorage.getItem(phoneKey()) || '';
+  if (!savedPhone && !sessionStorage.getItem(phoneSkipKey())) {
+    await requestPhoneOnce();
+  }
+  const phone = localStorage.getItem(phoneKey()) || '';
+  if (phone) travel.phone = phone;
+
   const firestoreId = await saveTravelToFirestore(travel);
   if (firestoreId) {
     travel.firestoreId = firestoreId;
@@ -7303,6 +7312,7 @@ async function submitTravel(e){
   closeTravelSheet();
   btn.disabled = false;
   showSuccessCheck();
+  maybeAskNotifAfterSubmit();
 }
 
 async function submitOrder(e, opts = {}){
@@ -7353,6 +7363,7 @@ async function submitOrder(e, opts = {}){
 
   async function saveOrder(coords){
     const storedThumb = skipPhoto ? '' : await thumbToStorable(thumbUrl);
+    const orderPhone = localStorage.getItem(phoneKey()) || '';
     let from = userLocationRegion || '';
     if (!from && coords) from = detectRegionFromCoords(coords.longitude, coords.latitude);
     // GPS yo'q bo'lsa — viloyat markazidan foydalanish
@@ -7378,7 +7389,8 @@ async function submitOrder(e, opts = {}){
       lat: orderLat,
       lng: orderLng,
       telegramId: telegramUser.id,
-      telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
+      telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || ''),
+      phone: orderPhone
     };
     const firestoreId = await saveOrderToFirestore(order);
     if (firestoreId) {
@@ -7402,14 +7414,81 @@ async function submitOrder(e, opts = {}){
     showSuccessCheck();
   }
 
+  // Telefon raqam so'rash (ixtiyoriy) — submit dan oldin
+  if (!localStorage.getItem(phoneKey()) && !sessionStorage.getItem(phoneSkipKey())) {
+    await requestPhoneOnce();
+  }
+
   // Cached coords ishlatamiz — dialog chiqarmaymiz
   if (userCoords) {
-    saveOrder(userCoords);
+    await saveOrder(userCoords);
   } else {
     const cached = loadLastGPS();
-    if (cached) saveOrder({ latitude: cached.lat, longitude: cached.lng });
-    else saveOrder(null);
+    if (cached) await saveOrder({ latitude: cached.lat, longitude: cached.lng });
+    else await saveOrder(null);
   }
+  maybeAskNotifAfterSubmit();
+}
+
+// ── Telefon raqam so'rash ─────────────────────────────────────────────────
+let _phoneResolve = null;
+
+function phoneKey(){ return 'dv_phone_' + (telegramUser.id || 'anon'); }
+function phoneSkipKey(){ return 'dv_phone_skip_' + (telegramUser.id || 'anon'); }
+
+function requestPhoneOnce(){
+  return new Promise((resolve) => {
+    // Allaqachon saqlangan?
+    const cached = localStorage.getItem(phoneKey());
+    if (cached) { resolve(cached); return; }
+    // Bu seans ichida "Keyinroq" bosganmi?
+    if (sessionStorage.getItem(phoneSkipKey())) { resolve(null); return; }
+    // Telegram requestContact mavjudmi?
+    if (!window.Telegram?.WebApp?.requestContact) { resolve(null); return; }
+    // Sheet ko'rsat
+    _phoneResolve = resolve;
+    document.getElementById('phoneRequestOverlay').classList.add('open');
+  });
+}
+
+function acceptPhoneRequest(){
+  document.getElementById('phoneRequestOverlay').classList.remove('open');
+  if (!window.Telegram?.WebApp?.requestContact){
+    if (_phoneResolve){ _phoneResolve(null); _phoneResolve = null; }
+    return;
+  }
+  Telegram.WebApp.requestContact((sent, response) => {
+    let phone = null;
+    if (sent){
+      phone = response?.responseUnsafe?.contact?.phone_number
+           || response?.contact?.phone_number
+           || null;
+      if (phone){
+        if (!phone.startsWith('+')) phone = '+' + phone;
+        localStorage.setItem(phoneKey(), phone);
+        if (db && telegramUser.id){
+          db.collection('users').doc(String(telegramUser.id))
+            .set({ phone }, { merge: true }).catch(()=>{});
+        }
+      }
+    }
+    if (_phoneResolve){ _phoneResolve(phone); _phoneResolve = null; }
+  });
+}
+
+function skipPhoneRequest(){
+  document.getElementById('phoneRequestOverlay').classList.remove('open');
+  sessionStorage.setItem(phoneSkipKey(), '1');
+  if (_phoneResolve){ _phoneResolve(null); _phoneResolve = null; }
+}
+
+// ── Bildirishnoma: birinchi submit dan keyin so'rash ──────────────────────
+function notifAskedKey(){ return 'dv_notif_asked_' + (telegramUser.id || 'anon'); }
+
+function maybeAskNotifAfterSubmit(){
+  if (localStorage.getItem(notifAskedKey())) return;
+  localStorage.setItem(notifAskedKey(), '1');
+  setTimeout(() => { try { requestNotificationPermission(); } catch(_){} }, 800);
 }
 
 function showSuccessCheck(){
@@ -7458,8 +7537,9 @@ setupShipmentsListEvents();
 setupDetailRoutePickerEvents();
 initTelegramUser();
 initRouteBtn();
-// Birinchi kirish: bir marta so'raymiz. Keyingi kirishlarda faqat fonda yangilaymiz
-setTimeout(() => requestLocationOnce(), 800);
+// Lokatsiya: driver tabga o'tganda so'raladi (quyida switchView da)
+// Shu yerda faqat kesh mavjud bo'lsa fonda yangilaymiz
+setTimeout(() => refreshUserLocationRegion(), 800);
 setTimeout(startGpsTracking, 2000);
 syncShipmentsFromFirestore(); // re-filter with now-known telegramUser.id
 restoreUserPrefs();
@@ -7507,6 +7587,23 @@ recoverSendFlow();
       <circle class="tg-check-bg" cx="44" cy="44" r="44"/>
       <path class="tg-check-mark" d="M26 46 L38 58 L62 32"/>
     </svg>
+  </div>
+</div>
+
+<!-- ── Telefon raqam ruxsat sheet ── -->
+<div class="sheet-overlay" id="phoneRequestOverlay" style="z-index:350">
+  <div class="sheet" style="padding:28px 28px max(32px,env(safe-area-inset-bottom))">
+    <div style="text-align:center;margin-bottom:22px">
+      <div style="font-size:52px;line-height:1;margin-bottom:12px">📞</div>
+      <h3 style="font-size:20px;font-weight:800;color:#0f172a;margin:0 0 8px">Telefon raqamingiz</h3>
+      <p style="font-size:15px;color:#6b7280;line-height:1.45;margin:0">Haydovchi siz bilan bog'lanishi uchun raqamingizni ulashing. Bu ixtiyoriy.</p>
+    </div>
+    <button onclick="acceptPhoneRequest()" style="width:100%;background:#2AABEE;color:#fff;padding:15px;border:none;border-radius:18px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 18px rgba(42,171,238,.35)">
+      📲 Raqamni ulashish
+    </button>
+    <button onclick="skipPhoneRequest()" style="width:100%;padding:13px;border:none;background:transparent;color:#6b7280;font-size:16px;font-weight:600;cursor:pointer;font-family:inherit">
+      Keyinroq
+    </button>
   </div>
 </div>
 
