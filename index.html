@@ -118,7 +118,7 @@ body.view-sender .header{background:var(--app-bg)!important}
 .logo{display:none}
 .logo-dot{display:none}
 
-/* TOGGLE — yashirilgan, haydovchi icon orqali boshqariladi */
+/* TOGGLE — yashirilgan */
 .header > .toggle{
   margin-bottom:0;
 }
@@ -126,19 +126,6 @@ body.view-sender .header{background:var(--app-bg)!important}
   display:none!important;
 }
 
-/* DRIVER MODE ICON */
-.driver-mode-btn{
-  width:40px;height:40px;border:none;background:transparent;
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;border-radius:50%;padding:0;
-  transition:opacity .2s,color .2s,background .18s;
-  color:var(--navy);opacity:.22;
-  -webkit-tap-highlight-color:transparent;
-  flex-shrink:0;
-}
-.driver-mode-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;display:block}
-.driver-mode-btn.active{opacity:1;color:var(--tg-blue)}
-.driver-mode-btn:active{transform:scale(.9)}
 .toggle-btn{
   flex:1;padding:13px 13px;border-radius:16px;border:none;font-size:19px;font-weight:600;
   cursor:pointer;transition:all .22s;font-family:inherit;letter-spacing:.02em;
@@ -1712,185 +1699,7 @@ body.view-sender.theme-telegram .toggle,
   bottom:calc(148px + max(12px, env(safe-area-inset-bottom)));
 }
 
-/* ── Kirish animatsiyasi (intro splash) ─────────────────────────── */
-.intro-splash{
-  position:fixed;inset:0;z-index:480;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  padding:max(20px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));
-  background:linear-gradient(165deg,#f8fbff 0%,#fff 42%,#f2f8fc 100%);
-  overflow:hidden;
-  transition:opacity .45s ease,visibility .45s ease,transform .45s ease;
-}
-.intro-splash.is-done{
-  opacity:0;visibility:hidden;pointer-events:none;
-  transform:scale(1.02);
-}
-.intro-splash-bg{
-  position:absolute;inset:0;pointer-events:none;overflow:hidden;
-}
-.intro-splash-bg::before{
-  content:'';position:absolute;width:280px;height:280px;border-radius:50%;
-  top:-80px;right:-60px;background:rgba(42,171,238,.09);
-  animation:introOrb 6s ease-in-out infinite;
-}
-.intro-splash-bg::after{
-  content:'';position:absolute;width:220px;height:220px;border-radius:50%;
-  bottom:-40px;left:-50px;background:rgba(255,107,74,.08);
-  animation:introOrb 7s ease-in-out infinite reverse;
-}
-@keyframes introOrb{
-  0%,100%{transform:translate(0,0) scale(1)}
-  50%{transform:translate(12px,-8px) scale(1.06)}
-}
-.intro-splash-inner{
-  position:relative;z-index:1;width:min(100%,360px);
-  display:flex;flex-direction:column;align-items:center;gap:18px;
-  flex:1;justify-content:center;max-height:100%;
-}
-.intro-logo{
-  font-size:34px;font-weight:900;letter-spacing:-.04em;color:#0f172a;
-  animation:introLogoIn .7s cubic-bezier(.34,1.4,.64,1) both;
-}
-.intro-logo-sep{
-  display:inline-block;width:7px;height:7px;border-radius:50%;
-  background:#FF6B4A;margin:0 5px;vertical-align:middle;
-  animation:introDotPulse 1.8s ease-in-out infinite;
-}
-@keyframes introLogoIn{
-  from{opacity:0;transform:translateY(-14px) scale(.92)}
-  to{opacity:1;transform:none}
-}
-@keyframes introDotPulse{
-  0%,100%{transform:scale(1);opacity:1}
-  50%{transform:scale(1.25);opacity:.75}
-}
-.intro-tagline{
-  margin:0;font-size:15px;font-weight:600;color:#64748b;text-align:center;
-  line-height:1.4;max-width:280px;
-  animation:introFadeUp .6s .25s ease both;
-}
-@keyframes introFadeUp{
-  from{opacity:0;transform:translateY(10px)}
-  to{opacity:1;transform:none}
-}
-.intro-stage{
-  position:relative;width:100%;min-height:220px;
-  display:flex;align-items:center;justify-content:center;
-}
-.intro-scene{
-  position:absolute;inset:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
-  opacity:0;visibility:hidden;transform:translateY(16px) scale(.96);
-  transition:opacity .42s ease,transform .42s cubic-bezier(.34,1.2,.64,1),visibility .42s;
-  pointer-events:none;
-}
-.intro-scene.is-active{
-  opacity:1;visibility:visible;transform:none;pointer-events:auto;
-}
-.intro-badge{
-  display:inline-flex;align-items:center;gap:6px;
-  padding:6px 14px;border-radius:100px;
-  background:rgba(42,171,238,.12);color:#0B5CAD;
-  font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;
-}
-.intro-badge--driver{background:rgba(255,140,0,.14);color:#C05600}
-.intro-cards{
-  display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;
-}
-.intro-card{
-  background:#fff;border-radius:18px;padding:14px 10px 12px;
-  text-align:center;box-shadow:0 8px 24px rgba(15,23,42,.07),0 0 0 1px rgba(42,171,238,.08);
-}
-.intro-scene.is-active .intro-card{
-  animation:introCardPop .55s cubic-bezier(.34,1.35,.64,1) both;
-}
-.intro-scene.is-active .intro-card:nth-child(2){animation-delay:.12s}
-@keyframes introCardPop{
-  from{opacity:0;transform:translateY(18px) scale(.9)}
-  to{opacity:1;transform:none}
-}
-.intro-card-icon{
-  width:52px;height:52px;margin:0 auto 8px;border-radius:16px;
-  display:flex;align-items:center;justify-content:center;
-  background:linear-gradient(145deg,rgba(42,171,238,.14),rgba(42,171,238,.06));
-}
-.intro-card-icon svg{width:28px;height:28px}
-.intro-card-icon--travel{background:linear-gradient(145deg,rgba(255,140,0,.18),rgba(255,140,0,.06))}
-.intro-card-icon--box{background:linear-gradient(145deg,rgba(42,171,238,.16),rgba(42,171,238,.05))}
-.intro-card-title{margin:0 0 3px;font-size:13px;font-weight:800;color:#0f172a;line-height:1.25}
-.intro-card-sub{margin:0;font-size:11px;font-weight:600;color:#94a3b8;line-height:1.3}
-.intro-hero{
-  width:100%;max-width:300px;aspect-ratio:16/10;
-  border-radius:20px;background:#fff;
-  box-shadow:0 12px 32px rgba(15,23,42,.08),0 0 0 1px rgba(42,171,238,.1);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
-  padding:20px 16px;overflow:hidden;position:relative;
-}
-.intro-hero-road{
-  position:absolute;bottom:0;left:0;right:0;height:38%;
-  background:linear-gradient(180deg,#e8f4fc,#d4ebf9);
-  border-top:2px dashed rgba(42,171,238,.25);
-}
-.intro-hero-car{
-  position:relative;z-index:1;width:72px;height:40px;
-  animation:introCarDrive 2.4s ease-in-out infinite;
-}
-@keyframes introCarDrive{
-  0%,100%{transform:translateX(-28px)}
-  50%{transform:translateX(28px)}
-}
-.intro-hero-icons{
-  position:relative;z-index:1;display:flex;gap:16px;align-items:center;
-}
-.intro-hero-pill{
-  display:flex;align-items:center;gap:6px;padding:8px 12px;border-radius:12px;
-  background:rgba(42,171,238,.1);font-size:12px;font-weight:700;color:#0B5CAD;
-  animation:introPillFloat 2.2s ease-in-out infinite;
-}
-.intro-hero-pill:nth-child(2){
-  background:rgba(255,140,0,.12);color:#C05600;
-  animation-delay:.4s;
-}
-@keyframes introPillFloat{
-  0%,100%{transform:translateY(0)}
-  50%{transform:translateY(-5px)}
-}
-.intro-hero-pill svg{width:18px;height:18px;flex-shrink:0}
-.intro-finish{
-  font-size:22px;font-weight:900;color:#0f172a;text-align:center;
-}
-.intro-scene.is-active .intro-finish{
-  animation:introFinishPop .5s cubic-bezier(.34,1.4,.64,1) both;
-}
-@keyframes introFinishPop{
-  from{opacity:0;transform:scale(.8)}
-  to{opacity:1;transform:scale(1)}
-}
-.intro-finish-sub{font-size:14px;font-weight:600;color:#64748b;text-align:center;margin:0}
-.intro-progress{
-  display:flex;gap:7px;align-items:center;justify-content:center;
-  margin-top:auto;padding-top:8px;
-}
-.intro-dot{
-  width:7px;height:7px;border-radius:50%;background:#cbd5e1;
-  transition:width .3s ease,background .3s ease,border-radius .3s ease;
-}
-.intro-dot.is-active{width:22px;border-radius:4px;background:#2AABEE}
-.intro-skip{
-  margin-top:6px;border:none;background:transparent;
-  font-size:14px;font-weight:600;color:#94a3b8;font-family:inherit;
-  cursor:pointer;padding:8px 16px;-webkit-tap-highlight-color:transparent;
-}
-.intro-skip:active{color:#64748b;transform:scale(.98)}
-.theme-telegram .intro-splash{background:var(--tg-bg,#fff)}
-.theme-telegram .intro-logo{color:var(--tg-text,#0f172a)}
-.theme-telegram .intro-tagline{color:var(--tg-hint,#64748b)}
-.theme-telegram .intro-card{background:var(--tg-section,#fff)}
-.theme-telegram .intro-card-title{color:var(--tg-text,#0f172a)}
-.theme-telegram .intro-dot.is-active{background:var(--tg-btn,#2AABEE)}
-body.intro-active .app{pointer-events:none}
-body.intro-active{overflow:hidden}
-
+/* Хабарнома рухсати — ишончли onboarding */
 .notif-onboard-overlay{
   position:fixed;inset:0;z-index:500;
   display:flex;align-items:center;justify-content:center;
@@ -1974,89 +1783,7 @@ body.intro-active{overflow:hidden}
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 </head>
-<body class="intro-active">
-
-<div class="intro-splash" id="introSplash" aria-hidden="false">
-  <div class="intro-splash-bg" aria-hidden="true"></div>
-  <div class="intro-splash-inner">
-    <div class="intro-logo" aria-hidden="true">duv <span class="intro-logo-sep"></span> duv</div>
-    <p class="intro-tagline" id="introTagline">Shaharlar yaqin — bitta ilovada!</p>
-
-    <div class="intro-stage" id="introStage">
-      <div class="intro-scene intro-scene--welcome is-active" data-intro-step="0">
-        <div class="intro-hero">
-          <div class="intro-hero-road" aria-hidden="true"></div>
-          <div class="intro-hero-car" aria-hidden="true">
-            <svg viewBox="0 0 72 40" fill="none"><rect x="8" y="14" width="56" height="18" rx="6" fill="#2AABEE"/><rect x="14" y="8" width="32" height="12" rx="4" fill="#1590d4"/><circle cx="20" cy="32" r="6" fill="#0f172a"/><circle cx="52" cy="32" r="6" fill="#0f172a"/><circle cx="20" cy="32" r="2.5" fill="#94a3b8"/><circle cx="52" cy="32" r="2.5" fill="#94a3b8"/></svg>
-          </div>
-          <div class="intro-hero-icons">
-            <span class="intro-hero-pill">
-              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="7" r="3.5" fill="#FF8C00"/><path d="M6 20c0-3 2.7-5.5 6-5.5s6 2.5 6 5.5" stroke="#FF8C00" stroke-width="2"/></svg>
-              <span id="introHeroTravel">Safar</span>
-            </span>
-            <span class="intro-hero-pill">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" fill="#2AABEE"/><path d="M12 4v16" stroke="#fff" stroke-width="1.5"/></svg>
-              <span id="introHeroOrder">Pochta</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="intro-scene intro-scene--client" data-intro-step="1">
-        <span class="intro-badge" id="introBadgeClient">Mijozlar uchun</span>
-        <div class="intro-cards">
-          <div class="intro-card">
-            <div class="intro-card-icon intro-card-icon--travel">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M5 17h14l-1.5-5H7L5 17z" fill="#FF8C00"/><path d="M7 12h10" stroke="#fff" stroke-width="1.2"/><circle cx="7.5" cy="17.5" r="1.5" fill="#0f172a"/><circle cx="16.5" cy="17.5" r="1.5" fill="#0f172a"/></svg>
-            </div>
-            <p class="intro-card-title" id="introTravelTitle">Safar boshlash</p>
-            <p class="intro-card-sub" id="introTravelSub">Haydovchi toping</p>
-          </div>
-          <div class="intro-card">
-            <div class="intro-card-icon intro-card-icon--box">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M4 8l8-4 8 4v8l-8 4-8-4V8z" fill="#2AABEE"/><path d="M12 4v16" stroke="#fff" stroke-width="1.5"/></svg>
-            </div>
-            <p class="intro-card-title" id="introOrderTitle">Pochta yuborish</p>
-            <p class="intro-card-sub" id="introOrderSub">Tez va ishonchli</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="intro-scene intro-scene--driver" data-intro-step="2">
-        <span class="intro-badge intro-badge--driver" id="introBadgeDriver">Haydovchilar uchun</span>
-        <div class="intro-cards">
-          <div class="intro-card">
-            <div class="intro-card-icon intro-card-icon--travel">
-              <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5" fill="#FF8C00"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6" stroke="#FF8C00" stroke-width="2"/></svg>
-            </div>
-            <p class="intro-card-title" id="introDrvTravelTitle">Yo'lovchi toping</p>
-            <p class="intro-card-sub" id="introDrvTravelSub">Xaritada ko'ring</p>
-          </div>
-          <div class="intro-card">
-            <div class="intro-card-icon intro-card-icon--box">
-              <svg viewBox="0 0 24 24" fill="none"><path d="M20 4H4v16h16V4z" fill="#2AABEE" opacity=".2"/><path d="M4 8h16M8 4v4M16 4v4" stroke="#2AABEE" stroke-width="2"/><rect x="8" y="12" width="8" height="5" rx="1" fill="#2AABEE"/></svg>
-            </div>
-            <p class="intro-card-title" id="introDrvOrderTitle">Pochta toping</p>
-            <p class="intro-card-sub" id="introDrvOrderSub">Qo'shimcha daromad</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="intro-scene intro-scene--finish" data-intro-step="3">
-        <p class="intro-finish" id="introFinishTitle">Tayyor!</p>
-        <p class="intro-finish-sub" id="introFinishSub">Safar va pochta — bir joyda</p>
-      </div>
-    </div>
-
-    <div class="intro-progress" id="introProgress" aria-hidden="true">
-      <span class="intro-dot is-active"></span>
-      <span class="intro-dot"></span>
-      <span class="intro-dot"></span>
-      <span class="intro-dot"></span>
-    </div>
-    <button type="button" class="intro-skip" id="introSkipBtn" onclick="dismissIntroSplash()">O'tkazib yuborish</button>
-  </div>
-</div>
+<body>
 
 <div class="app">
 
@@ -2068,15 +1795,6 @@ body.intro-active{overflow:hidden}
         <div class="header-actions-right">
           <button type="button" class="header-eye map-layers-btn" id="mapLayersBtn" onclick="toggleOrderMapLayers()" aria-label="Buyurtmalarni ko'rsatish" title="Buyurtmalarni ko'rsatish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
-          <button type="button" class="driver-mode-btn" id="driverModeBtn" onclick="toggleDriverMode()" aria-label="Haydovchi rejimi" title="Haydovchi rejimi">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="12" cy="12" r="9.5"/>
-              <circle cx="12" cy="12" r="2.5"/>
-              <line x1="12" y1="2.5" x2="12" y2="9.5"/>
-              <line x1="3.8" y1="16.5" x2="9.8" y2="13.2"/>
-              <line x1="20.2" y1="16.5" x2="14.2" y2="13.2"/>
-            </svg>
           </button>
         </div>
       </div>
@@ -2756,84 +2474,6 @@ function initTelegramUser(){
   telegramUser.username = user.username || '';
 }
 
-// ── Kirish animatsiyasi ───────────────────────────────────────────────────
-const INTRO_STEP_MS = [2200, 2500, 2500, 1600];
-const INTRO_TAGLINES = [
-  'Shaharlar yaqin — bitta ilovada!',
-  'Safar qiling yoki pochta yuboring',
-  "Yo'lovchi va pochta toping",
-  'Keling, boshlaymiz!'
-];
-let _introTimer = null;
-let _introStep = 0;
-
-function introSeenKey(){ return 'dv_intro_seen'; }
-
-function shouldShowIntroSplash(){
-  try { return !sessionStorage.getItem(introSeenKey()); } catch(_) { return true; }
-}
-
-function setIntroTagline(step){
-  const el = document.getElementById('introTagline');
-  if (!el) return;
-  const latin = INTRO_TAGLINES[step] || INTRO_TAGLINES[0];
-  setI18nText(el, latin);
-}
-
-function showIntroStep(step){
-  _introStep = step;
-  document.querySelectorAll('.intro-scene').forEach(el => {
-    el.classList.toggle('is-active', Number(el.dataset.introStep) === step);
-  });
-  document.querySelectorAll('#introProgress .intro-dot').forEach((dot, i) => {
-    dot.classList.toggle('is-active', i === step);
-  });
-  setIntroTagline(step);
-}
-
-function scheduleIntroStep(){
-  if (_introTimer) clearTimeout(_introTimer);
-  const ms = INTRO_STEP_MS[_introStep] ?? 1600;
-  _introTimer = setTimeout(() => {
-    _introTimer = null;
-    if (_introStep >= INTRO_STEP_MS.length - 1) {
-      dismissIntroSplash();
-      return;
-    }
-    showIntroStep(_introStep + 1);
-    scheduleIntroStep();
-  }, ms);
-}
-
-function initIntroSplash(){
-  const splash = document.getElementById('introSplash');
-  if (!splash) return;
-  if (!shouldShowIntroSplash()) {
-    dismissIntroSplash(true);
-    return;
-  }
-  document.body.classList.add('intro-active');
-  showIntroStep(0);
-  scheduleIntroStep();
-}
-
-function dismissIntroSplash(instant){
-  if (_introTimer) { clearTimeout(_introTimer); _introTimer = null; }
-  try { sessionStorage.setItem(introSeenKey(), '1'); } catch(_){}
-  document.body.classList.remove('intro-active');
-  const splash = document.getElementById('introSplash');
-  if (!splash) return;
-  splash.classList.add('is-done');
-  splash.setAttribute('aria-hidden', 'true');
-  if (instant) {
-    splash.style.display = 'none';
-    splash.classList.remove('is-done');
-  } else if (window.Telegram?.WebApp?.HapticFeedback) {
-    Telegram.WebApp.HapticFeedback.impactOccurred('light');
-  }
-  setTimeout(() => { if (splash.classList.contains('is-done')) splash.style.display = 'none'; }, instant ? 0 : 480);
-}
-
 function closeNotifOnboardOverlay(){
   const overlay = document.getElementById('notifOnboardOverlay');
   if (overlay) {
@@ -3259,10 +2899,6 @@ let travelDistrictPickerBuilt = false;
 let lastTravelDistrictKey = '';
 let refreshMarkersTimer = null;
 const orders = [];
-const mapTestOrders = [];
-let mapTestOrderById = null;
-let mapTestOrdersOnly = [];
-let mapTestTravelsOnly = [];
 let cachedMapGeo = null;
 let cachedMapGeoKey = '';
 let mapMarkersRefreshPending = false;
@@ -3289,9 +2925,6 @@ const UZ_REGIONS = [
   'Toshkent shahar', 'Toshkent viloyat', 'Samarqand', "Farg'ona", 'Andijon', 'Namangan', 'Buxoro',
   'Xorazm', 'Surxondaryo', "Qashqadaryo", 'Sirdaryo', 'Jizzax', 'Navoiy', "Qoraqalpog'iston"
 ];
-const MAP_TEST_PER_REGION = 100;
-const MAP_TEST_SEED_VERSION = 6;
-
 const REGION_CYRILLIC = {
   'Toshkent shahar': 'Тошкент шаҳар', 'Toshkent viloyat': 'Тошкент вилояти',
   'Samarqand': 'Самарқанд', "Farg'ona": 'Фарғона',
@@ -3494,21 +3127,6 @@ function mapItemHasMapCoords(item){
   return false;
 }
 
-function maybeReseedMapTestOrdersForHomeRegion(){
-  const home = userLocationRegion || 'Toshkent shahar';
-  const needsReseed = mapTestOrders.length > 0 && mapTestOrders[0]?._homeRegion !== home;
-  if (!needsReseed) return false;
-  mapTestOrders.length = 0;
-  mapTestOrderById = null;
-  mapTestOrdersOnly = [];
-  mapTestTravelsOnly = [];
-  invalidateMapGeoCache();
-  if (map && document.body.classList.contains('view-driver')) {
-    addTestOrders(() => refreshOrderMarkersDebounced());
-  }
-  return true;
-}
-
 // ── Lokatsiya onboarding ──────────────────────────────────────────────────
 // ── TEST MODE: true bo'lsa har safar barcha ruxsatlar qayta so'raladi ──────
 const TEST_MODE = true;
@@ -3578,9 +3196,7 @@ async function refreshUserLocationRegion(){
   }
   if (userLocationRegion !== prevRegion) {
     invalidateMapGeoCache();
-    if (!maybeReseedMapTestOrdersForHomeRegion() && map) {
-      refreshOrderMarkersDebounced();
-    }
+    if (map) refreshOrderMarkersDebounced();
   }
 }
 
@@ -4399,8 +4015,7 @@ function flushPendingMapMarkersRefresh(){
 
 function refreshOrderMarkersDebounced(){
   clearTimeout(refreshMarkersTimer);
-  const delay = mapTestOrders.length > 3000 ? 600 : 150;
-  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), delay);
+  refreshMarkersTimer = setTimeout(() => refreshOrderMarkers(), 150);
 }
 
 function isDriverMapReady(){
@@ -4677,25 +4292,6 @@ const UI_PHRASE_CYRILLIC = {
   'Tumanni tanlang': 'Туманни танланг',
   "Buyurtmalarni ko'rsatish": 'Буюртмаларни кўрсатиш',
   "Buyurtmalarni yashirish": 'Буюртмаларни яшириш',
-  'Shaharlar yaqin — bitta ilovada!': 'Шаҳарлар яқин — битта иловада!',
-  'Safar qiling yoki pochta yuboring': 'Сафар қилинг ёки почта юборинг',
-  "Yo'lovchi va pochta toping": 'Йўловчи ва почта топинг',
-  'Keling, boshlaymiz!': 'Келинг, бошлаймиз!',
-  'Mijozlar uchun': 'Мижозлар учун',
-  'Haydovchilar uchun': 'Ҳайдовчилар учун',
-  'Safar boshlash': 'Сафар бошлаш',
-  'Haydovchi toping': 'Ҳайдовчи топинг',
-  'Pochta yuborish': 'Почта юбориш',
-  'Tez va ishonchli': 'Тез ва ишончли',
-  "Yo'lovchi toping": 'Йўловчи топинг',
-  "Xaritada ko'ring": 'Харитада кўринг',
-  'Pochta toping': 'Почта топинг',
-  "Qo'shimcha daromad": 'Қўшимча даромад',
-  'Tayyor!': 'Тайёр!',
-  'Safar va pochta — bir joyda': 'Сафар ва почта — бир жойда',
-  'Safar': 'Сафар',
-  'Pochta': 'Почта',
-  "O'tkazib yuborish": 'Ўтказиб юбориш',
   'Yopish': 'Ёпиш', 'Kattalashtirish': 'Катталаштириш', 'Kichiklashtirish': 'Кичиклаштириш',
   'Mening joylashuvim': 'Менинг жойлашувим', 'Tahrirlash': 'Таҳрирлаш', 'Lokatsiya': 'Локация',
   'Hammasi': 'Ҳаммаси', 'Tuman': 'Туман', 'Tuman tanlash': 'Туман танлаш',
@@ -4742,15 +4338,6 @@ const MORPH_UI_ENTRIES = [
   ['#uploadSkipBtn', 'Rasmsiz yuborish', 'Расмсиз юбориш'],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
   ['#permHintLabel', '«Ruxsat» tugmasini bosing'],
-  ['#introTagline', 'Shaharlar yaqin — bitta ilovada!'],
-  ['#introHeroTravel', 'Safar'], ['#introHeroOrder', 'Pochta'],
-  ['#introBadgeClient', 'Mijozlar uchun'], ['#introBadgeDriver', 'Haydovchilar uchun'],
-  ['#introTravelTitle', 'Safar boshlash'], ['#introTravelSub', 'Haydovchi toping'],
-  ['#introOrderTitle', 'Pochta yuborish'], ['#introOrderSub', 'Tez va ishonchli'],
-  ['#introDrvTravelTitle', "Yo'lovchi toping"], ['#introDrvTravelSub', "Xaritada ko'ring"],
-  ['#introDrvOrderTitle', 'Pochta toping'], ['#introDrvOrderSub', "Qo'shimcha daromad"],
-  ['#introFinishTitle', 'Tayyor!'], ['#introFinishSub', 'Safar va pochta — bir joyda'],
-  ['#introSkipBtn', "O'tkazib yuborish"],
   ['#locPickerTitle', 'Lokatsiyani tanlang'], ['.loc-picker-hint', "Xaritani suring — pin o'rtada qoladi"],
   ['#locPickerSaveBtn', 'Saqlash'],
   ['#travelDestTitle', TRAVEL_TITLE_LATIN, TRAVEL_TITLE_CYRILLIC, 'travel-dest-title-morph'],
@@ -5364,10 +4951,6 @@ function getMapGeoCacheKey(){
     route.to || '',
     orders.length,
     travels.length,
-    mapTestOrders.length,
-    mapTestOrdersOnly.length,
-    mapTestTravelsOnly.length,
-    mapTestOrders[0]?._seedV || '',
     orderLayersVisible ? '1' : '0'
   ].join('|');
 }
@@ -5376,7 +4959,7 @@ function buildMapGeoCollections(){
   const key = getMapGeoCacheKey();
   if (cachedMapGeo && cachedMapGeoKey === key) return cachedMapGeo;
 
-  const orderFeatures = [...orders, ...mapTestOrdersOnly]
+  const orderFeatures = orders
     .filter(mapItemMatchesDriverFilter)
     .map(o => ({
       type: 'Feature',
@@ -5384,7 +4967,7 @@ function buildMapGeoCollections(){
       properties: mapItemProps(o, 'order')
     }));
 
-  const travelFeatures = [...travels, ...mapTestTravelsOnly]
+  const travelFeatures = travels
     .filter(mapItemMatchesDriverFilter)
     .map(t => {
       const coords = travelMapCoords(t);
@@ -5405,22 +4988,8 @@ function buildMapGeoCollections(){
   return cachedMapGeo;
 }
 
-function rebuildMapTestOrderIndex(){
-  mapTestOrderById = new Map();
-  mapTestOrdersOnly = [];
-  mapTestTravelsOnly = [];
-  mapTestOrders.forEach(o => {
-    mapTestOrderById.set(String(o.id), o);
-    if (o.firestoreId) mapTestOrderById.set(String(o.firestoreId), o);
-    if (o.type === 'travel') mapTestTravelsOnly.push(o);
-    else mapTestOrdersOnly.push(o);
-  });
-  invalidateMapGeoCache();
-}
-
 function findOrderByMapId(orderId){
   const key = String(orderId);
-  if (mapTestOrderById?.has(key)) return mapTestOrderById.get(key);
   return orders.find(o => String(o.firestoreId || o.id) === key)
     || travels.find(t => String(t.firestoreId || t.id) === key);
 }
@@ -5443,93 +5012,6 @@ function loadMapMarkerImages(map){
     loadMapMarkerImage(map, MAP_ICON_BOX, MAP_MARKER_BOX_SVG),
     loadMapMarkerImage(map, MAP_ICON_PERSON, MAP_MARKER_PERSON_SVG)
   ]);
-}
-
-let mapTestOrdersSeeding = false;
-
-function getMapTestTargetCount(){
-  return UZ_REGIONS.length * MAP_TEST_PER_REGION;
-}
-
-function seedMapTestOrders(done){
-  const total = getMapTestTargetCount();
-  if (mapTestOrders.length >= total && mapTestOrders[0]?._seedV === MAP_TEST_SEED_VERSION) {
-    if (!mapTestOrderById || mapTestOrderById.size !== mapTestOrders.length) rebuildMapTestOrderIndex();
-    if (done) done();
-    return;
-  }
-  if (mapTestOrdersSeeding) return;
-  mapTestOrdersSeeding = true;
-  mapTestOrders.length = 0;
-  mapTestOrderById = null;
-  mapTestOrdersOnly = [];
-  mapTestTravelsOnly = [];
-  invalidateMapGeoCache();
-  const homeRegion = userLocationRegion || 'Toshkent shahar';
-  let i = 0;
-  const chunk = 500;
-  const step = () => {
-    const end = Math.min(i + chunk, total);
-    for (; i < end; i++) {
-      const fromRegionIdx = Math.floor(i / MAP_TEST_PER_REGION);
-      const localIdx = i % MAP_TEST_PER_REGION;
-      // from — har bir viloyat
-      const fromRegion = UZ_REGIONS[fromRegionIdx];
-      const fromCenter = REGION_CENTERS[fromRegion] || REGION_CENTERS['Toshkent shahar'];
-      const fromDistricts = getDistrictsForRegion(fromRegion);
-      const fromDistrict = fromDistricts[localIdx % fromDistricts.length];
-      const fromDest = formatDest(fromRegion, fromDistrict);
-      // to — boshqa viloyat (fromRegion dan farqli)
-      const toRegions = UZ_REGIONS.filter(r => r !== fromRegion);
-      const toRegion = toRegions[(localIdx * 3 + fromRegionIdx * 7) % toRegions.length];
-      const toDistricts = getDistrictsForRegion(toRegion);
-      const toDistrict = toDistricts[localIdx % toDistricts.length];
-      const toDest = formatDest(toRegion, toDistrict);
-      // Koordinatalar from viloyati markazida
-      const lng = fromCenter[0] + (Math.random() - 0.5) * 0.3;
-      const lat = fromCenter[1] + (Math.random() - 0.5) * 0.2;
-      const isTravel = localIdx % 2 === 0;
-      mapTestOrders.push({
-        id: `test-${fromRegion}-${localIdx}`,
-        _seedV: MAP_TEST_SEED_VERSION,
-        _homeRegion: homeRegion,
-        type: isTravel ? 'travel' : 'order',
-        dest: toDest,
-        from: fromDest,
-        to: toDest,
-        note: '',
-        thumbUrl: '',
-        status: 'Aktiv',
-        lat: lat + (isTravel ? 0.005 : -0.005),
-        lng: lng + (isTravel ? 0.007 : -0.007),
-        telegramUsername: '@test'
-      });
-    }
-    if (i < total) {
-      requestAnimationFrame(step);
-      return;
-    }
-    mapTestOrdersSeeding = false;
-    rebuildMapTestOrderIndex();
-    refreshOrderMarkersDebounced();
-    if (done) done();
-  };
-  step();
-}
-
-function addTestOrders(done){
-  const total = getMapTestTargetCount();
-  const ok = mapTestOrders.length >= total && mapTestOrders[0]?._seedV === MAP_TEST_SEED_VERSION;
-  if (ok) {
-    if (done) done();
-    return;
-  }
-  mapTestOrders.length = 0;
-  mapTestOrderById = null;
-  mapTestOrdersOnly = [];
-  mapTestTravelsOnly = [];
-  invalidateMapGeoCache();
-  seedMapTestOrders(done);
 }
 
 const MAP_LABEL_LAYOUT = {
@@ -5650,8 +5132,6 @@ function bindOrderMapEvents(){
     const iconFeat = map.queryRenderedFeatures(e.point, { layers: iconLayers })[0];
     if (!iconFeat) return;
     const orderId = String(iconFeat.properties.orderId || '');
-    // Test markerlarini bossangiz sheet ochilmasin — faqat haqiqiy e'lonlar
-    if (orderId.startsWith('test-')) return;
     const itemType = iconFeat.properties.itemType;
     requestAnimationFrame(() => {
       const item = findOrderByMapId(orderId);
@@ -5670,7 +5150,6 @@ function bindOrderMapEvents(){
 
 function toggleOrderMapLayers(){
   orderLayersVisible = !orderLayersVisible;
-  if (orderLayersVisible) addTestOrders();
   const vis = orderLayersVisible ? 'visible' : 'none';
   if (map) {
     ORDER_MAP_LAYER_IDS.forEach(id => {
@@ -5805,11 +5284,8 @@ function initDriverMap(){
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
       setupOrderClusterLayers();
-      addTestOrders(() => {
-        refreshOrderMarkersDebounced();
-        // Deep link: ?order=ID — xaritada shu e'lonni ko'rsat
-        openOrderFromUrlParam();
-      });
+      refreshOrderMarkersDebounced();
+      openOrderFromUrlParam();
       centerMapOnRouteFrom();
       ensureDriverRegionPicker();
     });
@@ -5978,11 +5454,6 @@ function openTelegramChat(){
   window.open('https://t.me/' + uname.replace('@', ''));
 }
 
-function toggleDriverMode(){
-  const isDriver = document.body.classList.contains('view-driver');
-  switchView(isDriver ? 'sender' : 'driver');
-}
-
 function switchView(v){
   if (telegramUser.id != null) {
     saveUserRole(v === 'driver' ? 'driver' : 'sender');
@@ -6003,9 +5474,6 @@ function switchView(v){
   document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
   document.body.classList.toggle('view-driver', v === 'driver');
   document.body.classList.toggle('view-sender', v === 'sender');
-  // Driver mode icon yangilash
-  const dmb = document.getElementById('driverModeBtn');
-  if(dmb) dmb.classList.toggle('active', v === 'driver');
   if (v === 'driver') {
     // Haydovchi modega o'tganda GPS so'raymiz — xarita uchun kerak
     requestLocationOnce();
@@ -6022,7 +5490,6 @@ function switchView(v){
       }, 280);
     }
     refreshUserLocationRegion().then(() => {
-      maybeReseedMapTestOrdersForHomeRegion();
       applyCyrillicUI();
     });
   } else {
@@ -7930,7 +7397,6 @@ initRegionSelects();
 initCtaIcons();
 initAllMorphTexts();
 applyCyrillicUI();
-initIntroSplash();
 loadPersistedData();
 setupShipmentsListEvents();
 setupDetailRoutePickerEvents();

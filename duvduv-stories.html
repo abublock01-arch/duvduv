@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=430,initial-scale=1"/>
+<title>duvduv — Stories</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:#000;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;font-family:-apple-system,'SF Pro Display','Segoe UI',sans-serif;
+  overflow:hidden;
+}
+
+/* ── 9:16 konteyner ── */
+.phone{
+  width:430px;height:932px;
+  position:relative;overflow:hidden;border-radius:0;
+}
+@media (max-height:950px){
+  .phone{
+    width:calc(100vh * 9/19.5);
+    height:100vh;
+  }
+}
+
+/* ── Progress barlar ── */
+.progress-bars{
+  position:absolute;top:16px;left:12px;right:12px;
+  display:flex;gap:4px;z-index:100;
+}
+.pbar{
+  flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden;
+}
+.pbar-fill{
+  height:100%;background:#fff;border-radius:2px;
+  width:0%;transition:none;
+}
+.pbar-fill.done{width:100%}
+.pbar-fill.active{width:0%;animation:fillBar 6s linear forwards}
+@keyframes fillBar{from{width:0%}to{width:100%}}
+
+/* ── Slaydlar ── */
+.slide{
+  position:absolute;inset:0;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:60px 32px 80px;
+  opacity:0;pointer-events:none;
+  transition:opacity .4s ease;
+}
+.slide.active{opacity:1;pointer-events:auto}
+
+/* Kirish animatsiyalari */
+.slide.active .up{animation:up .55s ease both}
+.slide.active .up:nth-child(2){animation-delay:.12s}
+.slide.active .up:nth-child(3){animation-delay:.24s}
+.slide.active .up:nth-child(4){animation-delay:.36s}
+.slide.active .up:nth-child(5){animation-delay:.48s}
+@keyframes up{from{opacity:0;transform:translateY(32px)}to{opacity:1;transform:translateY(0)}}
+
+/* Tap zones */
+.tap-left,.tap-right{
+  position:absolute;top:0;bottom:0;width:45%;z-index:50;cursor:pointer;
+}
+.tap-left{left:0}
+.tap-right{right:0}
+
+/* ══ СЛАЙД 1 — Муқова ══ */
+#s1{background:linear-gradient(160deg,#0a1628 0%,#0B5CAD 60%,#2AABEE 100%)}
+.s1-logo{
+  font-size:88px;font-weight:900;color:#fff;
+  letter-spacing:-.04em;line-height:1;text-align:center;
+}
+.s1-dot{
+  display:inline-block;width:16px;height:16px;background:#FF8C00;
+  border-radius:50%;margin:0 8px;vertical-align:middle;position:relative;top:-5px;
+}
+.s1-tag{
+  font-size:22px;color:rgba(255,255,255,.85);font-weight:600;
+  margin-top:20px;text-align:center;letter-spacing:.02em;
+}
+.s1-sub{
+  font-size:15px;color:rgba(255,255,255,.5);margin-top:10px;text-align:center;
+}
+.s1-badge{
+  margin-top:52px;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(10px);
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:100px;padding:12px 28px;
+  font-size:14px;font-weight:700;color:#fff;letter-spacing:.04em;
+}
+
+/* ══ СЛАЙД 2 — Муаммо ══ */
+#s2{background:#fff}
+.s2-top{width:100%;margin-bottom:32px;}
+.s2-lbl{font-size:12px;font-weight:800;color:#2AABEE;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.s2-h{font-size:40px;font-weight:900;color:#0f172a;line-height:1.15}
+.s2-h span{color:#2AABEE}
+.s2-item{
+  width:100%;display:flex;align-items:flex-start;gap:16px;
+  padding:18px;background:#f0f9ff;border-radius:16px;
+  border-left:4px solid #2AABEE;margin-bottom:14px;
+}
+.s2-ico{font-size:28px;flex-shrink:0}
+.s2-txt .t{font-size:16px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.s2-txt .d{font-size:13px;color:#6b7280;line-height:1.4}
+
+/* ══ СЛАЙД 3 — Ечим ══ */
+#s3{background:linear-gradient(160deg,#0a1628,#1a3a5c)}
+.s3-lbl{font-size:12px;font-weight:800;color:#2AABEE;letter-spacing:.12em;text-transform:uppercase;margin-bottom:14px;text-align:center}
+.s3-h{font-size:38px;font-weight:900;color:#fff;line-height:1.15;text-align:center;margin-bottom:44px}
+.s3-step{
+  width:100%;display:flex;align-items:center;gap:16px;
+  margin-bottom:22px;
+}
+.s3-num{
+  width:52px;height:52px;border-radius:50%;flex-shrink:0;
+  background:#2AABEE;color:#fff;font-size:20px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 20px rgba(42,171,238,.4);
+}
+.s3-info .t{font-size:17px;font-weight:800;color:#fff;margin-bottom:3px}
+.s3-info .d{font-size:13px;color:#94a3b8;line-height:1.35}
+.s3-connector{
+  width:2px;height:20px;background:rgba(42,171,238,.3);
+  margin-left:25px;margin-bottom:0;
+}
+
+/* ══ СЛАЙД 4 — Ким учун ══ */
+#s4{background:#fff}
+.s4-lbl{font-size:12px;font-weight:800;color:#2AABEE;letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px;text-align:center}
+.s4-h{font-size:38px;font-weight:900;color:#0f172a;line-height:1.15;text-align:center;margin-bottom:40px}
+.s4-cards{width:100%;display:flex;flex-direction:column;gap:14px}
+.s4-card{
+  display:flex;align-items:center;gap:18px;
+  padding:20px;border-radius:18px;
+}
+.s4-card.blue{background:linear-gradient(135deg,#eff6ff,#dbeafe)}
+.s4-card.orange{background:linear-gradient(135deg,#fff7ed,#fed7aa)}
+.s4-icon{font-size:40px;flex-shrink:0}
+.s4-card .t{font-size:18px;font-weight:800;color:#0f172a;margin-bottom:4px}
+.s4-card .d{font-size:13px;color:#6b7280;line-height:1.35}
+
+/* ══ СЛАЙД 5 — CTA ══ */
+#s5{background:linear-gradient(160deg,#2AABEE 0%,#0B5CAD 100%)}
+.s5-emoji{font-size:80px;margin-bottom:24px;text-align:center}
+.s5-h{font-size:44px;font-weight:900;color:#fff;text-align:center;line-height:1.15;margin-bottom:14px}
+.s5-sub{font-size:17px;color:rgba(255,255,255,.75);text-align:center;margin-bottom:48px;line-height:1.5}
+.s5-btn{
+  background:#fff;color:#0B5CAD;font-size:20px;font-weight:800;
+  padding:18px 44px;border-radius:100px;border:none;
+  box-shadow:0 12px 36px rgba(0,0,0,.2);font-family:inherit;cursor:pointer;
+  width:100%;
+}
+.s5-tag{
+  margin-top:20px;font-size:13px;color:rgba(255,255,255,.55);text-align:center;
+}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- Progress barlar -->
+  <div class="progress-bars">
+    <div class="pbar"><div class="pbar-fill" id="p0"></div></div>
+    <div class="pbar"><div class="pbar-fill" id="p1"></div></div>
+    <div class="pbar"><div class="pbar-fill" id="p2"></div></div>
+    <div class="pbar"><div class="pbar-fill" id="p3"></div></div>
+    <div class="pbar"><div class="pbar-fill" id="p4"></div></div>
+  </div>
+
+  <!-- Tap zones -->
+  <div class="tap-left"  onclick="prev()"></div>
+  <div class="tap-right" onclick="next()"></div>
+
+  <!-- СЛАЙД 1 -->
+  <div class="slide" id="s1">
+    <div class="s1-logo up">дув<span class="s1-dot"></span>дув</div>
+    <div class="s1-tag up">Шаҳарлар Яқин</div>
+    <div class="s1-sub up">Telegram орқали юк ва йўловчи топиш</div>
+    <div class="s1-badge up">🇺🇿 Ўзбекистон</div>
+  </div>
+
+  <!-- СЛАЙД 2 -->
+  <div class="slide" id="s2">
+    <div class="s2-top">
+      <div class="s2-lbl up">Муаммо</div>
+      <div class="s2-h up">Вилоятга<br>юк юбориш<br><span>ҳали қийин</span></div>
+    </div>
+    <div class="s2-item up">
+      <div class="s2-ico">🔍</div>
+      <div class="s2-txt">
+        <div class="t">Ҳайдовчи топиш</div>
+        <div class="d">Гуруҳларда саралаш — вақт кетади</div>
+      </div>
+    </div>
+    <div class="s2-item up">
+      <div class="s2-ico">💬</div>
+      <div class="s2-txt">
+        <div class="t">Келишув</div>
+        <div class="d">Ҳар сафар нарх ва манзил алоҳида</div>
+      </div>
+    </div>
+    <div class="s2-item up">
+      <div class="s2-ico">⏳</div>
+      <div class="s2-txt">
+        <div class="t">Кутиш</div>
+        <div class="d">Ҳайдовчи топилганини билмайсиз</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СЛАЙД 3 -->
+  <div class="slide" id="s3">
+    <div class="s3-lbl up">Ечим</div>
+    <div class="s3-h up">дувдув<br>автоматик<br>мослаштиради</div>
+    <div class="up" style="width:100%">
+      <div class="s3-step">
+        <div class="s3-num">📦</div>
+        <div class="s3-info">
+          <div class="t">Жўнатувчи эълон қўяди</div>
+          <div class="d">Қаердан → қаерга, расм</div>
+        </div>
+      </div>
+      <div class="s3-connector"></div>
+      <div class="s3-step">
+        <div class="s3-num">🤖</div>
+        <div class="s3-info">
+          <div class="t">Бот мос ҳайдовчини топади</div>
+          <div class="d">Иккаласига дарҳол хабар юборади</div>
+        </div>
+      </div>
+      <div class="s3-connector"></div>
+      <div class="s3-step">
+        <div class="s3-num">🚐</div>
+        <div class="s3-info">
+          <div class="t">Ҳайдовчи Telegram да ёзади</div>
+          <div class="d">Тўғридан боғланиш</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СЛАЙД 4 -->
+  <div class="slide" id="s4">
+    <div class="s4-lbl up">Ким учун?</div>
+    <div class="s4-h up">Ҳамма учун<br>қулай</div>
+    <div class="s4-cards">
+      <div class="s4-card blue up">
+        <div class="s4-icon">📦</div>
+        <div>
+          <div class="t">Жўнатувчи</div>
+          <div class="d">Вилоят ва туман танлайди, расм юклайди — эълон тайёр</div>
+        </div>
+      </div>
+      <div class="s4-card orange up">
+        <div class="s4-icon">🚐</div>
+        <div>
+          <div class="t">Ҳайдовчи</div>
+          <div class="d">Маршрутини белгилайди — фақат мос эълонлар келади</div>
+        </div>
+      </div>
+      <div class="s4-card up" style="background:linear-gradient(135deg,#f0fdf4,#bbf7d0)">
+        <div class="s4-icon">🆓</div>
+        <div>
+          <div class="t">Бепул</div>
+          <div class="d">Telegram ичида — алоҳида илова керак эмас</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- СЛАЙД 5 -->
+  <div class="slide" id="s5">
+    <div class="s5-emoji up">🚀</div>
+    <div class="s5-h up">Ҳозироқ<br>бошланг!</div>
+    <div class="s5-sub up">Telegram да 1 дақиқада<br>биринчи эълонингизни қўйинг</div>
+    <button class="s5-btn up" onclick="window.open('https://t.me/duvduv_bot')">
+      t.me/duvduv_bot
+    </button>
+    <div class="s5-tag up">Бепул · Telegram · 🇺🇿</div>
+  </div>
+
+</div>
+
+<script>
+const DURATION = 6000; // 6 soniya har slayd
+const total = 5;
+let cur = 0;
+let timer = null;
+
+function showSlide(n) {
+  // Barcha slaydlarni yashirish
+  for (let i = 0; i < total; i++) {
+    document.getElementById('s' + (i+1)).classList.remove('active');
+    const fill = document.getElementById('p' + i);
+    fill.classList.remove('active', 'done');
+    fill.style.animation = 'none';
+    if (i < n) {
+      fill.classList.add('done');
+      fill.style.width = '100%';
+    } else {
+      fill.style.width = '0%';
+    }
+  }
+
+  cur = n;
+  document.getElementById('s' + (cur+1)).classList.add('active');
+
+  // Progress bar animatsiyasi
+  const fill = document.getElementById('p' + cur);
+  fill.style.animation = 'none';
+  fill.offsetHeight; // reflow
+  fill.style.animation = '';
+  fill.classList.add('active');
+
+  clearTimeout(timer);
+  if (cur < total - 1) {
+    timer = setTimeout(() => showSlide(cur + 1), DURATION);
+  }
+}
+
+function next() {
+  if (cur < total - 1) showSlide(cur + 1);
+  else showSlide(0); // loop
+}
+
+function prev() {
+  if (cur > 0) showSlide(cur - 1);
+}
+
+// Klaviatura
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') next();
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prev();
+});
+
+showSlide(0);
+</script>
+</body>
+</html>
