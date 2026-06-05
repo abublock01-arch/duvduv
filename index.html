@@ -807,8 +807,9 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet-action-back:active{background:rgba(42,171,238,.22);transform:scale(.96)}
 .sheet-action-back svg{display:block;width:22px;height:22px}
 .travel-dest-title{
-  font-size:clamp(34px,10vw,48px);font-weight:800;color:var(--navy);
-  letter-spacing:-.04em;line-height:1.1;margin:0;
+  font-size:clamp(30px,8.8vw,42px);font-weight:800;
+  color:var(--tg-blue);
+  letter-spacing:-.02em;line-height:1.18;margin:0;
 }
 .travel-dest-title-morph{
   --script-morph-h:52px;width:100%;max-width:100%;
@@ -1994,7 +1995,7 @@ body.view-sender.theme-telegram .toggle,
     <div class="sheet-drag"></div>
     <form class="send-form" id="sendForm" onsubmit="onSendFormSubmit(event)">
       <div class="travel-sheet-head send-sheet-head">
-        <h2 class="travel-dest-title" id="sendDestTitle">Qayerga?</h2>
+        <h2 class="travel-dest-title" id="sendDestTitle">Qayerga yuborasiz?</h2>
       </div>
       <div class="send-thumb-wrap" id="sendThumbWrap" hidden>
         <img class="send-thumb" id="sendThumb" alt="Jo'natma rasmi">
@@ -2985,8 +2986,8 @@ const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
 const TRAVEL_TITLE_CYRILLIC = 'Қайерга борасиз?';
 const TRAVEL_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const TRAVEL_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
-const SEND_TITLE_LATIN = 'Qayerga?';
-const SEND_TITLE_CYRILLIC = 'Қайерга?';
+const SEND_TITLE_LATIN = 'Qayerga yuborasiz?';
+const SEND_TITLE_CYRILLIC = 'Қайерга юборaсиз?';
 const SEND_DISTRICT_TITLE_LATIN = 'Tumanni tanlang';
 const SEND_DISTRICT_TITLE_CYRILLIC = 'Туманни танланг';
 const EDIT_NOTE_PH_LATIN = "Qo'shimcha (ixtiyoriy)";
@@ -4296,6 +4297,8 @@ const UI_PHRASE_CYRILLIC = {
   "Yo'lovchi": 'Йўловчи',
   'Qayerdan': 'Қайердан', 'Qayerga': 'Қайерга',
   'Qayerdan?': 'Қайердан?', 'Qayerga?': 'Қайерга?',
+  'Qayerga yuborasiz?': 'Қайерга юборaсиз?',
+  'Qayerga borasiz?': 'Қайерга борасиз?',
   "Yo'lovchi soni": 'Йўловчи сони',
   "Joylashuvni o'zgartirish": 'Жойлашувни ўзгартириш',
   "Yo'lovchi bilan bog'lanib, yo'l haqida kelishing": 'Йўловчи билан боғланиб, йўл ҳақида келишинг',
@@ -4474,8 +4477,8 @@ function initAllMorphTexts(){
   [
     ['regionPicker', 'Viloyat tanlash'],
     ['driverDistrictPicker', 'Tuman tanlash'],
-    ['sendRegionPicker', 'Qayerga?'],
-    ['travelRegionPicker', 'Qayerga borasiz']
+    ['sendRegionPicker', 'Qayerga yuborasiz?'],
+    ['travelRegionPicker', 'Qayerga borasiz?']
   ].forEach(([id, label]) => {
     const el = document.getElementById(id);
     if (el) registerMorphAttr(el, 'aria-label', label);
