@@ -7440,11 +7440,32 @@ function requestPhoneOnce(){
   });
 }
 
-// "Ruxsat beraman" — tushuntirish ekranini yopib, sistema dialogini chiqaradi
+// "Ruxsat beraman" — avval telefon, keyin bildirishnoma ketma-ket
 function acceptPhoneEdu(){
   document.getElementById('phoneEduOverlay').classList.remove('open');
+
+  const doNotif = () => {
+    // 2-qadam: Bildirishnoma ruxsati
+    setTimeout(() => {
+      try {
+        if (window.Telegram?.WebApp?.requestWriteAccess) {
+          Telegram.WebApp.requestWriteAccess(granted => {
+            if (db && telegramUser.id) {
+              db.collection('users').doc(String(telegramUser.id))
+                .set({ notifications: granted !== false, chatId: telegramUser.id }, { merge: true })
+                .catch(()=>{});
+            }
+            if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
+          });
+        }
+      } catch(_){}
+    }, 600);
+  };
+
+  // 1-qadam: Telefon raqami
   if (!window.Telegram?.WebApp?.requestContact){
     if (_phoneResolve){ _phoneResolve(null); _phoneResolve = null; }
+    doNotif();
     return;
   }
   Telegram.WebApp.requestContact((sent, response) => {
@@ -7463,6 +7484,8 @@ function acceptPhoneEdu(){
       }
     }
     if (_phoneResolve){ _phoneResolve(phone); _phoneResolve = null; }
+    // Telefon tugagach bildirishnoma
+    doNotif();
   });
 }
 
@@ -7476,7 +7499,10 @@ function skipPhoneEdu(){
 function notifAskedKey(){ return 'dv_notif_asked_' + (telegramUser.id || 'anon'); }
 
 function maybeAskNotifAfterSubmit(){
+  // Edu screen orqali allaqachon so'raldi — qaytamaymiz
   if (!TEST_MODE && localStorage.getItem(notifAskedKey())) return;
+  // Edu screen ochiq bo'lsa — u o'zi so'raydi
+  if (document.getElementById('phoneEduOverlay')?.classList.contains('open')) return;
   if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
   // Kichik kechikish — sheet yopilsin, keyin dialog chiqsin
   setTimeout(() => {
@@ -7600,21 +7626,52 @@ recoverSendFlow();
   <div class="sheet" style="border-radius:32px 32px 0 0;padding:28px 24px max(32px,env(safe-area-inset-bottom))">
 
     <!-- Sarlavha -->
-    <p style="font-size:13px;font-weight:700;color:#8e8e93;text-transform:uppercase;letter-spacing:.06em;text-align:center;margin:0 0 6px">Ruxsat kerak</p>
-    <h3 style="font-size:18px;font-weight:800;color:#0f172a;text-align:center;margin:0 0 18px;line-height:1.35">Haydovchi siz bilan tezroq aloqaga chiqishi uchun quyidagi ruxsatni bering</h3>
+    <p style="font-size:11px;font-weight:800;color:#8e8e93;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin:0 0 10px">Ruxsat kerak</p>
+    <h3 style="font-size:22px;font-weight:900;color:#0f172a;text-align:center;margin:0 0 20px;line-height:1.3">Haydovchi siz bilan tezroq aloqaga chiqishi uchun kerakli ruxsatlarni bering</h3>
 
-    <!-- Telegram dialogi mockup (uzbekcha) -->
-    <div style="background:#1c2733;border-radius:14px;padding:20px 18px 16px;margin-bottom:20px">
-      <p style="font-size:16px;font-weight:700;color:#fff;margin:0 0 10px;line-height:1.3">Telefon raqamini ulashish?</p>
-      <p style="font-size:14px;color:#a8b8c8;margin:0 0 18px;line-height:1.45">duvduv sizning telefon raqamingizni biladi. Bu haydovchi bilan tez bog'lanish uchun foydali bo'ladi.</p>
-      <div style="display:flex;justify-content:flex-end;gap:20px;padding-top:4px;border-top:1px solid rgba(255,255,255,.08)">
-        <span style="font-size:15px;color:#5b9bd5;font-weight:500">Bekor qilish</span>
-        <span style="font-size:15px;color:#5b9bd5;font-weight:700">Kontaktni ulashish</span>
+    <!-- Telegram dialogi mockup — telefon -->
+    <div style="background:#1c2733;border-radius:14px;padding:18px 16px 14px;margin-bottom:12px;position:relative">
+      <p style="font-size:15px;font-weight:700;color:#fff;margin:0 0 8px;line-height:1.3">Telefon raqamini ulashish?</p>
+      <p style="font-size:13px;color:#a8b8c8;margin:0 0 14px;line-height:1.45">duvduv sizning telefon raqamingizni biladi. Bu haydovchi bilan tez bog'lanish uchun foydali bo'ladi.</p>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:18px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:14px;color:#5b9bd5;font-weight:500">Bekor qilish</span>
+        <!-- Qizil aylana bilan ajratilgan asosiy tugma -->
+        <span style="font-size:14px;color:#5b9bd5;font-weight:800;position:relative;padding:6px 10px">
+          Kontaktni ulashish
+          <svg style="position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);overflow:visible;pointer-events:none" viewBox="0 0 1 1" preserveAspectRatio="none">
+            <rect x="0.02" y="0.02" width="0.96" height="0.96" rx="0.18" ry="0.18"
+              fill="none" stroke="#ef4444" stroke-width="0.06"
+              stroke-dasharray="0.18 0.06"
+              style="animation:dashSpin 1.4s linear infinite"/>
+          </svg>
+        </span>
       </div>
     </div>
 
+    <!-- Telegram dialogi mockup — bildirishnoma -->
+    <div style="background:#1c2733;border-radius:14px;padding:18px 16px 14px;margin-bottom:20px">
+      <p style="font-size:15px;font-weight:700;color:#fff;margin:0 0 8px;line-height:1.3">Xabar yuborishga ruxsat?</p>
+      <p style="font-size:13px;color:#a8b8c8;margin:0 0 14px;line-height:1.45">duvduv yangi e'lonlar va haydovchi xabarlari haqida sizga bildirishnoma yuboradi.</p>
+      <div style="display:flex;justify-content:flex-end;align-items:center;gap:18px;padding-top:10px;border-top:1px solid rgba(255,255,255,.08)">
+        <span style="font-size:14px;color:#5b9bd5;font-weight:500">Bekor qilish</span>
+        <span style="font-size:14px;color:#5b9bd5;font-weight:800;position:relative;padding:6px 10px">
+          Ruxsat berish
+          <svg style="position:absolute;inset:-4px;width:calc(100% + 8px);height:calc(100% + 8px);overflow:visible;pointer-events:none" viewBox="0 0 1 1" preserveAspectRatio="none">
+            <rect x="0.02" y="0.02" width="0.96" height="0.96" rx="0.18" ry="0.18"
+              fill="none" stroke="#ef4444" stroke-width="0.06"
+              stroke-dasharray="0.18 0.06"
+              style="animation:dashSpin 1.4s linear infinite 0.7s"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+
+    <style>
+      @keyframes dashSpin{to{stroke-dashoffset:-0.48}}
+    </style>
+
     <!-- Tugmalar -->
-    <button onclick="acceptPhoneEdu()" style="width:100%;background:#2AABEE;color:#fff;padding:15px;border:none;border-radius:18px;font-size:17px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 18px rgba(42,171,238,.35)">
+    <button onclick="acceptPhoneEdu()" style="width:100%;background:#2AABEE;color:#fff;padding:16px;border:none;border-radius:18px;font-size:18px;font-weight:800;font-family:inherit;cursor:pointer;margin-bottom:10px;box-shadow:0 6px 20px rgba(42,171,238,.4)">
       Ruxsat beraman
     </button>
     <button onclick="skipPhoneEdu()" style="width:100%;padding:11px;border:none;background:transparent;color:#8e8e93;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit">
