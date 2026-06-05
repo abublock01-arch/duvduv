@@ -3172,14 +3172,18 @@ function maybeReseedMapTestOrdersForHomeRegion(){
 }
 
 // ── Lokatsiya onboarding ──────────────────────────────────────────────────
+// ── TEST MODE: true bo'lsa har safar barcha ruxsatlar qayta so'raladi ──────
+const TEST_MODE = true;
+
 function locAskedKey(){
   return userPrefKey('loc_asked') || 'duvduv_loc_asked';
 }
 function hasAskedLocation(){
+  if (TEST_MODE) return false;
   return !!localStorage.getItem(locAskedKey());
 }
 function markLocationAsked(){
-  localStorage.setItem(locAskedKey(), '1');
+  if (!TEST_MODE) localStorage.setItem(locAskedKey(), '1');
 }
 
 async function requestLocationOnce(){
@@ -7440,9 +7444,9 @@ function requestPhoneOnce(){
   return new Promise((resolve) => {
     // Allaqachon saqlangan?
     const cached = localStorage.getItem(phoneKey());
-    if (cached) { resolve(cached); return; }
+    if (cached && !TEST_MODE) { resolve(cached); return; }
     // Bu seans ichida "Keyinroq" bosganmi?
-    if (sessionStorage.getItem(phoneSkipKey())) { resolve(null); return; }
+    if (!TEST_MODE && sessionStorage.getItem(phoneSkipKey())) { resolve(null); return; }
     // Telegram requestContact mavjudmi?
     if (!window.Telegram?.WebApp?.requestContact) { resolve(null); return; }
     // Sheet ko'rsat
@@ -7486,8 +7490,8 @@ function skipPhoneRequest(){
 function notifAskedKey(){ return 'dv_notif_asked_' + (telegramUser.id || 'anon'); }
 
 function maybeAskNotifAfterSubmit(){
-  if (localStorage.getItem(notifAskedKey())) return;
-  localStorage.setItem(notifAskedKey(), '1');
+  if (!TEST_MODE && localStorage.getItem(notifAskedKey())) return;
+  if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
   setTimeout(() => { try { requestNotificationPermission(); } catch(_){} }, 800);
 }
 
