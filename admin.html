@@ -468,7 +468,7 @@ code{font-size:11px;background:#f1f5f9;padding:2px 7px;border-radius:5px;color:v
       <div class="topbar-pill">
         <span style="font-size:8px;color:var(--green)">●</span>
         <span class="topbar-pill-val" id="tsOnline">0</span>
-        <span class="topbar-pill-lbl">GPS onlayn</span>
+        <span class="topbar-pill-lbl">Onlayn</span>
       </div>
       <div class="topbar-pill">
         <span class="topbar-pill-val" id="tsTotal">0</span>
@@ -952,7 +952,7 @@ function route(a,b){if(!a&&!b)return'<span style="color:var(--text3)">—</span>
 
 // ── TICK (stats update) ──
 function tick(){
-  const on=allUsers.filter(online).length;
+  const on=allUsers.filter(u=>online(u)||inApp(u)).length; // GPS + Ilovada
   const dr=allUsers.filter(u=>u.routeFrom&&u.routeTo).length;
   const pk=allOrders.filter(o=>o.type!=='person').length;
   const pr=allOrders.filter(o=>o.type==='person').length;
