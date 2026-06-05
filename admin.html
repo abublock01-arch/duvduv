@@ -908,10 +908,32 @@ function startFirestore(){
 }
 
 // ── HELPERS ──
+function inApp(u){
+  // Ilovada: lastSeen 5 daqiqa ichida
+  if(!u.lastSeen)return false;
+  const d=u.lastSeen.toDate?u.lastSeen.toDate():new Date(u.lastSeen);
+  return Date.now()-d.getTime()<5*60*1000;
+}
 function online(u){
+  // GPS onlayn: location 10 daqiqa ichida yangilangan
   if(!u.location?.updatedAt)return false;
   const d=u.location.updatedAt.toDate?u.location.updatedAt.toDate():new Date(u.location.updatedAt);
   return Date.now()-d.getTime()<10*60*1000;
+}
+function statusDot(u){
+  if(online(u))return'<span class="badge badge-green" style="font-size:10px">📍 GPS</span>';
+  if(inApp(u))return'<span class="badge" style="font-size:10px;background:rgba(16,185,129,.15);color:#10b981">🟢 Ilovada</span>';
+  return'<span class="time">oflayn</span>';
+}
+function roleBadges(u){
+  const isDriver=u.routeFrom&&u.routeTo;
+  // Mijoz: buyurtma qo'ygan (orders da telegramId bo'yicha)
+  const hasOrders=allOrders.some(o=>String(o.telegramId)===String(u.chatId||u.id));
+  let badges='';
+  if(isDriver)badges+='<span class="badge" style="font-size:10px;background:rgba(42,171,238,.15);color:#2AABEE;margin-right:3px">🚗 Haydovchi</span>';
+  if(hasOrders)badges+='<span class="badge" style="font-size:10px;background:rgba(245,158,11,.15);color:#f59e0b">📦 Mijoz</span>';
+  if(!badges)badges+='<span class="time">—</span>';
+  return badges;
 }
 function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v}
 function pad(n){return String(n).padStart(2,'0')}
@@ -1098,7 +1120,9 @@ function applyF(t){
     if(q)d=d.filter(u=>(u.firstName||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||String(u.chatId||'').includes(q));
     filtDrivers=d;renderDrivers();
   }else if(t==='passengers'){
-    let d=allUsers.filter(u=>!u.routeFrom||!u.routeTo);
+    // Mijozlar: buyurtma qo'ygan YOKI route yo'q (ikki rollilar ham kiradi)
+    const ordUserIds=new Set(allOrders.map(o=>String(o.telegramId)));
+    let d=allUsers.filter(u=>ordUserIds.has(String(u.chatId||u.id))||!u.routeFrom||!u.routeTo);
     if(q)d=d.filter(u=>(u.firstName||'').toLowerCase().includes(q)||(u.username||'').toLowerCase().includes(q)||String(u.chatId||'').includes(q));
     filtPassengers=d;renderPassengers();
   }else if(t==='orders'){
@@ -1136,13 +1160,14 @@ function renderDrivers(){
   document.getElementById('driversBody').innerHTML=
     filtDrivers.length===0?empty('🚗',"Haydovchi topilmadi",7):
     data.map((u,i)=>{
-      const n=(pages.drivers-1)*PG+i+1,on=online(u);
+      const n=(pages.drivers-1)*PG+i+1;
       return`<tr>
         <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
         <td><div class="user-row">${av(u.firstName)}<div class="user-info"><div class="un">${u.firstName||"Noma'lum"}</div>${u.username?`<div class="uu">@${u.username}</div>`:''}</div></div></td>
         <td><code>${u.chatId||u.id}</code></td>
+        <td>${roleBadges(u)}</td>
         <td>${route(u.routeFrom,u.routeTo)}</td>
-        <td>${on?'<span class="badge badge-green" style="font-size:10px">📍 Onlayn</span>':'<span class="time">oflayn</span>'}</td>
+        <td>${statusDot(u)}</td>
         <td><span class="time">${ago(u.lastSeen)} oldin</span></td>
         <td><button class="btn btn-danger" onclick="confirmDel('users','${u.id}','${(u.firstName||'').replace(/'/g,'')}')">🗑</button></td>
       </tr>`;
@@ -1155,12 +1180,13 @@ function renderPassengers(){
   document.getElementById('passengersBody').innerHTML=
     filtPassengers.length===0?empty('👤',"Mijoz topilmadi",7):
     data.map((u,i)=>{
-      const n=(pages.passengers-1)*PG+i+1,on=online(u);
+      const n=(pages.passengers-1)*PG+i+1;
       return`<tr>
         <td><span style="color:var(--text3);font-size:11px">${n}</span></td>
         <td><div class="user-row">${av(u.firstName)}<div class="user-info"><div class="un">${u.firstName||"Noma'lum"}</div>${u.username?`<div class="uu">@${u.username}</div>`:''}</div></div></td>
         <td><code>${u.chatId||u.id}</code></td>
-        <td>${on?'<span class="badge badge-green" style="font-size:10px">📍 Onlayn</span>':'<span class="time">oflayn</span>'}</td>
+        <td>${roleBadges(u)}</td>
+        <td>${statusDot(u)}</td>
         <td>${u.notifications?'<span class="badge badge-green" style="font-size:10px">✅</span>':'<span class="badge badge-gray" style="font-size:10px">—</span>'}</td>
         <td><span class="time">${ago(u.lastSeen)} oldin</span></td>
         <td><button class="btn btn-danger" onclick="confirmDel('users','${u.id}','${(u.firstName||'').replace(/'/g,'')}')">🗑</button></td>
