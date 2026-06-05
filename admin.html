@@ -888,8 +888,17 @@ const PAGES={
 
 // ── FIRESTORE (faqat login bo'lgandan keyin) ──
 function startFirestore(){
-  db.collection('users').orderBy('lastSeen','desc').limit(500)
-    .onSnapshot(s=>{allUsers=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('drivers');applyF('passengers');updMarkers();updCounts();if(curPage==='stats')renderStats();});
+  db.collection('users').limit(500)
+    .onSnapshot(s=>{
+      // lastSeen bo'lmagan userlar ham ko'rinsin — JS da sort
+      allUsers=s.docs.map(d=>({id:d.id,...d.data()}))
+        .sort((a,b)=>{
+          const ta=a.lastSeen?.toMillis?a.lastSeen.toMillis():(typeof a.lastSeen==='number'?a.lastSeen:0);
+          const tb=b.lastSeen?.toMillis?b.lastSeen.toMillis():(typeof b.lastSeen==='number'?b.lastSeen:0);
+          return tb-ta;
+        });
+      tick();applyF('drivers');applyF('passengers');updMarkers();updCounts();if(curPage==='stats')renderStats();
+    }, err=>console.error('users onSnapshot xato:',err.code,err.message));
   db.collection('orders').orderBy('createdAt','desc').limit(500)
     .onSnapshot(s=>{allOrders=s.docs.map(d=>({id:d.id,...d.data()}));tick();applyF('orders');if(curPage==='stats')renderStats();});
   db.collection('travels').orderBy('createdAt','desc').limit(500)
