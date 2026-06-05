@@ -505,30 +505,46 @@ body.view-sender .header{background:var(--app-bg)!important}
   -webkit-appearance:none;appearance:none;
 }
 .cta-btn::after{
-  content:'';position:absolute;top:-30%;bottom:-30%;left:0;width:42%;
+  content:'';position:absolute;top:-30%;bottom:-30%;left:0;width:46%;
   background:linear-gradient(
     100deg,
     transparent 0%,
-    rgba(255,255,255,0) 18%,
-    rgba(255,255,255,.07) 42%,
-    rgba(255,255,255,.16) 50%,
-    rgba(255,255,255,.07) 58%,
-    rgba(255,255,255,0) 82%,
+    rgba(255,255,255,0) 16%,
+    rgba(255,255,255,.11) 40%,
+    rgba(255,255,255,.24) 50%,
+    rgba(255,255,255,.11) 60%,
+    rgba(255,255,255,0) 84%,
     transparent 100%
   );
   transform:translateX(-160%) skewX(-14deg);
-  animation:ctaSunGlint 5.8s ease-in-out infinite;
+  animation:ctaSunGlint 3s ease-in-out infinite;
   pointer-events:none;z-index:1;
 }
-.cta-wrap > .cta-btn:nth-child(2)::after{animation-delay:2.9s}
+.cta-wrap > .cta-btn:nth-child(2)::after{animation-delay:1.5s}
 @keyframes ctaSunGlint{
-  0%,72%{transform:translateX(-160%) skewX(-14deg);opacity:0}
-  78%{opacity:.85}
+  0%,58%{transform:translateX(-160%) skewX(-14deg);opacity:0}
+  64%{opacity:1}
   100%{transform:translateX(320%) skewX(-14deg);opacity:0}
+}
+.cta-text{
+  position:relative;z-index:2;
+  flex:1;text-align:center;padding-right:41px;
+  color:#fff;font-size:17px;font-weight:700;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transform-origin:center center;
+  animation:ctaTextPulse 3s ease-in-out infinite;
+}
+.cta-wrap > .cta-btn:nth-child(2) .cta-text{animation-delay:1.5s}
+@keyframes ctaTextPulse{
+  0%,58%{transform:scale(1)}
+  72%{transform:scale(1.042)}
+  100%{transform:scale(1)}
 }
 @media (prefers-reduced-motion:reduce){
   .cta-btn::after{animation:none;opacity:0}
+  .cta-text{animation:none}
 }
+
 .cta-btn:active{transform:scale(.98);background:#209ce0}
 .cta-icon-wrap{
   position:relative;z-index:2;
@@ -540,12 +556,6 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .cta-icon{display:contents}
 .cta-icon svg{width:23px;height:23px;display:block}
-.cta-text{
-  position:relative;z-index:2;
-  flex:1;text-align:center;padding-right:41px;
-  color:#fff;font-size:17px;font-weight:700;letter-spacing:.01em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
 
 /* ══ DRIVER VIEW ══ */
 #driverView{
