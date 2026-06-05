@@ -7251,22 +7251,22 @@ async function submitTravel(e){
     showToast('Tuman tanlang');
     return;
   }
-  // GPS aniqlanmagan bo'lsa — bir marta sinab ko'ramiz
+  // 1-qadam: Telefon raqam so'rash (GPS dan OLDIN — ketma-ketlikni oldini olamiz)
+  await requestPhoneOnce();
+
+  // 2-qadam: GPS — bloklaydi emas, faqat keshdan foydalanadi
   if (!userCoords && !userLocationRegion) {
-    try {
-      const c = await getCurrentPosition();
+    const cached = loadLastGPS();
+    if (cached) {
+      userCoords = { latitude: cached.lat, longitude: cached.lng };
+      userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+    }
+    // GPS ruxsati bo'lsa fonda olish — bloklamaymiz
+    getCurrentPosition().then(c => {
       userCoords = { latitude: c.latitude, longitude: c.longitude };
       userLocationRegion = detectRegionFromCoords(c.longitude, c.latitude);
       saveLastGPS(c.longitude, c.latitude);
-    } catch (_) {
-      const cached = loadLastGPS();
-      if (cached) {
-        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
-      } else {
-        showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
-        return;
-      }
-    }
+    }).catch(()=>{});
   }
   let coords = userCoords;
   if (!coords) {
@@ -7295,14 +7295,6 @@ async function submitTravel(e){
     telegramId: telegramUser.id,
     telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
   };
-  // Telefon raqam so'rash (ixtiyoriy) — submit dan oldin
-  const savedPhone = localStorage.getItem(phoneKey()) || '';
-  if (!savedPhone && !sessionStorage.getItem(phoneSkipKey())) {
-    await requestPhoneOnce();
-  }
-  const phone = localStorage.getItem(phoneKey()) || '';
-  if (phone) travel.phone = phone;
-
   const firestoreId = await saveTravelToFirestore(travel);
   if (firestoreId) {
     travel.firestoreId = firestoreId;
@@ -7336,22 +7328,21 @@ async function submitOrder(e, opts = {}){
     showToast('Tuman tanlang');
     return;
   }
-  // GPS aniqlanmagan bo'lsa — bir marta sinab ko'ramiz
+  // 1-qadam: Telefon raqam so'rash (GPS dan OLDIN)
+  await requestPhoneOnce();
+
+  // 2-qadam: GPS — bloklamaymiz, keshdan foydalanamiz
   if (!userCoords && !userLocationRegion) {
-    try {
-      const c = await getCurrentPosition();
+    const cached = loadLastGPS();
+    if (cached) {
+      userCoords = { latitude: cached.lat, longitude: cached.lng };
+      userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+    }
+    getCurrentPosition().then(c => {
       userCoords = { latitude: c.latitude, longitude: c.longitude };
       userLocationRegion = detectRegionFromCoords(c.longitude, c.latitude);
       saveLastGPS(c.longitude, c.latitude);
-    } catch (_) {
-      const cached = loadLastGPS();
-      if (cached) {
-        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
-      } else {
-        showToast('📍 GPS ni yoqing — joylashuvingiz aniqlanmadi', 'error');
-        return;
-      }
-    }
+    }).catch(()=>{});
   }
   const dest = formatDest(region, district);
   document.getElementById('sendDest').value = dest;
@@ -7418,11 +7409,6 @@ async function submitOrder(e, opts = {}){
     showSuccessCheck();
   }
 
-  // Telefon raqam so'rash (ixtiyoriy) — submit dan oldin
-  if (!localStorage.getItem(phoneKey()) && !sessionStorage.getItem(phoneSkipKey())) {
-    await requestPhoneOnce();
-  }
-
   // Cached coords ishlatamiz — dialog chiqarmaymiz
   if (userCoords) {
     await saveOrder(userCoords);
@@ -7442,11 +7428,13 @@ function phoneSkipKey(){ return 'dv_phone_skip_' + (telegramUser.id || 'anon'); 
 
 function requestPhoneOnce(){
   return new Promise((resolve) => {
-    // Allaqachon saqlangan?
-    const cached = localStorage.getItem(phoneKey());
-    if (cached && !TEST_MODE) { resolve(cached); return; }
-    // Bu seans ichida "Keyinroq" bosganmi?
-    if (!TEST_MODE && sessionStorage.getItem(phoneSkipKey())) { resolve(null); return; }
+    if (!TEST_MODE) {
+      // Allaqachon saqlangan?
+      const cached = localStorage.getItem(phoneKey());
+      if (cached) { resolve(cached); return; }
+      // Bu seans ichida "Keyinroq" bosganmi?
+      if (sessionStorage.getItem(phoneSkipKey())) { resolve(null); return; }
+    }
     // Telegram requestContact mavjudmi?
     if (!window.Telegram?.WebApp?.requestContact) { resolve(null); return; }
     // Sheet ko'rsat
@@ -7492,7 +7480,23 @@ function notifAskedKey(){ return 'dv_notif_asked_' + (telegramUser.id || 'anon')
 function maybeAskNotifAfterSubmit(){
   if (!TEST_MODE && localStorage.getItem(notifAskedKey())) return;
   if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
-  setTimeout(() => { try { requestNotificationPermission(); } catch(_){} }, 800);
+  // Kichik kechikish — sheet yopilsin, keyin dialog chiqsin
+  setTimeout(() => {
+    try {
+      if (window.Telegram?.WebApp?.requestWriteAccess) {
+        Telegram.WebApp.requestWriteAccess(granted => {
+          if (db && telegramUser.id) {
+            db.collection('users').doc(String(telegramUser.id))
+              .set({ notifications: granted !== false, chatId: telegramUser.id }, { merge: true })
+              .catch(()=>{});
+          }
+        });
+      } else {
+        // Eski Telegram — faqat saqlaymiz
+        requestNotificationPermission();
+      }
+    } catch(_){}
+  }, 1200);
 }
 
 function showSuccessCheck(){
