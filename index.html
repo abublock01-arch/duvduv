@@ -134,15 +134,30 @@ body.view-sender .header{background:var(--app-bg)!important}
   position:relative;flex:1;min-height:0;width:100%;
   display:flex;flex-direction:column;overflow:hidden;
 }
-/* ══ SCENE — mashina rasm ══ */
-#senderView .scene{
-  position:absolute;inset:0;
-  display:flex;align-items:center;justify-content:center;
-  pointer-events:none;z-index:0;
-  background:transparent;
+/* ══ SENDER HERO — mijoz oynasi rasmi ══ */
+.sender-hero{
+  flex-shrink:0;display:flex;flex-direction:column;align-items:center;
+  gap:10px;padding:6px 0 10px;width:100%;
 }
-#senderView .scene > img{border:none;box-shadow:none;outline:none;display:block;}
-#senderView.has-active-shipments .scene > img{opacity:.92}
+.sender-hero-badge{
+  display:inline-flex;align-items:center;gap:7px;
+  padding:7px 16px;border-radius:100px;
+  background:linear-gradient(180deg,#F4FAFF 0%,#E3F4FD 100%);
+  border:2px solid rgba(42,171,238,.38);
+  color:#0B5CAD;font-size:13px;font-weight:800;letter-spacing:.03em;
+  box-shadow:0 2px 10px rgba(42,171,238,.1);
+}
+.sender-hero-badge svg{
+  width:18px;height:18px;flex-shrink:0;
+  stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.sender-hero-img{
+  width:100%;max-width:min(280px,78vw);height:auto;
+  display:block;object-fit:contain;
+  filter:drop-shadow(0 10px 24px rgba(42,171,238,.14));
+}
+#senderView.has-active-shipments .sender-hero{display:none}
 .shipments-empty,.shipments-list{border:none}
 #senderView .shipments-wrap,
 #senderView .shipments-wrap.visible{
@@ -1977,7 +1992,7 @@ html, body { font-size: var(--fs-base); }
   .sheet-drag { margin-bottom:16px; }
   .sheet-fields { gap:8px; margin-bottom:16px; }
   .shipments-empty { gap:4px; padding:4px 0 8px; }
-  #senderView .scene > img { max-height: 30vh; }
+  .sender-hero-img { max-width:min(220px,72vw); }
 }
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -2006,8 +2021,12 @@ html, body { font-size: var(--fs-base); }
       <!-- SENDER -->
       <div id="senderView">
         <div class="sender-body">
-          <div class="scene" aria-hidden="true">
-            <img src="assets/scene-car.png?v=2" fetchpriority="high" loading="eager" style="width:100%;max-width:230px;height:auto;" alt=""/>
+          <div class="sender-hero" id="senderHero" aria-hidden="true">
+            <div class="sender-hero-badge">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
+              <span id="senderHeroBadgeLbl">Mijoz</span>
+            </div>
+            <img class="sender-hero-img" src="assets/scene-car.png?v=2" fetchpriority="high" loading="eager" width="560" height="420" alt="">
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
             <div class="shipments-head">Jo'natmalarim</div>
@@ -4532,6 +4551,7 @@ const MORPH_UI_ENTRIES = [
   ['#ctaTravelText', 'SAFARNI BOSHLASH'], ['#ctaOrderText', 'POCHTA YUBORISH'],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
+  ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#uploadSkipBtn', 'Rasmsiz yuborish', 'Расмсиз юбориш'],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],

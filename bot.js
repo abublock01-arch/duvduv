@@ -54,9 +54,9 @@ if (!TOKEN) { console.error('❌ BOT_TOKEN topilmadi'); process.exit(1); }
 
 const bot = new TelegramBot(TOKEN, {
   polling: {
-    interval: 300,
+    interval: 1000,
     autoStart: true,
-    params: { timeout: 10 }
+    params: { timeout: 20 }
   }
 });
 const APP_URL = 'https://duvduv.vercel.app';
