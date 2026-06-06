@@ -529,8 +529,8 @@ body.view-sender .header{background:var(--app-bg)!important}
 .cta-text{
   position:relative;z-index:2;
   flex:1;text-align:center;padding-right:41px;
-  color:#fff;font-size:17px;font-weight:700;letter-spacing:.01em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  color:#fff;font-size:clamp(13px,3.8vw,17px);font-weight:700;letter-spacing:0;
+  white-space:nowrap;overflow:hidden;text-overflow:clip;
   transform-origin:center center;
   animation:ctaTextPulse 3s ease-in-out infinite;
 }
