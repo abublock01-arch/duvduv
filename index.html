@@ -1808,6 +1808,177 @@ body.view-sender.theme-telegram .toggle,
   50%{transform:scale(1.05);box-shadow:0 4px 14px rgba(42,171,238,.48),0 0 0 8px rgba(42,171,238,0)}
 }
 /* ─────────────────────────────────────────────────────────────────── */
+
+/* ══════════════════════════════════════════════════════════════════
+   RESPONSIVE — Samsung Fold 3 + barcha ekran o'lchamlari
+   Breakpoints:
+     < 290px  → Fold tashqi ekrani (tor)
+     290-600px → Oddiy telefonlar
+     600px+   → Fold ichki ekran / planshet
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Asosiy fluid o'lchamlar (barcha qurilmalarda ishlaydi) ── */
+:root {
+  --fs-base: clamp(14px, 4vw, 17px);
+  --fs-lg:   clamp(16px, 4.5vw, 19px);
+  --fs-xl:   clamp(20px, 6vw, 26px);
+  --px-safe: clamp(12px, 4vw, 20px);
+}
+html, body { font-size: var(--fs-base); }
+
+/* ══ Fold tashqi ekrani (yopiq holat) — ≤ 290px ══ */
+@media (max-width: 290px) {
+  :root {
+    --px-safe: 10px;
+    --fs-base: 13px;
+    --fs-lg:   14px;
+    --fs-xl:   18px;
+  }
+
+  /* Header */
+  .header { padding: max(10px,env(safe-area-inset-top)) 10px 6px; }
+  .logo-brand { font-size: 18px; }
+  .logo-brand .logo-sep { width:3px; height:3px; margin:0 6px; transform:scale(2); }
+  .header-close, .header-eye, .driver-mode-btn { width:32px; height:32px; font-size:20px; }
+
+  /* Toggle tabs */
+  .toggle-btn { font-size:13px !important; padding:9px 6px; border-radius:12px; }
+
+  /* CTA tugmalar */
+  .cta-btn { padding:11px 8px; border-radius:16px; }
+  .cta-text { font-size:13px !important; }
+  .cta-icon-wrap { width:32px; height:32px; border-radius:10px; }
+  .cta-icon svg { width:18px; height:18px; }
+  .cta-wrap { padding: 8px 12px max(20px,env(safe-area-inset-bottom)); gap:10px; }
+
+  /* Role switch */
+  .role-switch { font-size:12px; padding:6px 10px 6px 8px; min-height:36px; }
+  .role-switch-icon { width:22px; height:22px; }
+
+  /* Sheet */
+  .sheet { padding: 24px 16px max(28px,env(safe-area-inset-bottom)); border-radius:28px 28px 0 0; }
+  .sheet-fields { gap:8px; margin-bottom:20px; }
+  .sheet-field { padding:14px 16px; border-radius:14px; }
+  .sheet-field-val { font-size:15px; }
+  .sheet-accept { padding:15px; font-size:15px; border-radius:80px; }
+
+  /* Shipment kartalar */
+  .shipment-card { padding:10px; border-radius:16px; }
+  .shipment-type-icon { width:28px; height:28px; border-radius:8px; }
+  .shipment-route-place { font-size:13px; }
+  .shipment-date { font-size:10px; }
+
+  /* Region picker */
+  .region-picker-item { font-size:14px; padding:6px 10px; }
+  .region-picker-item.is-center { font-size:20px; }
+  .region-picker-item.is-adjacent { font-size:15px; }
+  .region-picker--vertical { height:160px; }
+  .region-picker--vertical .region-picker-track { height:160px; }
+  .region-picker--horizontal { height:160px; }
+  .region-picker--horizontal .region-picker-track { height:160px; }
+
+  /* Driver route bar */
+  .driver-route-bar { padding:8px 10px; gap:6px; }
+  .drv-route-btn { padding:9px 10px; font-size:13px; border-radius:11px; }
+  .drv-dot { width:9px; height:9px; }
+  .drv-route-arrow svg { width:20px; height:20px; }
+
+  /* Map controls */
+  .map-my-loc { width:38px; height:38px; right:10px; bottom:10px; }
+  .map-my-loc svg { width:18px; height:18px; }
+  .map-ctrl-btn { width:36px; height:36px; font-size:18px; }
+
+  /* Loc picker */
+  .loc-picker-header { font-size:15px; padding: max(12px,env(safe-area-inset-top)) 14px 10px; }
+  .loc-picker-save { padding:14px; font-size:14px; border-radius:80px; }
+
+  /* Detail sheet */
+  .detail-route-main { font-size:16px; }
+  .detail-cell-lbl { font-size:14px; }
+  .detail-group { margin:0 8px 8px; border-radius:11px; }
+  .detail-sep { margin-left:12px; }
+
+  /* Success overlay */
+  .tg-success-bubble { width:70px; height:70px; }
+
+  /* Sender bo'sh holat */
+  .shipments-empty-title { font-size:16px; }
+  .shipments-empty-sub { font-size:12px; }
+
+  /* Edu screen */
+  #phoneEduOverlay .sheet { padding:20px 16px max(24px,env(safe-area-inset-bottom)); }
+}
+
+/* ══ Oddiy telefonlar — 290px–600px (default, hech narsa kerak emas) ══ */
+
+/* ══ Fold ichki ekran + planshet — ≥ 600px ══ */
+@media (min-width: 600px) {
+  /* Markazlashtirilgan konteyner */
+  .app {
+    max-width: 500px;
+    margin: 0 auto;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    box-shadow: 0 0 40px rgba(0,0,0,.12);
+  }
+
+  /* Sheet kengayib ketmasin */
+  .sheet-overlay { align-items: center; }
+  .sheet {
+    border-radius: 28px !important;
+    margin: 0 auto;
+    max-width: 480px;
+    width: 90%;
+    padding-bottom: max(32px,env(safe-area-inset-bottom)) !important;
+  }
+
+  /* Overlay sheets */
+  .loc-picker-overlay,
+  .detail-route-overlay,
+  #driverRegionPickerOverlay {
+    max-width: 500px;
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  /* Phone edu overlay */
+  #phoneEduOverlay {
+    align-items: center;
+  }
+  #phoneEduOverlay .sheet {
+    border-radius: 24px !important;
+    max-width: 440px;
+    margin: auto;
+  }
+
+  /* Font o'lchami biroz katta bo'lishi mumkin */
+  .toggle-btn { font-size:20px; padding:14px; }
+  .cta-text { font-size:18px; }
+  .logo-brand { font-size:30px; }
+  .cta-btn { padding:15px 10px; border-radius:22px; }
+  .cta-icon-wrap { width:46px; height:46px; border-radius:15px; }
+}
+
+/* ══ Juda katta ekran — ≥ 840px (Fold to'liq ochilganda landscape) ══ */
+@media (min-width: 840px) {
+  .app { max-width: 520px; }
+  .loc-picker-overlay,
+  .detail-route-overlay,
+  #driverRegionPickerOverlay { max-width: 520px; }
+}
+
+/* ══ Past balandlik (landscape rejimi) ══ */
+@media (max-height: 600px) {
+  .header { padding-top: max(6px,env(safe-area-inset-top)); padding-bottom:4px; }
+  .cta-wrap { padding-top:6px; padding-bottom:max(14px,env(safe-area-inset-bottom)); }
+  .region-picker--vertical { height:130px; }
+  .region-picker--vertical .region-picker-track { height:130px; }
+  .sheet-drag { margin-bottom:16px; }
+  .sheet-fields { gap:8px; margin-bottom:16px; }
+  .shipments-empty { gap:4px; padding:4px 0 8px; }
+  #senderView .scene > img { max-height: 30vh; }
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -7424,7 +7595,7 @@ function pingLastSeen(){
     lastSeen: firebase.firestore.FieldValue.serverTimestamp()
   }, { merge: true }).catch(()=>{});
 }
-setInterval(pingLastSeen, 2 * 60 * 1000); // har 2 daqiqa
+setInterval(pingLastSeen, 10 * 60 * 1000); // har 10 daqiqa (Firebase limit uchun)
 // Ilova ochilganida darhol
 setTimeout(pingLastSeen, 3000);
 document.addEventListener('visibilitychange_orig', () => {
