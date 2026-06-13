@@ -462,7 +462,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   padding:12px 16px max(28px,env(safe-area-inset-bottom));
   background:transparent;
   border:none;box-shadow:none;
-  display:flex;flex-direction:column;align-items:stretch;gap:14px;
+  display:flex;flex-direction:column;align-items:stretch;gap:13px;
 }
 .cta-wrap{background:transparent;border:none;box-shadow:none}
 .role-switch{
@@ -510,52 +510,67 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .role-switch--float:active{transform:translateX(-50%) scale(.98)}
 .role-switch--float .role-switch-chev{transform:rotate(180deg)}
-.cta-card{
-  position:relative;width:100%;min-height:112px;
-  border:none;border-radius:22px;overflow:hidden;
-  cursor:pointer;outline:none;text-align:left;
+.cta-btn{
+  position:relative;width:100%;overflow:hidden;isolation:isolate;
+  background:var(--tg-blue);color:#fff;
+  padding:13px 9px;border:none;border-radius:20px;
+  display:flex;align-items:center;
+  box-shadow:0 7px 22px -6px rgba(42,171,238,.6);
+  cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;outline:none;
   -webkit-appearance:none;appearance:none;
-  padding:14px 16px 15px;
-  display:flex;align-items:flex-end;
-  box-shadow:0 8px 24px rgba(15,23,42,.07);
-  transition:transform .15s,box-shadow .15s;
 }
-.cta-card:active{transform:scale(.985)}
-.cta-card--travel{
-  background:linear-gradient(145deg,#EFF7FF 0%,#D9ECFA 55%,#C8E4F8 100%);
-  box-shadow:0 8px 22px rgba(42,171,238,.14);
+.cta-btn::after{
+  content:'';position:absolute;top:-30%;bottom:-30%;left:0;width:46%;
+  background:linear-gradient(
+    100deg,
+    transparent 0%,
+    rgba(255,255,255,0) 16%,
+    rgba(255,255,255,.11) 40%,
+    rgba(255,255,255,.24) 50%,
+    rgba(255,255,255,.11) 60%,
+    rgba(255,255,255,0) 84%,
+    transparent 100%
+  );
+  transform:translateX(-160%) skewX(-14deg);
+  animation:ctaSunGlint 3s ease-in-out infinite;
+  pointer-events:none;z-index:1;
 }
-.cta-card--order{
-  background:linear-gradient(145deg,#FFF4EA 0%,#FFE8D4 55%,#FFD9B8 100%);
-  box-shadow:0 8px 22px rgba(255,140,0,.12);
+.cta-wrap > .cta-btn:nth-child(2)::after{animation-delay:1.5s}
+@keyframes ctaSunGlint{
+  0%,58%{transform:translateX(-160%) skewX(-14deg);opacity:0}
+  64%{opacity:1}
+  100%{transform:translateX(320%) skewX(-14deg);opacity:0}
 }
-.cta-card--travel:active{box-shadow:0 4px 14px rgba(42,171,238,.18)}
-.cta-card--order:active{box-shadow:0 4px 14px rgba(255,140,0,.16)}
-.cta-card-text{
-  position:relative;z-index:2;max-width:52%;
-  font-size:clamp(14px,4vw,17px);font-weight:800;line-height:1.2;
-  letter-spacing:.01em;white-space:nowrap;
-  overflow:hidden;text-overflow:ellipsis;
+.cta-text{
+  position:relative;z-index:2;
+  flex:1;text-align:center;padding-right:41px;
+  color:#fff;font-size:clamp(13px,3.8vw,17px);font-weight:700;letter-spacing:0;
+  white-space:nowrap;overflow:hidden;text-overflow:clip;
+  transform-origin:center center;
+  animation:ctaTextPulse 3s ease-in-out infinite;
 }
-.cta-card--travel .cta-card-text{color:#0B5CAD}
-.cta-card--order .cta-card-text{color:#B45309}
-.cta-card-art{
-  position:absolute;z-index:1;top:50%;right:-6px;
-  height:88%;width:auto;max-width:62%;
-  transform:translateY(-50%);
-  object-fit:contain;pointer-events:none;
-  filter:drop-shadow(0 8px 16px rgba(15,23,42,.1));
+.cta-wrap > .cta-btn:nth-child(2) .cta-text{animation-delay:1.5s}
+@keyframes ctaTextPulse{
+  0%,58%{transform:scale(1)}
+  72%{transform:scale(1.042)}
+  100%{transform:scale(1)}
 }
-.cta-card--travel .cta-card-art{right:-14px;height:94%;max-width:68%}
-.cta-card--order .cta-card-art{right:4px;height:82%;max-width:54%}
-.cta-card-art--car{
-  width:72%;max-width:none;height:104%;
-  object-fit:cover;object-position:82% 48%;
+@media (prefers-reduced-motion:reduce){
+  .cta-btn::after{animation:none;opacity:0}
+  .cta-text{animation:none}
 }
-.cta-card-art--box{
-  width:50%;max-width:none;height:90%;
-  object-fit:cover;object-position:10% 52%;
+
+.cta-btn:active{transform:scale(.98);background:#209ce0}
+.cta-icon-wrap{
+  position:relative;z-index:2;
+  width:41px;height:41px;flex-shrink:0;
+  background:rgba(255,255,255,.2);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
 }
+.cta-icon{display:contents}
+.cta-icon svg{width:23px;height:23px;display:block}
 
 /* ══ DRIVER VIEW ══ */
 #driverView{
@@ -1196,7 +1211,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   --script-morph-h:18px;display:inline-block;text-align:left;
 }
 .script-morph--label .script-morph-layer{text-align:left}
-.toggle-btn .script-morph,.cta-card-text .script-morph,.send-submit .script-morph,.sheet-accept .script-morph,.sheet-tg-btn .script-morph,.loc-picker-save .script-morph,.zone-placeholder-btn .script-morph{
+.toggle-btn .script-morph,.cta-text .script-morph,.send-submit .script-morph,.sheet-accept .script-morph,.sheet-tg-btn .script-morph,.loc-picker-save .script-morph,.zone-placeholder-btn .script-morph{
   --script-morph-h:1.25em;display:inline-block;vertical-align:middle;
 }
 .shipments-head .script-morph,.upload-title .script-morph{--script-morph-h:1.2em;display:inline-block}
@@ -1523,16 +1538,16 @@ body.view-sender.theme-telegram .toggle,
   background:transparent!important;
   border:none!important;box-shadow:none!important;
 }
-.theme-telegram .cta-card--travel{
-  background:linear-gradient(145deg,#EFF7FF 0%,#D9ECFA 55%,#C8E4F8 100%)!important;
-  box-shadow:0 8px 22px rgba(42,171,238,.14)!important;
+.theme-telegram .cta-btn{
+  background:var(--tg-btn)!important;border:none!important;
+  box-shadow:0 8px 24px -6px rgba(42,171,238,.45)!important;
 }
-.theme-telegram .cta-card--order{
-  background:linear-gradient(145deg,#FFF4EA 0%,#FFE8D4 55%,#FFD9B8 100%)!important;
-  box-shadow:0 8px 22px rgba(255,140,0,.12)!important;
+.theme-telegram .cta-text{color:var(--tg-btn-text)!important;text-shadow:none!important}
+.theme-telegram .cta-icon-wrap{
+  background:rgba(255,255,255,.2)!important;
+  border:none!important;
 }
-.theme-telegram .cta-card--travel .cta-card-text{color:#0B5CAD!important;text-shadow:none!important}
-.theme-telegram .cta-card--order .cta-card-text{color:#B45309!important;text-shadow:none!important}
+.theme-telegram .cta-icon svg{fill:var(--tg-btn-text)!important;stroke:none!important}
 .theme-telegram .role-switch{
   border-color:color-mix(in srgb,var(--tg-btn) 42%,transparent)!important;
   background:linear-gradient(180deg,var(--tg-section) 0%,color-mix(in srgb,var(--tg-btn) 8%,var(--tg-section)) 100%)!important;
@@ -1844,11 +1859,11 @@ html, body { font-size: var(--fs-base); }
   /* Toggle tabs */
   .toggle-btn { font-size:13px !important; padding:9px 6px; border-radius:12px; }
 
-  /* CTA kartalar */
-  .cta-card { min-height:96px; padding:12px 14px 13px; border-radius:18px; }
-  .cta-card-text { font-size:13px !important; max-width:56%; }
-  .cta-card-art { height:84%; max-width:58%; }
-  .cta-card--travel .cta-card-art { right:-10px; height:88%; }
+  /* CTA tugmalar */
+  .cta-btn { padding:11px 8px; border-radius:16px; }
+  .cta-text { font-size:13px !important; }
+  .cta-icon-wrap { width:32px; height:32px; border-radius:10px; }
+  .cta-icon svg { width:18px; height:18px; }
   .cta-wrap { padding: 8px 12px max(20px,env(safe-area-inset-bottom)); gap:10px; }
 
   /* Role switch */
@@ -1954,10 +1969,10 @@ html, body { font-size: var(--fs-base); }
 
   /* Font o'lchami biroz katta bo'lishi mumkin */
   .toggle-btn { font-size:20px; padding:14px; }
+  .cta-text { font-size:18px; }
   .logo-brand { font-size:30px; }
-  .cta-card { min-height:124px; padding:16px 18px 17px; border-radius:24px; }
-  .cta-card-text { font-size:18px; max-width:50%; }
-  .cta-card-art { height:90%; max-width:60%; }
+  .cta-btn { padding:15px 10px; border-radius:22px; }
+  .cta-icon-wrap { width:46px; height:46px; border-radius:15px; }
 }
 
 /* ══ Juda katta ekran — ≥ 840px (Fold to'liq ochilganda landscape) ══ */
@@ -2020,13 +2035,13 @@ html, body { font-size: var(--fs-base); }
         </div>
 
         <div class="cta-wrap">
-          <button type="button" class="cta-card cta-card--travel" onclick="openTravelSheet()">
-            <img class="cta-card-art cta-card-art--car" src="assets/scene-car.png?v=2" alt="" aria-hidden="true" loading="eager">
-            <span class="cta-card-text" id="ctaTravelText">Safarni boshlash</span>
+          <button type="button" class="cta-btn" onclick="openTravelSheet()">
+            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
+            <span class="cta-text" id="ctaTravelText">SAFARNI BOSHLASH</span>
           </button>
-          <button type="button" class="cta-card cta-card--order" onclick="openOrder()">
-            <img class="cta-card-art cta-card-art--box" src="assets/scene-car.png?v=2" alt="" aria-hidden="true" loading="eager">
-            <span class="cta-card-text" id="ctaOrderText">Pochta yuborish</span>
+          <button type="button" class="cta-btn" onclick="openOrder()">
+            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
+            <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
           </button>
           <button type="button" class="role-switch" onclick="switchView('driver')" aria-label="Haydovchi ekraniga o'tish">
             <span class="role-switch-icon" aria-hidden="true">
@@ -3420,6 +3435,10 @@ function initRegionSelects(){
 function initCtaIcons(){
   const travelMapIcon = document.getElementById('travelMapIcon');
   if (travelMapIcon) travelMapIcon.innerHTML = ICON_PASSENGER_3D;
+  const travel = document.getElementById('ctaTravelIcon');
+  const order = document.getElementById('ctaOrderIcon');
+  if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
+  if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
 }
 
 function removeDriverRadiusLayers(){
@@ -4529,7 +4548,7 @@ const MORPH_MULTI = [
 
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
-  ['#ctaTravelText', 'Safarni boshlash', 'Сафарни бошлаш'], ['#ctaOrderText', 'Pochta yuborish', 'Почта юбориш'],
+  ['#ctaTravelText', 'SAFARNI BOSHLASH'], ['#ctaOrderText', 'POCHTA YUBORISH'],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
