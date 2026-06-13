@@ -3344,7 +3344,9 @@ function mapItemHasMapCoords(item){
 
 // ── Lokatsiya onboarding ──────────────────────────────────────────────────
 // ── TEST MODE: true bo'lsa har safar barcha ruxsatlar qayta so'raladi ──────
-const TEST_MODE = true;
+// ── PROD: false — ruxsatlar (lokatsiya/telefon/bildirishnoma) faqat
+//          bir marta so'raladi, har submitda qayta-qayta chiqmaydi ─────────
+const TEST_MODE = false;
 
 function locAskedKey(){
   return userPrefKey('loc_asked') || 'duvduv_loc_asked';
@@ -5411,9 +5413,24 @@ function getCurrentPosition(){
     // Telegram LocationManager — native dialog (avvalgi xulq)
     const lm = window.Telegram?.WebApp?.LocationManager;
     if (lm) {
+      let settled = false;
+      // Xavfsizlik taymeri: ba'zi Telegram klientlarida init/getLocation
+      // callback'i hech qachon chaqirilmasligi mumkin — shu sabab UI
+      // abadiy "kutish" holatida qolib ketmasligi uchun timeout bilan reject qilamiz
+      const timer = setTimeout(() => {
+        if (settled) return;
+        settled = true;
+        reject(new Error('Location timeout'));
+      }, 10000);
+      const finish = (fn, val) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        fn(val);
+      };
       const doGet = () => lm.getLocation(loc => {
-        if (loc && loc.latitude != null) resolve({ latitude: loc.latitude, longitude: loc.longitude });
-        else reject(new Error('Location unavailable'));
+        if (loc && loc.latitude != null) finish(resolve, { latitude: loc.latitude, longitude: loc.longitude });
+        else finish(reject, new Error('Location unavailable'));
       });
       if (lm.isInited) { doGet(); return; }
       lm.init(() => { doGet(); });
@@ -7488,7 +7505,21 @@ function acceptPhoneEdu(){
     doNotif();
     return;
   }
+  // Xavfsizlik taymeri: ba'zi Telegram klientlarida requestContact
+  // callback'i hech qachon chaqirilmasligi mumkin — shu sabab "Yuborish"
+  // tugmasi abadiy band (disabled) holatda qolib ketmasligi uchun
+  // belgilangan vaqtdan keyin ruxsat berilmagan deb hisoblab davom etamiz
+  let contactSettled = false;
+  const contactTimer = setTimeout(() => {
+    if (contactSettled) return;
+    contactSettled = true;
+    if (_phoneResolve){ _phoneResolve(null); _phoneResolve = null; }
+    doNotif();
+  }, 15000);
   Telegram.WebApp.requestContact((sent, response) => {
+    if (contactSettled) return;
+    contactSettled = true;
+    clearTimeout(contactTimer);
     let phone = null;
     if (sent){
       phone = response?.responseUnsafe?.contact?.phone_number
@@ -7618,7 +7649,7 @@ function pingLastSeen(){
 setInterval(pingLastSeen, 10 * 60 * 1000); // har 10 daqiqa (Firebase limit uchun)
 // Ilova ochilganida darhol
 setTimeout(pingLastSeen, 3000);
-document.addEventListener('visibilitychange_orig', () => {
+document.addEventListener('visibilitychange', () => {
   if (document.hidden) syncSendDraft();
   else recoverSendFlow();
 });

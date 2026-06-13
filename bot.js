@@ -279,27 +279,31 @@ bot.onText(/\/start/, async (msg) => {
 // ── /menu ─────────────────────────────────────────────────────────────────
 bot.onText(/\/menu/, async (msg) => {
   const user = msg.from;
-  const existing = await getUser(user.id);
-  const notif = existing?.notifications !== false;
-  const fromCity = existing?.routeFrom || '—';
-  const toCity = existing?.routeTo || '—';
-  const isDriver = existing?.role === 'driver';
+  try {
+    const existing = await getUser(user.id);
+    const notif = existing?.notifications !== false;
+    const fromCity = existing?.routeFrom || '—';
+    const toCity = existing?.routeTo || '—';
+    const isDriver = existing?.role === 'driver';
 
-  const keyboard = {
-    inline_keyboard: [
-      [{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }],
-      ...(isDriver ? [[{ text: `🛣  ${fromCity} → ${toCity}`, callback_data: 'set_route' }]] : []),
-      [notif
-        ? { text: '🔔  Билдиришномалар: ёқилган', callback_data: 'notif_off' }
-        : { text: '🔕  Билдиришномалар: ўчирилган', callback_data: 'notif_on' }
-      ],
-    ]
-  };
+    const keyboard = {
+      inline_keyboard: [
+        [{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }],
+        ...(isDriver ? [[{ text: `🛣  ${fromCity} → ${toCity}`, callback_data: 'set_route' }]] : []),
+        [notif
+          ? { text: '🔔  Билдиришномалар: ёқилган', callback_data: 'notif_off' }
+          : { text: '🔕  Билдиришномалар: ўчирилган', callback_data: 'notif_on' }
+        ],
+      ]
+    };
 
-  await bot.sendMessage(msg.chat.id,
-    `⚙️ *Созламалар*`,
-    { parse_mode: 'Markdown', reply_markup: keyboard }
-  );
+    await bot.sendMessage(msg.chat.id,
+      `⚙️ *Созламалар*`,
+      { parse_mode: 'Markdown', reply_markup: keyboard }
+    );
+  } catch (err) {
+    console.error('/menu xatosi:', err.message);
+  }
 });
 
 // ── /test — tekshirish buyrug'i ───────────────────────────────────────────
@@ -349,14 +353,18 @@ bot.onText(/\/test/, async (msg) => {
 
 // ── /stop ─────────────────────────────────────────────────────────────────
 bot.onText(/\/stop/, async (msg) => {
-  await db.collection('users').doc(String(msg.from.id)).set(
-    { notifications: false },
-    { merge: true }
-  );
-  await bot.sendMessage(msg.chat.id,
-    `🔕 *Билдиришномалар ўчирилди.*\n\nҚайта ёқиш учун /menu юборинг.`,
-    { parse_mode: 'Markdown' }
-  );
+  try {
+    await db.collection('users').doc(String(msg.from.id)).set(
+      { notifications: false },
+      { merge: true }
+    );
+    await bot.sendMessage(msg.chat.id,
+      `🔕 *Билдиришномалар ўчирилди.*\n\nҚайта ёқиш учун /menu юборинг.`,
+      { parse_mode: 'Markdown' }
+    );
+  } catch (err) {
+    console.error('/stop xatosi:', err.message);
+  }
 });
 
 // ── Callback tugmalar ─────────────────────────────────────────────────────
@@ -458,6 +466,9 @@ bot.on('callback_query', async (query) => {
     await bot.answerCallbackQuery(query.id);
   } catch (err) {
     console.error('Callback xatosi:', err.message);
+    // Xatolik bo'lsa ham tugmadagi "yuklanmoqda" aylanishini to'xtatamiz —
+    // aks holda foydalanuvchi tugma muzlab qolganini ko'radi
+    await bot.answerCallbackQuery(query.id).catch(() => {});
   }
 });
 
