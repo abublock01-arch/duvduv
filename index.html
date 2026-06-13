@@ -513,11 +513,11 @@ body.view-sender .header{background:var(--app-bg)!important}
 .cta-btn{
   position:relative;width:100%;overflow:hidden;isolation:isolate;
   background:var(--tg-blue);color:#fff;
-  padding:12px 14px 12px 12px;border:none;border-radius:20px;
-  display:flex;align-items:center;gap:12px;
+  padding:13px 9px;border:none;border-radius:20px;
+  display:flex;align-items:center;
   box-shadow:0 7px 22px -6px rgba(42,171,238,.6);
   cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;outline:none;
-  -webkit-appearance:none;appearance:none;text-align:left;
+  -webkit-appearance:none;appearance:none;
 }
 .cta-btn::after{
   content:'';position:absolute;top:-30%;bottom:-30%;left:0;width:46%;
@@ -541,21 +541,13 @@ body.view-sender .header{background:var(--app-bg)!important}
   64%{opacity:1}
   100%{transform:translateX(320%) skewX(-14deg);opacity:0}
 }
-.cta-copy{
-  position:relative;z-index:2;flex:1;min-width:0;
-  display:flex;flex-direction:column;gap:2px;
-}
 .cta-text{
   position:relative;z-index:2;
-  color:#fff;font-size:15px;font-weight:800;letter-spacing:.02em;line-height:1.2;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  transform-origin:left center;
+  flex:1;text-align:center;padding-right:41px;
+  color:#fff;font-size:clamp(13px,3.8vw,17px);font-weight:700;letter-spacing:0;
+  white-space:nowrap;overflow:hidden;text-overflow:clip;
+  transform-origin:center center;
   animation:ctaTextPulse 3s ease-in-out infinite;
-}
-.cta-sub{
-  font-size:12px;font-weight:600;line-height:1.25;
-  color:rgba(255,255,255,.84);letter-spacing:.01em;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
 }
 .cta-wrap > .cta-btn:nth-child(2) .cta-text{animation-delay:1.5s}
 @keyframes ctaTextPulse{
@@ -570,16 +562,15 @@ body.view-sender .header{background:var(--app-bg)!important}
 
 .cta-btn:active{transform:scale(.98);background:#209ce0}
 .cta-icon-wrap{
-  position:relative;z-index:2;flex-shrink:0;
-  width:52px;height:52px;
-  border-radius:16px;
-  display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:2;
+  width:41px;height:41px;flex-shrink:0;
+  background:rgba(255,255,255,.2);
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
 }
-.cta-icon-wrap--travel{background:rgba(255,237,213,.32)}
-.cta-icon-wrap--order{background:rgba(255,255,255,.22)}
-.cta-icon{display:flex;align-items:center;justify-content:center}
-.cta-icon svg{width:36px;height:36px;display:block}
+.cta-icon{display:contents}
+.cta-icon svg{width:23px;height:23px;display:block}
 
 /* ══ DRIVER VIEW ══ */
 #driverView{
@@ -1552,12 +1543,11 @@ body.view-sender.theme-telegram .toggle,
   box-shadow:0 8px 24px -6px rgba(42,171,238,.45)!important;
 }
 .theme-telegram .cta-text{color:var(--tg-btn-text)!important;text-shadow:none!important}
-.theme-telegram .cta-sub{color:rgba(255,255,255,.86)!important}
-.theme-telegram .cta-icon-wrap--travel{background:rgba(255,237,213,.28)!important}
-.theme-telegram .cta-icon-wrap--order{
+.theme-telegram .cta-icon-wrap{
   background:rgba(255,255,255,.2)!important;
   border:none!important;
 }
+.theme-telegram .cta-icon svg{fill:var(--tg-btn-text)!important;stroke:none!important}
 .theme-telegram .role-switch{
   border-color:color-mix(in srgb,var(--tg-btn) 42%,transparent)!important;
   background:linear-gradient(180deg,var(--tg-section) 0%,color-mix(in srgb,var(--tg-btn) 8%,var(--tg-section)) 100%)!important;
@@ -1870,11 +1860,10 @@ html, body { font-size: var(--fs-base); }
   .toggle-btn { font-size:13px !important; padding:9px 6px; border-radius:12px; }
 
   /* CTA tugmalar */
-  .cta-btn { padding:11px 10px 11px 9px; border-radius:16px; gap:10px; }
-  .cta-text { font-size:13px; }
-  .cta-sub { font-size:11px; }
-  .cta-icon-wrap { width:40px; height:40px; border-radius:12px; }
-  .cta-icon svg { width:28px; height:28px; }
+  .cta-btn { padding:11px 8px; border-radius:16px; }
+  .cta-text { font-size:13px !important; }
+  .cta-icon-wrap { width:32px; height:32px; border-radius:10px; }
+  .cta-icon svg { width:18px; height:18px; }
   .cta-wrap { padding: 8px 12px max(20px,env(safe-area-inset-bottom)); gap:10px; }
 
   /* Role switch */
@@ -1980,12 +1969,10 @@ html, body { font-size: var(--fs-base); }
 
   /* Font o'lchami biroz katta bo'lishi mumkin */
   .toggle-btn { font-size:20px; padding:14px; }
-  .cta-text { font-size:16px; }
-  .cta-sub { font-size:13px; }
+  .cta-text { font-size:18px; }
   .logo-brand { font-size:30px; }
-  .cta-btn { padding:14px 16px 14px 14px; border-radius:22px; gap:14px; }
-  .cta-icon-wrap { width:54px; height:54px; border-radius:17px; }
-  .cta-icon svg { width:38px; height:38px; }
+  .cta-btn { padding:15px 10px; border-radius:22px; }
+  .cta-icon-wrap { width:46px; height:46px; border-radius:15px; }
 }
 
 /* ══ Juda katta ekran — ≥ 840px (Fold to'liq ochilganda landscape) ══ */
@@ -2048,23 +2035,13 @@ html, body { font-size: var(--fs-base); }
         </div>
 
         <div class="cta-wrap">
-          <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
-            <div class="cta-icon-wrap cta-icon-wrap--travel">
-              <div class="cta-icon" id="ctaTravelIcon"></div>
-            </div>
-            <div class="cta-copy">
-              <span class="cta-text" id="ctaTravelText">SAFARNI BOSHLASH</span>
-              <span class="cta-sub" id="ctaTravelSub">Haydovchi toping</span>
-            </div>
+          <button type="button" class="cta-btn" onclick="openTravelSheet()">
+            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
+            <span class="cta-text" id="ctaTravelText">SAFARNI BOSHLASH</span>
           </button>
-          <button type="button" class="cta-btn cta-btn--order" onclick="openOrder()">
-            <div class="cta-icon-wrap cta-icon-wrap--order">
-              <div class="cta-icon" id="ctaOrderIcon"></div>
-            </div>
-            <div class="cta-copy">
-              <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
-              <span class="cta-sub" id="ctaOrderSub">Yuk yoki quti yuboring</span>
-            </div>
+          <button type="button" class="cta-btn" onclick="openOrder()">
+            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
+            <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
           </button>
           <button type="button" class="role-switch" onclick="switchView('driver')" aria-label="Haydovchi ekraniga o'tish">
             <span class="role-switch-icon" aria-hidden="true">
@@ -3460,8 +3437,8 @@ function initCtaIcons(){
   if (travelMapIcon) travelMapIcon.innerHTML = ICON_PASSENGER_3D;
   const travel = document.getElementById('ctaTravelIcon');
   const order = document.getElementById('ctaOrderIcon');
-  if (travel) travel.innerHTML = ICON_CTA_TRAVEL;
-  if (order) order.innerHTML = ICON_CTA_ORDER;
+  if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
+  if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
 }
 
 function removeDriverRadiusLayers(){
@@ -4572,8 +4549,6 @@ const MORPH_MULTI = [
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
   ['#ctaTravelText', 'SAFARNI BOSHLASH'], ['#ctaOrderText', 'POCHTA YUBORISH'],
-  ['#ctaTravelSub', 'Haydovchi toping', 'Ҳайдовчи топинг'],
-  ['#ctaOrderSub', 'Yuk yoki quti yuboring', 'Юк ёки қути юборинг'],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
