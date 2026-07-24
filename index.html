@@ -2501,6 +2501,7 @@ async function saveOrderToFirestore(order){
       lng: order.lng ?? null,
       telegramId: order.telegramId ?? null,
       telegramUsername: order.telegramUsername || '',
+      phone: order.phone || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     const ref = await db.collection('orders').add(doc);
@@ -2555,6 +2556,7 @@ async function saveTravelToFirestore(travel){
       lng: travel.lng ?? null,
       telegramId: travel.telegramId ?? null,
       telegramUsername: travel.telegramUsername || '',
+      phone: travel.phone || '',
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     const ref = await db.collection('travels').add(doc);
@@ -3365,9 +3367,31 @@ async function requestLocationOnce(){
     refreshUserLocationRegion();
     return;
   }
-  // Birinchi marta — tizim ruxsatini tekshiramiz
-  const perm = await getGeolocationPermissionState();
   markLocationAsked();
+  // Telegram LocationManager o'zining alohida ruxsat tizimiga ega —
+  // navigator.permissions('geolocation') Telegram WebView ichida ko'pincha
+  // "denied" qaytaradi, lekin bu LocationManager holatiga bog'liq emas.
+  // Shu sabab mavjud bo'lsa to'g'ridan to'g'ri so'raymiz.
+  const lm = window.Telegram?.WebApp?.LocationManager;
+  if (lm) {
+    try {
+      const coords = await getCurrentPosition();
+      userCoords = { latitude: coords.latitude, longitude: coords.longitude };
+      userLocationRegion = detectRegionFromCoords(coords.longitude, coords.latitude);
+      invalidateMapGeoCache();
+      saveLastGPS(coords.longitude, coords.latitude);
+    } catch (_) {
+      const cached = loadLastGPS();
+      if (cached) {
+        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+      }
+    } finally {
+      hidePermSpotlight();
+    }
+    return;
+  }
+  // Brauzer fallback — tizim ruxsatini tekshiramiz
+  const perm = await getGeolocationPermissionState();
   if (perm === 'granted') {
     refreshUserLocationRegion();
   } else if (perm === 'prompt' || perm === null) {
@@ -3392,14 +3416,19 @@ async function requestLocationOnce(){
 async function refreshUserLocationRegion(){
   const prevRegion = userLocationRegion;
   try {
-    const perm = await getGeolocationPermissionState();
-    if (perm !== 'granted') {
-      // Ruxsat yo'q — keshdan olamiz
-      const cached = loadLastGPS();
-      if (cached && !userLocationRegion) {
-        userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+    // Telegram LocationManager o'z ruxsat tizimiga ega — browser
+    // permission tekshiruvi unga taalluqli emas, to'g'ridan so'raymiz
+    const lm = window.Telegram?.WebApp?.LocationManager;
+    if (!lm) {
+      const perm = await getGeolocationPermissionState();
+      if (perm !== 'granted') {
+        // Ruxsat yo'q — keshdan olamiz
+        const cached = loadLastGPS();
+        if (cached && !userLocationRegion) {
+          userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+        }
+        return;
       }
-      return;
     }
     const coords = await getCurrentPosition();
     userCoords = { latitude: coords.latitude, longitude: coords.longitude };
@@ -5550,10 +5579,13 @@ async function centerMapOnDriver(){
     map.jumpTo({ center: [cached.lng, cached.lat], zoom: DRIVER_ENTRY_ZOOM });
     ensureDriverLocationMarker(cached.lng, cached.lat);
   }
-  const perm = await getGeolocationPermissionState();
-  if (perm !== 'granted') {
-    if (!cached) flyToDefaultMapCenter();
-    return;
+  const lm = window.Telegram?.WebApp?.LocationManager;
+  if (!lm) {
+    const perm = await getGeolocationPermissionState();
+    if (perm !== 'granted') {
+      if (!cached) flyToDefaultMapCenter();
+      return;
+    }
   }
   getCurrentPosition()
     .then(coords => {
@@ -6277,6 +6309,20 @@ function ensureShipmentFrom(s){
   } else {
     const o = orders.find(x => String(x.firestoreId || x.id) === key);
     if (o && !o.from) o.from = from;
+  }
+  // Endi joylashuv aniqlandi — Firestore'ga ham yozib qo'yamiz,
+  // shunda "A nuqta" boshqa joyda ham (masalan haydovchida) to'g'ri ko'rinadi
+  if (s.firestoreId && db) {
+    const patch = { from };
+    if (userCoords && s.lat == null && s.lng == null) {
+      patch.lat = userCoords.latitude;
+      patch.lng = userCoords.longitude;
+    }
+    if (s.type === 'travel') {
+      updateTravelInFirestore(s.firestoreId, patch);
+    } else {
+      updateOrderInFirestore(s.firestoreId, patch);
+    }
   }
 }
 
@@ -7330,7 +7376,8 @@ async function submitTravel(e){
     lat: coords?.latitude ?? null,
     lng: coords?.longitude ?? null,
     telegramId: telegramUser.id,
-    telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || '')
+    telegramUsername: '@' + (window.Telegram?.WebApp?.initDataUnsafe?.user?.username || ''),
+    phone: localStorage.getItem(phoneKey()) || ''
   };
   const firestoreId = await saveTravelToFirestore(travel);
   if (firestoreId) {
