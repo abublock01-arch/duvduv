@@ -2968,10 +2968,12 @@ function requestNotificationPermission(){
         // /start bosgan user uchun bot yozish huquqiga ega
         saveToFirestore();
       });
-    } else {
-      // Eski Telegram versiyasi — requestWriteAccess yo'q, shunchaki saqlaymiz
+    } else if (!tryTelegramNotifPopup()) {
+      // requestWriteAccess ham, showPopup ham yo'q — eng eski klient, jim saqlaymiz
       saveToFirestore();
     }
+    // tryTelegramNotifPopup() true qaytarsa — foydalanuvchi "Ҳа" bosgach
+    // onNotifOnboardHa() o'zi saqlaydi (saveNotifPermissionGranted)
   } catch(_) {
     // Hech qanday xato ko'rinmaydi — jim saqlaymiz
     saveToFirestore();
@@ -7541,6 +7543,17 @@ function acceptPhoneEdu(){
             }
             if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
           });
+        } else if (tryTelegramNotifPopup()) {
+          // showPopup orqali ko'rsatildi — "Ҳа" bosilgach onNotifOnboardHa() saqlaydi
+          if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
+        } else {
+          // requestWriteAccess ham, showPopup ham yo'q — eng eski klient, jim saqlaymiz
+          if (db && telegramUser.id) {
+            db.collection('users').doc(String(telegramUser.id))
+              .set({ notifications: true, chatId: telegramUser.id }, { merge: true })
+              .catch(()=>{});
+          }
+          if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
         }
       } catch(_){}
     }, 600);
