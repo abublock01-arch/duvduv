@@ -4827,9 +4827,11 @@ function initSendRegionPicker(){
   if (hidden) hidden.value = selectedSendRegion;
 }
 
-async function prepareSendSheet(){
-  await refreshUserLocationRegion();
+function prepareSendSheet(){
   resetSendSheetSteps();
+  // Joylashuvni fonda yangilaymiz — sheet ochilishini bloklamaymiz
+  // (GPS ba'zi qurilmalarda/brauzerlarda 10-12 soniyagacha cho'zilishi mumkin)
+  refreshUserLocationRegion().catch(()=>{});
 }
 
 function openSendRegionPickerStep(){
@@ -7301,7 +7303,9 @@ function closeSendSheet(){
 }
 
 async function openTravelSheet(){
-  await refreshUserLocationRegion();
+  // Joylashuvni fonda yangilaymiz — sheet ochilishini bloklamaymiz
+  // (GPS ba'zi qurilmalarda/brauzerlarda 10-12 soniyagacha cho'zilishi mumkin)
+  refreshUserLocationRegion().catch(()=>{});
   resetTravelSheetSteps();
   lastTravelPickerKey = '';
   document.getElementById('travelSheetOverlay').classList.add('open');
