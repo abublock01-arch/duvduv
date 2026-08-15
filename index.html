@@ -3041,8 +3041,8 @@ let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 13, clusterRadius: 50 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels'];
 const ORDER_MAP_LAYER_IDS = [
-  'map-orders-clusters', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
-  'map-travels-clusters', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
+  'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
+  'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
 ];
 const ORDER_ICON_SIZE_LAYOUT = [
   'interpolate', ['exponential', 1.75], ['zoom'],
@@ -5309,6 +5309,27 @@ function addMapTypeLayers(sourceId, iconImage, iconOffset){
     }
   });
   map.addLayer({
+    id: `${prefix}-cluster-count`,
+    type: 'symbol',
+    source: sourceId,
+    filter: ['has', 'point_count'],
+    layout: {
+      'text-field': ['get', 'point_count_abbreviated'],
+      'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+      'text-size': 12,
+      'text-allow-overlap': true,
+      'text-ignore-placement': true,
+      'symbol-sort-key': -1,
+      'text-offset': [0.95, -0.85]
+    },
+    paint: {
+      'text-color': '#ffffff',
+      'text-halo-color': iconImage === MAP_ICON_BOX ? '#1565C0' : '#B45309',
+      'text-halo-width': 3,
+      'text-halo-blur': 0.5
+    }
+  });
+  map.addLayer({
     id: `${prefix}-unclustered-icon`,
     type: 'symbol',
     source: sourceId,
@@ -5357,7 +5378,7 @@ function bindOrderMapEvents(){
   if (!map || map._orderMapEventsReady) return;
   map._orderMapEventsReady = true;
 
-  const clusterLayers = ['map-orders-clusters', 'map-travels-clusters'];
+  const clusterLayers = ['map-orders-clusters', 'map-orders-cluster-count', 'map-travels-clusters', 'map-travels-cluster-count'];
   const iconLayers = ['map-orders-unclustered-icon', 'map-travels-unclustered-icon'];
   const hoverLayers = [...clusterLayers, ...iconLayers];
 
