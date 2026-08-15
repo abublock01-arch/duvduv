@@ -3038,7 +3038,7 @@ if (window.Telegram && Telegram.WebApp) {
 let map = null;
 let driverLocationMarker = null;
 let orderClusterLayersReady = false;
-const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 13, clusterRadius: 50 };
+const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels'];
 const ORDER_MAP_LAYER_IDS = [
   'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
@@ -5271,7 +5271,7 @@ const MAP_LABEL_LAYOUT = {
   'text-anchor': 'top',
   'text-justify': 'center',
   'text-max-width': 16,
-  'text-allow-overlap': true,
+  'text-allow-overlap': false,
   'text-optional': true,
   'text-pitch-scale': 'map'
 };
