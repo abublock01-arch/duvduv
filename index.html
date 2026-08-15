@@ -3044,9 +3044,12 @@ const ORDER_MAP_LAYER_IDS = [
   'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
   'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
 ];
+// Professional xarita ilovalari (Yandex, Google Maps, Uber) belgilarni deyarli
+// bir xil ekran o'lchamida ushlab turadi — zoom bilan drastik kattalashmaydi.
+// Shu sabab bu yerda interval juda tor (0.78–0.95), keskin o'sish yo'q.
 const ORDER_ICON_SIZE_LAYOUT = [
-  'interpolate', ['exponential', 1.75], ['zoom'],
-  4, 0.22, 6, 0.30, 8, 0.42, 10, 0.58, 12, 0.72, 14, 0.88, 16, 1.1
+  'interpolate', ['linear'], ['zoom'],
+  3, 0.78, 10, 0.85, 16, 0.95
 ];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
