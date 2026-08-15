@@ -5294,18 +5294,22 @@ function removeMapOrderLayers(){
 
 function addMapTypeLayers(sourceId, iconImage, iconOffset){
   const prefix = sourceId;
+  const clusterBase = iconImage === MAP_ICON_BOX ? '#2AABEE' : '#E8820A';
+  const clusterDark = iconImage === MAP_ICON_BOX ? '#1565C0' : '#B45309';
   map.addLayer({
     id: `${prefix}-clusters`,
-    type: 'symbol',
+    type: 'circle',
     source: sourceId,
     filter: ['has', 'point_count'],
-    layout: {
-      'icon-image': iconImage,
-      'icon-size': ORDER_ICON_SIZE_LAYOUT,
-      'icon-anchor': 'center',
-      'icon-allow-overlap': true,
-      'icon-ignore-placement': true,
-      'icon-pitch-scale': 'map'
+    paint: {
+      'circle-color': clusterBase,
+      'circle-opacity': 0.88,
+      'circle-stroke-width': 3,
+      'circle-stroke-color': '#ffffff',
+      'circle-radius': [
+        'interpolate', ['linear'], ['get', 'point_count'],
+        1, 15, 5, 17, 10, 20, 25, 24, 50, 28, 100, 33
+      ]
     }
   });
   map.addLayer({
@@ -5316,17 +5320,19 @@ function addMapTypeLayers(sourceId, iconImage, iconOffset){
     layout: {
       'text-field': ['get', 'point_count_abbreviated'],
       'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
-      'text-size': 12,
+      'text-size': [
+        'interpolate', ['linear'], ['get', 'point_count'],
+        1, 12, 25, 13, 100, 15
+      ],
       'text-allow-overlap': true,
       'text-ignore-placement': true,
       'symbol-sort-key': -1,
-      'text-offset': [0.95, -0.85]
+      'text-offset': [0, 0]
     },
     paint: {
       'text-color': '#ffffff',
-      'text-halo-color': iconImage === MAP_ICON_BOX ? '#1565C0' : '#B45309',
-      'text-halo-width': 3,
-      'text-halo-blur': 0.5
+      'text-halo-color': clusterDark,
+      'text-halo-width': 0.4
     }
   });
   map.addLayer({
