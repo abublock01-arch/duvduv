@@ -1119,46 +1119,54 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet-tg-btn:active{transform:scale(.97)}
 .sheet-tg-btn:disabled{opacity:.4;cursor:not-allowed}
 
-/* ── Birinchi ochilishdagi qisqa o'rgatuvchi (onboarding) ── */
-.onboard-overlay{
-  position:fixed;inset:0;z-index:700;background:#fff;
-  display:none;flex-direction:column;align-items:center;justify-content:center;
-  padding:32px 28px max(28px,env(safe-area-inset-bottom));
+/* ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ── */
+.coach-backdrop{
+  position:fixed;inset:0;z-index:699;background:transparent;display:none;
 }
-.onboard-overlay.open{display:flex}
-.onboard-skip{
-  position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;
-  background:none;border:none;color:#8e8e93;font-size:14px;font-weight:600;
-  font-family:inherit;cursor:pointer;padding:8px 10px;
+.coach-backdrop.open{display:block}
+.coach-spot{
+  position:fixed;z-index:700;border-radius:20px;pointer-events:none;
+  box-shadow:0 0 0 2000px rgba(10,12,18,.68);
+  opacity:0;visibility:hidden;
+  transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1),
+             width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1),opacity .2s;
+  outline:2.5px solid #fff;outline-offset:4px;
 }
-.onboard-step{display:none;width:100%;max-width:340px;flex-direction:column;align-items:center;text-align:center}
-.onboard-step.active{display:flex;animation:onboardFade .3s ease}
-@keyframes onboardFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.onboard-icon-wrap{
-  width:88px;height:88px;border-radius:26px;display:flex;align-items:center;justify-content:center;
-  margin-bottom:24px;box-shadow:0 14px 28px -8px rgba(0,0,0,.25);
+.coach-spot.open{opacity:1;visibility:visible}
+.coach-tooltip{
+  position:fixed;z-index:701;max-width:300px;
+  background:#fff;border-radius:22px;padding:20px 20px 18px;
+  box-shadow:0 20px 50px -12px rgba(0,0,0,.4);
+  opacity:0;visibility:hidden;
+  transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1),bottom .35s cubic-bezier(.4,0,.2,1),opacity .2s;
 }
-.onboard-icon-wrap svg{width:42px;height:42px}
-.onboard-pair{display:flex;gap:14px;margin-bottom:24px}
-.onboard-chip{
-  display:flex;flex-direction:column;align-items:center;gap:8px;
-  background:#F9F9FA;border:1px solid #eeeef0;border-radius:20px;padding:16px 18px;flex:1;
+.coach-tooltip.open{opacity:1;visibility:visible}
+.coach-tooltip-arrow{
+  position:absolute;width:16px;height:16px;background:#fff;
+  transform:rotate(45deg);border-radius:3px;
 }
-.onboard-chip-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center}
-.onboard-chip-icon svg{width:26px;height:26px}
-.onboard-chip span{font-size:12px;font-weight:800;color:#111}
-.onboard-title{font-size:22px;font-weight:900;color:#0f172a;margin:0 0 10px;line-height:1.3}
-.onboard-desc{font-size:15px;color:#6b7280;line-height:1.5;margin:0}
-.onboard-dots{display:flex;gap:7px;margin:28px 0 22px}
-.onboard-dot{width:7px;height:7px;border-radius:50%;background:#e5e5e5;transition:all .25s}
-.onboard-dot.active{width:20px;background:#E8820A}
-.onboard-actions{width:100%;max-width:340px}
-.onboard-next{
-  width:100%;background:#E8820A;color:#fff;padding:17px;border-radius:100px;
-  font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:inherit;
-  box-shadow:0 12px 24px rgba(232,130,10,.35);transition:transform .15s;
+.coach-tag{
+  display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#E8820A;background:rgba(232,130,10,.12);padding:4px 10px;border-radius:100px;margin-bottom:10px;
 }
-.onboard-next:active{transform:scale(.97)}
+.coach-title{font-size:17px;font-weight:900;color:#0f172a;margin:0 0 6px;line-height:1.3}
+.coach-desc{font-size:14px;color:#6b7280;line-height:1.5;margin:0 0 16px}
+.coach-foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.coach-dots{display:flex;gap:6px}
+.coach-dot{width:6px;height:6px;border-radius:50%;background:#e5e5e5;transition:all .25s}
+.coach-dot.active{width:16px;background:#E8820A}
+.coach-next{
+  background:#E8820A;color:#fff;padding:10px 20px;border-radius:100px;
+  font-size:14px;font-weight:800;border:none;cursor:pointer;font-family:inherit;
+  box-shadow:0 8px 18px rgba(232,130,10,.35);transition:transform .15s;
+}
+.coach-next:active{transform:scale(.95)}
+.coach-skip{
+  position:fixed;z-index:701;top:max(16px,env(safe-area-inset-top));right:16px;
+  background:rgba(255,255,255,.14);border:none;color:#fff;font-size:13px;font-weight:600;
+  font-family:inherit;cursor:pointer;padding:9px 14px;border-radius:100px;display:none;
+}
+.coach-skip.open{display:block}
 
 /* Yo'l olish — haydovchi xarita sheet */
 .sheet-overlay--travel-map{z-index:214}
@@ -3538,45 +3546,104 @@ function initCtaIcons(){
   const order = document.getElementById('ctaOrderIcon');
   if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
   if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
-  const chipTravel = document.getElementById('onboardChipTravel');
-  const chipOrder = document.getElementById('onboardChipOrder');
-  if (chipTravel) chipTravel.innerHTML = ICON_CTA_ROUTE_WHITE;
-  if (chipOrder) chipOrder.innerHTML = ICON_CTA_BOX_WHITE;
 }
 
-// ── Birinchi ochilishdagi o'rgatuvchi (onboarding) ─────────────────────────
-const ONBOARD_STEPS = 3;
-let onboardStep = 1;
-function onboardSeenKey(){ return 'duvduv_onboard_seen_v1'; }
+// ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ──
+const COACH_STEPS = [
+  {
+    sel: '.cta-row', tag: '1/2', pad: 10,
+    title: 'Shu yerdan boshlang',
+    desc: "Yo'lovchi bo'lsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing."
+  },
+  {
+    sel: '.role-switch', tag: '2/2', pad: 8,
+    title: 'Haydovchimisiz?',
+    desc: "Bu tugmani bosib xaritadagi barcha e'lonlarni ko'rasiz va yo'l tanlaysiz."
+  }
+];
+let coachStep = 0;
+function coachSeenKey(){ return 'duvduv_coach_seen_v2'; }
 function maybeShowOnboarding(){
-  if (localStorage.getItem(onboardSeenKey())) return;
-  const el = document.getElementById('onboardOverlay');
-  if (!el) return;
-  el.classList.add('open');
+  if (localStorage.getItem(coachSeenKey())) return;
+  coachStep = 0;
+  const backdrop = document.getElementById('coachBackdrop');
+  const skip = document.getElementById('coachSkipBtn');
+  const spot = document.getElementById('coachSpot');
+  const tooltip = document.getElementById('coachTooltip');
+  if (!backdrop) return;
+  backdrop.classList.add('open');
+  if (skip) skip.classList.add('open');
+  if (spot) spot.classList.add('open');
+  if (tooltip) tooltip.classList.add('open');
+  renderCoachStep();
+  window.addEventListener('resize', repositionCoachStep);
 }
-function renderOnboardStep(){
-  document.querySelectorAll('.onboard-step').forEach(s => {
-    s.classList.toggle('active', Number(s.dataset.step) === onboardStep);
-  });
-  document.querySelectorAll('.onboard-dot').forEach(d => {
-    d.classList.toggle('active', Number(d.dataset.dot) === onboardStep);
-  });
-  const btn = document.getElementById('onboardNextBtn');
+function renderCoachStep(){
+  const step = COACH_STEPS[coachStep];
+  const target = step && document.querySelector(step.sel);
+  if (!step || !target) { closeOnboarding(); return; }
+  positionCoachOn(target, step);
+  document.querySelectorAll('.coach-dot').forEach((d, i) => d.classList.toggle('active', i === coachStep));
+  const titleEl = document.getElementById('coachTitle');
+  const descEl = document.getElementById('coachDesc');
+  const tagEl = document.getElementById('coachTag');
+  const btn = document.getElementById('coachNextBtn');
+  if (titleEl) titleEl.textContent = scriptLatin ? step.title : latinToCyrillic(step.title);
+  if (descEl) descEl.textContent = scriptLatin ? step.desc : latinToCyrillic(step.desc);
+  if (tagEl) tagEl.textContent = step.tag;
   if (btn) {
-    const lat = onboardStep === ONBOARD_STEPS ? "Boshladik!" : 'Keyingi';
+    const lastStep = coachStep === COACH_STEPS.length - 1;
+    const lat = lastStep ? 'Tushunarli' : 'Keyingi';
     btn.textContent = scriptLatin ? lat : (UI_PHRASE_CYRILLIC[lat] || latinToCyrillic(lat));
   }
 }
+function positionCoachOn(target, step){
+  const spot = document.getElementById('coachSpot');
+  const tooltip = document.getElementById('coachTooltip');
+  if (!spot || !tooltip) return;
+  const r = target.getBoundingClientRect();
+  const pad = step.pad ?? 10;
+  spot.style.top = (r.top - pad) + 'px';
+  spot.style.left = (r.left - pad) + 'px';
+  spot.style.width = (r.width + pad * 2) + 'px';
+  spot.style.height = (r.height + pad * 2) + 'px';
+
+  const vh = window.innerHeight;
+  const spaceBelow = vh - r.bottom;
+  const showBelow = spaceBelow > 190;
+  tooltip.style.left = Math.max(16, Math.min(r.left, window.innerWidth - 316)) + 'px';
+  if (showBelow) {
+    tooltip.style.top = (r.bottom + pad + 16) + 'px';
+    tooltip.style.bottom = 'auto';
+  } else {
+    tooltip.style.bottom = (vh - r.top + pad + 16) + 'px';
+    tooltip.style.top = 'auto';
+  }
+}
+function repositionCoachStep(){
+  const backdrop = document.getElementById('coachBackdrop');
+  if (!backdrop || !backdrop.classList.contains('open')) return;
+  const step = COACH_STEPS[coachStep];
+  const target = step && document.querySelector(step.sel);
+  if (target) positionCoachOn(target, step);
+}
 function nextOnboardingStep(){
-  if (onboardStep >= ONBOARD_STEPS) { closeOnboarding(); return; }
-  onboardStep++;
-  renderOnboardStep();
+  if (coachStep >= COACH_STEPS.length - 1) { closeOnboarding(); return; }
+  coachStep++;
+  renderCoachStep();
 }
 function skipOnboarding(){ closeOnboarding(); }
 function closeOnboarding(){
-  const el = document.getElementById('onboardOverlay');
-  if (el) el.classList.remove('open');
-  localStorage.setItem(onboardSeenKey(), '1');
+  const backdrop = document.getElementById('coachBackdrop');
+  const skip = document.getElementById('coachSkipBtn');
+  const spot = document.getElementById('coachSpot');
+  const tooltip = document.getElementById('coachTooltip');
+  if (backdrop) backdrop.classList.remove('open');
+  if (skip) skip.classList.remove('open');
+  if (spot) spot.classList.remove('open');
+  if (tooltip) tooltip.classList.remove('open');
+  window.removeEventListener('resize', repositionCoachStep);
+  localStorage.setItem(coachSeenKey(), '1');
 }
 
 function removeDriverRadiusLayers(){
@@ -4625,7 +4692,7 @@ const UI_PHRASE_CYRILLIC = {
   "Jo'natmalarim": 'Жўнатмаларим',
   "YO'LOVCHIMAN": 'ЙЎЛОВЧИМАН',
   'YUK YUBORAMAN': 'ЮК ЮБОРАМАН',
-  'Keyingi': 'Кейинги', 'Boshladik!': 'Бошладик!',
+  'Keyingi': 'Кейинги', 'Tushunarli': 'Тушунарли',
   "Jo'natma rasmi": 'Жўнатма расми',
   "Qutini ramka ichida ko'ring va rasm oling": 'Қутини рамка ичида кўринг ва расм олинг',
   'Galereyadan tanlash': 'Галереядан танлаш', 'Kamera yuklanmoqda…': 'Камера юкланмоқда…',
@@ -4688,14 +4755,7 @@ const MORPH_MULTI = [
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
   ['#ctaTravelText', "YO'LOVCHIMAN"], ['#ctaOrderText', 'YUK YUBORAMAN'],
-  ['#onboardSkipBtn', "O'tkazib yuborish"],
-  ['#onboardTitle1', 'Xush kelibsiz, duvduv!'],
-  ['#onboardDesc1', "O'zbekiston bo'ylab yuk va yo'lovchini bir zumda bog'laymiz — tez, oddiy, ishonchli."],
-  ['#onboardChipTravelLbl', "YO'LOVCHIMAN"], ['#onboardChipOrderLbl', 'YUK YUBORAMAN'],
-  ['#onboardTitle2', 'Ikkita tugma — tanlang'],
-  ['#onboardDesc2', "Yo'lga chiqsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing. Shu qadar oddiy."],
-  ['#onboardTitle3', "Xaritada ko'ring va bog'laning"],
-  ['#onboardDesc3', "Yaqin atrofdagi e'lonlarni xaritadan topasiz. Kerakli e'lonni bosing va to'g'ridan-to'g'ri Telegramda yozishing mumkin."],
+  ['#coachSkipBtn', "O'tkazib yuborish"],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
@@ -7938,49 +7998,20 @@ recoverSendFlow();
   </div>
 </div>
 
-<!-- ── Birinchi ochilishdagi qisqa o'rgatuvchi (onboarding) ── -->
-<div class="onboard-overlay" id="onboardOverlay">
-  <button type="button" class="onboard-skip" id="onboardSkipBtn" onclick="skipOnboarding()">O'tkazib yuborish</button>
-
-  <div class="onboard-step active" data-step="1">
-    <div class="onboard-icon-wrap" style="background:linear-gradient(135deg,#E8820A,#ff9d2e)">
-      <svg viewBox="0 0 24 24" fill="none"><path fill="#fff" d="M12 2l2.4 5.3 5.8.6-4.4 3.9 1.3 5.7L12 14.7 6.9 17.5l1.3-5.7-4.4-3.9 5.8-.6z"/></svg>
+<!-- ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ── -->
+<div class="coach-backdrop" id="coachBackdrop" onclick="if(event.target===this)nextOnboardingStep()"></div>
+<button type="button" class="coach-skip" id="coachSkipBtn" onclick="skipOnboarding()">O'tkazib yuborish</button>
+<div class="coach-spot" id="coachSpot"></div>
+<div class="coach-tooltip" id="coachTooltip">
+  <span class="coach-tag" id="coachTag">1/2</span>
+  <h2 class="coach-title" id="coachTitle">Shu yerdan boshlang</h2>
+  <p class="coach-desc" id="coachDesc"></p>
+  <div class="coach-foot">
+    <div class="coach-dots">
+      <span class="coach-dot active"></span>
+      <span class="coach-dot"></span>
     </div>
-    <h2 class="onboard-title" id="onboardTitle1">Xush kelibsiz, duvduv!</h2>
-    <p class="onboard-desc" id="onboardDesc1">O'zbekiston bo'ylab yuk va yo'lovchini bir zumda bog'laymiz — tez, oddiy, ishonchli.</p>
-  </div>
-
-  <div class="onboard-step" data-step="2">
-    <div class="onboard-pair">
-      <div class="onboard-chip">
-        <div class="onboard-chip-icon" style="background:#E8820A" id="onboardChipTravel"></div>
-        <span id="onboardChipTravelLbl">YO'LOVCHIMAN</span>
-      </div>
-      <div class="onboard-chip">
-        <div class="onboard-chip-icon" style="background:#2AABEE" id="onboardChipOrder"></div>
-        <span id="onboardChipOrderLbl">YUK YUBORAMAN</span>
-      </div>
-    </div>
-    <h2 class="onboard-title" id="onboardTitle2">Ikkita tugma — tanlang</h2>
-    <p class="onboard-desc" id="onboardDesc2">Yo'lga chiqsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing. Shu qadar oddiy.</p>
-  </div>
-
-  <div class="onboard-step" data-step="3">
-    <div class="onboard-icon-wrap" style="background:linear-gradient(135deg,#2AABEE,#5ec4f5)">
-      <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2C7.6 2 4 5.6 4 10c0 5.2 7 11.5 7.3 11.8.2.2.5.3.7.3s.5-.1.7-.3C13 21.5 20 15.2 20 10c0-4.4-3.6-8-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
-    </div>
-    <h2 class="onboard-title" id="onboardTitle3">Xaritada ko'ring va bog'laning</h2>
-    <p class="onboard-desc" id="onboardDesc3">Yaqin atrofdagi e'lonlarni xaritadan topasiz. Kerakli e'lonni bosing va to'g'ridan-to'g'ri Telegramda yozishing mumkin.</p>
-  </div>
-
-  <div class="onboard-dots">
-    <span class="onboard-dot active" data-dot="1"></span>
-    <span class="onboard-dot" data-dot="2"></span>
-    <span class="onboard-dot" data-dot="3"></span>
-  </div>
-
-  <div class="onboard-actions">
-    <button type="button" class="onboard-next" id="onboardNextBtn" onclick="nextOnboardingStep()">Keyingi</button>
+    <button type="button" class="coach-next" id="coachNextBtn" onclick="nextOnboardingStep()">Keyingi</button>
   </div>
 </div>
 
