@@ -1125,8 +1125,10 @@ body.view-sender .header{background:var(--app-bg)!important}
 /* ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ── */
 .coach-backdrop{
   position:fixed;inset:0;z-index:699;background:transparent;display:none;
+  transition:background .3s;
 }
 .coach-backdrop.open{display:block}
+.coach-backdrop.dim{background:rgba(10,12,18,.72)}
 .coach-spot{
   position:fixed;z-index:700;border-radius:20px;pointer-events:none;
   box-shadow:0 0 0 2000px rgba(10,12,18,.68);
@@ -1161,6 +1163,15 @@ body.view-sender .header{background:var(--app-bg)!important}
              opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1);
 }
 .coach-tooltip.open{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
+.coach-tooltip--center{
+  top:50%!important;left:50%!important;bottom:auto!important;right:auto!important;
+  max-width:300px;width:calc(100% - 64px);text-align:center;
+  transform:translate(-50%,-46%) scale(.94)!important;
+}
+.coach-tooltip--center.open{transform:translate(-50%,-50%) scale(1)!important}
+.coach-tooltip--center .coach-tooltip-arrow{display:none}
+.coach-tooltip--center .coach-foot{justify-content:center}
+.coach-tooltip--center .coach-tag{display:none}
 .coach-tooltip-arrow{
   position:absolute;width:16px;height:16px;background:#fff;
   transform:rotate(45deg);border-radius:3px;z-index:-1;
@@ -3571,26 +3582,32 @@ function initCtaIcons(){
 // ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ──
 const COACH_STEPS = [
   {
-    sel: '.cta-row', tag: '1/2', pad: 10, radius: 20,
+    sel: null,
+    title: 'Xush kelibsiz, duvduv!',
+    desc: "O'zbekiston bo'ylab yuk va yo'lovchini bir zumda bog'laymiz — tez, oddiy, ishonchli. Keling, qisqacha tanishtiramiz."
+  },
+  {
+    sel: '.cta-row', pad: 10, radius: 20,
     title: 'Shu yerdan boshlang',
     desc: "Yo'lovchi bo'lsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing."
   },
   {
-    sel: '.role-switch', tag: '2/2', pad: 8, radius: 22,
+    sel: '.role-switch', pad: 8, radius: 22,
     title: 'Haydovchimisiz?',
     desc: "Bu tugmani bosib xaritadagi barcha e'lonlarni ko'rasiz va yo'l tanlaysiz."
   }
 ];
 let coachStep = 0;
 let coachRetries = 0;
-function coachSeenKey(){ return 'duvduv_coach_seen_v3'; }
+function coachSeenKey(){ return 'duvduv_coach_seen_v4'; }
 function maybeShowOnboarding(){
   try {
     if (localStorage.getItem(coachSeenKey())) return;
     // Nishon element hali DOM'da/joyida bo'lmasligi mumkin (sekin render, GPS/Firestore
     // kutish va h.k.) — shu sabab bir marta emas, bir necha marta urinib ko'ramiz,
     // muvaffaqiyatsizlikda "ko'rsatilgan" deb belgilamaymiz.
-    const target = document.querySelector(COACH_STEPS[0].sel);
+    const firstTargeted = COACH_STEPS.find(s => s.sel);
+    const target = firstTargeted && document.querySelector(firstTargeted.sel);
     if (!target || target.getBoundingClientRect().width === 0) {
       if (coachRetries < 12) { coachRetries++; setTimeout(maybeShowOnboarding, 300); }
       return;
@@ -3598,14 +3615,10 @@ function maybeShowOnboarding(){
     coachStep = 0;
     const backdrop = document.getElementById('coachBackdrop');
     const skip = document.getElementById('coachSkipBtn');
-    const spot = document.getElementById('coachSpot');
-    const pulse = document.getElementById('coachPulse');
     const tooltip = document.getElementById('coachTooltip');
     if (!backdrop) return;
     backdrop.classList.add('open');
     if (skip) skip.classList.add('open');
-    if (spot) spot.classList.add('open');
-    if (pulse) pulse.classList.add('open');
     if (tooltip) tooltip.classList.add('open');
     renderCoachStep();
     window.addEventListener('resize', repositionCoachStep);
@@ -3615,9 +3628,14 @@ function maybeShowOnboarding(){
 }
 function renderCoachStep(){
   const step = COACH_STEPS[coachStep];
-  const target = step && document.querySelector(step.sel);
-  if (!step || !target) { closeOnboarding(false); return; }
-  positionCoachOn(target, step);
+  if (!step) { closeOnboarding(false); return; }
+  const target = step.sel && document.querySelector(step.sel);
+  if (step.sel && !target) { closeOnboarding(false); return; }
+  const backdrop = document.getElementById('coachBackdrop');
+  const tooltip = document.getElementById('coachTooltip');
+  if (backdrop) backdrop.classList.toggle('dim', !target);
+  if (tooltip) tooltip.classList.toggle('coach-tooltip--center', !target);
+  if (target) positionCoachOn(target, step);
   document.querySelectorAll('.coach-dot').forEach((d, i) => d.classList.toggle('active', i === coachStep));
   const titleEl = document.getElementById('coachTitle');
   const descEl = document.getElementById('coachDesc');
@@ -3625,10 +3643,10 @@ function renderCoachStep(){
   const btn = document.getElementById('coachNextBtn');
   if (titleEl) titleEl.textContent = scriptLatin ? step.title : latinToCyrillic(step.title);
   if (descEl) descEl.textContent = scriptLatin ? step.desc : latinToCyrillic(step.desc);
-  if (tagEl) tagEl.textContent = step.tag;
+  if (tagEl) tagEl.textContent = (coachStep + 1) + '/' + COACH_STEPS.length;
   if (btn) {
     const lastStep = coachStep === COACH_STEPS.length - 1;
-    const lat = lastStep ? 'Tushunarli' : 'Keyingi';
+    const lat = lastStep ? 'Tushunarli' : (coachStep === 0 ? 'Boshlaymiz' : 'Keyingi');
     btn.textContent = scriptLatin ? lat : (UI_PHRASE_CYRILLIC[lat] || latinToCyrillic(lat));
   }
 }
@@ -3638,6 +3656,8 @@ function positionCoachOn(target, step){
   const tooltip = document.getElementById('coachTooltip');
   const arrow = document.getElementById('coachArrow');
   if (!spot || !tooltip) return;
+  spot.classList.add('open');
+  if (pulse) pulse.classList.add('open');
   const r = target.getBoundingClientRect();
   const pad = step.pad ?? 10;
   spot.style.top = (r.top - pad) + 'px';
@@ -3679,7 +3699,7 @@ function repositionCoachStep(){
   const backdrop = document.getElementById('coachBackdrop');
   if (!backdrop || !backdrop.classList.contains('open')) return;
   const step = COACH_STEPS[coachStep];
-  const target = step && document.querySelector(step.sel);
+  const target = step && step.sel && document.querySelector(step.sel);
   if (target) positionCoachOn(target, step);
 }
 function nextOnboardingStep(){
@@ -8068,6 +8088,7 @@ recoverSendFlow();
   <div class="coach-foot">
     <div class="coach-dots">
       <span class="coach-dot active"></span>
+      <span class="coach-dot"></span>
       <span class="coach-dot"></span>
     </div>
     <button type="button" class="coach-next" id="coachNextBtn" onclick="nextOnboardingStep()">Keyingi</button>
