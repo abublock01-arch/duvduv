@@ -510,11 +510,14 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .role-switch--float:active{transform:translateX(-50%) scale(.98)}
 .role-switch--float .role-switch-chev{transform:rotate(180deg)}
+.cta-row{
+  display:flex;align-items:stretch;gap:10px;
+}
 .cta-btn{
-  position:relative;width:100%;overflow:hidden;isolation:isolate;
+  position:relative;flex:1;min-width:0;overflow:hidden;isolation:isolate;
   background:var(--tg-blue);color:#fff;
-  padding:13px 9px;border:none;border-radius:20px;
-  display:flex;align-items:center;
+  padding:16px 8px;border:none;border-radius:20px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
   box-shadow:0 7px 22px -6px rgba(42,171,238,.6);
   cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;outline:none;
   -webkit-appearance:none;appearance:none;
@@ -543,7 +546,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   animation:ctaSunGlint 3s ease-in-out 2;
   pointer-events:none;z-index:1;
 }
-.cta-wrap > .cta-btn:nth-child(2)::after{animation-delay:1.5s}
+.cta-row > .cta-btn:nth-child(2)::after{animation-delay:1.5s}
 @keyframes ctaSunGlint{
   0%,58%{transform:translateX(-160%) skewX(-14deg);opacity:0}
   64%{opacity:1}
@@ -551,13 +554,13 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .cta-text{
   position:relative;z-index:2;
-  flex:1;text-align:center;padding-right:41px;
-  color:#fff;font-size:clamp(13px,3.8vw,17px);font-weight:700;letter-spacing:0;
-  white-space:nowrap;overflow:hidden;text-overflow:clip;
+  text-align:center;
+  color:#fff;font-size:clamp(12px,3.6vw,15px);font-weight:700;letter-spacing:0;
+  white-space:normal;line-height:1.2;
   transform-origin:center center;
   animation:ctaTextPulse 3s ease-in-out 2;
 }
-.cta-wrap > .cta-btn:nth-child(2) .cta-text{animation-delay:1.5s}
+.cta-row > .cta-btn:nth-child(2) .cta-text{animation-delay:1.5s}
 @keyframes ctaTextPulse{
   0%,58%{transform:scale(1)}
   72%{transform:scale(1.042)}
@@ -2047,14 +2050,16 @@ html, body { font-size: var(--fs-base); }
         </div>
 
         <div class="cta-wrap">
-          <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
-            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
-            <span class="cta-text" id="ctaTravelText">SAFARNI BOSHLASH</span>
-          </button>
-          <button type="button" class="cta-btn" onclick="openOrder()">
-            <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
-            <span class="cta-text" id="ctaOrderText">POCHTA YUBORISH</span>
-          </button>
+          <div class="cta-row">
+            <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
+              <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
+              <span class="cta-text" id="ctaTravelText">YO'LOVCHIMAN</span>
+            </button>
+            <button type="button" class="cta-btn" onclick="openOrder()">
+              <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
+              <span class="cta-text" id="ctaOrderText">YUK YUBORAMAN</span>
+            </button>
+          </div>
           <button type="button" class="role-switch" onclick="switchView('driver')" aria-label="Haydovchi ekraniga o'tish">
             <span class="role-switch-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2"/><path d="M12 4.5v3.5M12 16v3.5M5.5 16l2.5-1.5M18.5 16l-2.5-1.5"/></svg>
@@ -4538,8 +4543,8 @@ const UI_PHRASE_CYRILLIC = {
   "Jo'natuvchi": 'Жўнатувчи', 'Haydovchi': 'Ҳайдовчи',
   'RASMGA OLING': 'РАСМГА ОЛИНГ', "VA JO'NATING": 'ВА ЖЎНАТИНГ',
   "Jo'natmalarim": 'Жўнатмаларим',
-  'SAFARNI BOSHLASH': 'САФАРНИ БОШЛАШ',
-  'POCHTA YUBORISH': 'ПОЧТА ЮБОРИШ',
+  "YO'LOVCHIMAN": 'ЙЎЛОВЧИМАН',
+  'YUK YUBORAMAN': 'ЮК ЮБОРАМАН',
   "Jo'natma rasmi": 'Жўнатма расми',
   "Qutini ramka ichida ko'ring va rasm oling": 'Қутини рамка ичида кўринг ва расм олинг',
   'Galereyadan tanlash': 'Галереядан танлаш', 'Kamera yuklanmoqda…': 'Камера юкланмоқда…',
@@ -4601,7 +4606,7 @@ const MORPH_MULTI = [
 
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
-  ['#ctaTravelText', 'SAFARNI BOSHLASH'], ['#ctaOrderText', 'POCHTA YUBORISH'],
+  ['#ctaTravelText', "YO'LOVCHIMAN"], ['#ctaOrderText', 'YUK YUBORAMAN'],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
