@@ -519,6 +519,14 @@ body.view-sender .header{background:var(--app-bg)!important}
   cursor:pointer;transition:transform .15s,background .15s,box-shadow .15s;outline:none;
   -webkit-appearance:none;appearance:none;
 }
+/* Yo'lovchi (Safarni boshlash) — xaritadagi odam belgisi bilan bir xil to'q sariq,
+   Pochta (yuqoridagi .cta-btn default) — xaritadagi quti belgisi bilan bir xil ko'k.
+   Rang tili bir xil bo'lgach, foydalanuvchi matnni o'qimasdan ham tez ajrata oladi. */
+.cta-btn--travel{
+  background:#E8820A!important;
+  box-shadow:0 7px 22px -6px rgba(232,130,10,.6)!important;
+}
+.cta-btn--travel:active{background:#c96f08!important}
 .cta-btn::after{
   content:'';position:absolute;top:-30%;bottom:-30%;left:0;width:46%;
   background:linear-gradient(
@@ -532,7 +540,7 @@ body.view-sender .header{background:var(--app-bg)!important}
     transparent 100%
   );
   transform:translateX(-160%) skewX(-14deg);
-  animation:ctaSunGlint 3s ease-in-out infinite;
+  animation:ctaSunGlint 3s ease-in-out 2;
   pointer-events:none;z-index:1;
 }
 .cta-wrap > .cta-btn:nth-child(2)::after{animation-delay:1.5s}
@@ -547,7 +555,7 @@ body.view-sender .header{background:var(--app-bg)!important}
   color:#fff;font-size:clamp(13px,3.8vw,17px);font-weight:700;letter-spacing:0;
   white-space:nowrap;overflow:hidden;text-overflow:clip;
   transform-origin:center center;
-  animation:ctaTextPulse 3s ease-in-out infinite;
+  animation:ctaTextPulse 3s ease-in-out 2;
 }
 .cta-wrap > .cta-btn:nth-child(2) .cta-text{animation-delay:1.5s}
 @keyframes ctaTextPulse{
@@ -1542,6 +1550,10 @@ body.view-sender.theme-telegram .toggle,
   background:var(--tg-btn)!important;border:none!important;
   box-shadow:0 8px 24px -6px rgba(42,171,238,.45)!important;
 }
+.theme-telegram .cta-btn--travel{
+  background:#E8820A!important;
+  box-shadow:0 8px 24px -6px rgba(232,130,10,.45)!important;
+}
 .theme-telegram .cta-text{color:var(--tg-btn-text)!important;text-shadow:none!important}
 .theme-telegram .cta-icon-wrap{
   background:rgba(255,255,255,.2)!important;
@@ -2035,7 +2047,7 @@ html, body { font-size: var(--fs-base); }
         </div>
 
         <div class="cta-wrap">
-          <button type="button" class="cta-btn" onclick="openTravelSheet()">
+          <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
             <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
             <span class="cta-text" id="ctaTravelText">SAFARNI BOSHLASH</span>
           </button>
