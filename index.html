@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
 <title>duvduv</title>
 <meta property="og:title" content="duvduv"/>
 <meta property="og:description" content="Shaharlar Yaqin — duv duv bilan! Haydovchi toping, yo'lovchi oling, yuk yuboring."/>
@@ -3579,28 +3582,41 @@ const COACH_STEPS = [
   }
 ];
 let coachStep = 0;
-function coachSeenKey(){ return 'duvduv_coach_seen_v2'; }
+let coachRetries = 0;
+function coachSeenKey(){ return 'duvduv_coach_seen_v3'; }
 function maybeShowOnboarding(){
-  if (localStorage.getItem(coachSeenKey())) return;
-  coachStep = 0;
-  const backdrop = document.getElementById('coachBackdrop');
-  const skip = document.getElementById('coachSkipBtn');
-  const spot = document.getElementById('coachSpot');
-  const pulse = document.getElementById('coachPulse');
-  const tooltip = document.getElementById('coachTooltip');
-  if (!backdrop) return;
-  backdrop.classList.add('open');
-  if (skip) skip.classList.add('open');
-  if (spot) spot.classList.add('open');
-  if (pulse) pulse.classList.add('open');
-  if (tooltip) tooltip.classList.add('open');
-  renderCoachStep();
-  window.addEventListener('resize', repositionCoachStep);
+  try {
+    if (localStorage.getItem(coachSeenKey())) return;
+    // Nishon element hali DOM'da/joyida bo'lmasligi mumkin (sekin render, GPS/Firestore
+    // kutish va h.k.) — shu sabab bir marta emas, bir necha marta urinib ko'ramiz,
+    // muvaffaqiyatsizlikda "ko'rsatilgan" deb belgilamaymiz.
+    const target = document.querySelector(COACH_STEPS[0].sel);
+    if (!target || target.getBoundingClientRect().width === 0) {
+      if (coachRetries < 12) { coachRetries++; setTimeout(maybeShowOnboarding, 300); }
+      return;
+    }
+    coachStep = 0;
+    const backdrop = document.getElementById('coachBackdrop');
+    const skip = document.getElementById('coachSkipBtn');
+    const spot = document.getElementById('coachSpot');
+    const pulse = document.getElementById('coachPulse');
+    const tooltip = document.getElementById('coachTooltip');
+    if (!backdrop) return;
+    backdrop.classList.add('open');
+    if (skip) skip.classList.add('open');
+    if (spot) spot.classList.add('open');
+    if (pulse) pulse.classList.add('open');
+    if (tooltip) tooltip.classList.add('open');
+    renderCoachStep();
+    window.addEventListener('resize', repositionCoachStep);
+  } catch (err) {
+    console.error('coachmark xato:', err);
+  }
 }
 function renderCoachStep(){
   const step = COACH_STEPS[coachStep];
   const target = step && document.querySelector(step.sel);
-  if (!step || !target) { closeOnboarding(); return; }
+  if (!step || !target) { closeOnboarding(false); return; }
   positionCoachOn(target, step);
   document.querySelectorAll('.coach-dot').forEach((d, i) => d.classList.toggle('active', i === coachStep));
   const titleEl = document.getElementById('coachTitle');
@@ -3667,12 +3683,12 @@ function repositionCoachStep(){
   if (target) positionCoachOn(target, step);
 }
 function nextOnboardingStep(){
-  if (coachStep >= COACH_STEPS.length - 1) { closeOnboarding(); return; }
+  if (coachStep >= COACH_STEPS.length - 1) { closeOnboarding(true); return; }
   coachStep++;
   renderCoachStep();
 }
-function skipOnboarding(){ closeOnboarding(); }
-function closeOnboarding(){
+function skipOnboarding(){ closeOnboarding(true); }
+function closeOnboarding(markSeen){
   const backdrop = document.getElementById('coachBackdrop');
   const skip = document.getElementById('coachSkipBtn');
   const spot = document.getElementById('coachSpot');
@@ -3684,7 +3700,7 @@ function closeOnboarding(){
   if (pulse) pulse.classList.remove('open');
   if (tooltip) tooltip.classList.remove('open');
   window.removeEventListener('resize', repositionCoachStep);
-  localStorage.setItem(coachSeenKey(), '1');
+  if (markSeen) localStorage.setItem(coachSeenKey(), '1');
 }
 
 function removeDriverRadiusLayers(){
