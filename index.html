@@ -1119,6 +1119,47 @@ body.view-sender .header{background:var(--app-bg)!important}
 .sheet-tg-btn:active{transform:scale(.97)}
 .sheet-tg-btn:disabled{opacity:.4;cursor:not-allowed}
 
+/* ── Birinchi ochilishdagi qisqa o'rgatuvchi (onboarding) ── */
+.onboard-overlay{
+  position:fixed;inset:0;z-index:700;background:#fff;
+  display:none;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 28px max(28px,env(safe-area-inset-bottom));
+}
+.onboard-overlay.open{display:flex}
+.onboard-skip{
+  position:absolute;top:max(16px,env(safe-area-inset-top));right:16px;
+  background:none;border:none;color:#8e8e93;font-size:14px;font-weight:600;
+  font-family:inherit;cursor:pointer;padding:8px 10px;
+}
+.onboard-step{display:none;width:100%;max-width:340px;flex-direction:column;align-items:center;text-align:center}
+.onboard-step.active{display:flex;animation:onboardFade .3s ease}
+@keyframes onboardFade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.onboard-icon-wrap{
+  width:88px;height:88px;border-radius:26px;display:flex;align-items:center;justify-content:center;
+  margin-bottom:24px;box-shadow:0 14px 28px -8px rgba(0,0,0,.25);
+}
+.onboard-icon-wrap svg{width:42px;height:42px}
+.onboard-pair{display:flex;gap:14px;margin-bottom:24px}
+.onboard-chip{
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+  background:#F9F9FA;border:1px solid #eeeef0;border-radius:20px;padding:16px 18px;flex:1;
+}
+.onboard-chip-icon{width:52px;height:52px;border-radius:16px;display:flex;align-items:center;justify-content:center}
+.onboard-chip-icon svg{width:26px;height:26px}
+.onboard-chip span{font-size:12px;font-weight:800;color:#111}
+.onboard-title{font-size:22px;font-weight:900;color:#0f172a;margin:0 0 10px;line-height:1.3}
+.onboard-desc{font-size:15px;color:#6b7280;line-height:1.5;margin:0}
+.onboard-dots{display:flex;gap:7px;margin:28px 0 22px}
+.onboard-dot{width:7px;height:7px;border-radius:50%;background:#e5e5e5;transition:all .25s}
+.onboard-dot.active{width:20px;background:#E8820A}
+.onboard-actions{width:100%;max-width:340px}
+.onboard-next{
+  width:100%;background:#E8820A;color:#fff;padding:17px;border-radius:100px;
+  font-size:16px;font-weight:800;border:none;cursor:pointer;font-family:inherit;
+  box-shadow:0 12px 24px rgba(232,130,10,.35);transition:transform .15s;
+}
+.onboard-next:active{transform:scale(.97)}
+
 /* Yo'l olish — haydovchi xarita sheet */
 .sheet-overlay--travel-map{z-index:214}
 .sheet--travel-map{padding-top:10px;padding-bottom:max(24px,env(safe-area-inset-bottom))}
@@ -3497,6 +3538,45 @@ function initCtaIcons(){
   const order = document.getElementById('ctaOrderIcon');
   if (travel) travel.innerHTML = ICON_CTA_ROUTE_WHITE;
   if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
+  const chipTravel = document.getElementById('onboardChipTravel');
+  const chipOrder = document.getElementById('onboardChipOrder');
+  if (chipTravel) chipTravel.innerHTML = ICON_CTA_ROUTE_WHITE;
+  if (chipOrder) chipOrder.innerHTML = ICON_CTA_BOX_WHITE;
+}
+
+// ── Birinchi ochilishdagi o'rgatuvchi (onboarding) ─────────────────────────
+const ONBOARD_STEPS = 3;
+let onboardStep = 1;
+function onboardSeenKey(){ return 'duvduv_onboard_seen_v1'; }
+function maybeShowOnboarding(){
+  if (localStorage.getItem(onboardSeenKey())) return;
+  const el = document.getElementById('onboardOverlay');
+  if (!el) return;
+  el.classList.add('open');
+}
+function renderOnboardStep(){
+  document.querySelectorAll('.onboard-step').forEach(s => {
+    s.classList.toggle('active', Number(s.dataset.step) === onboardStep);
+  });
+  document.querySelectorAll('.onboard-dot').forEach(d => {
+    d.classList.toggle('active', Number(d.dataset.dot) === onboardStep);
+  });
+  const btn = document.getElementById('onboardNextBtn');
+  if (btn) {
+    const lat = onboardStep === ONBOARD_STEPS ? "Boshladik!" : 'Keyingi';
+    btn.textContent = scriptLatin ? lat : (UI_PHRASE_CYRILLIC[lat] || latinToCyrillic(lat));
+  }
+}
+function nextOnboardingStep(){
+  if (onboardStep >= ONBOARD_STEPS) { closeOnboarding(); return; }
+  onboardStep++;
+  renderOnboardStep();
+}
+function skipOnboarding(){ closeOnboarding(); }
+function closeOnboarding(){
+  const el = document.getElementById('onboardOverlay');
+  if (el) el.classList.remove('open');
+  localStorage.setItem(onboardSeenKey(), '1');
 }
 
 function removeDriverRadiusLayers(){
@@ -4545,6 +4625,7 @@ const UI_PHRASE_CYRILLIC = {
   "Jo'natmalarim": 'Жўнатмаларим',
   "YO'LOVCHIMAN": 'ЙЎЛОВЧИМАН',
   'YUK YUBORAMAN': 'ЮК ЮБОРАМАН',
+  'Keyingi': 'Кейинги', 'Boshladik!': 'Бошладик!',
   "Jo'natma rasmi": 'Жўнатма расми',
   "Qutini ramka ichida ko'ring va rasm oling": 'Қутини рамка ичида кўринг ва расм олинг',
   'Galereyadan tanlash': 'Галереядан танлаш', 'Kamera yuklanmoqda…': 'Камера юкланмоқда…',
@@ -4607,6 +4688,14 @@ const MORPH_MULTI = [
 const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
   ['#ctaTravelText', "YO'LOVCHIMAN"], ['#ctaOrderText', 'YUK YUBORAMAN'],
+  ['#onboardSkipBtn', "O'tkazib yuborish"],
+  ['#onboardTitle1', 'Xush kelibsiz, duvduv!'],
+  ['#onboardDesc1', "O'zbekiston bo'ylab yuk va yo'lovchini bir zumda bog'laymiz — tez, oddiy, ishonchli."],
+  ['#onboardChipTravelLbl', "YO'LOVCHIMAN"], ['#onboardChipOrderLbl', 'YUK YUBORAMAN'],
+  ['#onboardTitle2', 'Ikkita tugma — tanlang'],
+  ['#onboardDesc2', "Yo'lga chiqsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing. Shu qadar oddiy."],
+  ['#onboardTitle3', "Xaritada ko'ring va bog'laning"],
+  ['#onboardDesc3', "Yaqin atrofdagi e'lonlarni xaritadan topasiz. Kerakli e'lonni bosing va to'g'ridan-to'g'ri Telegramda yozishing mumkin."],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
@@ -7729,6 +7818,7 @@ function showToast(msg, type='info'){
 initFirebase();
 initRegionSelects();
 initCtaIcons();
+setTimeout(maybeShowOnboarding, 400);
 initAllMorphTexts();
 applyCyrillicUI();
 loadPersistedData();
@@ -7845,6 +7935,52 @@ recoverSendFlow();
     <button onclick="skipPhoneEdu()" style="width:100%;padding:11px;border:none;background:transparent;color:#8e8e93;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit">
       Keyinroq
     </button>
+  </div>
+</div>
+
+<!-- ── Birinchi ochilishdagi qisqa o'rgatuvchi (onboarding) ── -->
+<div class="onboard-overlay" id="onboardOverlay">
+  <button type="button" class="onboard-skip" id="onboardSkipBtn" onclick="skipOnboarding()">O'tkazib yuborish</button>
+
+  <div class="onboard-step active" data-step="1">
+    <div class="onboard-icon-wrap" style="background:linear-gradient(135deg,#E8820A,#ff9d2e)">
+      <svg viewBox="0 0 24 24" fill="none"><path fill="#fff" d="M12 2l2.4 5.3 5.8.6-4.4 3.9 1.3 5.7L12 14.7 6.9 17.5l1.3-5.7-4.4-3.9 5.8-.6z"/></svg>
+    </div>
+    <h2 class="onboard-title" id="onboardTitle1">Xush kelibsiz, duvduv!</h2>
+    <p class="onboard-desc" id="onboardDesc1">O'zbekiston bo'ylab yuk va yo'lovchini bir zumda bog'laymiz — tez, oddiy, ishonchli.</p>
+  </div>
+
+  <div class="onboard-step" data-step="2">
+    <div class="onboard-pair">
+      <div class="onboard-chip">
+        <div class="onboard-chip-icon" style="background:#E8820A" id="onboardChipTravel"></div>
+        <span id="onboardChipTravelLbl">YO'LOVCHIMAN</span>
+      </div>
+      <div class="onboard-chip">
+        <div class="onboard-chip-icon" style="background:#2AABEE" id="onboardChipOrder"></div>
+        <span id="onboardChipOrderLbl">YUK YUBORAMAN</span>
+      </div>
+    </div>
+    <h2 class="onboard-title" id="onboardTitle2">Ikkita tugma — tanlang</h2>
+    <p class="onboard-desc" id="onboardDesc2">Yo'lga chiqsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing. Shu qadar oddiy.</p>
+  </div>
+
+  <div class="onboard-step" data-step="3">
+    <div class="onboard-icon-wrap" style="background:linear-gradient(135deg,#2AABEE,#5ec4f5)">
+      <svg viewBox="0 0 24 24"><path fill="#fff" d="M12 2C7.6 2 4 5.6 4 10c0 5.2 7 11.5 7.3 11.8.2.2.5.3.7.3s.5-.1.7-.3C13 21.5 20 15.2 20 10c0-4.4-3.6-8-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/></svg>
+    </div>
+    <h2 class="onboard-title" id="onboardTitle3">Xaritada ko'ring va bog'laning</h2>
+    <p class="onboard-desc" id="onboardDesc3">Yaqin atrofdagi e'lonlarni xaritadan topasiz. Kerakli e'lonni bosing va to'g'ridan-to'g'ri Telegramda yozishing mumkin.</p>
+  </div>
+
+  <div class="onboard-dots">
+    <span class="onboard-dot active" data-dot="1"></span>
+    <span class="onboard-dot" data-dot="2"></span>
+    <span class="onboard-dot" data-dot="3"></span>
+  </div>
+
+  <div class="onboard-actions">
+    <button type="button" class="onboard-next" id="onboardNextBtn" onclick="nextOnboardingStep()">Keyingi</button>
   </div>
 </div>
 
