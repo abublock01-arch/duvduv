@@ -1133,17 +1133,34 @@ body.view-sender .header{background:var(--app-bg)!important}
   outline:2.5px solid #fff;outline-offset:4px;
 }
 .coach-spot.open{opacity:1;visibility:visible}
+.coach-pulse{
+  position:fixed;z-index:700;border-radius:20px;pointer-events:none;
+  opacity:0;visibility:hidden;
+  transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1),
+             width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1),opacity .2s;
+}
+.coach-pulse.open{opacity:1;visibility:visible}
+.coach-pulse::after{
+  content:'';position:absolute;inset:0;border-radius:inherit;
+  border:2.5px solid #fff;
+  animation:coachPing 1.8s cubic-bezier(.2,.6,.35,1) infinite;
+}
+@keyframes coachPing{
+  0%{transform:scale(1);opacity:.85}
+  100%{transform:scale(1.16);opacity:0}
+}
 .coach-tooltip{
   position:fixed;z-index:701;max-width:300px;
   background:#fff;border-radius:22px;padding:20px 20px 18px;
   box-shadow:0 20px 50px -12px rgba(0,0,0,.4);
-  opacity:0;visibility:hidden;
-  transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1),bottom .35s cubic-bezier(.4,0,.2,1),opacity .2s;
+  opacity:0;visibility:hidden;transform:scale(.94) translateY(6px);
+  transition:top .35s cubic-bezier(.4,0,.2,1),left .35s cubic-bezier(.4,0,.2,1),bottom .35s cubic-bezier(.4,0,.2,1),
+             opacity .25s,transform .3s cubic-bezier(.34,1.56,.64,1);
 }
-.coach-tooltip.open{opacity:1;visibility:visible}
+.coach-tooltip.open{opacity:1;visibility:visible;transform:scale(1) translateY(0)}
 .coach-tooltip-arrow{
   position:absolute;width:16px;height:16px;background:#fff;
-  transform:rotate(45deg);border-radius:3px;
+  transform:rotate(45deg);border-radius:3px;z-index:-1;
 }
 .coach-tag{
   display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
@@ -3551,12 +3568,12 @@ function initCtaIcons(){
 // ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ──
 const COACH_STEPS = [
   {
-    sel: '.cta-row', tag: '1/2', pad: 10,
+    sel: '.cta-row', tag: '1/2', pad: 10, radius: 20,
     title: 'Shu yerdan boshlang',
     desc: "Yo'lovchi bo'lsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing."
   },
   {
-    sel: '.role-switch', tag: '2/2', pad: 8,
+    sel: '.role-switch', tag: '2/2', pad: 8, radius: 22,
     title: 'Haydovchimisiz?',
     desc: "Bu tugmani bosib xaritadagi barcha e'lonlarni ko'rasiz va yo'l tanlaysiz."
   }
@@ -3569,11 +3586,13 @@ function maybeShowOnboarding(){
   const backdrop = document.getElementById('coachBackdrop');
   const skip = document.getElementById('coachSkipBtn');
   const spot = document.getElementById('coachSpot');
+  const pulse = document.getElementById('coachPulse');
   const tooltip = document.getElementById('coachTooltip');
   if (!backdrop) return;
   backdrop.classList.add('open');
   if (skip) skip.classList.add('open');
   if (spot) spot.classList.add('open');
+  if (pulse) pulse.classList.add('open');
   if (tooltip) tooltip.classList.add('open');
   renderCoachStep();
   window.addEventListener('resize', repositionCoachStep);
@@ -3599,7 +3618,9 @@ function renderCoachStep(){
 }
 function positionCoachOn(target, step){
   const spot = document.getElementById('coachSpot');
+  const pulse = document.getElementById('coachPulse');
   const tooltip = document.getElementById('coachTooltip');
+  const arrow = document.getElementById('coachArrow');
   if (!spot || !tooltip) return;
   const r = target.getBoundingClientRect();
   const pad = step.pad ?? 10;
@@ -3607,17 +3628,35 @@ function positionCoachOn(target, step){
   spot.style.left = (r.left - pad) + 'px';
   spot.style.width = (r.width + pad * 2) + 'px';
   spot.style.height = (r.height + pad * 2) + 'px';
+  if (pulse) {
+    pulse.style.top = r.top + 'px';
+    pulse.style.left = r.left + 'px';
+    pulse.style.width = r.width + 'px';
+    pulse.style.height = r.height + 'px';
+    pulse.style.borderRadius = (step.radius ?? 20) + 'px';
+  }
 
-  const vh = window.innerHeight;
+  const vh = window.innerHeight, vw = window.innerWidth;
   const spaceBelow = vh - r.bottom;
   const showBelow = spaceBelow > 190;
-  tooltip.style.left = Math.max(16, Math.min(r.left, window.innerWidth - 316)) + 'px';
+  const tooltipLeft = Math.max(16, Math.min(r.left, vw - 316));
+  tooltip.style.left = tooltipLeft + 'px';
   if (showBelow) {
     tooltip.style.top = (r.bottom + pad + 16) + 'px';
     tooltip.style.bottom = 'auto';
   } else {
     tooltip.style.bottom = (vh - r.top + pad + 16) + 'px';
     tooltip.style.top = 'auto';
+  }
+
+  if (arrow) {
+    const tooltipWidth = tooltip.offsetWidth || 284;
+    const targetCenterX = r.left + r.width / 2;
+    let arrowLeft = targetCenterX - tooltipLeft - 8;
+    arrowLeft = Math.max(16, Math.min(arrowLeft, tooltipWidth - 32));
+    arrow.style.left = arrowLeft + 'px';
+    if (showBelow) { arrow.style.top = '-7px'; arrow.style.bottom = 'auto'; }
+    else { arrow.style.bottom = '-7px'; arrow.style.top = 'auto'; }
   }
 }
 function repositionCoachStep(){
@@ -3637,10 +3676,12 @@ function closeOnboarding(){
   const backdrop = document.getElementById('coachBackdrop');
   const skip = document.getElementById('coachSkipBtn');
   const spot = document.getElementById('coachSpot');
+  const pulse = document.getElementById('coachPulse');
   const tooltip = document.getElementById('coachTooltip');
   if (backdrop) backdrop.classList.remove('open');
   if (skip) skip.classList.remove('open');
   if (spot) spot.classList.remove('open');
+  if (pulse) pulse.classList.remove('open');
   if (tooltip) tooltip.classList.remove('open');
   window.removeEventListener('resize', repositionCoachStep);
   localStorage.setItem(coachSeenKey(), '1');
@@ -8002,7 +8043,9 @@ recoverSendFlow();
 <div class="coach-backdrop" id="coachBackdrop" onclick="if(event.target===this)nextOnboardingStep()"></div>
 <button type="button" class="coach-skip" id="coachSkipBtn" onclick="skipOnboarding()">O'tkazib yuborish</button>
 <div class="coach-spot" id="coachSpot"></div>
+<div class="coach-pulse" id="coachPulse"></div>
 <div class="coach-tooltip" id="coachTooltip">
+  <div class="coach-tooltip-arrow" id="coachArrow"></div>
   <span class="coach-tag" id="coachTag">1/2</span>
   <h2 class="coach-title" id="coachTitle">Shu yerdan boshlang</h2>
   <p class="coach-desc" id="coachDesc"></p>
