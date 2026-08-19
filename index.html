@@ -513,6 +513,40 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .role-switch--float:active{transform:translateX(-50%) scale(.98)}
 .role-switch--float .role-switch-chev{transform:rotate(180deg)}
+/* Mijoz: "Haydovchilarni ko'rish" — haydovchilar e'lon qilgan yo'nalishlar ro'yxati */
+.driver-list-btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  align-self:center;width:auto;max-width:100%;
+  min-height:42px;padding:8px 12px 8px 10px;
+  border:1.5px solid rgba(34,197,94,.38);
+  border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.98) 0%,rgba(240,253,244,.98) 100%);
+  color:#16a34a;
+  font-family:inherit;font-size:14px;font-weight:600;letter-spacing:.01em;
+  cursor:pointer;outline:none;
+  box-shadow:0 2px 14px rgba(34,197,94,.12),0 0 0 1px rgba(34,197,94,.06) inset;
+  -webkit-tap-highlight-color:transparent;
+  transition:border-color .18s,background .18s,box-shadow .18s,transform .12s;
+}
+.driver-list-btn:active{transform:scale(.98);background:rgba(240,253,244,1)}
+.driver-list-btn-icon{
+  width:28px;height:28px;flex-shrink:0;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(34,197,94,.14);color:#16a34a;
+}
+.driver-list-btn-icon svg{width:17px;height:17px;display:block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.driver-list-btn-label{flex:0 1 auto;text-align:center;line-height:1.2;white-space:nowrap}
+/* Haydovchi: xarita ustidagi "yo'nalish e'lon qilish" FAB */
+.post-route-fab{
+  position:absolute;right:14px;top:14px;
+  z-index:10;display:flex;align-items:center;gap:7px;
+  padding:11px 16px 11px 12px;border:none;border-radius:100px;
+  background:#E8820A;color:#fff;font-family:inherit;font-size:13px;font-weight:800;
+  box-shadow:0 10px 24px -6px rgba(232,130,10,.55);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;transition:transform .15s;
+}
+.post-route-fab:active{transform:scale(.95)}
+.post-route-fab svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
 .cta-row{
   display:flex;align-items:stretch;gap:10px;
 }
@@ -2147,6 +2181,13 @@ html, body { font-size: var(--fs-base); }
             <span class="role-switch-label" id="roleSwitchDriverLbl">Haydovchimisiz?</span>
             <span class="role-switch-chev" aria-hidden="true">›</span>
           </button>
+          <button type="button" class="driver-list-btn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
+            <span class="driver-list-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
+            </span>
+            <span class="driver-list-btn-label" id="driverListBtnLbl">Haydovchilarni ko'rish</span>
+            <span class="role-switch-chev" aria-hidden="true">›</span>
+          </button>
         </div>
       </div>
 
@@ -2175,6 +2216,10 @@ html, body { font-size: var(--fs-base); }
             </span>
             <span class="role-switch-label" id="roleSwitchSenderLbl">Mijozmisiz?</span>
             <span class="role-switch-chev" aria-hidden="true">›</span>
+          </button>
+          <button type="button" class="post-route-fab" onclick="openDriverRouteSheet()" aria-label="Yo'nalishimni e'lon qilish">
+            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+            <span id="postRouteFabLbl">Yo'nalish e'lon qilish</span>
           </button>
           <div class="map-controls">
             <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
@@ -2371,6 +2416,46 @@ html, body { font-size: var(--fs-base); }
         <button type="button" class="send-submit sheet-action-main" id="travelActionBtn" onclick="onTravelActionClick()">Keyingi</button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- HAYDOVCHI: yo'nalish e'lon qilish -->
+<div class="sheet-overlay" id="driverRouteSheetOverlay" onclick="if(event.target===this)closeDriverRouteSheet()" style="z-index:230">
+  <div class="sheet" onclick="event.stopPropagation()" style="border-radius:32px 32px 0 0">
+    <button type="button" class="sheet-close" onclick="closeDriverRouteSheet()" aria-label="Yopish">×</button>
+    <div class="sheet-drag"></div>
+    <p style="font-size:11px;font-weight:800;color:#8e8e93;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin:0 0 6px">Yo'nalish e'lon qilish</p>
+    <h3 style="font-size:19px;font-weight:900;color:#0f172a;text-align:center;margin:0 0 22px;line-height:1.3">Qayerdan qayerga ketyapsiz?</h3>
+    <form onsubmit="submitDriverRoute(event)">
+      <div class="sheet-fields" style="margin-bottom:16px">
+        <div class="sheet-field">
+          <div class="sheet-field-lbl">Qayerdan</div>
+          <select id="driverRouteFrom" required style="width:100%;border:none;background:transparent;font-size:16px;font-weight:700;color:#111;font-family:inherit;outline:none"></select>
+        </div>
+        <div class="sheet-field">
+          <div class="sheet-field-lbl">Qayerga</div>
+          <select id="driverRouteTo" required style="width:100%;border:none;background:transparent;font-size:16px;font-weight:700;color:#111;font-family:inherit;outline:none"></select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:16px" id="driverRouteTypeChips">
+        <button type="button" class="drv-type-chip active" data-type="person" onclick="toggleDriverRouteType(this)" style="flex:1;padding:12px 6px;border-radius:14px;border:1.5px solid #E8820A;background:rgba(232,130,10,.1);color:#E8820A;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer">Yo'lovchi olaman</button>
+        <button type="button" class="drv-type-chip" data-type="cargo" onclick="toggleDriverRouteType(this)" style="flex:1;padding:12px 6px;border-radius:14px;border:1.5px solid #d0d5dd;background:#fff;color:#667085;font-family:inherit;font-weight:700;font-size:13px;cursor:pointer">Yuk olaman</button>
+      </div>
+      <textarea id="driverRouteNote" placeholder="Izoh (ixtiyoriy) — masalan chiqish vaqti" rows="2" style="width:100%;padding:14px 16px;border-radius:16px;border:1px solid #eeeef0;background:#F9F9FA;font-family:inherit;font-size:14px;resize:none;margin-bottom:20px;outline:none"></textarea>
+      <button type="submit" class="sheet-accept" style="background:#E8820A;box-shadow:0 12px 24px rgba(232,130,10,.3)">E'lon qilish</button>
+    </form>
+  </div>
+</div>
+
+<!-- MIJOZ: haydovchilar ro'yxati -->
+<div class="sheet-overlay" id="driverListSheetOverlay" onclick="if(event.target===this)closeDriverListSheet()" style="z-index:230">
+  <div class="sheet" onclick="event.stopPropagation()" style="border-radius:32px 32px 0 0;padding-bottom:max(24px,env(safe-area-inset-bottom))">
+    <button type="button" class="sheet-close" onclick="closeDriverListSheet()" aria-label="Yopish">×</button>
+    <div class="sheet-drag"></div>
+    <p style="font-size:11px;font-weight:800;color:#8e8e93;text-transform:uppercase;letter-spacing:.08em;text-align:center;margin:0 0 6px">Haydovchilar</p>
+    <h3 style="font-size:19px;font-weight:900;color:#0f172a;text-align:center;margin:0 0 18px;line-height:1.3">E'lon qilingan yo'nalishlar</h3>
+    <select id="driverListRegionFilter" onchange="renderDriverRoutesList()" style="width:100%;padding:13px 16px;border-radius:16px;border:1px solid #eeeef0;background:#F9F9FA;font-family:inherit;font-size:14px;font-weight:700;color:#111;margin-bottom:14px;outline:none"></select>
+    <div id="driverRoutesList" style="display:flex;flex-direction:column;gap:10px;max-height:52vh;overflow-y:auto"></div>
   </div>
 </div>
 
@@ -2579,6 +2664,7 @@ function initFirebase(){
     db = firebase.firestore();
     subscribeFirestoreOrders();
     subscribeFirestoreTravels();
+    subscribeDriverRoutes();
   } catch(e){ console.warn('Firebase init xatosi:', e); }
 }
 async function saveOrderToFirestore(order){
@@ -2692,6 +2778,144 @@ function subscribeFirestoreTravels(){
     syncShipmentsFromFirestore();
     refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore travels snapshot xatosi:', err));
+}
+
+// ── Haydovchi yo'nalish e'lonlari — mijoz xaritada/ro'yxatda haydovchilarni
+// ko'rishi uchun. Avval faqat mijozlar e'lon bera olardi (orders/travels),
+// haydovchilar hech narsa yozmasdi — shu sabab mijoz haydovchini ko'rolmasdi.
+const driverRoutes = [];
+let driverRouteSelectedType = 'person';
+function subscribeDriverRoutes(){
+  if (!db) return;
+  db.collection('driverRoutes').orderBy('createdAt','desc').limit(300).onSnapshot(snap => {
+    driverRoutes.length = 0;
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.archived) return;
+      driverRoutes.push({ id: doc.id, firestoreId: doc.id, ...d });
+    });
+    renderDriverRoutesList();
+  }, err => console.warn('Firestore driverRoutes snapshot xatosi:', err));
+}
+async function saveDriverRouteToFirestore(route){
+  if (!db) return null;
+  try {
+    const doc = {
+      from: route.from || '',
+      to: route.to || '',
+      note: route.note || '',
+      carriesPerson: !!route.carriesPerson,
+      carriesCargo: !!route.carriesCargo,
+      status: 'Aktiv',
+      telegramId: telegramUser.id ?? null,
+      telegramUsername: telegramUser.username ? '@' + telegramUser.username : '',
+      driverName: telegramUser.first_name || '',
+      archived: false,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    };
+    const ref = await db.collection('driverRoutes').add(doc);
+    return ref.id;
+  } catch(e){
+    console.warn('Firestore driverRoute saqlash xatosi:', e);
+    return null;
+  }
+}
+function openDriverRouteSheet(){
+  const fromSel = document.getElementById('driverRouteFrom');
+  const toSel = document.getElementById('driverRouteTo');
+  if (fromSel && !fromSel.dataset.filled) fillRegionSelect(fromSel, 'Viloyatni tanlang');
+  if (toSel && !toSel.dataset.filled) fillRegionSelect(toSel, 'Viloyatni tanlang');
+  document.getElementById('driverRouteSheetOverlay')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDriverRouteSheet(){
+  document.getElementById('driverRouteSheetOverlay')?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function toggleDriverRouteType(btn){
+  const type = btn.dataset.type;
+  const chips = document.querySelectorAll('#driverRouteTypeChips .drv-type-chip');
+  const active = btn.classList.contains('active');
+  // Kamida bittasi tanlangan bo'lishi kerak
+  if (active && [...chips].filter(c => c.classList.contains('active')).length === 1) return;
+  btn.classList.toggle('active');
+  chips.forEach(c => {
+    const on = c.classList.contains('active');
+    c.style.borderColor = on ? '#E8820A' : '#d0d5dd';
+    c.style.background = on ? 'rgba(232,130,10,.1)' : '#fff';
+    c.style.color = on ? '#E8820A' : '#667085';
+  });
+}
+async function submitDriverRoute(e){
+  e.preventDefault();
+  const from = document.getElementById('driverRouteFrom')?.value;
+  const to = document.getElementById('driverRouteTo')?.value;
+  if (!from || !to) { showToast('Viloyatlarni tanlang'); return; }
+  const activeTypes = [...document.querySelectorAll('#driverRouteTypeChips .drv-type-chip.active')].map(c => c.dataset.type);
+  const note = document.getElementById('driverRouteNote')?.value?.trim() || '';
+  const id = await saveDriverRouteToFirestore({
+    from, to, note,
+    carriesPerson: activeTypes.includes('person'),
+    carriesCargo: activeTypes.includes('cargo')
+  });
+  if (id) {
+    showToast("Yo'nalish e'lon qilindi");
+    closeDriverRouteSheet();
+    document.getElementById('driverRouteNote').value = '';
+  } else {
+    showToast('Xatolik yuz berdi, qayta urinib ko\'ring');
+  }
+}
+function openDriverListSheet(){
+  const filterSel = document.getElementById('driverListRegionFilter');
+  if (filterSel && !filterSel.dataset.filled) {
+    filterSel.innerHTML = `<option value="">Barcha viloyatlar</option>` + UZ_REGIONS.map(r => `<option value="${r}">${regionPickerLabel(r)}</option>`).join('');
+    filterSel.dataset.filled = '1';
+  }
+  renderDriverRoutesList();
+  document.getElementById('driverListSheetOverlay')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDriverListSheet(){
+  document.getElementById('driverListSheetOverlay')?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function renderDriverRoutesList(){
+  const list = document.getElementById('driverRoutesList');
+  if (!list) return;
+  const filter = document.getElementById('driverListRegionFilter')?.value || '';
+  const items = driverRoutes.filter(r => !filter || r.from === filter);
+  if (!items.length) {
+    list.innerHTML = `<div class="shipments-empty" style="padding:24px 0"><p class="shipments-empty-title">Hozircha e'lonlar yo'q</p><span class="shipments-empty-sub">Keyinroq qayta tekshiring</span></div>`;
+    return;
+  }
+  list.innerHTML = items.map(r => {
+    const typeLabel = r.carriesPerson && r.carriesCargo ? "Yo'lovchi va yuk" : (r.carriesPerson ? "Yo'lovchi" : 'Yuk');
+    return `
+    <div class="shipment-card" style="cursor:default">
+      <div class="shipment-card-left">
+        <div class="shipment-type-icon${r.carriesPerson ? ' shipment-type-icon--travel' : ''}">${r.carriesPerson ? ICON_PASSENGER : ICON_BOX_SMALL}</div>
+        <div class="shipment-body">
+          <div class="shipment-route-end">
+            <span class="shipment-route-place">${escapeHtml(regionPickerLabel(r.from))}</span>
+            <span aria-hidden="true">→</span>
+            <span class="shipment-route-place shipment-route-place--to">${escapeHtml(regionPickerLabel(r.to))}</span>
+          </div>
+          <span class="shipment-status ${r.carriesPerson ? 'shipment-status--travel' : ''}">${escapeHtml(typeLabel)}</span>
+          ${r.note ? `<span style="font-size:12px;color:#8e8e93;margin-top:2px">${escapeHtml(r.note)}</span>` : ''}
+        </div>
+      </div>
+      <div class="shipment-actions">
+        <button type="button" onclick="contactDriverRoute('${r.firestoreId}')" style="background:#2AABEE;color:#fff;border:none;border-radius:12px;padding:9px 14px;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap">Yozish</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function contactDriverRoute(id){
+  const r = driverRoutes.find(x => x.firestoreId === id);
+  const uname = r?.telegramUsername;
+  if (!uname || uname === '@') { showToast("Bu haydovchining Telegram username'i yo'q"); return; }
+  window.open('https://t.me/' + uname.replace('@', ''));
 }
 
 const STORAGE_KEY = 'duvduv_data_v1';
@@ -4833,6 +5057,8 @@ const MORPH_UI_ENTRIES = [
   ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
   ['#ctaTravelText', "YO'LOVCHIMAN"], ['#ctaOrderText', 'YUK YUBORAMAN'],
   ['#coachSkipBtn', "O'tkazib yuborish"],
+  ['#driverListBtnLbl', "Haydovchilarni ko'rish"],
+  ['#postRouteFabLbl', "Yo'nalish e'lon qilish"],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
   ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
