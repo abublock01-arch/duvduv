@@ -696,30 +696,49 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .drv-route-arrow svg{width:26px;height:26px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
-/* ── Bitta ekrandagi 3ta aniq amal: Yo'nalish e'lon qilish / Yuk yuboraman / Yo'lovchiman ── */
+/* ── Bitta ekrandagi 3ta aniq amal: Haydovchiman / Yuk yuboraman / Yo'lovchiman ──
+   Har biri bir-biridan alohida "suzuvchi" karta, tushunarli 3D ikonka bilan.
+   Bosilganda: boshqa ikkitasi ekran chetiga uchib ketadi (enterUniMode JS),
+   faol amal esa o'rtada kichik "rejim chipi"ga aylanadi (bekor qilish uchun ham). */
 .unified-actions{
-  order:3;flex:0 0 auto;display:flex;align-items:stretch;gap:10px;
-  padding:12px 14px max(14px,env(safe-area-inset-bottom));
+  order:3;flex:0 0 auto;position:relative;
+  display:flex;align-items:stretch;gap:12px;
+  padding:14px 14px max(16px,env(safe-area-inset-bottom));
   background:#fff;border-top:1.5px solid #e8edf2;
-  position:relative;z-index:20;
+  z-index:20;
 }
 .uni-action-btn{
-  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
-  padding:12px 6px;border:none;border-radius:18px;
-  background:#f8fafc;color:#1a1c1e;font-family:inherit;
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  padding:14px 6px 12px;border:1px solid #eef1f5;border-radius:20px;
+  background:#fff;color:#1a1c1e;font-family:inherit;
+  box-shadow:0 2px 4px rgba(15,23,42,.04),0 8px 20px rgba(15,23,42,.07);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
-  transition:transform .15s,background .15s;
+  will-change:transform,opacity;
 }
-.uni-action-btn:active{transform:scale(.94);background:#eef2f6}
+.uni-action-btn:active{transform:scale(.94);background:#fafbfc}
 .uni-action-icon{
-  width:38px;height:38px;border-radius:100px;flex-shrink:0;
+  width:46px;height:46px;flex-shrink:0;
   display:flex;align-items:center;justify-content:center;
-  background:#E8820A;color:#fff;
 }
-.uni-action-btn--route .uni-action-icon svg{width:19px;height:19px;display:block;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round}
-.uni-action-btn--cargo .uni-action-icon{background:#33a0fd}
-.uni-action-btn--travel .uni-action-icon{background:#ff8a00}
+.uni-action-icon svg{width:44px;height:44px;display:block}
+.uni-action-icon .cta-icon svg{width:44px;height:44px}
 .uni-action-label{font-size:11.5px;font-weight:700;text-align:center;line-height:1.2;white-space:normal;letter-spacing:-.01em}
+
+/* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
+.uni-mode-chip{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%,-50%) scale(.85);
+  display:flex;align-items:center;gap:8px;
+  padding:14px 22px;border-radius:100px;border:none;
+  background:var(--uni-chip-color,#E8820A);color:#fff;
+  font-family:inherit;font-size:15px;font-weight:700;
+  opacity:0;pointer-events:none;white-space:nowrap;
+  transition:opacity .25s ease .08s,transform .3s cubic-bezier(.34,1.56,.64,1) .08s;
+  box-shadow:0 12px 28px -8px rgba(0,0,0,.3);
+  -webkit-tap-highlight-color:transparent;
+}
+.uni-mode-chip.visible{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
+.uni-mode-chip-x{font-size:12px;opacity:.85}
 
 /* ── Driver region picker overlay ── */
 #driverRegionPickerOverlay{
@@ -1440,9 +1459,9 @@ body.view-sender .header{background:var(--app-bg)!important}
   left:16px;right:16px;
   top:max(112px,calc(env(safe-area-inset-top) + 96px));
   bottom:max(124px,calc(env(safe-area-inset-bottom) + 108px));
-  border-radius:36px;
+  border-radius:28px;
   background:#fff;
-  box-shadow:0 24px 64px rgba(0,0,0,.18),0 0 0 1px rgba(0,0,0,.06);
+  box-shadow:0 16px 40px rgba(15,23,42,.14),0 0 0 1px rgba(15,23,42,.05);
   transform:scale(.15);
   opacity:0;
   transform-origin:center center;
@@ -1488,22 +1507,23 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .upload-close:active{transform:scale(.92);background:#E8E8EB}
 .upload-close svg{width:20px;height:20px;stroke:#666;stroke-width:2.5;fill:none}
+.upload-drag{width:40px;height:5px;background:#E5E5E5;border-radius:100px;margin:0 auto 12px;flex-shrink:0}
 .upload-title{
-  color:#111;font-size:clamp(28px,8vw,36px);font-weight:800;
-  letter-spacing:-.04em;line-height:1.15;margin-bottom:8px;text-align:center;
+  color:#1a1c1e;font-size:19px;font-weight:800;
+  letter-spacing:-.02em;line-height:1.2;margin-bottom:4px;text-align:center;
   padding-right:44px;padding-left:44px;
 }
-.upload-inner:has(.upload-sub[hidden]) .upload-title{margin-bottom:4px}
+.upload-inner:has(.upload-sub[hidden]) .upload-title{margin-bottom:2px}
 .upload-sub{
-  color:#888;font-size:14px;font-weight:600;
+  color:#8a7362;font-size:13px;font-weight:600;
   margin-bottom:12px;text-align:center;
   flex-shrink:0;line-height:1.35;
 }
 .upload-sub[hidden]{display:none!important}
 .upload-zone{
   width:100%;flex:1;min-height:120px;
-  border:2px dashed #D4D4D8;
-  border-radius:28px;
+  border:1.5px solid #eef1f5;
+  border-radius:22px;
   position:relative;
   overflow:hidden;
   background:#111;
@@ -2249,19 +2269,25 @@ html, body { font-size: var(--fs-base); }
           </div>
         </div>
 
-        <!-- Bitta ekrandagi 3ta aniq amal (haydovchi + mijoz) -->
+        <!-- Bitta ekrandagi 3ta aniq amal (haydovchi + mijoz) — har biri alohida karta,
+             tushunarli 3D ikonka bilan. Bosilganda: boshqa ikkitasi ekran chetiga
+             chiqib ketadi, faol amal kichik "rejim chipi"ga aylanadi (enterUniMode). -->
         <div class="unified-actions">
-          <button type="button" class="uni-action-btn uni-action-btn--route" onclick="openDriverRouteSheet()">
-            <span class="uni-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
-            <span class="uni-action-label" id="uniRouteText">Yo'nalish e'lon qilish</span>
+          <button type="button" class="uni-action-btn uni-action-btn--driver" data-uni-key="driver" onclick="enterUniMode('driver')">
+            <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaDriverIcon"></span></span>
+            <span class="uni-action-label" id="uniRouteText">Haydovchiman</span>
           </button>
-          <button type="button" class="uni-action-btn uni-action-btn--cargo" onclick="openOrder()">
+          <button type="button" class="uni-action-btn uni-action-btn--cargo" data-uni-key="cargo" onclick="enterUniMode('cargo')">
             <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaOrderIcon"></span></span>
             <span class="uni-action-label" id="ctaOrderText">Yuk yuboraman</span>
           </button>
-          <button type="button" class="uni-action-btn uni-action-btn--travel" onclick="openTravelSheet()">
+          <button type="button" class="uni-action-btn uni-action-btn--travel" data-uni-key="travel" onclick="enterUniMode('travel')">
             <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaTravelIcon"></span></span>
             <span class="uni-action-label" id="ctaTravelText">Yo'lovchiman</span>
+          </button>
+          <button type="button" class="uni-mode-chip" id="uniModeChip" onclick="exitUniMode()" aria-label="Bekor qilish">
+            <span class="uni-mode-chip-label" id="uniModeChipLabel"></span>
+            <span class="uni-mode-chip-x" aria-hidden="true">✕</span>
           </button>
         </div>
       </div>
@@ -2323,6 +2349,7 @@ html, body { font-size: var(--fs-base); }
       <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="upload-inner">
+      <div class="upload-drag" aria-hidden="true"></div>
       <h2 class="upload-title" id="uploadTitle">Jo'natma rasmi</h2>
       <p class="upload-sub" id="uploadSub">Qutini ramka ichida ko'ring va rasm oling</p>
       <div class="upload-zone" id="uploadZone">
@@ -2862,6 +2889,7 @@ function openDriverRouteSheet(){
 function closeDriverRouteSheet(){
   document.getElementById('driverRouteSheetOverlay')?.classList.remove('open');
   document.body.style.overflow = '';
+  exitUniMode();
 }
 function toggleDriverRouteType(btn){
   const type = btn.dataset.type;
@@ -2920,6 +2948,56 @@ function openMineSheet(){
 function closeMineSheet(){
   document.getElementById('mineSheetOverlay')?.classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ── Bitta ekrandagi 3ta amal tugmasi: bosilganda boshqa ikkitasi ekran
+// chetiga uchib ketadi, faol amal kichik "rejim chipi"ga aylanadi (bekor
+// qilish tugmasi vazifasini ham bajaradi), so'ng tegishli sheet ochiladi. ──
+let activeUniMode = null;
+let uniModeOpenTimer = null;
+function uniModeMeta(){
+  return {
+    driver: { label: 'Haydovchiman', cyr: 'Ҳайдовчиман', color: '#E8820A', open: openDriverRouteSheet },
+    cargo:  { label: 'Yuk yuboraman', cyr: 'Юк юбораман', color: '#33a0fd', open: openOrder },
+    travel: { label: "Yo'lovchiman", cyr: 'Йўловчиман', color: '#ff8a00', open: openTravelSheet }
+  };
+}
+function enterUniMode(key){
+  if (activeUniMode) return; // rejim allaqachon faol — qayta bosishni e'tiborsiz qoldiramiz
+  const meta = uniModeMeta()[key];
+  if (!meta) return;
+  activeUniMode = key;
+  const btns = [...document.querySelectorAll('.uni-action-btn')];
+  const activeIndex = btns.findIndex(b => b.dataset.uniKey === key);
+  btns.forEach((btn, i) => {
+    if (i === activeIndex) return;
+    btn.style.transition = 'transform .32s cubic-bezier(.4,0,.2,1), opacity .28s ease';
+    btn.style.transform = (i < activeIndex ? 'translateX(-130%)' : 'translateX(130%)') + ' scale(.7)';
+    btn.style.opacity = '0';
+    btn.style.pointerEvents = 'none';
+  });
+  const chip = document.getElementById('uniModeChip');
+  const chipLabel = document.getElementById('uniModeChipLabel');
+  if (chip && chipLabel) {
+    chipLabel.textContent = scriptLatin ? meta.label : meta.cyr;
+    chip.style.setProperty('--uni-chip-color', meta.color);
+    requestAnimationFrame(() => chip.classList.add('visible'));
+  }
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.impactOccurred('light');
+  }
+  uniModeOpenTimer = setTimeout(() => { uniModeOpenTimer = null; meta.open(); }, 260);
+}
+function exitUniMode(){
+  if (!activeUniMode) return;
+  activeUniMode = null;
+  if (uniModeOpenTimer) { clearTimeout(uniModeOpenTimer); uniModeOpenTimer = null; }
+  document.querySelectorAll('.uni-action-btn').forEach(btn => {
+    btn.style.transform = '';
+    btn.style.opacity = '';
+    btn.style.pointerEvents = '';
+  });
+  document.getElementById('uniModeChip')?.classList.remove('visible');
 }
 function renderDriverRoutesList(){
   const list = document.getElementById('driverRoutesList');
@@ -3583,6 +3661,9 @@ const ICON_PACKAGE_3D = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><line
 const ICON_CTA_TRAVEL = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="ctg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9F5A"/><stop offset="100%" stop-color="#D35400"/></linearGradient><linearGradient id="ctg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFB87A"/><stop offset="100%" stop-color="#E67E22"/></linearGradient><linearGradient id="ctg3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F8F8F9"/><stop offset="100%" stop-color="#E8EAED"/></linearGradient></defs><ellipse cx="24" cy="43" rx="14" ry="3" fill="rgba(211,84,0,.2)"/><path d="M6 38 Q24 32 42 38 L40 42 Q24 38 8 42 Z" fill="url(#ctg3)" stroke="#eee" stroke-width=".8"/><path d="M8 38 L40 38" stroke="#D35400" stroke-width="2.5" stroke-dasharray="4 3" opacity=".7"/><circle cx="24" cy="16" r="8" fill="url(#ctg1)"/><circle cx="21.5" cy="14.5" r="1.8" fill="#fff" opacity=".5"/><rect x="18" y="24" width="12" height="14" rx="4" fill="url(#ctg2)"/><path d="M13 27 Q18 24 24 25 Q30 24 35 27 L33 32 Q24 29 15 32 Z" fill="url(#ctg2)"/></svg>`;
 
 const ICON_CTA_ORDER = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="cog1" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#fff"/><stop offset="100%" stop-color="#ECEEF1"/></linearGradient><linearGradient id="cog2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5F6F8"/><stop offset="100%" stop-color="#C8CDD4"/></linearGradient></defs><ellipse cx="24" cy="43" rx="13" ry="3" fill="rgba(0,0,0,.1)"/><path d="M11 24 L24 16 L37 24 L37 37 L24 44 L11 37 Z" fill="url(#cog2)"/><path d="M11 24 L24 31 L37 24 L24 16 Z" fill="url(#cog1)"/><rect x="20" y="8" width="8" height="10" rx="2" fill="#D35400" opacity=".95"/><path d="M24 16 L24 31" stroke="#D35400" stroke-width="2.2"/><path d="M14 26 L24 31 L34 26" stroke="#B8BFC8" stroke-width="1" fill="none"/></svg>`;
+// "Haydovchiman" uchun yangi 3D-uslub ikonka — ICON_CTA_TRAVEL/ICON_PACKAGE_3D bilan
+// bir xil til: gradient korpus, soya ellips, D35400 urg'u rangi.
+const ICON_CTA_DRIVER = `<svg viewBox="0 0 48 48" aria-hidden="true"><defs><linearGradient id="drg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FF9F5A"/><stop offset="100%" stop-color="#D35400"/></linearGradient><linearGradient id="drg2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFC896"/><stop offset="100%" stop-color="#E67E22"/></linearGradient></defs><ellipse cx="24" cy="41" rx="15" ry="3" fill="rgba(211,84,0,.2)"/><path d="M10 30 L12 22 Q14 17 20 17 L28 17 Q34 17 36 22 L38 30 Z" fill="url(#drg1)"/><rect x="7" y="27" width="34" height="11" rx="5.5" fill="url(#drg2)"/><rect x="16" y="20" width="16" height="8" rx="3" fill="#FFF3E8" opacity=".55"/><circle cx="15" cy="38" r="5" fill="#2b2b2b"/><circle cx="15" cy="38" r="2" fill="#8a8a8a"/><circle cx="33" cy="38" r="5" fill="#2b2b2b"/><circle cx="33" cy="38" r="2" fill="#8a8a8a"/></svg>`;
 
 const ICON_AVATAR = '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4.5" fill="#2AABEE"/><path d="M4 20.5c0-3.8 3.4-6.5 8-6.5s8 2.7 8 6.5" fill="#2AABEE"/></svg>';
 const ICON_BOX_SMALL = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2L3 7v10l9 5 9-5V7l-9-5z" fill="#2AABEE" opacity=".9"/><path d="M3 7l9 5 9-5" stroke="#fff" stroke-width="1.2" fill="none"/><path d="M12 12v10" stroke="#1e8bc4" stroke-width="1.5"/></svg>';
@@ -3835,8 +3916,10 @@ function initCtaIcons(){
   if (travelMapIcon) travelMapIcon.innerHTML = ICON_PASSENGER_3D;
   const travel = document.getElementById('ctaTravelIcon');
   const order = document.getElementById('ctaOrderIcon');
-  if (travel) travel.innerHTML = ICON_CTA_PERSON_WHITE;
-  if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
+  const driver = document.getElementById('ctaDriverIcon');
+  if (travel) travel.innerHTML = ICON_CTA_TRAVEL;
+  if (order) order.innerHTML = ICON_PACKAGE_3D;
+  if (driver) driver.innerHTML = ICON_CTA_DRIVER;
 }
 
 // "Qayerga boramiz?" kartasi hali to'g'ridan-to'g'ri qidiruv qilmaydi —
@@ -5098,7 +5181,7 @@ const MORPH_MULTI = [
 
 const MORPH_UI_ENTRIES = [
   ['#ctaTravelText', "Yo'lovchiman"], ['#ctaOrderText', 'Yuk yuboraman'],
-  ['#uniRouteText', "Yo'nalish e'lon qilish"],
+  ['#uniRouteText', 'Haydovchiman', 'Ҳайдовчиман'],
   ['#coachSkipBtn', "O'tkazib yuborish"],
   ['#mineSheetTitle', "Mening e'lonlarim"],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
@@ -7842,6 +7925,7 @@ function closeSendSheet(){
   clearSendDraft();
   resetSendSheetSteps();
   applyCyrillicUI();
+  exitUniMode();
 }
 
 async function openTravelSheet(){
@@ -7868,6 +7952,7 @@ function closeTravelSheet(){
   document.body.style.overflow = '';
   resetTravelSheetSteps();
   applyCyrillicUI();
+  exitUniMode();
 }
 
 async function submitTravel(e){
