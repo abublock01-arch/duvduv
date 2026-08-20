@@ -106,6 +106,28 @@ body.view-sender .header{background:var(--app-bg)!important}
 }
 .logo-text{display:none}
 
+/* Header — o'ng tarafdagi kichik amallar: haydovchilar ro'yxati, mening e'lonlarim */
+.header-right{
+  display:flex;align-items:center;gap:8px;
+  position:relative;z-index:1;flex-shrink:0;
+}
+.header-mine-btn{
+  width:40px;height:40px;border:none;border-radius:50%;
+  background:#f4f4f6;color:#374151;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-family:inherit;padding:0;flex-shrink:0;
+  position:relative;z-index:1;
+  -webkit-tap-highlight-color:transparent;transition:transform .15s,background .15s;
+}
+.header-mine-btn svg{width:20px;height:20px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round}
+.header-mine-btn:active{transform:scale(.92);background:#e8e8ec}
+.header-mine-badge{
+  position:absolute;top:-2px;right:-2px;min-width:16px;height:16px;padding:0 3px;
+  border-radius:100px;background:#E8820A;color:#fff;
+  font-size:10px;font-weight:800;line-height:16px;text-align:center;
+  border:2px solid var(--app-bg);
+}
+
 /* TOGGLE — yashirilgan */
 .header > .toggle{
   margin-bottom:0;
@@ -289,6 +311,10 @@ body.view-sender .header{background:var(--app-bg)!important}
 .shipment-icon-btn--delete svg{stroke:currentColor;stroke-width:2;fill:none}
 .shipment-icon-btn--delete:hover,.shipment-icon-btn--delete:active{color:#ef4444;background:rgba(239,68,68,.08)}
 .shipment-icon-btn:active{transform:scale(.92)}
+.sheet-overlay--mine{z-index:210}
+.sheet--mine{max-height:78vh;display:flex;flex-direction:column;overflow:hidden}
+.mine-sheet-title{font-size:19px;font-weight:800;color:#1a1c1e;margin:0 0 14px;flex-shrink:0}
+.sheet--mine .shipments-wrap{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .sheet-overlay--edit{z-index:212}
 .sheet-overlay--travel{z-index:213}
 .sheet-overlay--detail{
@@ -619,9 +645,12 @@ body.view-sender .header{background:var(--app-bg)!important}
 .cta-icon{display:contents}
 .cta-icon svg{width:28px;height:28px;display:block;color:inherit}
 
-/* ══ DRIVER VIEW ══ */
+/* ══ BITTA BIRLASHTIRILGAN EKRAN (xarita asosiy) ══
+   Haydovchi va mijoz uchun alohida ekran yo'q — hammaga bitta xarita
+   ko'rinishi, pastda esa 3ta aniq amal: Yo'nalish e'lon qilish /
+   Yuk yuboraman / Yo'lovchiman. */
 #driverView{
-  display:none;flex-direction:column;align-items:stretch;
+  display:flex;flex-direction:column;align-items:stretch;
   padding:0;height:100%;min-height:0;flex:1;gap:0;
   background:var(--app-bg);overflow:hidden;
 }
@@ -666,6 +695,31 @@ body.view-sender .header{background:var(--app-bg)!important}
   color:#2AABEE;
 }
 .drv-route-arrow svg{width:26px;height:26px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+
+/* ── Bitta ekrandagi 3ta aniq amal: Yo'nalish e'lon qilish / Yuk yuboraman / Yo'lovchiman ── */
+.unified-actions{
+  order:3;flex:0 0 auto;display:flex;align-items:stretch;gap:10px;
+  padding:12px 14px max(14px,env(safe-area-inset-bottom));
+  background:#fff;border-top:1.5px solid #e8edf2;
+  position:relative;z-index:20;
+}
+.uni-action-btn{
+  flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
+  padding:12px 6px;border:none;border-radius:18px;
+  background:#f8fafc;color:#1a1c1e;font-family:inherit;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
+  transition:transform .15s,background .15s;
+}
+.uni-action-btn:active{transform:scale(.94);background:#eef2f6}
+.uni-action-icon{
+  width:38px;height:38px;border-radius:100px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  background:#E8820A;color:#fff;
+}
+.uni-action-btn--route .uni-action-icon svg{width:19px;height:19px;display:block;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round}
+.uni-action-btn--cargo .uni-action-icon{background:#33a0fd}
+.uni-action-btn--travel .uni-action-icon{background:#ff8a00}
+.uni-action-label{font-size:11.5px;font-weight:700;text-align:center;line-height:1.2;white-space:normal;letter-spacing:-.01em}
 
 /* ── Driver region picker overlay ── */
 #driverRegionPickerOverlay{
@@ -2137,66 +2191,23 @@ html, body { font-size: var(--fs-base); }
       <div class="header-bar">
         <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
         <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
-      </div>
-      <div class="toggle" style="display:none" aria-hidden="true">
-        <button class="toggle-btn active" id="btnSender" onclick="switchView('sender')">Jo'natuvchi</button>
-        <button class="toggle-btn" id="btnDriver" onclick="switchView('driver')">Haydovchi</button>
+        <div class="header-right">
+          <button type="button" class="header-mine-btn" id="headerDriversBtn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
+          </button>
+          <button type="button" class="header-mine-btn" id="headerMineBtn" onclick="openMineSheet()" aria-label="Mening e'lonlarim">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            <span class="header-mine-badge" id="headerMineBadge" hidden>0</span>
+          </button>
+        </div>
       </div>
     </div>
 
-    <!-- Content -->
+    <!-- Content: BITTA birlashtirilgan ekran — xarita asosiy, ostida 3ta aniq amal -->
     <div class="content">
 
-      <!-- SENDER -->
-      <div id="senderView">
-        <div class="velocity-bg" aria-hidden="true"></div>
-        <div class="sender-body">
-          <div class="sender-hero" id="senderHero" aria-hidden="true">
-            <div class="velocity-search-card" onclick="pulseServiceCards()" role="button" tabindex="0">
-              <h2 class="velocity-search-title" id="velocitySearchTitle">Qayerga boramiz?</h2>
-              <div class="velocity-search-input">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
-                <span id="velocitySearchPh">Manzilni kiriting</span>
-              </div>
-            </div>
-          </div>
-          <div class="shipments-wrap" id="shipmentsWrap">
-            <div class="shipments-head">Jo'natmalarim</div>
-            <div class="shipments-list" id="shipmentsList"></div>
-          </div>
-        </div>
-
-        <div class="cta-wrap">
-          <div class="cta-row">
-            <button type="button" class="cta-btn cta-btn--travel" onclick="openTravelSheet()">
-              <div class="cta-icon-wrap"><div class="cta-icon" id="ctaTravelIcon"></div></div>
-              <span class="cta-text" id="ctaTravelText">YO'LOVCHIMAN</span>
-            </button>
-            <button type="button" class="cta-btn" onclick="openOrder()">
-              <div class="cta-icon-wrap"><div class="cta-icon" id="ctaOrderIcon"></div></div>
-              <span class="cta-text" id="ctaOrderText">YUK YUBORAMAN</span>
-            </button>
-          </div>
-          <button type="button" class="role-switch" onclick="switchView('driver')" aria-label="Haydovchi ekraniga o'tish">
-            <span class="role-switch-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.2"/><path d="M12 4.5v3.5M12 16v3.5M5.5 16l2.5-1.5M18.5 16l-2.5-1.5"/></svg>
-            </span>
-            <span class="role-switch-label" id="roleSwitchDriverLbl">Haydovchimisiz?</span>
-            <span class="role-switch-chev" aria-hidden="true">›</span>
-          </button>
-          <button type="button" class="driver-list-btn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
-            <span class="driver-list-btn-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
-            </span>
-            <span class="driver-list-btn-label" id="driverListBtnLbl">Haydovchilarni ko'rish</span>
-            <span class="role-switch-chev" aria-hidden="true">›</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- DRIVER -->
       <div id="driverView">
-        <!-- Yangi route bar — xarita ustida ikki tugma -->
+        <!-- Yo'nalish qidiruv paneli — xarita ustida -->
         <div class="driver-route-bar">
           <button class="drv-route-btn" id="driverFromBtn" onclick="openDriverRegionPicker('from')">
             <div class="drv-dot drv-dot--a"></div>
@@ -2213,17 +2224,6 @@ html, body { font-size: var(--fs-base); }
 
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
-          <button type="button" class="role-switch role-switch--float" onclick="switchView('sender')" aria-label="Mijoz ekraniga o'tish">
-            <span class="role-switch-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
-            </span>
-            <span class="role-switch-label" id="roleSwitchSenderLbl">Mijozmisiz?</span>
-            <span class="role-switch-chev" aria-hidden="true">›</span>
-          </button>
-          <button type="button" class="post-route-fab" onclick="openDriverRouteSheet()" aria-label="Yo'nalishimni e'lon qilish">
-            <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
-            <span id="postRouteFabLbl">Yo'nalish e'lon qilish</span>
-          </button>
           <div class="map-controls">
             <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
             <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
@@ -2248,9 +2248,37 @@ html, body { font-size: var(--fs-base); }
             </div>
           </div>
         </div>
+
+        <!-- Bitta ekrandagi 3ta aniq amal (haydovchi + mijoz) -->
+        <div class="unified-actions">
+          <button type="button" class="uni-action-btn uni-action-btn--route" onclick="openDriverRouteSheet()">
+            <span class="uni-action-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span>
+            <span class="uni-action-label" id="uniRouteText">Yo'nalish e'lon qilish</span>
+          </button>
+          <button type="button" class="uni-action-btn uni-action-btn--cargo" onclick="openOrder()">
+            <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaOrderIcon"></span></span>
+            <span class="uni-action-label" id="ctaOrderText">Yuk yuboraman</span>
+          </button>
+          <button type="button" class="uni-action-btn uni-action-btn--travel" onclick="openTravelSheet()">
+            <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaTravelIcon"></span></span>
+            <span class="uni-action-label" id="ctaTravelText">Yo'lovchiman</span>
+          </button>
+        </div>
       </div>
 
     </div>
+</div>
+
+<!-- MENING E'LONLARIM (yuk/yo'lovchi e'lonlarim) -->
+<div class="sheet-overlay sheet-overlay--mine" id="mineSheetOverlay" onclick="if(event.target===this)closeMineSheet()">
+  <div class="sheet sheet--mine" onclick="event.stopPropagation()">
+    <button type="button" class="sheet-close" onclick="closeMineSheet()" aria-label="Yopish">×</button>
+    <div class="sheet-drag"></div>
+    <h2 class="mine-sheet-title" id="mineSheetTitle">Mening e'lonlarim</h2>
+    <div class="shipments-wrap visible" id="shipmentsWrap">
+      <div class="shipments-list" id="shipmentsList"></div>
+    </div>
+  </div>
 </div>
 
 <!-- LOKATSIYA TANLASH -->
@@ -2865,6 +2893,7 @@ async function submitDriverRoute(e){
     showToast("Yo'nalish e'lon qilindi");
     closeDriverRouteSheet();
     document.getElementById('driverRouteNote').value = '';
+    persistUserRole('driver'); // haqiqiy yo'nalish e'lon qildi — endi haydovchi
   } else {
     showToast('Xatolik yuz berdi, qayta urinib ko\'ring');
   }
@@ -2881,6 +2910,15 @@ function openDriverListSheet(){
 }
 function closeDriverListSheet(){
   document.getElementById('driverListSheetOverlay')?.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function openMineSheet(){
+  renderShipments();
+  document.getElementById('mineSheetOverlay')?.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeMineSheet(){
+  document.getElementById('mineSheetOverlay')?.classList.remove('open');
   document.body.style.overflow = '';
 }
 function renderDriverRoutesList(){
@@ -2999,12 +3037,9 @@ function restoreUserPrefs(){
 }
 
 function applySavedUserRole(){
-  if (telegramUser.id == null) {
-    switchView('sender');
-    return;
-  }
-  const role = localStorage.getItem(userPrefKey('role'));
-  switchView(role === 'driver' ? 'driver' : 'sender');
+  const role = telegramUser.id != null ? localStorage.getItem(userPrefKey('role')) : null;
+  persistUserRole(role === 'driver' ? 'driver' : 'sender');
+  initUnifiedMap();
 }
 
 function initTelegramUser(){
@@ -3808,7 +3843,7 @@ function initCtaIcons(){
 // bosilganda haqiqiy amal tugmalariga (Yo'lovchi/Yuk) e'tiborni tortadi,
 // soxta funksiya va'da qilmasdan.
 function pulseServiceCards(){
-  document.querySelectorAll('.cta-row .cta-btn').forEach((btn, i) => {
+  document.querySelectorAll('.unified-actions .uni-action-btn').forEach((btn, i) => {
     setTimeout(() => {
       btn.classList.add('cta-btn--pulse');
       setTimeout(() => btn.classList.remove('cta-btn--pulse'), 500);
@@ -3824,19 +3859,14 @@ const COACH_STEPS = [
     desc: "O'zbekiston bo'ylab yuk va yo'lovchini bir zumda bog'laymiz — tez, oddiy, ishonchli. Keling, qisqacha tanishtiramiz."
   },
   {
-    sel: '.cta-row', pad: 10, radius: 20,
+    sel: '.unified-actions', pad: 10, radius: 20,
     title: 'Shu yerdan boshlang',
-    desc: "Yo'lovchi bo'lsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN tugmasini bosing."
-  },
-  {
-    sel: '.role-switch', pad: 8, radius: 22,
-    title: 'Haydovchimisiz?',
-    desc: "Bu tugmani bosib xaritadagi barcha e'lonlarni ko'rasiz va yo'l tanlaysiz."
+    desc: "Yo'lovchi bo'lsangiz — YO'LOVCHIMAN, yuk jo'natsangiz — YUK YUBORAMAN, haydovchi bo'lsangiz — YO'NALISH E'LON QILISH tugmasini bosing."
   }
 ];
 let coachStep = 0;
 let coachRetries = 0;
-function coachSeenKey(){ return 'duvduv_coach_seen_v4'; }
+function coachSeenKey(){ return 'duvduv_coach_seen_v5'; }
 function maybeShowOnboarding(){
   try {
     if (localStorage.getItem(coachSeenKey())) return;
@@ -5067,15 +5097,10 @@ const MORPH_MULTI = [
 ];
 
 const MORPH_UI_ENTRIES = [
-  ['#btnSender', "Jo'natuvchi"], ['#btnDriver', 'Haydovchi'],
-  ['#ctaTravelText', "YO'LOVCHIMAN"], ['#ctaOrderText', 'YUK YUBORAMAN'],
+  ['#ctaTravelText', "Yo'lovchiman"], ['#ctaOrderText', 'Yuk yuboraman'],
+  ['#uniRouteText', "Yo'nalish e'lon qilish"],
   ['#coachSkipBtn', "O'tkazib yuborish"],
-  ['#driverListBtnLbl', "Haydovchilarni ko'rish"],
-  ['#velocitySearchTitle', 'Qayerga boramiz?'],
-  ['#velocitySearchPh', 'Manzilni kiriting'],
-  ['#postRouteFabLbl', "Yo'nalish e'lon qilish"],
-  ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
-  ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
+  ['#mineSheetTitle', "Mening e'lonlarim"],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#uploadSkipBtn', 'Rasmsiz yuborish', 'Расмсиз юбориш'],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
@@ -6211,14 +6236,17 @@ function openTelegramChat(){
   window.open('https://t.me/' + uname.replace('@', ''));
 }
 
-function switchView(v){
-  if (telegramUser.id != null) {
-    saveUserRole(v === 'driver' ? 'driver' : 'sender');
-  }
-  // Har safar view o'zgarganda Firestore ga saqlash (lastSeen bilan)
-  if (telegramUser.id && db) {
+// Backend (bot.js) mijoz/haydovchini "role" maydoni orqali ajratadi
+// (bildirishnomalar shu asosda yuboriladi) — shu sabab bitta ekranga
+// o'tgandan keyin ham bu maydonni yozib turamiz: standart 'sender',
+// haqiqiy yo'nalish e'lon qilinganda 'driver'ga ko'tariladi
+// (submitDriverRoute'da chaqiriladi).
+function persistUserRole(role){
+  if (telegramUser.id == null) return;
+  saveUserRole(role);
+  if (db) {
     db.collection('users').doc(String(telegramUser.id)).set({
-      role: v === 'driver' ? 'driver' : 'sender',
+      role,
       chatId: telegramUser.id,
       notifications: true,
       firstName: telegramUser.first_name || '',
@@ -6226,34 +6254,27 @@ function switchView(v){
       lastSeen: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true }).catch(() => {});
   }
-  document.getElementById('senderView').style.display = v==='sender'?'flex':'none';
-  document.getElementById('driverView').style.display = v==='driver'?'flex':'none';
-  document.getElementById('btnSender').className = 'toggle-btn'+(v==='sender'?' active':'');
-  document.getElementById('btnDriver').className = 'toggle-btn'+(v==='driver'?' active':'');
-  document.body.classList.toggle('view-driver', v === 'driver');
-  document.body.classList.toggle('view-sender', v === 'sender');
-  if (v === 'driver') {
-    // Haydovchi modega o'tganda GPS so'raymiz — xarita uchun kerak
-    requestLocationOnce();
-    loadDriverRouteState();
-    ensureDriverRegionPicker();
-    scheduleDriverDistrictReveal();
-    if (!map) initDriverMap();
-    else {
-      setTimeout(() => {
-        map.resize();
-        refreshOrderMarkersDebounced();
-        ensureDriverRegionPicker();
-        centerMapOnDriver();
-      }, 280);
-    }
-    refreshUserLocationRegion().then(() => {
-      applyCyrillicUI();
-    });
-  } else {
-    hideDriverDistrictPanel();
-    applyCyrillicUI();
+}
+
+// Bitta birlashtirilgan ekran — xarita hammaga bir xil, darhol ko'rsatiladi.
+function initUnifiedMap(){
+  document.body.classList.add('view-driver');
+  requestLocationOnce();
+  loadDriverRouteState();
+  ensureDriverRegionPicker();
+  scheduleDriverDistrictReveal();
+  if (!map) initDriverMap();
+  else {
+    setTimeout(() => {
+      map.resize();
+      refreshOrderMarkersDebounced();
+      ensureDriverRegionPicker();
+      centerMapOnDriver();
+    }, 280);
   }
+  refreshUserLocationRegion().then(() => {
+    applyCyrillicUI();
+  });
 }
 
 function initLocationPickerMap(centerLng, centerLat){
@@ -7280,15 +7301,18 @@ function formatDate(ts) {
 function renderShipments(){
   const wrap = document.getElementById('shipmentsWrap');
   const list = document.getElementById('shipmentsList');
-  const senderView = document.getElementById('senderView');
   if (!wrap || !list) return;
   const mine = getMyShipments();
-  senderView?.classList.toggle('has-active-shipments', mine.length > 0);
+  const badge = document.getElementById('headerMineBadge');
+  if (badge) {
+    badge.hidden = mine.length === 0;
+    badge.textContent = String(mine.length);
+  }
   if (!mine.length) {
     wrap.classList.add('visible');
     list.innerHTML = `<div class="shipments-empty">
     <p class="shipments-empty-title">Ҳали фаол эълонлар йўқ</p>
-    <span class="shipments-empty-sub">САФАРНИ БОШЛАШ ёки ПОЧТА ЮБОРИШ орқали қўшинг</span>
+    <span class="shipments-empty-sub">"ЮК ЮБОРАМАН" ёки "ЙЎЛОВЧИМАН" орқали қўшинг</span>
   </div>`;
     return;
   }
