@@ -137,33 +137,44 @@ body.view-sender .header{background:var(--app-bg)!important}
   position:relative;flex:1;min-height:0;width:100%;
   display:flex;flex-direction:column;overflow:hidden;
 }
-/* ══ SENDER HERO — mijoz oynasi rasmi ══ */
+/* ══ "Kinetic Velocity" dizayn tizimi — mijoz bosh ekrani ══
+   Manba: Stitch variant_3 (xarita bosh ekranda) + DESIGN.md spetsifikatsiyasi.
+   Ranglar: primary #914c00 / primary-container #ff8a00 / on-primary-container #613100
+            secondary-container #33a0fd / on-secondary-container #00355c
+   Soyalar: Level1 (karta) 0 4px 20px rgba(0,0,0,.05) — Level2 (asosiy amal) 0 8px 30px rgba(0,0,0,.12) */
+.velocity-bg{
+  position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;
+  background-color:#f3f3f6;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(138,115,98,.09) 0 1.5px, transparent 1.5px 64px),
+    repeating-linear-gradient(90deg, rgba(138,115,98,.09) 0 1.5px, transparent 1.5px 84px),
+    repeating-linear-gradient(35deg, rgba(138,115,98,.05) 0 1px, transparent 1px 110px);
+}
+.velocity-bg::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg, rgba(249,249,252,.5) 0%, rgba(249,249,252,.72) 42%, #f9f9fc 80%);
+}
+#senderView.has-active-shipments .velocity-bg{display:none}
+/* ══ SENDER HERO — "Qayerga boramiz?" qidiruv-uslubidagi karta ══ */
 .sender-hero{
-  flex-shrink:0;display:flex;flex-direction:column;align-items:center;
-  gap:10px;padding:6px 0 10px;width:100%;
+  flex-shrink:0;display:flex;flex-direction:column;align-items:stretch;
+  gap:10px;padding:14px 0 10px;width:100%;position:relative;z-index:1;
 }
-/* Stitch "Hero Image Box" — rounded-2xl, aspect-[4/3], oq fon, yumshoq soya */
-.sender-hero-box{
-  width:100%;aspect-ratio:4/3;border-radius:16px;overflow:hidden;
-  background:#fff;box-shadow:0 4px 20px rgba(0,0,0,.05);
-  display:flex;align-items:center;justify-content:center;
+.velocity-search-card{
+  width:100%;background:#fff;border-radius:20px;padding:22px 20px;
+  box-shadow:0 4px 20px rgba(0,0,0,.05);border:1px solid #e2e2e5;
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  animation:velocitySlideUp .5s cubic-bezier(.22,1,.36,1) both;
 }
-.sender-hero-badge{
-  display:inline-flex;align-items:center;gap:7px;
-  padding:7px 16px;border-radius:100px;
-  background:linear-gradient(180deg,#F4FAFF 0%,#E3F4FD 100%);
-  border:2px solid rgba(42,171,238,.38);
-  color:#0B5CAD;font-size:13px;font-weight:800;letter-spacing:.03em;
-  box-shadow:0 2px 10px rgba(42,171,238,.1);
+.velocity-search-title{font-size:19px;font-weight:700;color:#1a1c1e;text-align:center;letter-spacing:-.01em}
+.velocity-search-input{
+  width:100%;display:flex;align-items:center;gap:10px;
+  background:#f3f3f6;border:1px solid #ddc1ae;border-radius:12px;
+  height:52px;padding:0 16px;color:#564334;
 }
-.sender-hero-badge svg{
-  width:18px;height:18px;flex-shrink:0;
-  stroke:currentColor;fill:none;stroke-width:2;
-  stroke-linecap:round;stroke-linejoin:round;
-}
-.sender-hero-img{
-  width:100%;height:100%;object-fit:cover;display:block;
-}
+.velocity-search-input svg{width:20px;height:20px;flex-shrink:0;color:#914c00;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.velocity-search-input span{font-size:16px;color:#8a7362}
+@keyframes velocitySlideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 #senderView.has-active-shipments .sender-hero{display:none}
 .shipments-empty,.shipments-list{border:none}
 #senderView .shipments-wrap,
@@ -504,19 +515,25 @@ body.view-sender .header{background:var(--app-bg)!important}
 .role-switch-label{flex:0 1 auto;text-align:center;line-height:1.2;white-space:nowrap}
 /* Stitch variant_1: "HAYDOVCHIMISIZ?" — oq fon, 2px outline, rounded-xl,
    h-56px, faqat markazlashgan matn (ikonka/strelkasiz). */
+/* "Haydovchi bo'lish" — DESIGN.md pill link: oq fon, primary/20 chegara,
+   soft shadow, ikonka+matn, markazlashgan, o'z eniga mos (full-width emas). */
 #senderView .role-switch{
-  display:flex;width:100%;min-height:56px;
-  padding:8px 16px;border:2px solid #914c00;border-radius:12px;
+  display:inline-flex;align-self:center;width:auto;min-height:48px;
+  padding:12px 22px;border:1px solid rgba(145,76,0,.2);border-radius:100px;
   background:#fff;color:#914c00;
-  font-size:18px;font-weight:600;
-  box-shadow:0 4px 20px rgba(0,0,0,.05);
+  font-size:14px;font-weight:600;letter-spacing:.02em;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);
+  animation:velocitySlideUp .5s cubic-bezier(.22,1,.36,1) both;animation-delay:.24s;
 }
 #senderView .role-switch:active{
-  transform:scale(.95);background:#fff;border-color:#914c00;box-shadow:0 4px 20px rgba(0,0,0,.05);
+  transform:scale(.95);box-shadow:0 2px 8px rgba(0,0,0,.04);
 }
-#senderView .role-switch-icon,
+#senderView .role-switch-icon{
+  width:20px;height:20px;background:transparent;color:#914c00;
+}
+#senderView .role-switch-icon svg{width:20px;height:20px}
 #senderView .role-switch-chev{display:none}
-#senderView .role-switch-label{white-space:normal;text-transform:uppercase}
+#senderView .role-switch-label{white-space:nowrap}
 .role-switch-chev{
   flex-shrink:0;width:18px;height:18px;display:flex;align-items:center;justify-content:center;
   font-size:18px;font-weight:400;line-height:1;color:rgba(42,171,238,.5);
@@ -533,28 +550,26 @@ body.view-sender .header{background:var(--app-bg)!important}
 .role-switch--float:active{transform:translateX(-50%) scale(.98)}
 .role-switch--float .role-switch-chev{transform:rotate(180deg)}
 /* Mijoz: "Haydovchilarni ko'rish" — haydovchilar e'lon qilgan yo'nalishlar ro'yxati */
+/* Bu tugma Stitch dizaynida yo'q — ilovaning o'z qo'shimcha imkoniyati,
+   shu sabab asosiy pill bilan bellashmasin deb kichik ikkinchi darajali
+   matn-havola sifatida bosiladi. */
 .driver-list-btn{
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  width:100%;min-height:56px;
-  padding:8px 16px;
-  border:2px solid #16a34a;
-  border-radius:12px;
-  background:#fff;
-  color:#16a34a;
-  font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.01em;
+  display:inline-flex;align-self:center;align-items:center;justify-content:center;gap:6px;
+  width:auto;min-height:32px;
+  padding:4px 8px;border:none;background:transparent;
+  color:#8a7362;
+  font-family:inherit;font-size:13px;font-weight:600;letter-spacing:.01em;
   cursor:pointer;outline:none;
-  box-shadow:0 4px 20px rgba(0,0,0,.05);
   -webkit-tap-highlight-color:transparent;
-  transition:transform .2s;
+  transition:transform .15s,color .15s;
+  animation:velocitySlideUp .5s cubic-bezier(.22,1,.36,1) both;animation-delay:.3s;
 }
-.driver-list-btn:active{transform:scale(.95)}
+.driver-list-btn:active{transform:scale(.95);color:#16a34a}
 .driver-list-btn-icon{
-  width:28px;height:28px;flex-shrink:0;border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  background:rgba(34,197,94,.14);color:#16a34a;
+  width:16px;height:16px;flex-shrink:0;background:transparent;color:currentColor;
 }
-.driver-list-btn-icon svg{width:17px;height:17px;display:block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.driver-list-btn-label{flex:0 1 auto;text-align:center;line-height:1.2;white-space:nowrap}
+.driver-list-btn-icon svg{width:16px;height:16px;display:block;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.driver-list-btn-label{flex:0 1 auto;text-align:center;line-height:1.2;white-space:nowrap;text-decoration:underline;text-decoration-color:rgba(138,115,98,.35);text-underline-offset:3px}
 /* Haydovchi: xarita ustidagi "yo'nalish e'lon qilish" FAB */
 .post-route-fab{
   position:absolute;right:14px;top:14px;
@@ -567,37 +582,42 @@ body.view-sender .header{background:var(--app-bg)!important}
 .post-route-fab:active{transform:scale(.95)}
 .post-route-fab svg{width:18px;height:18px;stroke:#fff;fill:none;stroke-width:2.4;stroke-linecap:round}
 .cta-row{
-  display:flex;align-items:stretch;gap:10px;
+  display:flex;align-items:stretch;gap:16px;
+  position:relative;z-index:1;
 }
-/* Stitch "variant_1_klassik_grid_dizayn" dizayniga aynan mos: Material 3
-   tonal tugmalar — to'yingan oq/rangli emas, pastel fon + shu rangning
-   to'q tusidagi matn/ikonka (primary-container/on-primary-container va
-   secondary-container/on-secondary-container juftliklari). */
+/* "Kinetic Velocity" service card — oq karta + dumaloq rangli ikonka-belgi,
+   DESIGN.md: Level1 soya, rounded-xl, primary/secondary-container juftligi. */
 .cta-btn{
   position:relative;flex:1;min-width:0;
-  background:#33a0fd;color:#00355c;
-  padding:16px 8px;border:none;border-radius:12px;min-height:100px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
-  box-shadow:0 8px 30px rgba(0,0,0,.12);
-  cursor:pointer;transition:transform .2s;outline:none;
+  background:#fff;color:#1a1c1e;
+  padding:20px 8px;border:1px solid #e2e2e5;border-radius:20px;min-height:128px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;
+  box-shadow:0 4px 20px rgba(0,0,0,.05);
+  cursor:pointer;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .2s,border-color .2s;outline:none;
   -webkit-appearance:none;appearance:none;
+  animation:velocitySlideUp .5s cubic-bezier(.22,1,.36,1) both;
+  animation-delay:.08s;
 }
-.cta-btn--travel{
-  background:#ff8a00!important;color:#613100!important;
-}
+.cta-row > .cta-btn:nth-child(2){animation-delay:.16s}
+.cta-btn--travel{}
 .cta-text{
-  text-align:center;color:inherit;
-  font-size:clamp(15px,5vw,20px);font-weight:600;letter-spacing:0;
+  text-align:center;color:#1a1c1e;
+  font-size:15px;font-weight:600;letter-spacing:0;
   white-space:normal;line-height:1.15;
 }
-.cta-btn:active{transform:scale(.95)}
+.cta-btn:active{transform:scale(.95);box-shadow:0 2px 10px rgba(0,0,0,.06)}
+.cta-btn--pulse{animation:velocityPulse .5s cubic-bezier(.34,1.56,.64,1)}
+@keyframes velocityPulse{0%{transform:scale(1)}40%{transform:scale(1.06)}100%{transform:scale(1)}}
 .cta-icon-wrap{
-  width:36px;height:36px;flex-shrink:0;
+  width:56px;height:56px;flex-shrink:0;border-radius:100px;
   display:flex;align-items:center;justify-content:center;
-  color:inherit;
+  background:#33a0fd;color:#00355c;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 }
+.cta-btn--travel .cta-icon-wrap{background:#ff8a00;color:#613100}
+.cta-btn:active .cta-icon-wrap{transform:scale(1.08)}
 .cta-icon{display:contents}
-.cta-icon svg{width:36px;height:36px;display:block;color:inherit}
+.cta-icon svg{width:28px;height:28px;display:block;color:inherit}
 
 /* ══ DRIVER VIEW ══ */
 #driverView{
@@ -2100,7 +2120,8 @@ html, body { font-size: var(--fs-base); }
   .sheet-drag { margin-bottom:16px; }
   .sheet-fields { gap:8px; margin-bottom:16px; }
   .shipments-empty { gap:4px; padding:4px 0 8px; }
-  .sender-hero-img { max-width:min(220px,72vw); }
+  .velocity-search-card { padding:16px 18px; gap:12px; }
+  .cta-btn { min-height:104px; }
 }
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -2128,14 +2149,15 @@ html, body { font-size: var(--fs-base); }
 
       <!-- SENDER -->
       <div id="senderView">
+        <div class="velocity-bg" aria-hidden="true"></div>
         <div class="sender-body">
           <div class="sender-hero" id="senderHero" aria-hidden="true">
-            <div class="sender-hero-box">
-              <img class="sender-hero-img" src="assets/scene-car.png?v=2" fetchpriority="high" loading="eager" width="560" height="420" alt="">
-            </div>
-            <div class="sender-hero-badge">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-3.3 3.1-6 7-6s7 2.7 7 6"/></svg>
-              <span id="senderHeroBadgeLbl">Mijoz</span>
+            <div class="velocity-search-card" onclick="pulseServiceCards()" role="button" tabindex="0">
+              <h2 class="velocity-search-title" id="velocitySearchTitle">Qayerga boramiz?</h2>
+              <div class="velocity-search-input">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+                <span id="velocitySearchPh">Manzilni kiriting</span>
+              </div>
             </div>
           </div>
           <div class="shipments-wrap" id="shipmentsWrap">
@@ -3782,6 +3804,18 @@ function initCtaIcons(){
   if (order) order.innerHTML = ICON_CTA_BOX_WHITE;
 }
 
+// "Qayerga boramiz?" kartasi hali to'g'ridan-to'g'ri qidiruv qilmaydi —
+// bosilganda haqiqiy amal tugmalariga (Yo'lovchi/Yuk) e'tiborni tortadi,
+// soxta funksiya va'da qilmasdan.
+function pulseServiceCards(){
+  document.querySelectorAll('.cta-row .cta-btn').forEach((btn, i) => {
+    setTimeout(() => {
+      btn.classList.add('cta-btn--pulse');
+      setTimeout(() => btn.classList.remove('cta-btn--pulse'), 500);
+    }, i * 90);
+  });
+}
+
 // ── Birinchi ochilishda haqiqiy tugmalarni ko'rsatib beruvchi coach-mark ──
 const COACH_STEPS = [
   {
@@ -5037,10 +5071,11 @@ const MORPH_UI_ENTRIES = [
   ['#ctaTravelText', "YO'LOVCHIMAN"], ['#ctaOrderText', 'YUK YUBORAMAN'],
   ['#coachSkipBtn', "O'tkazib yuborish"],
   ['#driverListBtnLbl', "Haydovchilarni ko'rish"],
+  ['#velocitySearchTitle', 'Qayerga boramiz?'],
+  ['#velocitySearchPh', 'Manzilni kiriting'],
   ['#postRouteFabLbl', "Yo'nalish e'lon qilish"],
   ['#roleSwitchDriverLbl', 'Haydovchimisiz?', 'Ҳайдовчимисиз?'],
   ['#roleSwitchSenderLbl', 'Mijozmisiz?', 'Мижозмисиз?'],
-  ['#senderHeroBadgeLbl', 'Mijoz', 'Мижоз'],
   ['#uploadTitle', "Jo'natma rasmi"], ['#uploadSub', "Qutini ramka ichida ko'ring va rasm oling"],
   ['#uploadSkipBtn', 'Rasmsiz yuborish', 'Расмсиз юбориш'],
   ['#zoneGalleryBtn', 'Galereyadan tanlash'], ['#zonePlaceholderText', 'Kamera yuklanmoqda…'],
