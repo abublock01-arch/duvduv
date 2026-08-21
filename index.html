@@ -708,33 +708,26 @@ body.view-sender .header{background:var(--app-bg)!important}
   z-index:20;
 }
 /* Har bir amal — kvadratga yaqin, yumshoq (o'tkir bo'lmagan) burchakli oq ramka,
-   atrofida nozik marjon-zanjir xoshiya (Samarqand naqqoshligidagi tilla+feruza
-   "marjon" chegara uslubi — girih an'anasidagi kichik nuqta-zanjir, keng
-   diagonal chiziq emas); ikonka ham, matn ham shu ramka ichida. aspect-ratio
-   bilan har xil ekran kengligida ham to'g'ri kvadrat shaklda qoladi. Ramka
-   o'zi biroz ixchamroq, ikonka esa ramkaga nisbatan kattaroq. */
+   atrofida oddiy ingichka ko'k chiziq. Ikonka ham, matn ham shu ramka ichida.
+   aspect-ratio bilan har xil ekran kengligida ham to'g'ri kvadrat shaklda
+   qoladi. Ramka o'zi biroz ixchamroq, ikonka esa ramkaga nisbatan kattaroq. */
 .uni-action-btn{
   flex:1;min-width:0;aspect-ratio:1/1;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  padding:6% 5%;border:5px solid transparent;border-radius:20px;
-  background:
-    linear-gradient(#fff,#fff) padding-box,
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Ccircle cx='3' cy='6' r='2' fill='%23d9a441'/%3E%3Ccircle cx='9' cy='6' r='2' fill='%231f8a86'/%3E%3C/svg%3E") border-box;
-  background-repeat:no-repeat,repeat;
-  background-size:100% 100%,12px 12px;
-  color:#1a1c1e;font-family:inherit;
+  padding:6% 5%;border:2px solid #2AABEE;border-radius:20px;
+  background:#fff;color:#1a1c1e;font-family:inherit;
   box-shadow:0 6px 18px rgba(15,23,42,.20),0 1px 4px rgba(15,23,42,.10);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   will-change:transform,opacity;
 }
 .uni-action-btn:active{transform:scale(.94)}
 .uni-action-icon{
-  width:76%;aspect-ratio:1/1;flex-shrink:0;position:relative;
+  width:83%;aspect-ratio:1/1;flex-shrink:0;position:relative;
   display:flex;align-items:center;justify-content:center;overflow:visible;
 }
-.uni-action-icon svg{width:92%;height:92%;display:block}
-.uni-action-icon .cta-icon svg{width:92%;height:92%}
-.uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
+.uni-action-icon svg{width:95%;height:95%;display:block}
+.uni-action-icon .cta-icon svg{width:95%;height:95%}
+.uni-action-icon-img{width:95%;height:95%;display:block;object-fit:contain}
 /* Yuk (parashyut+quti) ikonkasi atayin o'z maydonidan kattaroq — yuqorisi (parashyut)
    tashqariga chiqib tursin, pastki chegarasi (quti) esa joyida qolsin. */
 .uni-action-btn--cargo .uni-action-icon-img{
