@@ -702,38 +702,43 @@ body.view-sender .header{background:var(--app-bg)!important}
    faol amal esa o'rtada kichik "rejim chipi"ga aylanadi (bekor qilish uchun ham). */
 .unified-actions{
   position:absolute;left:0;right:0;bottom:0;
-  display:flex;align-items:stretch;gap:8px;
-  padding:10px 10px max(14px,env(safe-area-inset-bottom));
+  display:flex;align-items:stretch;gap:11px;
+  padding:10px 15px max(14px,env(safe-area-inset-bottom));
   background:transparent;border-top:none;
   z-index:20;
 }
-/* Har bir amal — kvadratga yaqin, yumshoq (o'tkir bo'lmagan) burchakli oq ramka;
-   ikonka ham, matn ham shu ramka ichida. aspect-ratio bilan har xil ekran
-   kengligida ham to'g'ri kvadrat shaklda qoladi. */
+/* Har bir amal — kvadratga yaqin, yumshoq (o'tkir bo'lmagan) burchakli oq ramka,
+   atrofida nozik o'zbekona (ikat uslubidagi diagonal) xoshiya; ikonka ham,
+   matn ham shu ramka ichida. aspect-ratio bilan har xil ekran kengligida ham
+   to'g'ri kvadrat shaklda qoladi. Ramka o'zi biroz ixchamroq, ikonka esa
+   ramkaga nisbatan kattaroq — birinchi qarashda darrov ko'zga tashlanadi. */
 .uni-action-btn{
   flex:1;min-width:0;aspect-ratio:1/1;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-  padding:10% 6%;border:none;border-radius:22px;
-  background:#fff;color:#1a1c1e;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+  padding:6% 5%;border:3px solid transparent;border-radius:20px;
+  background:
+    linear-gradient(#fff,#fff) padding-box,
+    repeating-linear-gradient(135deg,#d9a441 0 5px,#c9622f 5px 10px,#1f8a86 10px 15px) border-box;
+  color:#1a1c1e;font-family:inherit;
   box-shadow:0 6px 18px rgba(15,23,42,.20),0 1px 4px rgba(15,23,42,.10);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   will-change:transform,opacity;
 }
-.uni-action-btn:active{transform:scale(.94);background:#fafbfc}
+.uni-action-btn:active{transform:scale(.94)}
 .uni-action-icon{
-  width:62%;aspect-ratio:1/1;flex-shrink:0;position:relative;
+  width:76%;aspect-ratio:1/1;flex-shrink:0;position:relative;
   display:flex;align-items:center;justify-content:center;overflow:visible;
 }
-.uni-action-icon svg{width:84%;height:84%;display:block}
-.uni-action-icon .cta-icon svg{width:84%;height:84%}
-.uni-action-icon-img{width:84%;height:84%;display:block;object-fit:contain}
+.uni-action-icon svg{width:92%;height:92%;display:block}
+.uni-action-icon .cta-icon svg{width:92%;height:92%}
+.uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
 /* Yuk (parashyut+quti) ikonkasi atayin o'z maydonidan kattaroq — yuqorisi (parashyut)
    tashqariga chiqib tursin, pastki chegarasi (quti) esa joyida qolsin. */
 .uni-action-btn--cargo .uni-action-icon-img{
-  position:absolute;bottom:2%;left:50%;transform:translateX(-50%);
-  width:128%;height:128%;max-width:none;max-height:none;
+  position:absolute;bottom:1%;left:50%;transform:translateX(-50%);
+  width:132%;height:132%;max-width:none;max-height:none;
 }
-.uni-action-label{font-size:14px;font-weight:700;text-align:center;line-height:1.15;white-space:normal;letter-spacing:-.01em}
+.uni-action-label{font-size:12.5px;font-weight:700;text-align:center;line-height:1.1;white-space:normal;letter-spacing:-.01em}
 
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
 .uni-mode-chip{
