@@ -702,39 +702,39 @@ body.view-sender .header{background:var(--app-bg)!important}
    faol amal esa o'rtada kichik "rejim chipi"ga aylanadi (bekor qilish uchun ham). */
 .unified-actions{
   position:absolute;left:0;right:0;bottom:0;
-  display:flex;align-items:stretch;gap:11px;
-  padding:10px 15px max(14px,env(safe-area-inset-bottom));
+  display:flex;flex-direction:column;align-items:stretch;gap:10px;
+  padding:10px 16px max(14px,env(safe-area-inset-bottom));
   background:transparent;border-top:none;
   z-index:20;
 }
-/* Har bir amal — kvadratga yaqin, yumshoq (o'tkir bo'lmagan) burchakli oq ramka,
-   atrofida oddiy ingichka ko'k chiziq. Ikonka ham, matn ham shu ramka ichida.
-   aspect-ratio bilan har xil ekran kengligida ham to'g'ri kvadrat shaklda
-   qoladi. Ramka o'zi biroz ixchamroq, ikonka esa ramkaga nisbatan kattaroq. */
+/* Har bir amal — yotiq "pill": chapda dumaloq ikonka, o'ng tomonda katta matn.
+   Tepadan pastga: Yo'lovchiman, Yuk yuboraman, Haydovchiman. */
 .uni-action-btn{
-  flex:1;min-width:0;aspect-ratio:1/1;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
-  padding:6% 5%;border:2px solid #2AABEE;border-radius:20px;
-  background:#fff;color:#1a1c1e;font-family:inherit;
+  width:100%;min-height:68px;flex:0 0 auto;
+  display:flex;flex-direction:row;align-items:center;gap:0;
+  padding:8px;border:none;border-radius:999px;
+  background:#AEDBF7;color:#0c3a57;font-family:inherit;
   box-shadow:0 6px 18px rgba(15,23,42,.20),0 1px 4px rgba(15,23,42,.10);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   will-change:transform,opacity;
 }
-.uni-action-btn:active{transform:scale(.94)}
+.uni-action-btn:active{transform:scale(.97)}
 .uni-action-icon{
-  width:83%;aspect-ratio:1/1;flex-shrink:0;position:relative;
+  width:52px;height:52px;flex-shrink:0;position:relative;
   display:flex;align-items:center;justify-content:center;overflow:visible;
+  background:#fff;border-radius:50%;
+  box-shadow:0 3px 8px rgba(15,23,42,.16),0 1px 3px rgba(15,23,42,.08);
 }
-.uni-action-icon svg{width:95%;height:95%;display:block}
-.uni-action-icon .cta-icon svg{width:95%;height:95%}
-.uni-action-icon-img{width:95%;height:95%;display:block;object-fit:contain}
-/* Yuk (parashyut+quti) ikonkasi atayin o'z maydonidan kattaroq — yuqorisi (parashyut)
-   tashqariga chiqib tursin, pastki chegarasi (quti) esa joyida qolsin. */
+.uni-action-icon svg{width:66%;height:66%;display:block}
+.uni-action-icon .cta-icon svg{width:66%;height:66%}
+.uni-action-icon-img{width:66%;height:66%;display:block;object-fit:contain}
+/* Yuk (parashyut+quti) ikonkasi atayin o'z doirasidan kattaroq — yuqorisi
+   (parashyut) tashqariga chiqib tursin. */
 .uni-action-btn--cargo .uni-action-icon-img{
-  position:absolute;bottom:1%;left:50%;transform:translateX(-50%);
-  width:132%;height:132%;max-width:none;max-height:none;
+  position:absolute;bottom:2%;left:50%;transform:translateX(-50%);
+  width:92%;height:92%;max-width:none;max-height:none;
 }
-.uni-action-label{font-size:12.5px;font-weight:700;text-align:center;line-height:1.1;white-space:normal;letter-spacing:-.01em}
+.uni-action-label{flex:1;min-width:0;text-align:left;padding:0 16px;font-size:18px;font-weight:800;line-height:1.15;white-space:normal;letter-spacing:-.01em}
 
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
 .uni-mode-chip{
@@ -2285,10 +2285,6 @@ html, body { font-size: var(--fs-base); }
              tushunarli 3D ikonka bilan. Bosilganda: boshqa ikkitasi ekran chetiga
              chiqib ketadi, faol amal kichik "rejim chipi"ga aylanadi (enterUniMode). -->
         <div class="unified-actions">
-          <button type="button" class="uni-action-btn uni-action-btn--driver" data-uni-key="driver" onclick="enterUniMode('driver')">
-            <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaDriverIcon"></span></span>
-            <span class="uni-action-label" id="uniRouteText">Haydovchiman</span>
-          </button>
           <button type="button" class="uni-action-btn uni-action-btn--travel" data-uni-key="travel" onclick="enterUniMode('travel')">
             <span class="uni-action-icon uni-action-icon--img" aria-hidden="true"><img class="uni-action-icon-img" src="assets/icon-travel-3d.png" alt=""></span>
             <span class="uni-action-label" id="ctaTravelText">Yo'lovchiman</span>
@@ -2296,6 +2292,10 @@ html, body { font-size: var(--fs-base); }
           <button type="button" class="uni-action-btn uni-action-btn--cargo" data-uni-key="cargo" onclick="enterUniMode('cargo')">
             <span class="uni-action-icon uni-action-icon--img" aria-hidden="true"><img class="uni-action-icon-img" src="assets/icon-cargo-3d.png" alt=""></span>
             <span class="uni-action-label" id="ctaOrderText">Yuk yuboraman</span>
+          </button>
+          <button type="button" class="uni-action-btn uni-action-btn--driver" data-uni-key="driver" onclick="enterUniMode('driver')">
+            <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaDriverIcon"></span></span>
+            <span class="uni-action-label" id="uniRouteText">Haydovchiman</span>
           </button>
           <button type="button" class="uni-mode-chip" id="uniModeChip" onclick="exitUniMode()" aria-label="Bekor qilish">
             <span class="uni-mode-chip-label" id="uniModeChipLabel"></span>
@@ -2984,7 +2984,7 @@ function enterUniMode(key){
   btns.forEach((btn, i) => {
     if (i === activeIndex) return;
     btn.style.transition = 'transform .32s cubic-bezier(.4,0,.2,1), opacity .28s ease';
-    btn.style.transform = (i < activeIndex ? 'translateX(-130%)' : 'translateX(130%)') + ' scale(.7)';
+    btn.style.transform = (i < activeIndex ? 'translateY(-130%)' : 'translateY(130%)') + ' scale(.7)';
     btn.style.opacity = '0';
     btn.style.pointerEvents = 'none';
   });
