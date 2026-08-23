@@ -1112,6 +1112,12 @@ body.view-driver .driver-route-bar{
   bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
   transition:bottom .28s ease;
 }
+/* My-location tugmasi endi alohida suzmaydi — +/- kattalashtirish
+   tugmalari ostida, o'sha ustunning davomi sifatida turadi. */
+#driverView .map-controls .map-my-loc{
+  position:static;width:44px;height:44px;margin:0;
+  bottom:auto;right:auto;transition:none;
+}
 .map-route-btn{
   position:absolute;left:14px;z-index:12;
   width:48px;height:48px;border-radius:50%;border:none;padding:0;cursor:pointer;
@@ -1986,8 +1992,8 @@ body.view-sender.theme-telegram .toggle,
 #driverView .driver-district-picker .region-picker-item{
   font-size:15px!important;padding:8px 14px!important;
 }
-#driverView.driver-district-open .map-my-loc{
-  bottom:calc(148px + max(12px, env(safe-area-inset-bottom)));
+#driverView.driver-district-open .map-controls .map-my-loc{
+  bottom:auto;
 }
 
 /* Хабарнома рухсати — ишончли onboarding */
@@ -2291,10 +2297,10 @@ html, body { font-size: var(--fs-base); }
           <div class="map-controls">
             <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
             <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
+            <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+            </button>
           </div>
-          <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
-            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
-          </button>
           <!-- Eski tugmalar saqlanmoqda (JS ular bilan ishlaydi) -->
           <button type="button" class="map-route-btn" id="routeSetBtn" style="display:none" aria-label="Yo'nalish"></button>
           <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden></button>
