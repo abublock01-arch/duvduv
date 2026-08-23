@@ -77,6 +77,14 @@ html,body{
   background:var(--app-bg);z-index:20;position:relative;flex-shrink:0;
 }
 body.view-sender .header{background:var(--app-bg)!important}
+/* Birlashtirilgan xarita ekranida (view-driver) header xarita ustida
+   suzuvchi, orqa fon yo'q — xarita ko'rinib tursin. */
+body.view-driver .header{
+  position:absolute;top:0;left:0;right:0;
+  background:transparent;z-index:30;flex-shrink:initial;
+}
+body.view-driver .header-close{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px rgba(255,255,255,.6)}
+body.view-driver .logo-brand{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px rgba(255,255,255,.6)}
 .header-bar{
   position:relative;
   display:flex;align-items:center;justify-content:space-between;
@@ -673,6 +681,15 @@ body.view-sender .header{background:var(--app-bg)!important}
   border-bottom:1.5px solid #e8edf2;
   z-index:20;position:relative;
 }
+/* Birlashtirilgan xarita ekranida yo'nalish paneli ham xarita ustida
+   suzuvchi bo'ladi — orqa oq fon olib tashlandi, faqat pillar (chip)
+   larning o'zi oq qoladi. */
+body.view-driver .driver-route-bar{
+  position:absolute;left:0;right:0;
+  top:calc(max(12px,env(safe-area-inset-top)) + 68px);
+  background:transparent;border-bottom:none;
+  padding:0 14px;
+}
 .drv-route-btn{
   flex:1;display:flex;align-items:center;gap:10px;
   padding:12px 14px;border-radius:14px;
@@ -736,14 +753,13 @@ body.view-sender .header{background:var(--app-bg)!important}
   box-shadow:0 0 0 0 #D3D5DA,0 3px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
 }
 .uni-action-icon{
-  width:52px;height:52px;flex-shrink:0;position:relative;z-index:1;
+  width:56px;height:56px;flex-shrink:0;position:relative;z-index:1;
   display:flex;align-items:center;justify-content:center;overflow:visible;
-  background:#fff;border-radius:50%;
-  box-shadow:0 3px 8px rgba(0,0,0,.16),0 1px 3px rgba(0,0,0,.08),inset 0 0 0 1px #EDEEF1;
+  background:transparent;border-radius:0;box-shadow:none;
 }
-.uni-action-icon svg{width:66%;height:66%;display:block}
-.uni-action-icon .cta-icon svg{width:66%;height:66%}
-.uni-action-icon-img{width:66%;height:66%;display:block;object-fit:contain}
+.uni-action-icon svg{width:92%;height:92%;display:block}
+.uni-action-icon .cta-icon svg{width:92%;height:92%}
+.uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
 /* Yuk (parashyut+quti) ikonkasi atayin o'z doirasidan kattaroq — yuqorisi
    (parashyut) tashqariga chiqib tursin. */
 .uni-action-btn--cargo .uni-action-icon-img{
