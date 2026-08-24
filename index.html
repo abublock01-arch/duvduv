@@ -690,28 +690,61 @@ body.view-driver .driver-route-bar{
   background:transparent;border-bottom:none;
   padding:0 14px;
 }
+/* "Qayerdan / Qayerga" tugmalari — endi "Yo'lovchiman" va boshqa amal
+   tugmalari bilan BIR XIL fizik bosiladigan glossy 3D uslubda: xrom bezel,
+   qavatli soya/yorug'lik, bosma matn. Qiymat tanlanmagunicha neytral
+   kumush rangda, tanlangach (has-value) o'ziga xos jonli rangga (from —
+   ko'k, to — to'q sariq) o'tadi. Oldingidan sezilarli kattaroq. */
 .drv-route-btn{
-  flex:1;display:flex;align-items:center;gap:10px;
-  padding:12px 14px;border-radius:14px;
-  border:2px solid #e2e8f0;background:#f8fafc;
-  cursor:pointer;font-size:15px;font-weight:600;color:#9ca3af;
-  text-align:left;transition:border-color .18s,background .18s,color .18s;
-  min-width:0;
+  --btn-mid:#F5F6F8;--btn-base:#E6E8EC;--btn-dark:#C5C8CE;--btn-darkest:#9FA3AA;
+  flex:1;display:flex;align-items:center;gap:12px;
+  padding:16px 18px;border:3px solid transparent;border-radius:26px;
+  background:
+    linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
+    linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
+  color:#4a5260;font-family:inherit;font-size:16px;font-weight:800;
+  position:relative;overflow:hidden;
+  box-shadow:
+    0 4px 0 0 var(--btn-darkest),
+    0 10px 18px rgba(0,0,0,.24),
+    0 3px 6px rgba(0,0,0,.13),
+    inset 0 2px 1px rgba(255,255,255,.55),
+    inset 0 -6px 10px -5px rgba(0,0,0,.32);
+  cursor:pointer;text-align:left;min-width:0;
+  -webkit-tap-highlight-color:transparent;outline:none;
+  will-change:transform,box-shadow;
+  transition:transform .09s ease,box-shadow .09s ease,background .3s ease,color .3s ease;
 }
-.drv-route-btn.has-value{
-  border-color:#2AABEE;background:#f0f9ff;color:#0f172a;
+.drv-route-btn::before{
+  content:"";position:absolute;left:14%;right:14%;top:9%;height:22%;z-index:0;
+  border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 85%);
+  pointer-events:none;
 }
+.drv-route-btn:active{
+  transform:translateY(4px);
+  box-shadow:
+    0 0 0 0 var(--btn-darkest),
+    0 3px 7px rgba(0,0,0,.2),
+    inset 0 3px 7px rgba(0,0,0,.4),
+    inset 0 -2px 3px rgba(255,255,255,.1);
+}
+#driverFromBtn.has-value{ --btn-mid:#6EC3FF;--btn-base:#2AABEE;--btn-dark:#1C7FB0;--btn-darkest:#135A7D; color:#fff; }
+#driverToBtn.has-value{ --btn-mid:#FFA733;--btn-base:#FF8A00;--btn-dark:#C96800;--btn-darkest:#8F4900; color:#fff; }
+.drv-route-btn:not(.has-value) span{ text-shadow:0 -1px 1px rgba(0,0,0,.12),0 1px 1px rgba(255,255,255,.6); }
+.drv-route-btn.has-value span{ text-shadow:0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22); }
 .drv-dot{
-  width:11px;height:11px;border-radius:50%;flex-shrink:0;
+  width:12px;height:12px;border-radius:50%;flex-shrink:0;
+  position:relative;z-index:1;
 }
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
 .drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
-.drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;}
 .drv-route-arrow{
-  flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;
   color:#2AABEE;
 }
-.drv-route-arrow svg{width:26px;height:26px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.drv-route-arrow svg{width:28px;height:28px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ── Bitta ekrandagi 3ta aniq amal: Haydovchiman / Yuk yuboraman / Yo'lovchiman ──
    Har biri bir-biridan alohida "suzuvchi" karta, tushunarli 3D ikonka bilan.
@@ -2222,8 +2255,9 @@ html, body { font-size: var(--fs-base); }
 
   /* Driver route bar */
   .driver-route-bar { padding:8px 10px; gap:6px; }
-  .drv-route-btn { padding:9px 10px; font-size:13px; border-radius:11px; }
-  .drv-dot { width:9px; height:9px; }
+  .drv-route-btn { padding:11px 12px; font-size:13px; border-radius:18px; }
+  .drv-dot { width:10px; height:10px; }
+  .drv-route-arrow { width:24px; height:24px; }
   .drv-route-arrow svg { width:20px; height:20px; }
 
   /* Map controls */
