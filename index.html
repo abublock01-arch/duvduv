@@ -6656,7 +6656,11 @@ function persistUserRole(role){
 // Bitta birlashtirilgan ekran — xarita hammaga bir xil, darhol ko'rsatiladi.
 function initUnifiedMap(){
   document.body.classList.add('view-driver');
-  requestLocationOnce();
+  // Lokatsiya ruxsati endi bu yerda DARHOL so'ralmaydi — foydalanuvchi
+  // "Yo'lovchiman"ni bosib, pin animatsiyasi boshlanganda so'raladi
+  // (playTravelPinAnimation ichida), shu payt ruxsat berish tabiiyroq va
+  // tushunarliroq bo'ladi. Shuningdek xaritadagi "mening lokatsiyam"
+  // tugmasi ham (flyToMyLocation) o'z vaqtida so'raydi.
   loadDriverRouteState();
   ensureDriverRegionPicker();
   scheduleDriverDistrictReveal();
@@ -8626,8 +8630,9 @@ setupShipmentsListEvents();
 setupDetailRoutePickerEvents();
 initTelegramUser();
 initRouteBtn();
-// Lokatsiya: birinchi ochganda bir marta so'raladi
-setTimeout(() => requestLocationOnce(), 800);
+// Lokatsiya ruxsati endi ilova ochilganda DARHOL so'ralmaydi — buning
+// o'rniga "Yo'lovchiman" bosilib, pin xaritaga tushish animatsiyasi
+// boshlangan paytda kontekstli so'raladi (playTravelPinAnimation).
 setTimeout(startGpsTracking, 2000);
 syncShipmentsFromFirestore(); // re-filter with now-known telegramUser.id
 restoreUserPrefs();
