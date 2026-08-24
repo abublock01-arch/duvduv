@@ -16,6 +16,11 @@
 <link rel="preload" as="image" href="assets/scene-car.png?v=2">
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.3.0/mapbox-gl.js"></script>
+<!-- VAQTINCHALIK: tugma matnlari (Yolovchiman/Yuk yuboraman/Haydovchiman) uchun
+     shrift variantlarini jonli sinash uchun qo'shilgan. Tanlangach olib tashlanadi. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@800;900&family=Manrope:wght@800&family=Poppins:wght@700;800&family=Montserrat:wght@800;900&family=Nunito:wght@800;900&family=Rubik:wght@800;900&display=swap" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* ── Har qanday qurilmada, dark mode bo'lsa ham — light majburiy ── */
@@ -2322,6 +2327,16 @@ html, body { font-size: var(--fs-base); }
         <!-- Bitta ekrandagi 3ta aniq amal (haydovchi + mijoz) — har biri alohida karta,
              tushunarli 3D ikonka bilan. Bosilganda: boshqa ikkitasi ekran chetiga
              chiqib ketadi, faol amal kichik "rejim chipi"ga aylanadi (enterUniMode). -->
+        <!-- VAQTINCHALIK sinov tugmasi: bosganda pastdagi 3ta yozuvning shriftini
+             navbat bilan almashtirib turadi, joriy shrift nomini ko'rsatadi.
+             Yoqqan variantni tanlagach, shu tugma butunlay olib tashlanadi. -->
+        <button type="button" id="fontTestBtn" onclick="cycleUniFont()"
+          style="position:fixed;top:calc(max(12px,env(safe-area-inset-top)) + 68px);right:14px;z-index:40;
+          background:#0f172a;color:#fff;border:none;border-radius:100px;padding:9px 16px;
+          font-size:12px;font-weight:700;font-family:-apple-system,sans-serif;
+          box-shadow:0 4px 14px rgba(0,0,0,.28);cursor:pointer;-webkit-tap-highlight-color:transparent">
+          🔤 <span id="fontTestBadge">Hozirgi (Sistema)</span>
+        </button>
         <div class="unified-actions">
           <button type="button" class="uni-action-btn uni-action-btn--travel" data-uni-key="travel" onclick="enterUniMode('travel')">
             <span class="uni-action-icon uni-action-icon--img" aria-hidden="true"><img class="uni-action-icon-img" src="assets/icon-travel-3d.png" alt=""></span>
@@ -3003,6 +3018,26 @@ function closeMineSheet(){
 // ── Bitta ekrandagi 3ta amal tugmasi: bosilganda boshqa ikkitasi ekran
 // chetiga uchib ketadi, faol amal kichik "rejim chipi"ga aylanadi (bekor
 // qilish tugmasi vazifasini ham bajaradi), so'ng tegishli sheet ochiladi. ──
+// VAQTINCHALIK: shrift sinash tugmasi uchun. Yoqqan variant tanlangach,
+// shu funksiya, yuqoridagi fontTestBtn tugmasi va Google Fonts <link> olib tashlanadi.
+const UNI_FONT_CANDIDATES = [
+  { name: 'Hozirgi (Sistema)', css: "-apple-system,'SF Pro Display','Segoe UI',Roboto,sans-serif" },
+  { name: 'Inter',      css: "'Inter',sans-serif" },
+  { name: 'Manrope',    css: "'Manrope',sans-serif" },
+  { name: 'Poppins',    css: "'Poppins',sans-serif" },
+  { name: 'Montserrat', css: "'Montserrat',sans-serif" },
+  { name: 'Nunito',     css: "'Nunito',sans-serif" },
+  { name: 'Rubik',      css: "'Rubik',sans-serif" }
+];
+let uniFontIdx = 0;
+function cycleUniFont(){
+  uniFontIdx = (uniFontIdx + 1) % UNI_FONT_CANDIDATES.length;
+  const f = UNI_FONT_CANDIDATES[uniFontIdx];
+  document.querySelectorAll('.uni-action-label').forEach(el => { el.style.fontFamily = f.css; });
+  const badge = document.getElementById('fontTestBadge');
+  if (badge) badge.textContent = f.name;
+}
+
 let activeUniMode = null;
 let uniModeOpenTimer = null;
 function uniModeMeta(){
