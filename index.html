@@ -3210,6 +3210,13 @@ function enterUniMode(key){
   if (activeUniMode) return; // rejim allaqachon faol — qayta bosishni e'tiborsiz qoldiramiz
   const meta = uniModeMeta()[key];
   if (!meta) return;
+  // Ehtiyot chorasi: agar coach-mark (birinchi tanishtiruv) backdropi
+  // negadir hali ochiq bo'lsa — u butun ekranni to'sib, hech qaysi
+  // tugma bosilmay qolishiga sabab bo'ladi. Amal rejimiga kirishdan oldin
+  // uni darhol yopamiz (va "ko'rilgan" deb belgilaymiz, qayta ochilmasin).
+  if (document.getElementById('coachBackdrop')?.classList.contains('open')) {
+    closeOnboarding(true);
+  }
   activeUniMode = key;
   // Yo'lovchiman rejimida xaritada faqat haydovchi yo'nalishlari ko'rinsin —
   // yo'lovchi/yuk e'lonlari yashiriladi (applyUniModeMapVisibility).
@@ -4410,6 +4417,17 @@ function coachSeenKey(){ return 'duvduv_coach_seen_v5'; }
 function maybeShowOnboarding(){
   try {
     if (localStorage.getItem(coachSeenKey())) return;
+    // Foydalanuvchi allaqachon biror amal (Haydovchiman/Yuk yuboraman/
+    // Yo'lovchiman) rejimida bo'lsa, coach-mark backdropini USHA PAYTDA
+    // ochmaymiz — .unified-actions konteynerining o'zi (tugmalar animatsiya
+    // bilan uchib ketgan bo'lsa ham) hamon to'liq eninigacha yoyilgan
+    // bo'lgani uchun "nishon topildi" deb noto'g'ri xulosaga kelib,
+    // butun ekranni to'suvchi backdrop ochib yuborishi mumkin edi — shu
+    // sabab keyinroq qayta urinib ko'ramiz.
+    if (activeUniMode) {
+      if (coachRetries < 12) { coachRetries++; setTimeout(maybeShowOnboarding, 300); }
+      return;
+    }
     // Nishon element hali DOM'da/joyida bo'lmasligi mumkin (sekin render, GPS/Firestore
     // kutish va h.k.) — shu sabab bir marta emas, bir necha marta urinib ko'ramiz,
     // muvaffaqiyatsizlikda "ko'rsatilgan" deb belgilamaymiz.
