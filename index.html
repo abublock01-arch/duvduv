@@ -781,12 +781,16 @@ body.view-driver .driver-route-bar{
   flex-shrink:0;justify-self:center;
   width:56px;height:56px;position:relative;z-index:1;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
-  border-radius:50%;
-  background:linear-gradient(180deg,#FFFFFF 0%,#F2F3F5 100%);
+  border-radius:50%;border:2px solid transparent;
+  background:
+    radial-gradient(circle at 32% 26%,#FFFFFF 0%,#FFFFFF 45%,#E4E6EA 100%) padding-box,
+    linear-gradient(180deg,#FFFFFF 0%,#CFD1D6 40%,#9A9EA6 62%,#F2F2F4 100%) border-box;
   box-shadow:
-    inset 0 2px 2px rgba(255,255,255,.9),
-    inset 0 -3px 5px rgba(0,0,0,.12),
-    0 2px 5px rgba(0,0,0,.28);
+    0 3px 0 0 rgba(0,0,0,.12),
+    0 6px 12px rgba(0,0,0,.32),
+    0 2px 4px rgba(0,0,0,.2),
+    inset 0 3px 3px rgba(255,255,255,1),
+    inset 0 -5px 7px rgba(0,0,0,.2);
 }
 .uni-action-icon svg{width:78%;height:78%;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 .uni-action-icon-img{width:78%;height:78%;display:block;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
