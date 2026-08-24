@@ -3134,7 +3134,7 @@ function enterUniMode(key){
   const activeBtn = btns[activeIndex];
   btns.forEach((btn, i) => {
     if (i === activeIndex) return;
-    btn.style.transition = 'transform .32s cubic-bezier(.4,0,.2,1), opacity .28s ease';
+    btn.style.transition = 'transform .48s cubic-bezier(.22,.61,.16,1), opacity .4s ease';
     btn.style.transform = (i < activeIndex ? 'translateY(-130%)' : 'translateY(130%)') + ' scale(.7)';
     btn.style.opacity = '0';
     btn.style.pointerEvents = 'none';
@@ -3166,45 +3166,49 @@ function enterUniMode(key){
 // vaqtda xarita o'sha koordinataga yaqinlashadi). ═══
 let travelPinMarker = null;
 let travelRouteBarShifted = false;
-const TRAVEL_PIN_ANIM_MS = 900;
+const TRAVEL_PIN_ANIM_MS = 1100;
+const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out" — juda tez emas
 function playTravelPinAnimation(activeBtn, allBtns){
-  const icon = activeBtn?.querySelector('.uni-action-icon');
+  // Faqat ikonkaning O'ZI (rasm/svg) — atrofidagi oq dumaloq ramka YO'Q.
+  const iconImg = activeBtn?.querySelector('.uni-action-icon-img, .uni-action-icon svg');
   const mapEl = document.getElementById('map');
   const routeBar = document.querySelector('.driver-route-bar');
   const cargoBtn = allBtns.find(b => b.dataset.uniKey === 'cargo');
-  if (!icon || !mapEl || !map) { return; }
+  if (!iconImg || !mapEl || !map) { return; }
 
-  const iconRect = icon.getBoundingClientRect();
+  const imgRect = iconImg.getBoundingClientRect();
   const mapRect = mapEl.getBoundingClientRect();
-  const targetX = mapRect.left + mapRect.width / 2 - iconRect.width / 2;
-  const targetY = mapRect.top + mapRect.height / 2 - iconRect.height / 2;
+  const pinSize = Math.round(imgRect.width * 1.35); // xaritada biroz kattaroq ko'rinsin
+  const targetX = mapRect.left + mapRect.width / 2 - pinSize / 2;
+  const targetY = mapRect.top + mapRect.height / 2 - pinSize / 2;
 
-  // Ikonkaning suzuvchi klonini yasaymiz — asl tugma shu zahoti yashiriladi,
-  // klon esa aynan o'sha o'rinda qoladi, shu sabab almashinuv ko'zga
-  // tashlanmaydi (klassik FLIP hiylasi).
-  const clone = icon.cloneNode(true);
+  // Ikonka rasmining suzuvchi klon-nusxasi — asl tugma shu zahoti yashiriladi,
+  // klon esa aynan o'sha o'rinda (xuddi shu o'lchamda) qoladi, shu sabab
+  // almashinuv ko'zga tashlanmaydi (klassik FLIP hiylasi).
+  const clone = iconImg.cloneNode(true);
   clone.classList.add('travel-pin-fly');
   clone.style.position = 'fixed';
-  clone.style.left = iconRect.left + 'px';
-  clone.style.top = iconRect.top + 'px';
-  clone.style.width = iconRect.width + 'px';
-  clone.style.height = iconRect.height + 'px';
+  clone.style.left = imgRect.left + 'px';
+  clone.style.top = imgRect.top + 'px';
+  clone.style.width = imgRect.width + 'px';
+  clone.style.height = imgRect.height + 'px';
   clone.style.margin = '0';
   clone.style.zIndex = '9500';
-  clone.style.transition = `left ${TRAVEL_PIN_ANIM_MS}ms cubic-bezier(.3,.08,.2,1), top ${TRAVEL_PIN_ANIM_MS}ms cubic-bezier(.3,.08,.2,1), transform ${TRAVEL_PIN_ANIM_MS}ms cubic-bezier(.3,.08,.2,1)`;
+  clone.style.transition = `left ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, top ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, width ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, height ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
   document.body.appendChild(clone);
 
-  activeBtn.style.transition = 'opacity .15s ease';
+  activeBtn.style.transition = 'opacity .2s ease';
   activeBtn.style.opacity = '0';
   activeBtn.style.pointerEvents = 'none';
 
   // Tepadagi "qayerdan → qayerga" paneli bo'shagan "Yuk yuboraman" joyiga
-  // tushadi (markazlarini tekislab, faqat translateY bilan).
+  // tushadi (markazlarini tekislab, faqat translateY bilan) — endi boshqa
+  // animatsiyalar bilan bir xil davomiylik va yumshoq ease bilan, plavniy.
   if (routeBar && cargoBtn) {
     const barRect = routeBar.getBoundingClientRect();
     const cargoRect = cargoBtn.getBoundingClientRect();
     const deltaY = (cargoRect.top + cargoRect.height / 2) - (barRect.top + barRect.height / 2);
-    routeBar.style.transition = 'transform .38s cubic-bezier(.4,0,.2,1)';
+    routeBar.style.transition = `transform ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
     routeBar.style.transform = `translateY(${deltaY}px)`;
     travelRouteBarShifted = true;
   }
@@ -3213,19 +3217,33 @@ function playTravelPinAnimation(activeBtn, allBtns){
     requestAnimationFrame(() => {
       clone.style.left = targetX + 'px';
       clone.style.top = targetY + 'px';
-      clone.style.transform = 'scale(1.15)';
+      clone.style.width = pinSize + 'px';
+      clone.style.height = pinSize + 'px';
     });
   });
 
   getCurrentPosition().then(coords => {
     const lng = coords.longitude, lat = coords.latitude;
     map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+
+    // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
+    // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
+    // uni mijozning o'zi tanlaydi.
+    const regionName = detectRegionFromCoords(lng, lat);
+    if (regionName) {
+      const fromLbl = document.getElementById('driverFromLabel');
+      if (fromLbl) fromLbl.textContent = regionName;
+      document.getElementById('driverFromBtn')?.classList.add('has-value');
+    }
+
     setTimeout(() => {
       clone.remove();
       if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
       const pinEl = document.createElement('div');
-      pinEl.className = 'uni-action-icon travel-pin-marker';
-      pinEl.innerHTML = icon.innerHTML;
+      pinEl.className = 'travel-pin-marker';
+      pinEl.style.width = pinSize + 'px';
+      pinEl.style.height = pinSize + 'px';
+      pinEl.innerHTML = iconImg.outerHTML;
       travelPinMarker = new mapboxgl.Marker({ element: pinEl, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
     }, TRAVEL_PIN_ANIM_MS);
   }).catch(() => {
