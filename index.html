@@ -3235,30 +3235,25 @@ function enterUniMode(key){
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
-  // "Yo'lovchiman" — alohida stsenariy: 3ta tugma ham yo'qoladi, faqat
-  // shu ikonka xaritada foydalanuvchi lokatsiyasiga smooth pin bo'lib
+  // Uchala amal ham (Yo'lovchiman, Yuk yuboraman, Haydovchiman) endi BIR
+  // XIL animatsiya bilan boshlanadi: 3ta tugma ham yo'qoladi, faol
+  // ikonkaning o'zi xaritada foydalanuvchi lokatsiyasiga smooth pin bo'lib
   // tushadi, xarita o'sha yerga yaqinlashadi, tepadagi yo'nalish paneli
-  // bo'shagan "Yuk yuboraman" joyiga tushadi. Bekor qilish uchun endi
-  // markazdagi "✕" chipi emas, xaritaning pastki chap burchagidagi
-  // glossy 3D "orqaga" tugmasi ishlatiladi.
-  if (key === 'travel') {
-    document.getElementById('uniModeBackBtn')?.classList.add('visible');
-    // Tugmalar konteyneri (.unified-actions) shaffof bo'lsa-da, o'z joyida
-    // "ko'rinmas" holda qolib, pastga tushgan Qayerdan/Qayerga panelining
-    // bosilishiga to'sqinlik qilmasin.
-    const unifiedActions = document.querySelector('.unified-actions');
-    if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
-    playTravelPinAnimation(activeBtn, btns);
-    return;
+  // bo'shagan o'rtadagi joyga tushadi. Bekor qilish uchun xaritaning
+  // pastki chap burchagidagi glossy 3D "orqaga" tugmasi ishlatiladi.
+  // Amallarning o'zi o'zgarishsiz qoladi: Yo'lovchiman'da hech qanday
+  // sheet ochilmaydi (avvalgidek, faqat xarita+filtr), Yuk yuboraman va
+  // Haydovchiman'da esa o'zining sheeti animatsiya bilan bir vaqtda ochiladi.
+  document.getElementById('uniModeBackBtn')?.classList.add('visible');
+  // Tugmalar konteyneri (.unified-actions) shaffof bo'lsa-da, o'z joyida
+  // "ko'rinmas" holda qolib, pastga tushgan Qayerdan/Qayerga panelining
+  // bosilishiga to'sqinlik qilmasin.
+  const unifiedActions = document.querySelector('.unified-actions');
+  if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
+  playTravelPinAnimation(activeBtn, btns, key);
+  if (key !== 'travel') {
+    uniModeOpenTimer = setTimeout(() => { uniModeOpenTimer = null; meta.open(); }, 260);
   }
-  const chip = document.getElementById('uniModeChip');
-  const chipLabel = document.getElementById('uniModeChipLabel');
-  if (chip && chipLabel) {
-    chipLabel.textContent = scriptLatin ? meta.label : meta.cyr;
-    chip.style.setProperty('--uni-chip-color', meta.color);
-    requestAnimationFrame(() => chip.classList.add('visible'));
-  }
-  uniModeOpenTimer = setTimeout(() => { uniModeOpenTimer = null; meta.open(); }, 260);
 }
 // ═══ "Yo'lovchiman" ikonkasi xaritada foydalanuvchi lokatsiyasiga
 // smooth "pin" bo'lib tushadigan animatsiya (FLIP texnikasi: ikonkaning
@@ -3270,7 +3265,7 @@ let travelPinFlightClone = null;
 let travelPinFlightTimer = null;
 const TRAVEL_PIN_ANIM_MS = 1100;
 const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out" — juda tez emas
-function playTravelPinAnimation(activeBtn, allBtns){
+function playTravelPinAnimation(activeBtn, allBtns, key){
   // Faqat ikonkaning O'ZI (rasm/svg) — atrofidagi oq dumaloq ramka YO'Q.
   const iconImg = activeBtn?.querySelector('.uni-action-icon-img, .uni-action-icon svg');
   const mapEl = document.getElementById('map');
@@ -3331,18 +3326,23 @@ function playTravelPinAnimation(activeBtn, allBtns){
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
-    // uni mijozning o'zi tanlaydi.
-    const regionName = detectRegionFromCoords(lng, lat);
-    if (regionName) {
-      const fromLbl = document.getElementById('driverFromLabel');
-      if (fromLbl) fromLbl.textContent = regionName;
-      document.getElementById('driverFromBtn')?.classList.add('has-value');
-      // "Qayerdan" avtomatik to'ldirildi — xaritadagi haydovchi yo'nalishlari
-      // shu manzilga qarab qayta filtrlanadi.
-      const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-      saved.from = regionName;
-      localStorage.setItem(routeKey(), JSON.stringify(saved));
-      refreshOrderMarkersDebounced();
+    // uni mijozning o'zi tanlaydi. Bu faqat Yo'lovchiman uchun — u yerdagi
+    // qayerdan/qayerga haydovchi-qidiruv filtri sifatida ishlatiladi;
+    // Yuk yuboraman/Haydovchiman'da bu maydonni o'zgartirmaymiz, chunki
+    // ular o'z sheetida alohida manzil so'raydi.
+    if (key === 'travel') {
+      const regionName = detectRegionFromCoords(lng, lat);
+      if (regionName) {
+        const fromLbl = document.getElementById('driverFromLabel');
+        if (fromLbl) fromLbl.textContent = regionName;
+        document.getElementById('driverFromBtn')?.classList.add('has-value');
+        // "Qayerdan" avtomatik to'ldirildi — xaritadagi haydovchi yo'nalishlari
+        // shu manzilga qarab qayta filtrlanadi.
+        const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+        saved.from = regionName;
+        localStorage.setItem(routeKey(), JSON.stringify(saved));
+        refreshOrderMarkersDebounced();
+      }
     }
 
     travelPinFlightTimer = setTimeout(() => {
@@ -3417,7 +3417,6 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
 }
 function exitUniMode(){
   if (!activeUniMode) return;
-  const wasTravel = activeUniMode === 'travel';
   const prevKey = activeUniMode;
   activeUniMode = null;
   applyUniModeMapVisibility();
@@ -3425,9 +3424,11 @@ function exitUniMode(){
   const btns = [...document.querySelectorAll('.uni-action-btn')];
   const activeBtn = btns.find(b => b.dataset.uniKey === prevKey);
   btns.forEach(btn => {
-    // Yo'lovchiman'dagi faol tugma alohida — pastda reverse pin
-    // animatsiyasi orqali (yoki uning zaxira shoxobchasi orqali) qaytadi.
-    if (wasTravel && btn === activeBtn) return;
+    // Faol bo'lgan tugma alohida — pastda reverse pin animatsiyasi
+    // orqali (yoki uning zaxira shoxobchasi orqali) qaytadi. Endi
+    // uchala amal ham (Yo'lovchiman, Yuk yuboraman, Haydovchiman) shu
+    // bir xil animatsiyadan foydalanadi.
+    if (btn === activeBtn) return;
     btn.style.transform = '';
     btn.style.opacity = '';
     btn.style.pointerEvents = '';
@@ -3438,28 +3439,26 @@ function exitUniMode(){
   // pastga tushgan Qayerdan/Qayerga panelini bosishga to'sqinlik qilmasin.
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = '';
-  if (wasTravel) {
-    const routeBar = document.querySelector('.driver-route-bar');
-    if (routeBar && travelRouteBarShifted) {
-      routeBar.style.transform = '';
-      travelRouteBarShifted = false;
-    }
-    if (travelPinFlightTimer) { clearTimeout(travelPinFlightTimer); travelPinFlightTimer = null; }
-    // Klon/marker rasmiy o'chirilishidan OLDIN uning ekrandagi joyini
-    // o'lchab olamiz — aks holda DOM'dan ajratilgach o'lchov nolga
-    // aylanib qoladi.
-    let fromRect = null;
-    if (travelPinMarker) {
-      fromRect = travelPinMarker.getElement().getBoundingClientRect();
-      travelPinMarker.remove();
-      travelPinMarker = null;
-    } else if (travelPinFlightClone) {
-      fromRect = travelPinFlightClone.getBoundingClientRect();
-    }
-    travelPinFlightClone = null;
-    document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
-    playTravelPinReverseAnimation(activeBtn, fromRect);
+  const routeBar = document.querySelector('.driver-route-bar');
+  if (routeBar && travelRouteBarShifted) {
+    routeBar.style.transform = '';
+    travelRouteBarShifted = false;
   }
+  if (travelPinFlightTimer) { clearTimeout(travelPinFlightTimer); travelPinFlightTimer = null; }
+  // Klon/marker rasmiy o'chirilishidan OLDIN uning ekrandagi joyini
+  // o'lchab olamiz — aks holda DOM'dan ajratilgach o'lchov nolga
+  // aylanib qoladi.
+  let fromRect = null;
+  if (travelPinMarker) {
+    fromRect = travelPinMarker.getElement().getBoundingClientRect();
+    travelPinMarker.remove();
+    travelPinMarker = null;
+  } else if (travelPinFlightClone) {
+    fromRect = travelPinFlightClone.getBoundingClientRect();
+  }
+  travelPinFlightClone = null;
+  document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
+  playTravelPinReverseAnimation(activeBtn, fromRect);
 }
 function renderDriverRoutesList(){
   const list = document.getElementById('driverRoutesList');
