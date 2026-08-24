@@ -763,10 +763,6 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-icon svg{width:92%;height:92%;display:block}
 .uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
-/* Haydovchi (mashina) SVG chizmasi o'zining ichki bo'shlig'i sabab boshqa
-   ikkita rasmga nisbatan kichikroq ko'rinar edi — muvozanat uchun to'liq
-   konteynerni egallaydi. */
-.uni-action-btn--driver .cta-icon svg{width:100%;height:100%}
 .uni-action-label{
   grid-column:2;min-width:0;text-align:center;padding:0 2px;
   font-size:21px;font-weight:800;line-height:1.05;white-space:normal;
@@ -2338,7 +2334,7 @@ html, body { font-size: var(--fs-base); }
             <span class="uni-action-label" id="ctaOrderText">Yuk yuboraman</span>
           </button>
           <button type="button" class="uni-action-btn uni-action-btn--driver" data-uni-key="driver" onclick="enterUniMode('driver')">
-            <span class="uni-action-icon" aria-hidden="true"><span class="cta-icon" id="ctaDriverIcon"></span></span>
+            <span class="uni-action-icon uni-action-icon--img" aria-hidden="true"><img class="uni-action-icon-img" src="assets/icon-driver-3d.png" alt=""></span>
             <span class="uni-action-label" id="uniRouteText">Haydovchiman</span>
           </button>
           <button type="button" class="uni-mode-chip" id="uniModeChip" onclick="exitUniMode()" aria-label="Bekor qilish">
