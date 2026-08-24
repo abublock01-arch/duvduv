@@ -727,12 +727,14 @@ body.view-driver .driver-route-bar{
 /* Har bir amal — "o'yin tugmasi" uslubidagi asosiy CTA: oq fon, kulrang
    soyalar, pastda och kulrang "asos" qatlami (3D bosiladigan effekt),
    chapda nisbatan kattaroq dumaloq ikonka, o'ng tomonda lotincha matn.
-   Eniga tor va ekran o'rtasida simmetrik joylashgan. Tepadan pastga:
-   Yo'lovchiman, Yuk yuboraman, Haydovchiman. */
+   Endi ENI O'Z MATNIGA MOS (avvalgi 90% cho'zilgan holat o'rniga) — ikonka+
+   matn bitta zich to'plam sifatida ekran o'rtasida turadi, ortiqcha bosh
+   joy qolmaydi, "jips" va o'yin tugmalariga o'xshash ko'rinadi. Tepadan
+   pastga: Yo'lovchiman, Yuk yuboraman, Haydovchiman. */
 .uni-action-btn{
-  width:90%;min-height:60px;flex:0 0 auto;
-  display:grid;grid-template-columns:68px 1fr 68px;align-items:center;column-gap:10px;
-  padding:8px 12px;border:1px solid rgba(42,171,238,.32);border-radius:20px;
+  width:auto;max-width:92%;min-height:60px;flex:0 0 auto;
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;
+  padding:9px 24px;border:1px solid rgba(42,171,238,.32);border-radius:20px;
   background:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 55%,#ECEDF0 100%);
   color:#0c3a57;font-family:inherit;
   position:relative;overflow:hidden;
@@ -748,15 +750,12 @@ body.view-driver .driver-route-bar{
   background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,0));
   pointer-events:none;
 }
-/* O'ng tomondagi ko'rinmas "ko'zgu" bo'shlig'i — chapdagi ikonka bilan bir xil
-   kenglikda, shu sababli matn butun tugmaning aynan o'rtasida simmetrik turadi. */
-.uni-action-btn::after{ content:""; grid-column:3; }
 .uni-action-btn:active{
   transform:translateY(4px);
   box-shadow:0 0 0 0 #D3D5DA,0 3px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
 }
 .uni-action-icon{
-  grid-column:1;
+  flex-shrink:0;
   width:68px;height:68px;position:relative;z-index:1;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
   background:transparent;border-radius:0;box-shadow:none;
@@ -778,8 +777,8 @@ body.view-driver .driver-route-bar{
   .uni-action-btn--cargo .uni-action-icon-img{ animation:none; }
 }
 .uni-action-label{
-  grid-column:2;min-width:0;text-align:center;padding:0 2px;
-  font-size:21px;font-weight:800;line-height:1.05;white-space:normal;
+  min-width:0;text-align:center;
+  font-size:21px;font-weight:800;line-height:1.05;white-space:nowrap;
   letter-spacing:-.02em;text-transform:uppercase;position:relative;z-index:1;
   color:#1E3A8A;
 }
