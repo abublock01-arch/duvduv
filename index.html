@@ -809,6 +809,20 @@ body.view-driver .driver-route-bar{
   text-shadow:0 -1px 1px rgba(0,0,0,.35),0 1px 1px rgba(255,255,255,.9);
 }
 
+/* ═══ VAQTINCHALIK: palitra tanlash test tugmasi (20 ta rang) — keyin OLIB TASHLANADI ═══ */
+#paletteTestBtn{
+  position:fixed;top:64px;right:12px;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  padding:8px 14px;border-radius:14px;
+  background:rgba(20,24,32,.82);color:#fff;
+  border:1.5px dashed rgba(255,255,255,.55);
+  font-family:inherit;font-size:11px;font-weight:700;line-height:1.3;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 6px 16px rgba(0,0,0,.3);
+  text-align:center;
+}
+#paletteTestBtn span{display:block;font-size:13px;font-weight:800}
+
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
 .uni-mode-chip{
   position:absolute;left:50%;top:50%;
@@ -2381,6 +2395,10 @@ html, body { font-size: var(--fs-base); }
             <span class="uni-mode-chip-x" aria-hidden="true">✕</span>
           </button>
         </div>
+        <!-- VAQTINCHALIK TEST TUGMASI: 20 ta palitrani almashtirib ko'rish uchun. Tanlov qilingach OLIB TASHLASH kerak. -->
+        <button type="button" id="paletteTestBtn" onclick="cyclePaletteTest()">
+          Palitra <span id="paletteTestLabel">1/20 — Oq/Kumush</span>
+        </button>
       </div>
 
     </div>
@@ -3039,6 +3057,45 @@ function openMineSheet(){
 function closeMineSheet(){
   document.getElementById('mineSheetOverlay')?.classList.remove('open');
   document.body.style.overflow = '';
+}
+
+// ═══ VAQTINCHALIK: 20 ta glossy palitrani sinab ko'rish uchun. Tanlov
+// qilingach shu blok, HTML'dagi #paletteTestBtn va CSS'dagi #paletteTestBtn
+// qoidasi OLIB TASHLANADI. ═══
+const PALETTE_TEST_COLORS = [
+  { name:'Oq/Kumush',      mid:'#FFFFFF', base:'#F1F2F4', dark:'#C7CBD1', darkest:'#A9AEB6' },
+  { name:'Telegram Ko\'k', mid:'#6EC3FF', base:'#2AABEE', dark:'#1C7FB0', darkest:'#135A7D' },
+  { name:'Osmon Ko\'k',    mid:'#8FD1FF', base:'#33A0FD', dark:'#1D6FC4', darkest:'#124A85' },
+  { name:'Zumrad Yashil',  mid:'#6EE7B7', base:'#10B981', dark:'#0B7A56', darkest:'#075940' },
+  { name:'Nafis Yashil',   mid:'#A8F0D1', base:'#34D399', dark:'#1FA97A', darkest:'#147255' },
+  { name:'Amber Sariq',    mid:'#FFC169', base:'#FF8A00', dark:'#C96800', darkest:'#8F4900' },
+  { name:'To\'q Sariq',    mid:'#F2960F', base:'#E8820A', dark:'#A85C02', darkest:'#7A4200' },
+  { name:'Qizil',          mid:'#FF8080', base:'#EF4444', dark:'#B91C1C', darkest:'#7F1010' },
+  { name:'Yoqut Qizil',    mid:'#FF9EB1', base:'#E11D48', dark:'#9F1239', darkest:'#6B0C28' },
+  { name:'Binafsha',       mid:'#C4B5FD', base:'#8B5CF6', dark:'#6D28D9', darkest:'#4C1D95' },
+  { name:'Siyohrang',      mid:'#A5B4FC', base:'#6366F1', dark:'#4338CA', darkest:'#312E81' },
+  { name:'Pushti',         mid:'#FBB6CE', base:'#EC4899', dark:'#BE185D', darkest:'#831843' },
+  { name:'Tiniq Moviy',    mid:'#5EEAD4', base:'#14B8A6', dark:'#0F766E', darkest:'#0A4F4A' },
+  { name:'Feruza',         mid:'#67E8F9', base:'#06B6D4', dark:'#0E7490', darkest:'#164E63' },
+  { name:'To\'q Ko\'k',    mid:'#7DA6D9', base:'#2C5FA8', dark:'#1B3E73', darkest:'#10254A' },
+  { name:'Oltin',          mid:'#FFE08A', base:'#F5B301', dark:'#B87F00', darkest:'#7A5300' },
+  { name:'Grafit',         mid:'#6B7280', base:'#374151', dark:'#1F2937', darkest:'#0F172A' },
+  { name:'Layim Yashil',   mid:'#D9F99D', base:'#A3E635', dark:'#65A30D', darkest:'#3F6212' },
+  { name:'Marjon',         mid:'#FFAB91', base:'#FF6F4D', dark:'#E14E2C', darkest:'#A3341A' },
+  { name:'To\'q Binafsha', mid:'#8C7AE6', base:'#5B4FCF', dark:'#3E339E', darkest:'#281F73' }
+];
+let paletteTestIndex = 0;
+function cyclePaletteTest(){
+  paletteTestIndex = (paletteTestIndex + 1) % PALETTE_TEST_COLORS.length;
+  const p = PALETTE_TEST_COLORS[paletteTestIndex];
+  document.querySelectorAll('.unified-actions .uni-action-btn').forEach(btn => {
+    btn.style.setProperty('--btn-mid', p.mid);
+    btn.style.setProperty('--btn-base', p.base);
+    btn.style.setProperty('--btn-dark', p.dark);
+    btn.style.setProperty('--btn-darkest', p.darkest);
+  });
+  const lbl = document.getElementById('paletteTestLabel');
+  if (lbl) lbl.textContent = (paletteTestIndex + 1) + '/20 — ' + p.name;
 }
 
 // ── Bitta ekrandagi 3ta amal tugmasi: bosilganda boshqa ikkitasi ekran
