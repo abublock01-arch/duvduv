@@ -742,7 +742,7 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-btn{
   width:100%;min-height:56px;flex:0 0 auto;
-  display:grid;grid-template-columns:68px 1fr;align-items:center;column-gap:14px;
+  display:grid;grid-template-columns:62px 1fr;align-items:center;column-gap:14px;
   padding:9px 26px 9px 16px;border:3px solid transparent;border-radius:34px;
   background:
     linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
@@ -779,8 +779,8 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-icon{
   flex-shrink:0;justify-self:center;
-  width:65px;height:65px;position:relative;z-index:1;
-  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  width:59px;height:59px;position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;overflow:visible;
   border-radius:50%;border:2px solid transparent;
   background:
     radial-gradient(circle at 32% 26%,#FFFFFF 0%,#FFFFFF 45%,#E4E6EA 100%) padding-box,
@@ -792,13 +792,14 @@ body.view-driver .driver-route-bar{
     inset 0 3px 3px rgba(255,255,255,1),
     inset 0 -5px 7px rgba(0,0,0,.2);
 }
-/* "Yuk yuboraman" ikonkasi boshqalardan 10% katta (boshqalari 5%), shu
-   sabab alohida oʻlcham bilan ustma-ust yoziladi. Grid ustuni (62px) eng
-   katta ikonkaga moslangan, shu sabab markazlari baribir bitta tik
-   chiziqda tekis qoladi. */
-.uni-action-btn--cargo .uni-action-icon{ width:68px; height:68px; }
-.uni-action-icon svg{width:78%;height:78%;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
-.uni-action-icon-img{width:78%;height:78%;display:block;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+/* "Yuk yuboraman" ikonkasi boshqalardan kattaroq. Oq doira (belgi) va tugma
+   o'lchami O'ZGARMAYDI — faqat ichidagi rasm (svg/img) doira chegarasidan
+   biroz tashqariga chiqib kattaroq ko'rinadi (overflow:visible tufayli),
+   shu sabab tugmalarning o'zi kattalashib ketmaydi. */
+.uni-action-btn--cargo .uni-action-icon{ width:62px; height:62px; }
+.uni-action-icon svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+.uni-action-icon-img{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
+.uni-action-btn--cargo .uni-action-icon-img{width:114%;height:114%}
 /* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
    faqat CSS transform (GPU'da arzon, layout/reflow triggermaydi), shu sabab
    telefonda sekinlashuv yoki qotishga olib kelmaydi. */
