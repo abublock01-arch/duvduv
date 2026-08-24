@@ -3236,14 +3236,12 @@ function enterUniMode(key){
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
   // Uchala amal ham (Yo'lovchiman, Yuk yuboraman, Haydovchiman) endi BIR
-  // XIL animatsiya bilan boshlanadi: 3ta tugma ham yo'qoladi, faol
-  // ikonkaning o'zi xaritada foydalanuvchi lokatsiyasiga smooth pin bo'lib
-  // tushadi, xarita o'sha yerga yaqinlashadi, tepadagi yo'nalish paneli
-  // bo'shagan o'rtadagi joyga tushadi. Bekor qilish uchun xaritaning
-  // pastki chap burchagidagi glossy 3D "orqaga" tugmasi ishlatiladi.
-  // Amallarning o'zi o'zgarishsiz qoladi: Yo'lovchiman'da hech qanday
-  // sheet ochilmaydi (avvalgidek, faqat xarita+filtr), Yuk yuboraman va
-  // Haydovchiman'da esa o'zining sheeti animatsiya bilan bir vaqtda ochiladi.
+  // XIL animatsiya bilan boshlanadi va BIR XIL natijaga ega: eski sheet
+  // (varaq) ENDI OCHILMAYDI — faol ikonkaning o'zi xaritada foydalanuvchi
+  // lokatsiyasiga smooth pin bo'lib tushadi, xarita o'sha yerga
+  // yaqinlashadi, tepadagi yo'nalish paneli bo'shagan o'rtadagi joyga
+  // tushadi. Bekor qilish uchun xaritaning pastki chap burchagidagi
+  // glossy 3D "orqaga" tugmasi ishlatiladi (meta.open() endi chaqirilmaydi).
   document.getElementById('uniModeBackBtn')?.classList.add('visible');
   // Tugmalar konteyneri (.unified-actions) shaffof bo'lsa-da, o'z joyida
   // "ko'rinmas" holda qolib, pastga tushgan Qayerdan/Qayerga panelining
@@ -3251,9 +3249,6 @@ function enterUniMode(key){
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
   playTravelPinAnimation(activeBtn, btns, key);
-  if (key !== 'travel') {
-    uniModeOpenTimer = setTimeout(() => { uniModeOpenTimer = null; meta.open(); }, 260);
-  }
 }
 // ═══ "Yo'lovchiman" ikonkasi xaritada foydalanuvchi lokatsiyasiga
 // smooth "pin" bo'lib tushadigan animatsiya (FLIP texnikasi: ikonkaning
@@ -3403,10 +3398,12 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
     });
   });
 
-  // Asl tugma xuddi shu davomiylikda sekin ko'rinadi — klon "qo'nayotganda"
-  // tabiiy tuyulsin.
-  activeBtn.style.transition = `opacity ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
-  activeBtn.style.opacity = '1';
+  // Asl tugma klon parvoz qilib borayotgan BUTUN davomida ikonkasiz/
+  // ko'rinmas holda qoladi (ikkita ikonka bir vaqtda ko'rinib ketmasligi
+  // uchun) — faqat klon aynan "qo'nib" ulgurgan lahzada tugma birdaniga
+  // paydo bo'ladi, xuddi ikonka joyiga qaytib yopishgandek tuyulsin.
+  activeBtn.style.transition = 'none';
+  activeBtn.style.opacity = '0';
 
   setTimeout(() => {
     clone.remove();
