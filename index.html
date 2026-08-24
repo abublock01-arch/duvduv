@@ -893,6 +893,50 @@ body.view-driver .driver-route-bar{
 .uni-mode-chip.visible{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
 .uni-mode-chip-x{font-size:12px;opacity:.85}
 
+/* "Yo'lovchiman" rejimida (pin animatsiyasi paytida) chip o'rniga xaritaning
+   pastki chap burchagida ko'rinadigan "orqaga" tugmasi — uchta amal
+   tugmasi bilan bir xil glossy 3D uslub/dizayn. */
+.uni-back-btn{
+  position:absolute;left:14px;bottom:14px;z-index:14;
+  width:52px;height:52px;border-radius:50%;
+  border:3px solid transparent;
+  background:
+    linear-gradient(180deg,#FFFFFF 0%,#F1F2F4 55%,#C7CBD1 100%) padding-box,
+    linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:
+    0 5px 0 0 #A9AEB6,
+    0 12px 20px rgba(0,0,0,.28),
+    0 3px 6px rgba(0,0,0,.15),
+    inset 0 2px 1px rgba(255,255,255,.55),
+    inset 0 -8px 12px -6px rgba(0,0,0,.4);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
+  opacity:0;transform:scale(.7);pointer-events:none;overflow:hidden;
+  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.uni-back-btn.visible{opacity:1;transform:scale(1);pointer-events:auto}
+.uni-back-btn::before{
+  content:"";position:absolute;left:16%;right:16%;top:10%;height:20%;z-index:0;
+  border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 85%);
+  pointer-events:none;
+}
+.uni-back-btn:active{
+  transform:scale(1) translateY(4px);
+  background:
+    linear-gradient(180deg,#C7CBD1 0%,#A9AEB6 100%) padding-box,
+    linear-gradient(180deg,#c9c9c9 0%,#8c8c8c 40%,#6b6b6b 60%,#d8d8d8 100%) border-box;
+  box-shadow:
+    0 0 0 0 #A9AEB6,
+    0 4px 8px rgba(0,0,0,.22),
+    inset 0 3px 8px rgba(0,0,0,.45),
+    inset 0 -2px 4px rgba(255,255,255,.12);
+}
+.uni-back-btn svg{
+  width:24px;height:24px;position:relative;z-index:1;
+  stroke:#33445c;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round;
+}
+
 /* ── Driver region picker overlay ── */
 #driverRegionPickerOverlay{
   position:fixed;inset:0;background:#fff;z-index:500;
@@ -2414,6 +2458,9 @@ html, body { font-size: var(--fs-base); }
           <!-- Eski tugmalar saqlanmoqda (JS ular bilan ishlaydi) -->
           <button type="button" class="map-route-btn" id="routeSetBtn" style="display:none" aria-label="Yo'nalish"></button>
           <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden></button>
+          <button type="button" class="uni-back-btn" id="uniModeBackBtn" onclick="exitUniMode()" aria-label="Orqaga qaytish">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
         </div>
         <!-- Eski picker — yashirildi, JS uchun saqlanmoqda -->
         <div class="driver-picker-zone" aria-hidden="true">
@@ -3181,21 +3228,23 @@ function enterUniMode(key){
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
+  // "Yo'lovchiman" — alohida stsenariy: 3ta tugma ham yo'qoladi, faqat
+  // shu ikonka xaritada foydalanuvchi lokatsiyasiga smooth pin bo'lib
+  // tushadi, xarita o'sha yerga yaqinlashadi, tepadagi yo'nalish paneli
+  // bo'shagan "Yuk yuboraman" joyiga tushadi. Bekor qilish uchun endi
+  // markazdagi "✕" chipi emas, xaritaning pastki chap burchagidagi
+  // glossy 3D "orqaga" tugmasi ishlatiladi.
+  if (key === 'travel') {
+    document.getElementById('uniModeBackBtn')?.classList.add('visible');
+    playTravelPinAnimation(activeBtn, btns);
+    return;
+  }
   const chip = document.getElementById('uniModeChip');
   const chipLabel = document.getElementById('uniModeChipLabel');
   if (chip && chipLabel) {
     chipLabel.textContent = scriptLatin ? meta.label : meta.cyr;
     chip.style.setProperty('--uni-chip-color', meta.color);
     requestAnimationFrame(() => chip.classList.add('visible'));
-  }
-  // "Yo'lovchiman" — alohida stsenariy: 3ta tugma ham yo'qoladi, faqat
-  // shu ikonka xaritada foydalanuvchi lokatsiyasiga smooth pin bo'lib
-  // tushadi, xarita o'sha yerga yaqinlashadi, tepadagi yo'nalish paneli
-  // bo'shagan "Yuk yuboraman" joyiga tushadi. Hozircha (davomi keyinroq)
-  // pastki varaq ochilmaydi — bekor qilish uchun chip ("✕") qoladi.
-  if (key === 'travel') {
-    playTravelPinAnimation(activeBtn, btns);
-    return;
   }
   uniModeOpenTimer = setTimeout(() => { uniModeOpenTimer = null; meta.open(); }, 260);
 }
@@ -3310,6 +3359,7 @@ function exitUniMode(){
     btn.style.pointerEvents = '';
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
+  document.getElementById('uniModeBackBtn')?.classList.remove('visible');
   if (wasTravel) {
     const routeBar = document.querySelector('.driver-route-bar');
     if (routeBar && travelRouteBarShifted) {
