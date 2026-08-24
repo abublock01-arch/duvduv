@@ -763,6 +763,20 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-icon svg{width:92%;height:92%;display:block}
 .uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
+/* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
+   faqat CSS transform (GPU'da arzon, layout/reflow triggermaydi), shu sabab
+   telefonda sekinlashuv yoki qotishga olib kelmaydi. */
+@keyframes cargoParachuteSway{
+  0%,100%{ transform:rotate(-4deg); }
+  50%{ transform:rotate(4deg); }
+}
+.uni-action-btn--cargo .uni-action-icon-img{
+  transform-origin:50% 6%;
+  animation:cargoParachuteSway 2.6s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce){
+  .uni-action-btn--cargo .uni-action-icon-img{ animation:none; }
+}
 .uni-action-label{
   grid-column:2;min-width:0;text-align:center;padding:0 2px;
   font-size:21px;font-weight:800;line-height:1.05;white-space:normal;
