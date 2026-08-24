@@ -3236,6 +3236,11 @@ function enterUniMode(key){
   // glossy 3D "orqaga" tugmasi ishlatiladi.
   if (key === 'travel') {
     document.getElementById('uniModeBackBtn')?.classList.add('visible');
+    // Tugmalar konteyneri (.unified-actions) shaffof bo'lsa-da, o'z joyida
+    // "ko'rinmas" holda qolib, pastga tushgan Qayerdan/Qayerga panelining
+    // bosilishiga to'sqinlik qilmasin.
+    const unifiedActions = document.querySelector('.unified-actions');
+    if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
     playTravelPinAnimation(activeBtn, btns);
     return;
   }
@@ -3254,6 +3259,8 @@ function enterUniMode(key){
 // vaqtda xarita o'sha koordinataga yaqinlashadi). ═══
 let travelPinMarker = null;
 let travelRouteBarShifted = false;
+let travelPinFlightClone = null;
+let travelPinFlightTimer = null;
 const TRAVEL_PIN_ANIM_MS = 1100;
 const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out" — juda tez emas
 function playTravelPinAnimation(activeBtn, allBtns){
@@ -3284,6 +3291,7 @@ function playTravelPinAnimation(activeBtn, allBtns){
   clone.style.zIndex = '9500';
   clone.style.transition = `left ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, top ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, width ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, height ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
   document.body.appendChild(clone);
+  travelPinFlightClone = clone;
 
   activeBtn.style.transition = 'opacity .2s ease';
   activeBtn.style.opacity = '0';
@@ -3330,8 +3338,10 @@ function playTravelPinAnimation(activeBtn, allBtns){
       refreshOrderMarkersDebounced();
     }
 
-    setTimeout(() => {
+    travelPinFlightTimer = setTimeout(() => {
+      travelPinFlightTimer = null;
       clone.remove();
+      if (travelPinFlightClone === clone) travelPinFlightClone = null;
       if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
       const pinEl = document.createElement('div');
       pinEl.className = 'travel-pin-marker';
@@ -3343,31 +3353,105 @@ function playTravelPinAnimation(activeBtn, allBtns){
   }).catch(() => {
     clone.style.transition = 'opacity .2s ease';
     clone.style.opacity = '0';
-    setTimeout(() => clone.remove(), 220);
+    setTimeout(() => {
+      clone.remove();
+      if (travelPinFlightClone === clone) travelPinFlightClone = null;
+    }, 220);
     showToast('Lokatsiya olinmadi', 'error');
   });
+}
+// Orqaga qaytish (back tugmasi) bosilganda — pin xaritadan tugma joyiga
+// qarab TESKARI tomonga suzib qaytadi (forward animatsiyaning aynan
+// aksi), keyin asl tugma o'sha yerda paydo bo'ladi.
+function playTravelPinReverseAnimation(activeBtn, fromRect){
+  const iconTarget = activeBtn?.querySelector('.uni-action-icon-img, .uni-action-icon svg');
+  if (!fromRect || !iconTarget) {
+    if (activeBtn) {
+      activeBtn.style.transition = '';
+      activeBtn.style.opacity = '';
+      activeBtn.style.pointerEvents = '';
+    }
+    return;
+  }
+  const targetRect = iconTarget.getBoundingClientRect();
+
+  const clone = iconTarget.cloneNode(true);
+  clone.classList.add('travel-pin-fly');
+  clone.style.position = 'fixed';
+  clone.style.left = fromRect.left + 'px';
+  clone.style.top = fromRect.top + 'px';
+  clone.style.width = fromRect.width + 'px';
+  clone.style.height = fromRect.height + 'px';
+  clone.style.margin = '0';
+  clone.style.zIndex = '9500';
+  clone.style.transition = `left ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, top ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, width ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}, height ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
+  document.body.appendChild(clone);
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      clone.style.left = targetRect.left + 'px';
+      clone.style.top = targetRect.top + 'px';
+      clone.style.width = targetRect.width + 'px';
+      clone.style.height = targetRect.height + 'px';
+    });
+  });
+
+  // Asl tugma xuddi shu davomiylikda sekin ko'rinadi — klon "qo'nayotganda"
+  // tabiiy tuyulsin.
+  activeBtn.style.transition = `opacity ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
+  activeBtn.style.opacity = '1';
+
+  setTimeout(() => {
+    clone.remove();
+    activeBtn.style.transition = '';
+    activeBtn.style.opacity = '';
+    activeBtn.style.pointerEvents = '';
+  }, TRAVEL_PIN_ANIM_MS);
 }
 function exitUniMode(){
   if (!activeUniMode) return;
   const wasTravel = activeUniMode === 'travel';
+  const prevKey = activeUniMode;
   activeUniMode = null;
   applyUniModeMapVisibility();
   if (uniModeOpenTimer) { clearTimeout(uniModeOpenTimer); uniModeOpenTimer = null; }
-  document.querySelectorAll('.uni-action-btn').forEach(btn => {
+  const btns = [...document.querySelectorAll('.uni-action-btn')];
+  const activeBtn = btns.find(b => b.dataset.uniKey === prevKey);
+  btns.forEach(btn => {
+    // Yo'lovchiman'dagi faol tugma alohida — pastda reverse pin
+    // animatsiyasi orqali (yoki uning zaxira shoxobchasi orqali) qaytadi.
+    if (wasTravel && btn === activeBtn) return;
     btn.style.transform = '';
     btn.style.opacity = '';
     btn.style.pointerEvents = '';
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
   document.getElementById('uniModeBackBtn')?.classList.remove('visible');
+  // Tugmalar konteyneri (.unified-actions) o'zi "shaffof" bo'lsa ham
+  // pastga tushgan Qayerdan/Qayerga panelini bosishga to'sqinlik qilmasin.
+  const unifiedActions = document.querySelector('.unified-actions');
+  if (unifiedActions) unifiedActions.style.pointerEvents = '';
   if (wasTravel) {
     const routeBar = document.querySelector('.driver-route-bar');
     if (routeBar && travelRouteBarShifted) {
       routeBar.style.transform = '';
       travelRouteBarShifted = false;
     }
+    if (travelPinFlightTimer) { clearTimeout(travelPinFlightTimer); travelPinFlightTimer = null; }
+    // Klon/marker rasmiy o'chirilishidan OLDIN uning ekrandagi joyini
+    // o'lchab olamiz — aks holda DOM'dan ajratilgach o'lchov nolga
+    // aylanib qoladi.
+    let fromRect = null;
+    if (travelPinMarker) {
+      fromRect = travelPinMarker.getElement().getBoundingClientRect();
+      travelPinMarker.remove();
+      travelPinMarker = null;
+    } else if (travelPinFlightClone) {
+      fromRect = travelPinFlightClone.getBoundingClientRect();
+    }
+    travelPinFlightClone = null;
     document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
-    if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
+    playTravelPinReverseAnimation(activeBtn, fromRect);
   }
 }
 function renderDriverRoutesList(){
