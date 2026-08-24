@@ -3375,9 +3375,23 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
     }
     return;
   }
+  // Tugmaning o'zi (dumaloq oq ramka + matn) darhol TO'LIQ ko'rinadi —
+  // faqat butun tugma emas. Tugma hali ham forward parvozdan beri
+  // opacity:0 bo'lib turgan bo'lishi mumkin, shu sabab uni avval tiklaymiz.
+  activeBtn.style.transition = '';
+  activeBtn.style.opacity = '';
+  activeBtn.style.pointerEvents = 'none';
+
   const targetRect = iconTarget.getBoundingClientRect();
+  // Faqat ICHIDAGI ikonka (rasm/svg) klon parvoz qilib borayotgan BUTUN
+  // davomida yashiriladi — dumaloq ramka bo'sh holda ko'rinib turadi.
+  // Klon aynan shu joyga "qo'nib" ulgurgan lahzada ikonka birdaniga
+  // paydo bo'ladi, xuddi joyiga qaytib yopishgandek tuyulsin (ikkita
+  // ikonka bir vaqtda ko'rinib ketmasin).
+  iconTarget.style.visibility = 'hidden';
 
   const clone = iconTarget.cloneNode(true);
+  clone.style.visibility = '';
   clone.classList.add('travel-pin-fly');
   clone.style.position = 'fixed';
   clone.style.left = fromRect.left + 'px';
@@ -3398,17 +3412,9 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
     });
   });
 
-  // Asl tugma klon parvoz qilib borayotgan BUTUN davomida ikonkasiz/
-  // ko'rinmas holda qoladi (ikkita ikonka bir vaqtda ko'rinib ketmasligi
-  // uchun) — faqat klon aynan "qo'nib" ulgurgan lahzada tugma birdaniga
-  // paydo bo'ladi, xuddi ikonka joyiga qaytib yopishgandek tuyulsin.
-  activeBtn.style.transition = 'none';
-  activeBtn.style.opacity = '0';
-
   setTimeout(() => {
     clone.remove();
-    activeBtn.style.transition = '';
-    activeBtn.style.opacity = '';
+    iconTarget.style.visibility = '';
     activeBtn.style.pointerEvents = '';
   }, TRAVEL_PIN_ANIM_MS);
 }
