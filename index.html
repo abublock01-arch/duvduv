@@ -724,43 +724,65 @@ body.view-driver .driver-route-bar{
   background:transparent;border-top:none;
   z-index:20;
 }
-/* Har bir amal — "o'yin tugmasi" uslubidagi asosiy CTA: oq fon, kulrang
-   soyalar, pastda och kulrang "asos" qatlami (3D bosiladigan effekt),
-   chapda nisbatan kattaroq dumaloq ikonka, o'ng tomonda lotincha matn.
-   Uchtasi ham BIR XIL ENGA ega (ustki grid ustuni eng uzun matnga —
-   "Yuk yuboraman"ga — moslashadi, qolgan ikkitasi ham shu enni oladi);
-   ichidagi ikonka+matn har bir tugmada alohida markazlashtirilgan, shu
-   sabab qisqaroq matnli tugmalarda ham simmetrik bosh joy qoladi. Balandligi
-   avvalgidan ozgina kichikroq. Tepadan pastga: Yo'lovchiman, Yuk yuboraman,
-   Haydovchiman. */
+/* Har bir amal — HAQIQIY fizik tugma effekti: xromli metall bezel (halqa),
+   ranggga boy "jilo" (glossy) tana, tepada shisha kabi yorug'lik nuri,
+   pastda qorong'i 3D "asos" qatlami (bosilganda tugma shu qatlamga cho'kadi),
+   oq bosma (embossed) matn. Har bir amal o'zining brend rangida (driver —
+   to'q sariq, cargo — ko'k, travel — amber). Uchtasi ham BIR XIL ENGA ega
+   (ustki grid ustuni eng uzun matnga moslashadi). Tepadan pastga:
+   Yo'lovchiman, Yuk yuboraman, Haydovchiman. */
+.uni-action-btn--driver{
+  --btn-mid:#F2960F;--btn-base:#E8820A;--btn-dark:#A85C02;--btn-darkest:#7A4200;
+}
+.uni-action-btn--cargo{
+  --btn-mid:#4FADFD;--btn-base:#33A0FD;--btn-dark:#1D6FC4;--btn-darkest:#124A85;
+}
+.uni-action-btn--travel{
+  --btn-mid:#FFA733;--btn-base:#FF8A00;--btn-dark:#C96800;--btn-darkest:#8F4900;
+}
 .uni-action-btn{
-  width:100%;min-height:52px;flex:0 0 auto;
-  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:12px;
-  padding:7px 24px;border:1px solid rgba(42,171,238,.32);border-radius:18px;
-  background:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 55%,#ECEDF0 100%);
-  color:#0c3a57;font-family:inherit;
+  width:100%;min-height:56px;flex:0 0 auto;
+  display:flex;flex-direction:row;align-items:center;justify-content:center;gap:14px;
+  padding:10px 26px;border:3px solid transparent;border-radius:34px;
+  background:
+    linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
+    linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
+  color:#fff;font-family:inherit;
   position:relative;overflow:hidden;
-  box-shadow:0 4px 0 0 #D3D5DA,0 10px 18px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
+  box-shadow:
+    0 5px 0 0 var(--btn-darkest),
+    0 12px 20px rgba(0,0,0,.28),
+    0 3px 6px rgba(0,0,0,.15),
+    inset 0 2px 1px rgba(255,255,255,.55),
+    inset 0 -8px 12px -6px rgba(0,0,0,.4);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   will-change:transform,box-shadow;
-  transition:transform .09s ease,box-shadow .09s ease;
+  transition:transform .09s ease,box-shadow .09s ease,background .09s ease;
 }
-/* Tepadagi yaltiroq (glossy) yorug'lik chizig'i — o'yin tugmalariga xos jilo */
+/* Tepadagi shishasimon (glossy) yorug'lik dog'i — fizik tugmaning xarakterli jilosi */
 .uni-action-btn::before{
-  content:"";position:absolute;left:0;right:0;top:0;height:52%;z-index:0;
-  border-radius:20px 20px 60px 60px/20px 20px 34px 34px;
-  background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,0));
+  content:"";position:absolute;left:6%;right:6%;top:8%;height:36%;z-index:0;
+  border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,0));
   pointer-events:none;
 }
 .uni-action-btn:active{
-  transform:translateY(4px);
-  box-shadow:0 0 0 0 #D3D5DA,0 3px 8px rgba(0,0,0,.10),0 1px 3px rgba(0,0,0,.06);
+  transform:translateY(5px);
+  background:
+    linear-gradient(180deg,var(--btn-dark) 0%,var(--btn-darkest) 100%) padding-box,
+    linear-gradient(180deg,#c9c9c9 0%,#8c8c8c 40%,#6b6b6b 60%,#d8d8d8 100%) border-box;
+  box-shadow:
+    0 0 0 0 var(--btn-darkest),
+    0 4px 8px rgba(0,0,0,.22),
+    inset 0 3px 8px rgba(0,0,0,.45),
+    inset 0 -2px 4px rgba(255,255,255,.12);
 }
 .uni-action-icon{
   flex-shrink:0;
-  width:60px;height:60px;position:relative;z-index:1;
+  width:58px;height:58px;position:relative;z-index:1;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
   background:transparent;border-radius:0;box-shadow:none;
+  filter:drop-shadow(0 3px 4px rgba(0,0,0,.35));
 }
 .uni-action-icon svg{width:92%;height:92%;display:block}
 .uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
@@ -780,9 +802,10 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-label{
   min-width:0;text-align:center;
-  font-size:21px;font-weight:800;line-height:1.05;white-space:nowrap;
-  letter-spacing:-.02em;text-transform:uppercase;position:relative;z-index:1;
-  color:#1E3A8A;
+  font-size:20px;font-weight:800;line-height:1.05;white-space:nowrap;
+  letter-spacing:-.01em;text-transform:uppercase;position:relative;z-index:1;
+  color:#fff;
+  text-shadow:0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22);
 }
 
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
