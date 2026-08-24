@@ -735,7 +735,7 @@ body.view-driver .driver-route-bar{
   padding:8px 12px;border:1px solid rgba(42,171,238,.32);border-radius:20px;
   background:linear-gradient(180deg,#FFFFFF 0%,#F6F7F9 55%,#ECEDF0 100%);
   color:#0c3a57;font-family:inherit;
-  position:relative;
+  position:relative;overflow:hidden;
   box-shadow:0 4px 0 0 #D3D5DA,0 10px 18px rgba(0,0,0,.14),0 2px 6px rgba(0,0,0,.08);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   will-change:transform,box-shadow;
@@ -758,21 +758,18 @@ body.view-driver .driver-route-bar{
 .uni-action-icon{
   grid-column:1;
   width:68px;height:68px;position:relative;z-index:1;
-  display:flex;align-items:center;justify-content:center;overflow:visible;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
   background:transparent;border-radius:0;box-shadow:none;
 }
 .uni-action-icon svg{width:92%;height:92%;display:block}
-.uni-action-icon .cta-icon svg{width:92%;height:92%}
 .uni-action-icon-img{width:92%;height:92%;display:block;object-fit:contain}
-/* Yuk (parashyut+quti) ikonkasi atayin o'z doirasidan kattaroq — yuqorisi
-   (parashyut) tashqariga chiqib tursin. */
-.uni-action-btn--cargo .uni-action-icon-img{
-  position:absolute;bottom:2%;left:50%;transform:translateX(-50%);
-  width:92%;height:92%;max-width:none;max-height:none;
-}
+/* Haydovchi (mashina) SVG chizmasi o'zining ichki bo'shlig'i sabab boshqa
+   ikkita rasmga nisbatan kichikroq ko'rinar edi — muvozanat uchun to'liq
+   konteynerni egallaydi. */
+.uni-action-btn--driver .cta-icon svg{width:100%;height:100%}
 .uni-action-label{
   grid-column:2;min-width:0;text-align:center;padding:0 2px;
-  font-size:23px;font-weight:800;line-height:1.05;white-space:normal;
+  font-size:21px;font-weight:800;line-height:1.05;white-space:normal;
   letter-spacing:-.02em;text-transform:uppercase;position:relative;z-index:1;
   color:#1E3A8A;
 }
