@@ -3017,6 +3017,7 @@ function subscribeDriverRoutes(){
       driverRoutes.push({ id: doc.id, firestoreId: doc.id, ...d });
     });
     renderDriverRoutesList();
+    refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore driverRoutes snapshot xatosi:', err));
 }
 async function saveDriverRouteToFirestore(route){
@@ -3163,6 +3164,10 @@ function enterUniMode(key){
   const meta = uniModeMeta()[key];
   if (!meta) return;
   activeUniMode = key;
+  // Yo'lovchiman rejimida xaritada faqat haydovchi yo'nalishlari ko'rinsin —
+  // yo'lovchi/yuk e'lonlari yashiriladi (applyUniModeMapVisibility).
+  applyUniModeMapVisibility();
+  if (key === 'travel') { invalidateMapGeoCache(); refreshOrderMarkersDebounced(); }
   const btns = [...document.querySelectorAll('.uni-action-btn')];
   const activeIndex = btns.findIndex(b => b.dataset.uniKey === key);
   const activeBtn = btns[activeIndex];
@@ -3268,6 +3273,12 @@ function playTravelPinAnimation(activeBtn, allBtns){
       const fromLbl = document.getElementById('driverFromLabel');
       if (fromLbl) fromLbl.textContent = regionName;
       document.getElementById('driverFromBtn')?.classList.add('has-value');
+      // "Qayerdan" avtomatik to'ldirildi — xaritadagi haydovchi yo'nalishlari
+      // shu manzilga qarab qayta filtrlanadi.
+      const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+      saved.from = regionName;
+      localStorage.setItem(routeKey(), JSON.stringify(saved));
+      refreshOrderMarkersDebounced();
     }
 
     setTimeout(() => {
@@ -3291,6 +3302,7 @@ function exitUniMode(){
   if (!activeUniMode) return;
   const wasTravel = activeUniMode === 'travel';
   activeUniMode = null;
+  applyUniModeMapVisibility();
   if (uniModeOpenTimer) { clearTimeout(uniModeOpenTimer); uniModeOpenTimer = null; }
   document.querySelectorAll('.uni-action-btn').forEach(btn => {
     btn.style.transform = '';
@@ -3785,10 +3797,11 @@ let map = null;
 let driverLocationMarker = null;
 let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
-const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels'];
+const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
 const ORDER_MAP_LAYER_IDS = [
   'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
-  'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
+  'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label',
+  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
 ];
 // Professional xarita ilovalari (Yandex, Google Maps, Uber) belgilarni deyarli
 // bir xil ekran o'lchamida ushlab turadi — zoom bilan drastik kattalashmaydi.
@@ -3800,6 +3813,7 @@ const ORDER_ICON_SIZE_LAYOUT = [
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
 const MAP_ICON_PERSON = 'map-icon-person';
+const MAP_ICON_DRIVER = 'map-icon-driver';
 
 const MAP_MARKER_BOX_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
     <defs>
@@ -6142,10 +6156,96 @@ function buildMapGeoCollections(){
   return cachedMapGeo;
 }
 
+// ── Yo'lovchiman rejimida xaritada faqat haydovchi yo'nalishlari (driverRoutes)
+// ko'rinishi uchun — yo'lovchi/yuk e'lonlari shu paytda yashiriladi
+// (applyUniModeMapVisibility), o'rniga shu funksiyalar bilan haydovchilar
+// chiziladi, belgilangan "Qayerdan/Qayerga" manzillariga qarab filtrlanib.
+function driverRouteMatchesTravelFilter(route){
+  if (!route || route.archived) return false;
+  if (route.status && route.status !== 'Aktiv') return false;
+  if (!route.carriesPerson) return false;
+  if (!REGION_CENTERS[route.from]) return false;
+  const filter = getDriverRouteFilter();
+  if (filter.from && filter.to) {
+    const rFrom = toCanonRegion(route.from || '');
+    const rTo   = toCanonRegion(route.to || '');
+    const dFrom = toCanonRegion(filter.from);
+    const dTo   = toCanonRegion(filter.to);
+    return (rFrom === dFrom && rTo === dTo) || (rFrom === dTo && rTo === dFrom);
+  }
+  return true;
+}
+
+function driverRouteMapProps(route){
+  const from = route.from || '';
+  const to = route.to || '';
+  const mapFrom = mapLabelRegion(from);
+  const mapTo = mapLabelRegion(to);
+  return {
+    orderId: String(route.firestoreId || route.id || ''),
+    dest: from && to ? `${from} → ${to}` : (to || from),
+    from, to,
+    mapFrom: mapFrom || '—',
+    mapTo: mapTo || '—',
+    itemType: 'driverRoute',
+    thumbUrl: '',
+    telegramUsername: route.telegramUsername || ''
+  };
+}
+
+// Bitta viloyat markazida bir nechta haydovchi bo'lsa, ustma-ust tushmasligi
+// uchun har bir hujjat id'siga qarab kichik, lekin barqaror (har safar bir xil)
+// siljish beriladi.
+function jitterForRouteId(id, scale){
+  let h = 0;
+  const s = String(id || '');
+  for (let i = 0; i < s.length; i++) { h = (h * 31 + s.charCodeAt(i)) >>> 0; }
+  const a = (h % 1000) / 1000;
+  const b = ((Math.floor(h / 1000)) % 1000) / 1000;
+  const angle = a * Math.PI * 2;
+  const r = scale * Math.sqrt(b);
+  return [Math.cos(angle) * r, Math.sin(angle) * r];
+}
+
+function buildDriverRouteGeo(){
+  const features = driverRoutes
+    .filter(driverRouteMatchesTravelFilter)
+    .map(r => {
+      const center = REGION_CENTERS[r.from];
+      if (!center) return null;
+      const [jx, jy] = jitterForRouteId(r.firestoreId || r.id, 0.045);
+      return {
+        type: 'Feature',
+        geometry: { type: 'Point', coordinates: [center[0] + jx, center[1] + jy] },
+        properties: driverRouteMapProps(r)
+      };
+    })
+    .filter(Boolean);
+  return { type: 'FeatureCollection', features };
+}
+
+// Yo'lovchiman rejimi faol bo'lganda: yo'lovchi/yuk e'lonlari yashiriladi,
+// haydovchi yo'nalishlari ko'rsatiladi. Aks holda — teskarisi.
+function applyUniModeMapVisibility(){
+  if (!map || !map.getLayer('map-orders-clusters')) return;
+  const travelMode = activeUniMode === 'travel';
+  const hideIds = [
+    'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
+    'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
+  ];
+  const showIds = [
+    'map-driver-routes-clusters', 'map-driver-routes-cluster-count',
+    'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
+  ];
+  hideIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', travelMode ? 'none' : 'visible'); });
+  showIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', travelMode ? 'visible' : 'none'); });
+}
+
 function findOrderByMapId(orderId){
   const key = String(orderId);
   return orders.find(o => String(o.firestoreId || o.id) === key)
-    || travels.find(t => String(t.firestoreId || t.id) === key);
+    || travels.find(t => String(t.firestoreId || t.id) === key)
+    || driverRoutes.find(r => String(r.firestoreId || r.id) === key);
 }
 
 function loadMapMarkerImage(map, id, source){
@@ -6171,7 +6271,8 @@ function loadMapMarkerImages(map){
     // uchun endi o'sha 3D PNG rasmlarning o'zidan foydalanamiz (avvalgi
     // qo'lda chizilgan MAP_MARKER_BOX_SVG/MAP_MARKER_PERSON_SVG o'rniga).
     loadMapMarkerImage(map, MAP_ICON_BOX, 'assets/icon-cargo-3d.png'),
-    loadMapMarkerImage(map, MAP_ICON_PERSON, 'assets/icon-travel-3d.png')
+    loadMapMarkerImage(map, MAP_ICON_PERSON, 'assets/icon-travel-3d.png'),
+    loadMapMarkerImage(map, MAP_ICON_DRIVER, 'assets/icon-driver-3d.png')
   ]);
 }
 
@@ -6207,8 +6308,8 @@ function removeMapOrderLayers(){
 
 function addMapTypeLayers(sourceId, iconImage, iconOffset){
   const prefix = sourceId;
-  const clusterBase = iconImage === MAP_ICON_BOX ? '#2AABEE' : '#E8820A';
-  const clusterDark = iconImage === MAP_ICON_BOX ? '#1565C0' : '#B45309';
+  const clusterBase = iconImage === MAP_ICON_BOX ? '#2AABEE' : iconImage === MAP_ICON_DRIVER ? '#34A853' : '#E8820A';
+  const clusterDark = iconImage === MAP_ICON_BOX ? '#1565C0' : iconImage === MAP_ICON_DRIVER ? '#1E7E34' : '#B45309';
   map.addLayer({
     id: `${prefix}-clusters`,
     type: 'circle',
@@ -6282,11 +6383,14 @@ function setupOrderClusterLayers(){
   const geo = buildMapGeoCollections();
   map.addSource('map-orders', { type: 'geojson', data: geo.orders, ...MAP_CLUSTER_OPTS });
   map.addSource('map-travels', { type: 'geojson', data: geo.travels, ...MAP_CLUSTER_OPTS });
+  map.addSource('map-driver-routes', { type: 'geojson', data: buildDriverRouteGeo(), ...MAP_CLUSTER_OPTS });
   loadMapMarkerImages(map).then(() => {
     if (!map.getLayer('map-orders-clusters')) {
       addMapTypeLayers('map-orders', MAP_ICON_BOX, [-0.35, 0]);
       addMapTypeLayers('map-travels', MAP_ICON_PERSON, [0.35, 0]);
+      addMapTypeLayers('map-driver-routes', MAP_ICON_DRIVER, [0, 0]);
     }
+    applyUniModeMapVisibility();
     map._ordersLayerConfigVersion = MAP_LAYER_CONFIG_VERSION;
     bindOrderMapEvents();
     orderClusterLayersReady = true;
@@ -6297,8 +6401,8 @@ function bindOrderMapEvents(){
   if (!map || map._orderMapEventsReady) return;
   map._orderMapEventsReady = true;
 
-  const clusterLayers = ['map-orders-clusters', 'map-orders-cluster-count', 'map-travels-clusters', 'map-travels-cluster-count'];
-  const iconLayers = ['map-orders-unclustered-icon', 'map-travels-unclustered-icon'];
+  const clusterLayers = ['map-orders-clusters', 'map-orders-cluster-count', 'map-travels-clusters', 'map-travels-cluster-count', 'map-driver-routes-clusters', 'map-driver-routes-cluster-count'];
+  const iconLayers = ['map-orders-unclustered-icon', 'map-travels-unclustered-icon', 'map-driver-routes-unclustered-icon'];
   const hoverLayers = [...clusterLayers, ...iconLayers];
 
   map.on('click', e => {
@@ -6320,7 +6424,7 @@ function bindOrderMapEvents(){
       const item = findOrderByMapId(orderId);
       if (!item) return;
       const type = itemType || item.type;
-      if (type === 'travel') openTravelMapSheet(item);
+      if (type === 'travel' || type === 'driverRoute') openTravelMapSheet(item);
       else openOrderSheet(item);
     });
   });
@@ -6557,6 +6661,9 @@ function refreshOrderMarkers(){
   const geo = buildMapGeoCollections();
   map.getSource('map-orders').setData(geo.orders);
   map.getSource('map-travels').setData(geo.travels);
+  if (map.getSource('map-driver-routes')) {
+    map.getSource('map-driver-routes').setData(buildDriverRouteGeo());
+  }
 }
 
 async function adminDeleteAllOrders(){
