@@ -759,11 +759,13 @@ body.view-driver .driver-route-bar{
   will-change:transform,box-shadow;
   transition:transform .09s ease,box-shadow .09s ease,background .09s ease;
 }
-/* Tepadagi shishasimon (glossy) yorug'lik dog'i — fizik tugmaning xarakterli jilosi */
+/* Tepadagi shishasimon (glossy) yorug'lik dog'i — fizik tugmaning xarakterli
+   jilosi. Kichikroq va tabiiyroq bo'lishi uchun torroq, pastroq opasiyada
+   va yumshoqroq so'nadigan qilib qo'ydim. */
 .uni-action-btn::before{
-  content:"";position:absolute;left:6%;right:6%;top:8%;height:36%;z-index:0;
+  content:"";position:absolute;left:16%;right:16%;top:10%;height:20%;z-index:0;
   border-radius:50%;
-  background:linear-gradient(180deg,rgba(255,255,255,.8),rgba(255,255,255,0));
+  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 85%);
   pointer-events:none;
 }
 .uni-action-btn:active{
@@ -800,6 +802,8 @@ body.view-driver .driver-route-bar{
 .uni-action-icon svg{width:100%;height:100%;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 .uni-action-icon-img{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 .uni-action-btn--cargo .uni-action-icon-img{width:114%;height:114%}
+/* Faqat "Haydovchiman" (mashina) ikonkasi qoshimcha 3% ga kattalashadi */
+.uni-action-btn--driver .uni-action-icon-img{width:103%;height:103%}
 /* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
    faqat CSS transform (GPU'da arzon, layout/reflow triggermaydi), shu sabab
    telefonda sekinlashuv yoki qotishga olib kelmaydi. */
