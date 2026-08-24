@@ -804,6 +804,9 @@ body.view-driver .driver-route-bar{
 .uni-action-btn--cargo .uni-action-icon-img{width:114%;height:114%}
 /* Faqat "Haydovchiman" (mashina) ikonkasi qoshimcha 3% ga kattalashadi */
 .uni-action-btn--driver .uni-action-icon-img{width:103%;height:103%}
+/* "Yo'lovchiman" bosilganda xarita ustida suzib boradigan ikonka klon-nusxasi
+   va xaritaga tushgan pin — join qilish/bosish ta'sir qilmasin */
+.travel-pin-fly,.travel-pin-marker{pointer-events:none!important}
 /* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
    faqat CSS transform (GPU'da arzon, layout/reflow triggermaydi), shu sabab
    telefonda sekinlashuv yoki qotishga olib kelmaydi. */
@@ -3128,6 +3131,7 @@ function enterUniMode(key){
   activeUniMode = key;
   const btns = [...document.querySelectorAll('.uni-action-btn')];
   const activeIndex = btns.findIndex(b => b.dataset.uniKey === key);
+  const activeBtn = btns[activeIndex];
   btns.forEach((btn, i) => {
     if (i === activeIndex) return;
     btn.style.transition = 'transform .32s cubic-bezier(.4,0,.2,1), opacity .28s ease';
@@ -3135,6 +3139,9 @@ function enterUniMode(key){
     btn.style.opacity = '0';
     btn.style.pointerEvents = 'none';
   });
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.impactOccurred('light');
+  }
   const chip = document.getElementById('uniModeChip');
   const chipLabel = document.getElementById('uniModeChipLabel');
   if (chip && chipLabel) {
@@ -3142,13 +3149,95 @@ function enterUniMode(key){
     chip.style.setProperty('--uni-chip-color', meta.color);
     requestAnimationFrame(() => chip.classList.add('visible'));
   }
-  if (window.Telegram?.WebApp?.HapticFeedback) {
-    Telegram.WebApp.HapticFeedback.impactOccurred('light');
+  // "Yo'lovchiman" — alohida stsenariy: 3ta tugma ham yo'qoladi, faqat
+  // shu ikonka xaritada foydalanuvchi lokatsiyasiga smooth pin bo'lib
+  // tushadi, xarita o'sha yerga yaqinlashadi, tepadagi yo'nalish paneli
+  // bo'shagan "Yuk yuboraman" joyiga tushadi. Hozircha (davomi keyinroq)
+  // pastki varaq ochilmaydi — bekor qilish uchun chip ("✕") qoladi.
+  if (key === 'travel') {
+    playTravelPinAnimation(activeBtn, btns);
+    return;
   }
   uniModeOpenTimer = setTimeout(() => { uniModeOpenTimer = null; meta.open(); }, 260);
 }
+// ═══ "Yo'lovchiman" ikonkasi xaritada foydalanuvchi lokatsiyasiga
+// smooth "pin" bo'lib tushadigan animatsiya (FLIP texnikasi: ikonkaning
+// klon-nusxasi tugma joyidan xarita markaziga qarab suzadi, shu bilan bir
+// vaqtda xarita o'sha koordinataga yaqinlashadi). ═══
+let travelPinMarker = null;
+let travelRouteBarShifted = false;
+const TRAVEL_PIN_ANIM_MS = 900;
+function playTravelPinAnimation(activeBtn, allBtns){
+  const icon = activeBtn?.querySelector('.uni-action-icon');
+  const mapEl = document.getElementById('map');
+  const routeBar = document.querySelector('.driver-route-bar');
+  const cargoBtn = allBtns.find(b => b.dataset.uniKey === 'cargo');
+  if (!icon || !mapEl || !map) { return; }
+
+  const iconRect = icon.getBoundingClientRect();
+  const mapRect = mapEl.getBoundingClientRect();
+  const targetX = mapRect.left + mapRect.width / 2 - iconRect.width / 2;
+  const targetY = mapRect.top + mapRect.height / 2 - iconRect.height / 2;
+
+  // Ikonkaning suzuvchi klonini yasaymiz — asl tugma shu zahoti yashiriladi,
+  // klon esa aynan o'sha o'rinda qoladi, shu sabab almashinuv ko'zga
+  // tashlanmaydi (klassik FLIP hiylasi).
+  const clone = icon.cloneNode(true);
+  clone.classList.add('travel-pin-fly');
+  clone.style.position = 'fixed';
+  clone.style.left = iconRect.left + 'px';
+  clone.style.top = iconRect.top + 'px';
+  clone.style.width = iconRect.width + 'px';
+  clone.style.height = iconRect.height + 'px';
+  clone.style.margin = '0';
+  clone.style.zIndex = '9500';
+  clone.style.transition = `left ${TRAVEL_PIN_ANIM_MS}ms cubic-bezier(.3,.08,.2,1), top ${TRAVEL_PIN_ANIM_MS}ms cubic-bezier(.3,.08,.2,1), transform ${TRAVEL_PIN_ANIM_MS}ms cubic-bezier(.3,.08,.2,1)`;
+  document.body.appendChild(clone);
+
+  activeBtn.style.transition = 'opacity .15s ease';
+  activeBtn.style.opacity = '0';
+  activeBtn.style.pointerEvents = 'none';
+
+  // Tepadagi "qayerdan → qayerga" paneli bo'shagan "Yuk yuboraman" joyiga
+  // tushadi (markazlarini tekislab, faqat translateY bilan).
+  if (routeBar && cargoBtn) {
+    const barRect = routeBar.getBoundingClientRect();
+    const cargoRect = cargoBtn.getBoundingClientRect();
+    const deltaY = (cargoRect.top + cargoRect.height / 2) - (barRect.top + barRect.height / 2);
+    routeBar.style.transition = 'transform .38s cubic-bezier(.4,0,.2,1)';
+    routeBar.style.transform = `translateY(${deltaY}px)`;
+    travelRouteBarShifted = true;
+  }
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      clone.style.left = targetX + 'px';
+      clone.style.top = targetY + 'px';
+      clone.style.transform = 'scale(1.15)';
+    });
+  });
+
+  getCurrentPosition().then(coords => {
+    const lng = coords.longitude, lat = coords.latitude;
+    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+    setTimeout(() => {
+      clone.remove();
+      if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
+      const pinEl = document.createElement('div');
+      pinEl.className = 'uni-action-icon travel-pin-marker';
+      pinEl.innerHTML = icon.innerHTML;
+      travelPinMarker = new mapboxgl.Marker({ element: pinEl, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+    }, TRAVEL_PIN_ANIM_MS);
+  }).catch(() => {
+    clone.style.transition = 'opacity .2s ease';
+    clone.style.opacity = '0';
+    setTimeout(() => clone.remove(), 220);
+    showToast('Lokatsiya olinmadi', 'error');
+  });
+}
 function exitUniMode(){
   if (!activeUniMode) return;
+  const wasTravel = activeUniMode === 'travel';
   activeUniMode = null;
   if (uniModeOpenTimer) { clearTimeout(uniModeOpenTimer); uniModeOpenTimer = null; }
   document.querySelectorAll('.uni-action-btn').forEach(btn => {
@@ -3157,6 +3246,15 @@ function exitUniMode(){
     btn.style.pointerEvents = '';
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
+  if (wasTravel) {
+    const routeBar = document.querySelector('.driver-route-bar');
+    if (routeBar && travelRouteBarShifted) {
+      routeBar.style.transform = '';
+      travelRouteBarShifted = false;
+    }
+    document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
+    if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
+  }
 }
 function renderDriverRoutesList(){
   const list = document.getElementById('driverRoutesList');
