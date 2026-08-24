@@ -742,7 +742,7 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-btn{
   width:100%;min-height:56px;flex:0 0 auto;
-  display:grid;grid-template-columns:58px 1fr;align-items:center;column-gap:14px;
+  display:grid;grid-template-columns:62px 1fr;align-items:center;column-gap:14px;
   padding:9px 26px 9px 16px;border:3px solid transparent;border-radius:34px;
   background:
     linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
@@ -779,7 +779,7 @@ body.view-driver .driver-route-bar{
 }
 .uni-action-icon{
   flex-shrink:0;justify-self:center;
-  width:56px;height:56px;position:relative;z-index:1;
+  width:59px;height:59px;position:relative;z-index:1;
   display:flex;align-items:center;justify-content:center;overflow:hidden;
   border-radius:50%;border:2px solid transparent;
   background:
@@ -792,6 +792,11 @@ body.view-driver .driver-route-bar{
     inset 0 3px 3px rgba(255,255,255,1),
     inset 0 -5px 7px rgba(0,0,0,.2);
 }
+/* "Yuk yuboraman" ikonkasi boshqalardan 10% katta (boshqalari 5%), shu
+   sabab alohida oʻlcham bilan ustma-ust yoziladi. Grid ustuni (62px) eng
+   katta ikonkaga moslangan, shu sabab markazlari baribir bitta tik
+   chiziqda tekis qoladi. */
+.uni-action-btn--cargo .uni-action-icon{ width:62px; height:62px; }
 .uni-action-icon svg{width:78%;height:78%;display:block;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 .uni-action-icon-img{width:78%;height:78%;display:block;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.3))}
 /* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
@@ -809,7 +814,7 @@ body.view-driver .driver-route-bar{
   .uni-action-btn--cargo .uni-action-icon-img{ animation:none; }
 }
 .uni-action-label{
-  min-width:0;text-align:center;
+  min-width:0;text-align:left;
   font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,'SF Pro Display','Segoe UI',Roboto,sans-serif;
   font-size:20px;font-weight:900;line-height:1.05;white-space:nowrap;
   letter-spacing:.01em;text-transform:uppercase;position:relative;z-index:1;
@@ -819,17 +824,17 @@ body.view-driver .driver-route-bar{
 
 /* ═══ VAQTINCHALIK: palitra tanlash test tugmasi (20 ta rang) — keyin OLIB TASHLANADI ═══ */
 #paletteTestBtn{
-  position:fixed;top:64px;right:12px;z-index:9999;
+  position:fixed;left:8px;top:50%;transform:translateY(-50%);z-index:9999;
   display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:8px 14px;border-radius:14px;
+  padding:8px 10px;border-radius:14px;max-width:64px;
   background:rgba(20,24,32,.82);color:#fff;
   border:1.5px dashed rgba(255,255,255,.55);
-  font-family:inherit;font-size:11px;font-weight:700;line-height:1.3;
+  font-family:inherit;font-size:9px;font-weight:700;line-height:1.25;
   cursor:pointer;-webkit-tap-highlight-color:transparent;
   box-shadow:0 6px 16px rgba(0,0,0,.3);
   text-align:center;
 }
-#paletteTestBtn span{display:block;font-size:13px;font-weight:800}
+#paletteTestBtn span{display:block;font-size:11px;font-weight:800}
 
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
 .uni-mode-chip{
@@ -2405,7 +2410,7 @@ html, body { font-size: var(--fs-base); }
         </div>
         <!-- VAQTINCHALIK TEST TUGMASI: 20 ta palitrani almashtirib ko'rish uchun. Tanlov qilingach OLIB TASHLASH kerak. -->
         <button type="button" id="paletteTestBtn" onclick="cyclePaletteTest()">
-          Palitra <span id="paletteTestLabel">1/40 — Oq/Kumush</span>
+          Palitra <span id="paletteTestLabel">Standart</span>
         </button>
       </div>
 
@@ -3071,48 +3076,12 @@ function closeMineSheet(){
 // qilingach shu blok, HTML'dagi #paletteTestBtn va CSS'dagi #paletteTestBtn
 // qoidasi OLIB TASHLANADI. ═══
 const PALETTE_TEST_COLORS = [
-  { name:'Oq/Kumush',      mid:'#FFFFFF', base:'#F1F2F4', dark:'#C7CBD1', darkest:'#A9AEB6', light:true },
-  { name:'Telegram Ko\'k', mid:'#6EC3FF', base:'#2AABEE', dark:'#1C7FB0', darkest:'#135A7D', light:false },
-  { name:'Osmon Ko\'k',    mid:'#8FD1FF', base:'#33A0FD', dark:'#1D6FC4', darkest:'#124A85', light:false },
-  { name:'Zumrad Yashil',  mid:'#6EE7B7', base:'#10B981', dark:'#0B7A56', darkest:'#075940', light:false },
-  { name:'Nafis Yashil',   mid:'#A8F0D1', base:'#34D399', dark:'#1FA97A', darkest:'#147255', light:false },
-  { name:'Amber Sariq',    mid:'#FFC169', base:'#FF8A00', dark:'#C96800', darkest:'#8F4900', light:false },
-  { name:'To\'q Sariq',    mid:'#F2960F', base:'#E8820A', dark:'#A85C02', darkest:'#7A4200', light:false },
-  { name:'Qizil',          mid:'#FF8080', base:'#EF4444', dark:'#B91C1C', darkest:'#7F1010', light:false },
-  { name:'Yoqut Qizil',    mid:'#FF9EB1', base:'#E11D48', dark:'#9F1239', darkest:'#6B0C28', light:false },
-  { name:'Binafsha',       mid:'#C4B5FD', base:'#8B5CF6', dark:'#6D28D9', darkest:'#4C1D95', light:false },
-  { name:'Siyohrang',      mid:'#A5B4FC', base:'#6366F1', dark:'#4338CA', darkest:'#312E81', light:false },
-  { name:'Pushti',         mid:'#FBB6CE', base:'#EC4899', dark:'#BE185D', darkest:'#831843', light:false },
-  { name:'Tiniq Moviy',    mid:'#5EEAD4', base:'#14B8A6', dark:'#0F766E', darkest:'#0A4F4A', light:false },
+  { name:'Shampan',        mid:'#FDF3DC', base:'#F3DFA8', dark:'#C9AE6E', darkest:'#957E43', light:true  },
   { name:'Feruza',         mid:'#67E8F9', base:'#06B6D4', dark:'#0E7490', darkest:'#164E63', light:false },
   { name:'To\'q Ko\'k',    mid:'#7DA6D9', base:'#2C5FA8', dark:'#1B3E73', darkest:'#10254A', light:false },
-  { name:'Oltin',          mid:'#FFE08A', base:'#F5B301', dark:'#B87F00', darkest:'#7A5300', light:true  },
-  { name:'Grafit',         mid:'#6B7280', base:'#374151', dark:'#1F2937', darkest:'#0F172A', light:false },
-  { name:'Layim Yashil',   mid:'#D9F99D', base:'#A3E635', dark:'#65A30D', darkest:'#3F6212', light:true  },
-  { name:'Marjon',         mid:'#FFAB91', base:'#FF6F4D', dark:'#E14E2C', darkest:'#A3341A', light:false },
-  { name:'To\'q Binafsha', mid:'#8C7AE6', base:'#5B4FCF', dark:'#3E339E', darkest:'#281F73', light:false },
-  { name:'Shokolad',       mid:'#C68B59', base:'#8B5A2B', dark:'#5C3A1A', darkest:'#3B2410', light:false },
-  { name:'Bronza',         mid:'#E8B478', base:'#B87333', dark:'#8A5522', darkest:'#5C3814', light:false },
-  { name:'Po\'lat Kumush', mid:'#B8C2CC', base:'#7C8A99', dark:'#55626F', darkest:'#37414B', light:false },
-  { name:'Pistaki',        mid:'#E3F0C4', base:'#C6E377', dark:'#94AD4E', darkest:'#647434', light:true  },
-  { name:'Shaftoli',       mid:'#FFE0C2', base:'#FFB27D', dark:'#E0895A', darkest:'#A85F3A', light:true  },
-  { name:'Lavanda',        mid:'#E4D9FF', base:'#B39DFF', dark:'#8067CC', darkest:'#574699', light:true  },
-  { name:'Zaytun',         mid:'#C9CB7D', base:'#9B9B3D', dark:'#6E6E24', darkest:'#47470F', light:false },
-  { name:'Kobalt',         mid:'#6E8FE0', base:'#2255C7', dark:'#163C8F', darkest:'#0D275F', light:false },
-  { name:'Malina',         mid:'#FF7FA6', base:'#E8336B', dark:'#B01E4C', darkest:'#7A1234', light:false },
-  { name:'Shampan',        mid:'#FDF3DC', base:'#F3DFA8', dark:'#C9AE6E', darkest:'#957E43', light:true  },
-  { name:'Zangori',        mid:'#7DEAE0', base:'#2DD4C8', dark:'#189A8F', darkest:'#0E6961', light:false },
-  { name:'O\'rmon Yashil', mid:'#6FA37C', base:'#2F6B3F', dark:'#1D4527', darkest:'#102A17', light:false },
-  { name:'Yashin Sariq',   mid:'#FFF89E', base:'#F5E10B', dark:'#C4B408', darkest:'#8A7C04', light:true  },
-  { name:'Neon Pushti',    mid:'#FF7DE0', base:'#F72CC7', dark:'#B81C96', darkest:'#7C1266', light:false },
-  { name:'Neon Yashil',    mid:'#C9FF7A', base:'#8CFF1A', dark:'#63C907', darkest:'#3E7E05', light:true  },
-  { name:'Sovuq Kulrang',  mid:'#E2E5EA', base:'#B4BAC4', dark:'#868D99', darkest:'#5C636E', light:true  },
-  { name:'Iliq Bej',       mid:'#F3E7D8', base:'#E0C9A6', dark:'#B89968', darkest:'#8A6E43', light:true  },
-  { name:'Jigarrang Qizil',mid:'#B06A6A', base:'#7A2E2E', dark:'#521C1C', darkest:'#331010', light:false },
-  { name:'Akva',           mid:'#A6F3F3', base:'#4FD8D8', dark:'#2FA0A0', darkest:'#1B6E6E', light:true  },
-  { name:'Mat Qora',       mid:'#4B4F58', base:'#23262D', dark:'#121317', darkest:'#08090B', light:false }
+  { name:'Oltin',          mid:'#FFE08A', base:'#F5B301', dark:'#B87F00', darkest:'#7A5300', light:true  }
 ];
-let paletteTestIndex = 0;
+let paletteTestIndex = -1;
 function applyPaletteTest(index){
   const p = PALETTE_TEST_COLORS[index];
   const textColor = p.light ? '#33445c' : '#ffffff';
