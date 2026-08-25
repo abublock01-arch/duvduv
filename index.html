@@ -966,6 +966,58 @@ body.view-driver .driver-route-bar{
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
 
+/* "Qayerdan" (A) va "Qayerga" (B) nuqtalarining ikkalasi ham tanlangach
+   xaritaning pastki O'NG burchagida paydo bo'ladigan yashil "Tasdiqlash"
+   tugmasi — orqaga tugmasi bilan aynan bir xil o'lcham/uslub, lekin
+   maxsus yashil rangda (universal "tasdiqlash" ma'nosi, palitraga
+   qarab o'zgarmaydi — chunki bu boshqa harakat: chapda "orqaga qaytish",
+   o'ngda "tasdiqlash", ikkisi doim aniq farqlanishi kerak). Faqat ikkala
+   nuqta tanlanganda ko'rinadi, tanlov o'zgarsa qayta tasdiqlashni talab
+   qiladi. */
+.uni-confirm-btn{
+  position:absolute;right:16px;bottom:22px;z-index:15;
+  width:60px;height:60px;border-radius:50%;
+  border:3px solid transparent;
+  background:
+    linear-gradient(180deg,#6EE7A8 0%,#22B369 55%,#0E7C46 100%) padding-box,
+    linear-gradient(180deg,#cdf7e0 0%,#4fcf8a 35%,#0d6b3d 55%,#bdf2d4 100%) border-box;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:
+    0 5px 0 0 #0a5c34,
+    0 0 0 5px rgba(0,0,0,.1),
+    0 14px 26px rgba(0,0,0,.32),
+    0 3px 7px rgba(0,0,0,.18),
+    inset 0 2px 1px rgba(255,255,255,.6),
+    inset 0 -8px 12px -6px rgba(0,0,0,.42);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
+  opacity:0;transform:scale(.7);pointer-events:none;overflow:hidden;
+  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.uni-confirm-btn.visible{opacity:1;transform:scale(1);pointer-events:auto}
+.uni-confirm-btn::before{
+  content:"";position:absolute;left:16%;right:16%;top:10%;height:20%;z-index:0;
+  border-radius:50%;
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 85%);
+  pointer-events:none;
+}
+.uni-confirm-btn:active{
+  transform:scale(1) translateY(4px);
+  background:
+    linear-gradient(180deg,#22B369 0%,#0E7C46 100%) padding-box,
+    linear-gradient(180deg,#4fcf8a 0%,#0d6b3d 40%,#083d24 60%,#7fe0ab 100%) border-box;
+  box-shadow:
+    0 0 0 0 #0a5c34,
+    0 0 0 5px rgba(0,0,0,.1),
+    0 4px 9px rgba(0,0,0,.22),
+    inset 0 3px 8px rgba(0,0,0,.48),
+    inset 0 -2px 4px rgba(255,255,255,.12);
+}
+.uni-confirm-btn svg{
+  width:28px;height:28px;position:relative;z-index:1;
+  stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
+}
+
 /* ── Driver region picker overlay ── */
 #driverRegionPickerOverlay{
   position:fixed;inset:0;background:#fff;z-index:500;
@@ -1261,11 +1313,35 @@ body.view-driver .driver-route-bar{
   border:3px solid #fff;
   box-shadow:0 8px 22px rgba(211,84,0,.5),0 2px 6px rgba(0,0,0,.18);
 }
+/* "Men shu yerdaman" ko'k nuqta — Telegram/Google Maps'dagi live-location
+   uslubidagi pulsatsiyalanuvchi belgi. Markaziy qattiq nuqta (::after)
+   doim ko'rinadi, atrofidagi halqa (::before) esa asta kengayib so'nadi —
+   klassik "joylashuv jonli yangilanmoqda" taassurotini beradi. Faqat
+   CSS transform/opacity animatsiya qiladi (GPU'da arzon), shu sabab
+   telefonni sekinlashtirmaydi. */
 .map-driver-marker{
-  width:22px;height:22px;background:#2AABEE;border:3px solid #fff;
-  border-radius:50%;
-  box-shadow:0 0 0 6px rgba(42,171,238,.28),0 4px 14px rgba(42,171,238,.45);
-  z-index:6;
+  width:22px;height:22px;position:relative;
+  display:flex;align-items:center;justify-content:center;
+  z-index:6;pointer-events:none;
+}
+.map-driver-marker::before{
+  content:"";position:absolute;inset:-14px;border-radius:50%;
+  background:radial-gradient(circle,rgba(42,171,238,.4) 0%,rgba(42,171,238,0) 72%);
+  animation:mapDriverDotPulse 2.2s ease-out infinite;
+}
+.map-driver-marker::after{
+  content:"";width:16px;height:16px;border-radius:50%;
+  background:#2AABEE;border:3px solid #fff;
+  box-shadow:0 0 0 1px rgba(42,171,238,.32),0 4px 10px rgba(42,171,238,.5);
+  position:relative;z-index:1;
+}
+@keyframes mapDriverDotPulse{
+  0%{ transform:scale(.35); opacity:.8; }
+  70%{ transform:scale(1.7); opacity:0; }
+  100%{ transform:scale(1.7); opacity:0; }
+}
+@media (prefers-reduced-motion: reduce){
+  .map-driver-marker::before{ animation:none; opacity:.3; }
 }
 /* Kattalashtirish/kichiklashtirish tugmalari — avval oddiy tekis matn
    belgili ("+"/"−") doiralar edi, "eski" ko'rinardi. Endi bitta nozik
@@ -2485,14 +2561,14 @@ html, body { font-size: var(--fs-base); }
         <div class="driver-route-bar">
           <button class="drv-route-btn" id="driverFromBtn" onclick="openDriverRegionPicker('from')">
             <div class="drv-dot drv-dot--a"></div>
-            <span id="driverFromLabel">Қаердан?</span>
+            <span id="driverFromLabel">Qayerdan?</span>
           </button>
           <div class="drv-route-arrow" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 12h13"/><path d="M14 7l5 5-5 5"/></svg>
           </div>
           <button class="drv-route-btn" id="driverToBtn" onclick="openDriverRegionPicker('to')">
             <div class="drv-dot drv-dot--b"></div>
-            <span id="driverToLabel">Қаерга?</span>
+            <span id="driverToLabel">Qayerga?</span>
           </button>
         </div>
 
@@ -2514,6 +2590,9 @@ html, body { font-size: var(--fs-base); }
           <button type="button" class="driver-district-chip" id="driverDistrictChip" hidden></button>
           <button type="button" class="uni-back-btn" id="uniModeBackBtn" onclick="exitUniMode()" aria-label="Orqaga qaytish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>
+          </button>
+          <button type="button" class="uni-confirm-btn" id="uniRouteConfirmBtn" onclick="confirmDriverRoute()" aria-label="Tasdiqlash">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
           </button>
         </div>
         <!-- Eski picker — yashirildi, JS uchun saqlanmoqda -->
@@ -3426,6 +3505,12 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
     }
     const lng = coords.longitude, lat = coords.latitude;
     map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+    // Doimiy "men shu yerdaman" ko'k nuqta — bu Yo'lovchiman rejimidan
+    // chiqib ketilganda ham xaritada qolaveradi (travelPinMarker'dan farqli
+    // o'laroq), va ruxsat endi bor ekan, jonli watch orqali yangilanib
+    // turishi uchun kuzatuvni ham ishga tushiramiz.
+    ensureDriverLocationMarker(lng, lat);
+    startGpsTracking();
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
@@ -3557,6 +3642,13 @@ function exitUniMode(){
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
   document.getElementById('uniModeBackBtn')?.classList.remove('visible');
+  // Yo'lovchiman rejimidan tasdiqlanmagan A/B tanlov bilan chiqib
+  // ketilsa — bu "bekor qilish" hisoblanadi, keyingi safar yangi qidiruv
+  // yangidan boshlansin (loadDriverRouteState panellarni ham, kutilayotgan
+  // "Tasdiqlash" tugmasini ham tozalaydi). Allaqachon tasdiqlangan
+  // Haydovchiman yo'nalishi Firestore'da saqlanib qolaveradi — bu yerda
+  // faqat ekrandagi holat tozalanadi.
+  loadDriverRouteState();
   // Tugmalar konteyneri (.unified-actions) o'zi "shaffof" bo'lsa ham
   // pastga tushgan Qayerdan/Qayerga panelini bosishga to'sqinlik qilmasin.
   const unifiedActions = document.querySelector('.unified-actions');
@@ -3749,6 +3841,9 @@ async function startGpsTracking() {
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }
       }, { merge: true });
+      // Xaritadagi "men shu yerdaman" ko'k nuqtani ham jonli yangilab
+      // turamiz — watch ishlab turgan ekan, nuqta ham doim yangi turadi.
+      ensureDriverLocationMarker(pos.coords.longitude, pos.coords.latitude);
     },
     err => console.warn('GPS xato:', err.message),
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
@@ -3908,16 +4003,34 @@ function selectDriverRegion(region) {
   localStorage.setItem(routeKey(), JSON.stringify(saved));
   closeDriverRegionPicker();
 
-  // Xaritani route ga qarab yangilash
+  // Xaritani route ga qarab yangilash (bu shunchaki qidiruv/filtr —
+  // hech narsa "e'lon qilinmaydi", shu sabab darhol ishlaydi)
   invalidateMapGeoCache();
   refreshOrderMarkersDebounced();
 
-  // Ikkala yo'nalish tanlanganda — avtomatik saqlash
+  // Ikkala nuqta (A va B) tanlanishi bilan ENDI DARHOL saqlanmaydi/
+  // e'lon qilinmaydi — buning o'rniga pastki o'ng burchakda yashil
+  // "Tasdiqlash" tugmasi paydo bo'ladi, foydalanuvchi shuni bosgandan
+  // keyingina haqiqatan saqlanadi (confirmDriverRoute). Agar keyinchalik
+  // B nuqta boshqa manzilga o'zgartirilsa, tugma yana ko'rinadi — har
+  // qanday o'zgarish qayta tasdiqlashni talab qiladi.
+  const confirmBtn = document.getElementById('uniRouteConfirmBtn');
   if (saved.from && saved.to && saved.from !== saved.to) {
-    _saveDriverRouteToFirestore(saved.from, saved.to);
-    showDrvSavedBanner(`${saved.from} → ${saved.to}`);
-    // Eski routeSetBtn ni ham yangilash
-    document.getElementById('routeSetBtn')?.classList.add('has-route');
+    confirmBtn?.classList.add('visible');
+  } else {
+    confirmBtn?.classList.remove('visible');
+  }
+}
+
+function confirmDriverRoute() {
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (!saved.from || !saved.to || saved.from === saved.to) return;
+  _saveDriverRouteToFirestore(saved.from, saved.to);
+  showDrvSavedBanner(`${saved.from} → ${saved.to}`);
+  document.getElementById('routeSetBtn')?.classList.add('has-route');
+  document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   }
 }
 
@@ -3958,11 +4071,12 @@ function showDrvSavedBanner(text) {
 function loadDriverRouteState() {
   try { localStorage.removeItem(routeKey()); } catch (_) {}
   const fromLbl = document.getElementById('driverFromLabel');
-  if (fromLbl) fromLbl.textContent = 'Қаердан?';
+  if (fromLbl) fromLbl.textContent = 'Qayerdan?';
   document.getElementById('driverFromBtn')?.classList.remove('has-value');
   const toLbl = document.getElementById('driverToLabel');
-  if (toLbl) toLbl.textContent = 'Қаерга?';
+  if (toLbl) toLbl.textContent = 'Qayerga?';
   document.getElementById('driverToBtn')?.classList.remove('has-value');
+  document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
 }
 
 function requestNotificationPermission(){
@@ -6779,6 +6893,9 @@ function flyToMyLocation(){
         zoom: Math.max(map.getZoom(), 14),
         essential: true
       });
+      // Ruxsat endi bor ekan — "men shu yerdaman" nuqtasi shu yerda
+      // to'xtab qolmasin, jonli watch orqali doim yangilanib tursin.
+      startGpsTracking();
     })
     .catch(() => showToast('Lokatsiya olinmadi', 'error'));
 }
