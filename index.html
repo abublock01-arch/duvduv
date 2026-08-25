@@ -733,6 +733,12 @@ body.view-driver .driver-route-bar{
 #driverToBtn.has-value{ --btn-mid:#FFA733;--btn-base:#FF8A00;--btn-dark:#C96800;--btn-darkest:#8F4900; color:#fff; }
 .drv-route-btn:not(.has-value) span{ text-shadow:0 -1px 1px rgba(0,0,0,.12),0 1px 1px rgba(255,255,255,.6); }
 .drv-route-btn.has-value span{ text-shadow:0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22); }
+/* Grammatik qo'shimcha ("Toshkentdan", "Farg'onaga") xom nomdan biroz
+   uzunroq — pill ichida ellipsis bilan kesilib qolmasligi uchun
+   to'ldirilgan holatda matn/joy biroz ixchamlashtiriladi. */
+.drv-route-btn.has-value{ padding:16px 14px; gap:9px; }
+.drv-route-btn.has-value .drv-dot{ width:9px;height:9px; }
+.drv-route-btn.has-value span{ font-size:14.5px; letter-spacing:-.1px; }
 .drv-dot{
   width:12px;height:12px;border-radius:50%;flex-shrink:0;
   position:relative;z-index:1;
@@ -3492,7 +3498,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       const regionName = detectRegionFromCoords(lng, lat);
       if (regionName) {
         const fromLbl = document.getElementById('driverFromLabel');
-        if (fromLbl) fromLbl.textContent = regionName;
+        if (fromLbl) fromLbl.textContent = regionWithFromSuffix(regionName);
         document.getElementById('driverFromBtn')?.classList.add('has-value');
         // "Qayerdan" avtomatik to'ldirildi — xaritadagi haydovchi yo'nalishlari
         // shu manzilga qarab qayta filtrlanadi.
@@ -3963,12 +3969,12 @@ function selectDriverRegion(region) {
   if (dvrPickingFor === 'from') {
     saved.from = region;
     const lbl = document.getElementById('driverFromLabel');
-    if (lbl) lbl.textContent = region;
+    if (lbl) lbl.textContent = regionWithFromSuffix(region);
     document.getElementById('driverFromBtn')?.classList.add('has-value');
   } else {
     saved.to = region;
     const lbl = document.getElementById('driverToLabel');
-    if (lbl) lbl.textContent = region;
+    if (lbl) lbl.textContent = regionWithToSuffix(region);
     document.getElementById('driverToBtn')?.classList.add('has-value');
   }
   localStorage.setItem(routeKey(), JSON.stringify(saved));
@@ -3997,7 +4003,7 @@ function confirmDriverRoute() {
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   if (!saved.from || !saved.to || saved.from === saved.to) return;
   _saveDriverRouteToFirestore(saved.from, saved.to);
-  showDrvSavedBanner(`${saved.from} → ${saved.to}`);
+  showDrvSavedBanner(`${regionWithFromSuffix(saved.from)} → ${regionWithToSuffix(saved.to)}`);
   document.getElementById('routeSetBtn')?.classList.add('has-route');
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
   if (window.Telegram?.WebApp?.HapticFeedback) {
@@ -4182,32 +4188,40 @@ function showDriverLocationMarker(){
 // Xarita kamerasi flyTo/easeTo bilan harakatlanayotganda, Mapbox matnli
 // yorliqlarni (ko'cha, joy nomlari) HAR BIR KADRDA qayta hisoblab,
 // darhol qayta joylashtiradi — animatsiya tugagach ular boshqa joyga
-// "sakrab" qolganday tuyuladi. Buni oldini olish uchun: kamera
-// harakati boshlanishi bilan barcha matnli qatlamlarni vaqtincha
-// yashiramiz, xarita to'xtab (moveend) YAKUNIY joylashuvga kelgach
-// qayta ko'rsatamiz — foydalanuvchi faqat barqaror natijani ko'radi.
-function setMapLabelLayersVisible(mapInstance, visible){
+// "sakrab" qolganday tuyuladi. Oldin bu qatlamlar to'liq
+// yashirilib/qaytarilardi — lekin ko'rinish/yo'qolish LAHZADA bo'lgani
+// uchun o'zi ham "glitch"dek ko'zga tashlanardi. Endi buning o'rniga
+// OPACITY orqali YUMSHOQ SO'NIB-YONISH qo'llaniladi: kamera harakati
+// boshlanishi bilan matnlar tez va sezilarsiz xiralashadi (e'tibor
+// xaritaning o'zi harakatiga qaratilgan payt), to'xtab (moveend) YAKUNIY
+// joyga kelgach esa SEKIN, plavni tarzda qayta paydo bo'ladi — hech qanday
+// keskin "sakrash" yoki "yonib-o'chish" sezilmaydi.
+function setMapLabelLayersOpacity(mapInstance, opacity, transitionMs){
   if (!mapInstance || !mapInstance.getStyle) return;
   let layers;
   try { layers = mapInstance.getStyle()?.layers; } catch (_) { return; }
   if (!layers) return;
+  const transition = { duration: transitionMs, delay: 0 };
   layers.forEach(layer => {
     if (layer.type !== 'symbol') return;
     try {
-      mapInstance.setLayoutProperty(layer.id, 'visibility', visible ? 'visible' : 'none');
+      mapInstance.setPaintProperty(layer.id, 'text-opacity-transition', transition);
+      mapInstance.setPaintProperty(layer.id, 'text-opacity', opacity);
+      mapInstance.setPaintProperty(layer.id, 'icon-opacity-transition', transition);
+      mapInstance.setPaintProperty(layer.id, 'icon-opacity', opacity);
     } catch (_) {}
   });
 }
 function flyToSmooth(mapInstance, opts){
   if (!mapInstance) return;
-  setMapLabelLayersVisible(mapInstance, false);
-  mapInstance.once('moveend', () => setMapLabelLayersVisible(mapInstance, true));
+  setMapLabelLayersOpacity(mapInstance, 0, 160);
+  mapInstance.once('moveend', () => setMapLabelLayersOpacity(mapInstance, 1, 450));
   mapInstance.flyTo(opts);
 }
 function easeToSmooth(mapInstance, opts){
   if (!mapInstance) return;
-  setMapLabelLayersVisible(mapInstance, false);
-  mapInstance.once('moveend', () => setMapLabelLayersVisible(mapInstance, true));
+  setMapLabelLayersOpacity(mapInstance, 0, 160);
+  mapInstance.once('moveend', () => setMapLabelLayersOpacity(mapInstance, 1, 450));
   mapInstance.easeTo(opts);
 }
 let orderClusterLayersReady = false;
@@ -4365,6 +4379,36 @@ const REGION_CITY_LABEL = {
   'Navoiy': 'Navoiy shahar',
   "Qoraqalpog'iston": 'Nukus shahar'
 };
+
+// Tepadagi "Qayerdan/Qayerga" pillarida xom hudud nomi ("Toshkent shahar")
+// tor joyga sig'may, CSS ellipsis bilan "Toshkent..." bo'lib kesilib
+// qolardi — foydalanuvchiga g'alati/tushunarsiz ko'rinardi. Endi bunday
+// qo'shimcha so'zlar (shahar/viloyat) qisqa ko'rinish uchun olib
+// tashlanadi va o'rniga to'g'ri grammatik qo'shimcha ("dan"/"ga")
+// qo'shiladi — natija ham qisqaroq, ham grammatik jihatdan to'g'ri
+// bo'ladi (masalan "Toshkentdan", "Farg'onaga"). Xom nom (saved.from/to,
+// Firestore) o'zgarishsiz qoladi — faqat KO'RINADIGAN matn shu tarzda
+// formatlanadi.
+function regionDisplayCompact(name) {
+  if (!name) return name;
+  return name.replace(/\s+(shahar|shahri|viloyat|viloyati)$/i, '');
+}
+function regionWithFromSuffix(name) {
+  const short = regionDisplayCompact(name);
+  if (!short) return short;
+  // "-dan" o'zbek tilida undosh/unlidan qat'i nazar o'zgarmaydi
+  return short + 'dan';
+}
+function regionWithToSuffix(name) {
+  const short = regionDisplayCompact(name);
+  if (!short) return short;
+  const last = short.slice(-1).toLowerCase();
+  // "-ga" faqat "q" va "k" bilan tugagan so'zlarda "qa"/"ka" ga aylanadi
+  // (masalan "Chortoq" → "Chortoqqa"), qolgan barcha holatlarda "-ga"
+  if (last === 'q') return short + 'qa';
+  if (last === 'k') return short + 'ka';
+  return short + 'ga';
+}
 
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
 const TRAVEL_TITLE_CYRILLIC = 'Қайерга борасиз?';
