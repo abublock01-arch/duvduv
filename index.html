@@ -1376,6 +1376,19 @@ body.view-driver .driver-route-bar{
   position:static;width:44px;height:44px;margin:0;
   bottom:auto;right:auto;transition:none;
 }
+/* Asosiy ekranda (3 ta amal tugmasi ko'rinib turgan paytda) xaritani
+   kattalashtirish/joylashuv boshqaruvlari keraksiz — bekorchi chalg'itadi.
+   Shu sabab bu boshqaruvlar boshida YASHIRIQ turadi, faqat foydalanuvchi
+   3 ta asosiy tugmadan birini bosib, o'sha amal animatsiyasi tugagach
+   (pin xaritaga tushib bo'lgach) paydo bo'ladi; orqaga qaytilganda yana
+   yashiriladi. */
+#driverView .map-controls{
+  opacity:0;transform:translateY(-50%) scale(.85);pointer-events:none;
+  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+#driverView .map-controls.visible{
+  opacity:1;transform:translateY(-50%) scale(1);pointer-events:auto;
+}
 .map-route-btn{
   position:absolute;left:14px;z-index:12;
   width:48px;height:48px;border-radius:50%;border:none;padding:0;cursor:pointer;
@@ -3525,6 +3538,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       pinEl.innerHTML = iconImg.outerHTML;
       travelPinMarker = new mapboxgl.Marker({ element: pinEl, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
       hideDriverLocationMarker();
+      showMapControls();
     }, TRAVEL_PIN_ANIM_MS);
   }).catch(() => {
     clone.style.transition = 'opacity .2s ease';
@@ -3598,6 +3612,7 @@ function exitUniMode(){
   if (!activeUniMode) return;
   const prevKey = activeUniMode;
   activeUniMode = null;
+  hideMapControls();
   // Qaytish animatsiyasi boshlanmoqda — bu davrda yangi rejimga kirish
   // (enterUniMode) bloklanadi, va oldingi forward-parvozdan qolgan GPS
   // javobi (agar hali kelmagan bo'lsa) endi eskirgan hisoblanadi.
@@ -4185,56 +4200,24 @@ function showDriverLocationMarker(){
   if (driverLocationMarker) driverLocationMarker.getElement().style.display = '';
 }
 
-// Xarita kamerasi harakatlanayotganda (flyTo/easeTo, SHUNINGDEK
-// foydalanuvchining o'z barmog'i bilan surish/pinch-zoom qilishi ham!),
-// Mapbox matnli yorliqlarni (ko'cha, joy nomlari) qayta hisoblab, boshqa
-// joyga "sakrab" qo'yadi.
-//
-// AVVALGI 2 TA URINISH FAQAT bizning o'zimiz chaqirgan flyTo/easeTo
-// chaqiruvlarini o'rab olgandi — lekin foydalanuvchi xaritani QO'LI BILAN
-// (barmoq bilan surish, ikki barmoq bilan zoom) harakatlantirganda bu
-// alohida chaqiruvlar umuman ishlamaydi, chunki bunday harakatlarni
-// Mapbox o'zi to'g'ridan-to'g'ri boshqaradi — bizning kodimiz bunga
-// aralashmaydi. Demak muammo davom etardi. Bundan tashqari, animatsiya
-// "taxminiy davomiyligi"ga qarab oldindan hisoblab matnni erta
-// yorqinlashtirish g'oyasi ham xato bo'lishi mumkin edi — chunki
-// duration berilmagan chaqiruvlarda (masalan flyToMyLocation) Mapbox
-// haqiqiy davomiylikni masofaga qarab O'ZI hisoblaydi, bizning taxminimiz
-// noto'g'ri chiqsa, matn hali xarita harakatlanayotganda erta yorishib
-// ketib, xuddi o'sha "sakrash"ning o'zini qayta hosil qilardi.
-//
-// TO'G'RI YECHIM: individual chaqiruvlarni o'rab olish o'rniga, xarita
-// OBYEKTINING O'ZIGA bir marta 'movestart'/'moveend' tinglovchi
-// qo'yamiz — bu ikkala hodisa ham HAR QANDAY kamera harakati uchun
-// (flyTo, easeTo, jumpTo, barmoq bilan surish, pinch-zoom, sichqoncha
-// g'ildiragi — FARQI YO'Q) ishonchli tarzda, faqat harakat BOSHLANGANDA
-// va HAQIQATAN TUGAGANDA ishga tushadi. Hech qanday taxmin/hisoblash
-// kerak emas — har doim to'g'ri sinxron bo'ladi.
-function setMapLabelLayersOpacity(mapInstance, opacity, transitionMs){
-  if (!mapInstance || !mapInstance.getStyle) return;
-  let layers;
-  try { layers = mapInstance.getStyle()?.layers; } catch (_) { return; }
-  if (!layers) return;
-  const transition = { duration: transitionMs, delay: 0 };
-  layers.forEach(layer => {
-    if (layer.type !== 'symbol') return;
-    try {
-      mapInstance.setPaintProperty(layer.id, 'text-opacity-transition', transition);
-      mapInstance.setPaintProperty(layer.id, 'text-opacity', opacity);
-      mapInstance.setPaintProperty(layer.id, 'icon-opacity-transition', transition);
-      mapInstance.setPaintProperty(layer.id, 'icon-opacity', opacity);
-    } catch (_) {}
-  });
+// Asosiy ekranda (3 ta amal tugmasi) xaritani kattalashtirish/joylashuv
+// boshqaruvlari (+/-/mening joylashuvim) boshida yashirin turadi — faqat
+// foydalanuvchi shu 3 tugmadan birini bosib, pin-tushish animatsiyasi
+// tugagach paydo bo'ladi, orqaga qaytilganda yana yashiriladi.
+function showMapControls(){
+  document.querySelector('#driverView .map-controls')?.classList.add('visible');
 }
-function setupMapLabelSmoothing(mapInstance){
-  if (!mapInstance) return;
-  // Harakat boshlanishi bilan TEZ va past (lekin nolga teng bo'lmagan)
-  // xiralikka tushadi — "yo'qolish" emas, fokusdan chiqqanday tuyuladi.
-  mapInstance.on('movestart', () => setMapLabelLayersOpacity(mapInstance, 0.12, 120));
-  // Harakat HAQIQATAN tugagach (manba qanday bo'lishidan qat'i nazar)
-  // sekin, plavni tarzda qayta to'liq yorqinlashadi.
-  mapInstance.on('moveend', () => setMapLabelLayersOpacity(mapInstance, 1, 420));
+function hideMapControls(){
+  document.querySelector('#driverView .map-controls')?.classList.remove('visible');
 }
+
+// ESLATMA: bu yerda ilgari xarita harakati paytida matnli yorliqlarni
+// (ko'cha nomlari) opacity orqali xiralashtirib-yorishtirib turadigan
+// mexanizm bor edi ("sakrash"ni yashirish uchun) — lekin bu o'zi ham
+// alohida sezilarli "yo'qolib-paydo bo'lish" effektiga sabab bo'lgani
+// uchun (ham dasturiy animatsiyalarda, ham qo'lda surish/+  -  tugmalarida)
+// olib tashlandi. Endi matnlar hech qachon sun'iy ravishda
+// xiralashtirilmaydi — Mapbox'ning tabiiy, standart ko'rinishi ishlatiladi.
 let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
@@ -7045,7 +7028,6 @@ function initDriverMap(){
     if (telegramUser.id == null) return;
     saveUserMapZoom(map.getZoom());
   });
-  setupMapLabelSmoothing(map);
   map.on('load', () => {
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
@@ -7282,7 +7264,6 @@ function initLocationPickerMap(centerLng, centerLat){
     zoom: 14,
     attributionControl: false
   });
-  setupMapLabelSmoothing(locationPickerMap);
   const pinEl = document.getElementById('locPinFixed');
   locationPickerMap.on('load', () => {
     locationPickerMap.resize();
