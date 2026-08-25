@@ -863,19 +863,29 @@ body.view-driver .driver-route-bar{
   text-shadow:var(--btn-text-shadow,0 -1px 1px rgba(0,0,0,.35) ,0 1px 1px rgba(255,255,255,.9));
 }
 
-/* ═══ VAQTINCHALIK: palitra tanlash test tugmasi (20 ta rang) — keyin OLIB TASHLANADI ═══ */
-#paletteTestBtn{
-  position:fixed;left:8px;top:50%;transform:translateY(-50%);z-index:9999;
-  display:flex;flex-direction:column;align-items:center;gap:2px;
-  padding:8px 10px;border-radius:14px;max-width:64px;
-  background:rgba(20,24,32,.82);color:#fff;
-  border:1.5px dashed rgba(255,255,255,.55);
-  font-family:inherit;font-size:9px;font-weight:700;line-height:1.25;
-  cursor:pointer;-webkit-tap-highlight-color:transparent;
-  box-shadow:0 6px 16px rgba(0,0,0,.3);
-  text-align:center;
+/* Tugmalar rangini tanlash — "Mening e'lonlarim" varag'i ichida, doimiy
+   sozlama sifatida. Foydalanuvchi tanlagan rang localStorage'da saqlanadi
+   va keyingi safar ilova ochilganda ham o'sha rang qo'llaniladi. */
+.mine-palette-row{
+  display:flex;align-items:center;gap:12px;
+  padding:0 0 14px;margin:0 0 14px;
+  border-bottom:1.5px solid #eef1f4;flex-shrink:0;
 }
-#paletteTestBtn span{display:block;font-size:11px;font-weight:800}
+.mine-palette-label{font-size:13.5px;font-weight:700;color:#5b6472;flex-shrink:0}
+.mine-palette-swatches{display:flex;align-items:center;gap:10px;flex:1}
+.mine-palette-swatch{
+  width:30px;height:30px;border-radius:50%;flex-shrink:0;
+  border:2.5px solid #fff;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 2px 6px rgba(0,0,0,.22),0 0 0 1.5px #e2e6ea;
+  transition:transform .15s ease,box-shadow .15s ease;
+  padding:0;
+}
+.mine-palette-swatch:active{transform:scale(.9)}
+.mine-palette-swatch.active{
+  box-shadow:0 2px 6px rgba(0,0,0,.22),0 0 0 2.5px #2AABEE;
+  transform:scale(1.08);
+}
+.mine-palette-name{font-size:12px;font-weight:700;color:#8b95a3;flex-shrink:0}
 
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
 .uni-mode-chip{
@@ -895,21 +905,25 @@ body.view-driver .driver-route-bar{
 
 /* "Yo'lovchiman" rejimida (pin animatsiyasi paytida) chip o'rniga xaritaning
    pastki chap burchagida ko'rinadigan "orqaga" tugmasi — uchta amal
-   tugmasi bilan bir xil glossy 3D uslub/dizayn. */
+   tugmasi bilan bir xil glossy 3D uslub, lekin rangi ATAYLAB to'q sariq —
+   xaritaning turli fonlari (yashil/och rang) ustida oq/kumush rang
+   ko'zga tashlanmay, foydalanuvchi uni topa olmayotgan edi. Shu bilan
+   birga o'lchami kattaroq va biroz yuqoriroq qilindi. */
 .uni-back-btn{
-  position:absolute;left:14px;bottom:14px;z-index:14;
-  width:52px;height:52px;border-radius:50%;
+  position:absolute;left:16px;bottom:22px;z-index:15;
+  width:60px;height:60px;border-radius:50%;
   border:3px solid transparent;
   background:
-    linear-gradient(180deg,#FFFFFF 0%,#F1F2F4 55%,#C7CBD1 100%) padding-box,
-    linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
+    linear-gradient(180deg,#FFB25C 0%,#F2790A 55%,#B85A00 100%) padding-box,
+    linear-gradient(180deg,#ffe3bd 0%,#e69433 35%,#9c5300 55%,#ffd9a3 100%) border-box;
   display:flex;align-items:center;justify-content:center;
   box-shadow:
-    0 5px 0 0 #A9AEB6,
-    0 12px 20px rgba(0,0,0,.28),
-    0 3px 6px rgba(0,0,0,.15),
-    inset 0 2px 1px rgba(255,255,255,.55),
-    inset 0 -8px 12px -6px rgba(0,0,0,.4);
+    0 5px 0 0 #8c4400,
+    0 0 0 5px rgba(242,121,10,.22),
+    0 14px 26px rgba(0,0,0,.35),
+    0 3px 7px rgba(0,0,0,.2),
+    inset 0 2px 1px rgba(255,255,255,.6),
+    inset 0 -8px 12px -6px rgba(0,0,0,.45);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   opacity:0;transform:scale(.7);pointer-events:none;overflow:hidden;
   transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1);
@@ -918,23 +932,25 @@ body.view-driver .driver-route-bar{
 .uni-back-btn::before{
   content:"";position:absolute;left:16%;right:16%;top:10%;height:20%;z-index:0;
   border-radius:50%;
-  background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 85%);
+  background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,0) 85%);
   pointer-events:none;
 }
 .uni-back-btn:active{
   transform:scale(1) translateY(4px);
   background:
-    linear-gradient(180deg,#C7CBD1 0%,#A9AEB6 100%) padding-box,
-    linear-gradient(180deg,#c9c9c9 0%,#8c8c8c 40%,#6b6b6b 60%,#d8d8d8 100%) border-box;
+    linear-gradient(180deg,#F2790A 0%,#B85A00 100%) padding-box,
+    linear-gradient(180deg,#e69433 0%,#9c5300 40%,#6e3900 60%,#f0a355 100%) border-box;
   box-shadow:
-    0 0 0 0 #A9AEB6,
-    0 4px 8px rgba(0,0,0,.22),
-    inset 0 3px 8px rgba(0,0,0,.45),
-    inset 0 -2px 4px rgba(255,255,255,.12);
+    0 0 0 0 #8c4400,
+    0 0 0 5px rgba(242,121,10,.22),
+    0 4px 9px rgba(0,0,0,.25),
+    inset 0 3px 8px rgba(0,0,0,.5),
+    inset 0 -2px 4px rgba(255,255,255,.14);
 }
 .uni-back-btn svg{
-  width:24px;height:24px;position:relative;z-index:1;
-  stroke:#33445c;stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  width:26px;height:26px;position:relative;z-index:1;
+  stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
 }
 
 /* ── Driver region picker overlay ── */
@@ -2497,10 +2513,6 @@ html, body { font-size: var(--fs-base); }
             <span class="uni-mode-chip-x" aria-hidden="true">✕</span>
           </button>
         </div>
-        <!-- VAQTINCHALIK TEST TUGMASI: 20 ta palitrani almashtirib ko'rish uchun. Tanlov qilingach OLIB TASHLASH kerak. -->
-        <button type="button" id="paletteTestBtn" onclick="cyclePaletteTest()">
-          Palitra <span id="paletteTestLabel">Standart</span>
-        </button>
       </div>
 
     </div>
@@ -2512,6 +2524,11 @@ html, body { font-size: var(--fs-base); }
     <button type="button" class="sheet-close" onclick="closeMineSheet()" aria-label="Yopish">×</button>
     <div class="sheet-drag"></div>
     <h2 class="mine-sheet-title" id="mineSheetTitle">Mening e'lonlarim</h2>
+    <div class="mine-palette-row">
+      <span class="mine-palette-label">Tugmalar rangi</span>
+      <div class="mine-palette-swatches" id="minePaletteSwatches"></div>
+      <span class="mine-palette-name" id="minePaletteName"></span>
+    </div>
     <div class="shipments-wrap visible" id="shipmentsWrap">
       <div class="shipments-list" id="shipmentsList"></div>
     </div>
@@ -3154,6 +3171,7 @@ function closeDriverListSheet(){
 }
 function openMineSheet(){
   renderShipments();
+  renderMinePaletteSwatches();
   document.getElementById('mineSheetOverlay')?.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -3162,18 +3180,22 @@ function closeMineSheet(){
   document.body.style.overflow = '';
 }
 
-// ═══ VAQTINCHALIK: 20 ta glossy palitrani sinab ko'rish uchun. Tanlov
-// qilingach shu blok, HTML'dagi #paletteTestBtn va CSS'dagi #paletteTestBtn
-// qoidasi OLIB TASHLANADI. ═══
-const PALETTE_TEST_COLORS = [
+// ═══ Amal tugmalarining rangi (palitrasi) — "Mening e'lonlarim" varag'i
+// ichidagi doiraviy tugmachalar orqali tanlanadi va localStorage'da
+// saqlanadi, shu sabab tanlov ilovani qayta ochganda ham saqlanib qoladi.
+// Standart (birinchi marta ochganda) — "To'q Ko'k". ═══
+const ACTION_BTN_PALETTES = [
   { name:'Shampan',        mid:'#FDF3DC', base:'#F3DFA8', dark:'#C9AE6E', darkest:'#957E43', light:true  },
   { name:'Feruza',         mid:'#67E8F9', base:'#06B6D4', dark:'#0E7490', darkest:'#164E63', light:false },
   { name:'To\'q Ko\'k',    mid:'#7DA6D9', base:'#2C5FA8', dark:'#1B3E73', darkest:'#10254A', light:false },
   { name:'Oltin',          mid:'#FFE08A', base:'#F5B301', dark:'#B87F00', darkest:'#7A5300', light:true  }
 ];
-let paletteTestIndex = -1;
-function applyPaletteTest(index){
-  const p = PALETTE_TEST_COLORS[index];
+const ACTION_PALETTE_STORAGE_KEY = 'duvduv_action_palette_idx';
+const ACTION_PALETTE_DEFAULT_IDX = 2; // To'q Ko'k
+let actionPaletteIndex = ACTION_PALETTE_DEFAULT_IDX;
+function applyActionPalette(index){
+  const p = ACTION_BTN_PALETTES[index];
+  if (!p) return;
   const textColor = p.light ? '#33445c' : '#ffffff';
   const textShadow = p.light
     ? '0 -1px 1px rgba(0,0,0,.35),0 1px 1px rgba(255,255,255,.9)'
@@ -3186,13 +3208,34 @@ function applyPaletteTest(index){
     btn.style.setProperty('--btn-text', textColor);
     btn.style.setProperty('--btn-text-shadow', textShadow);
   });
-  const lbl = document.getElementById('paletteTestLabel');
-  if (lbl) lbl.textContent = (index + 1) + '/' + PALETTE_TEST_COLORS.length + ' — ' + p.name;
+  const nameEl = document.getElementById('minePaletteName');
+  if (nameEl) nameEl.textContent = p.name;
 }
-function cyclePaletteTest(){
-  paletteTestIndex = (paletteTestIndex + 1) % PALETTE_TEST_COLORS.length;
-  applyPaletteTest(paletteTestIndex);
+function renderMinePaletteSwatches(){
+  const wrap = document.getElementById('minePaletteSwatches');
+  if (!wrap) return;
+  wrap.innerHTML = ACTION_BTN_PALETTES.map((p, i) => `
+    <button type="button" class="mine-palette-swatch${i === actionPaletteIndex ? ' active' : ''}"
+      style="background:linear-gradient(135deg, ${p.mid}, ${p.base} 55%, ${p.dark})"
+      onclick="selectActionPalette(${i})" aria-label="${p.name}"></button>
+  `).join('');
 }
+function selectActionPalette(index){
+  if (!ACTION_BTN_PALETTES[index]) return;
+  actionPaletteIndex = index;
+  applyActionPalette(index);
+  try { localStorage.setItem(ACTION_PALETTE_STORAGE_KEY, String(index)); } catch (_) {}
+  renderMinePaletteSwatches();
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.selectionChanged();
+  }
+}
+(function initActionPalette(){
+  let saved = null;
+  try { saved = parseInt(localStorage.getItem(ACTION_PALETTE_STORAGE_KEY), 10); } catch (_) {}
+  actionPaletteIndex = (Number.isInteger(saved) && ACTION_BTN_PALETTES[saved]) ? saved : ACTION_PALETTE_DEFAULT_IDX;
+  applyActionPalette(actionPaletteIndex);
+})();
 
 // ── Bitta ekrandagi 3ta amal tugmasi: bosilganda boshqa ikkitasi ekran
 // chetiga uchib ketadi, faol amal kichik "rejim chipi"ga aylanadi (bekor
@@ -3207,7 +3250,11 @@ function uniModeMeta(){
   };
 }
 function enterUniMode(key){
-  if (activeUniMode) return; // rejim allaqachon faol — qayta bosishni e'tiborsiz qoldiramiz
+  // Reverse (orqaga qaytish) animatsiyasi hali tugamagan bo'lsa ham yangi
+  // rejimga kirishga yo'l qo'ymaymiz — aks holda ikkita animatsiya bir
+  // xil tugmada bir-biriga qarshi kelib, ikonka g'alati "chaqnab" ketishi
+  // yoki xarita kutilmaganda sakrab ketishi mumkin edi.
+  if (activeUniMode || uniPinReversing) return; // rejim allaqachon faol — qayta bosishni e'tiborsiz qoldiramiz
   const meta = uniModeMeta()[key];
   if (!meta) return;
   // Ehtiyot chorasi: agar coach-mark (birinchi tanishtiruv) backdropi
@@ -3248,19 +3295,26 @@ function enterUniMode(key){
   // bosilishiga to'sqinlik qilmasin.
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
-  playTravelPinAnimation(activeBtn, btns, key);
+  const myPinToken = ++uniPinToken;
+  playTravelPinAnimation(activeBtn, btns, key, myPinToken);
 }
 // ═══ "Yo'lovchiman" ikonkasi xaritada foydalanuvchi lokatsiyasiga
 // smooth "pin" bo'lib tushadigan animatsiya (FLIP texnikasi: ikonkaning
 // klon-nusxasi tugma joyidan xarita markaziga qarab suzadi, shu bilan bir
 // vaqtda xarita o'sha koordinataga yaqinlashadi). ═══
+// Har bir yangi kirish/chiqish "avlod"i o'z tokenini oladi — GPS javobi
+// kech kelib qolsa (foydalanuvchi ulgurib orqaga qaytgan yoki boshqa
+// amalga o'tgan bo'lsa ham), eskirgan chaqiruv xaritani/markerni endi
+// o'zgartirmasligini shu token orqali bilamiz.
+let uniPinToken = 0;
+let uniPinReversing = false;
 let travelPinMarker = null;
 let travelRouteBarShifted = false;
 let travelPinFlightClone = null;
 let travelPinFlightTimer = null;
 const TRAVEL_PIN_ANIM_MS = 1100;
 const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out" — juda tez emas
-function playTravelPinAnimation(activeBtn, allBtns, key){
+function playTravelPinAnimation(activeBtn, allBtns, key, token){
   // Faqat ikonkaning O'ZI (rasm/svg) — atrofidagi oq dumaloq ramka YO'Q.
   const iconImg = activeBtn?.querySelector('.uni-action-icon-img, .uni-action-icon svg');
   const mapEl = document.getElementById('map');
@@ -3316,6 +3370,15 @@ function playTravelPinAnimation(activeBtn, allBtns, key){
   });
 
   getCurrentPosition().then(coords => {
+    // GPS javobi kech kelishi mumkin (ba'zan bir necha soniya) — shu vaqt
+    // ichida foydalanuvchi allaqachon orqaga qaytgan yoki boshqa amalga
+    // o'tgan bo'lishi mumkin. Bunday holda bu eskirgan chaqiruv — xaritani
+    // kutilmaganda joyidan jilmaymiz, hech qanday marker ham yaratmaymiz.
+    if (token !== uniPinToken) {
+      clone.remove();
+      if (travelPinFlightClone === clone) travelPinFlightClone = null;
+      return;
+    }
     const lng = coords.longitude, lat = coords.latitude;
     map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
 
@@ -3344,6 +3407,10 @@ function playTravelPinAnimation(activeBtn, allBtns, key){
       travelPinFlightTimer = null;
       clone.remove();
       if (travelPinFlightClone === clone) travelPinFlightClone = null;
+      // Shu orada foydalanuvchi allaqachon chiqib ketgan yoki boshqa
+      // amalga o'tgan bo'lishi mumkin — bunday holda eskirgan marker
+      // yaratilmasin ("ghost" marker qolib ketmasin).
+      if (token !== uniPinToken) return;
       if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
       const pinEl = document.createElement('div');
       pinEl.className = 'travel-pin-marker';
@@ -3373,6 +3440,7 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
       activeBtn.style.opacity = '';
       activeBtn.style.pointerEvents = '';
     }
+    uniPinReversing = false;
     return;
   }
   // Tugmaning o'zi (dumaloq oq ramka + matn) darhol TO'LIQ ko'rinadi —
@@ -3416,12 +3484,18 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
     clone.remove();
     iconTarget.style.visibility = '';
     activeBtn.style.pointerEvents = '';
+    uniPinReversing = false;
   }, TRAVEL_PIN_ANIM_MS);
 }
 function exitUniMode(){
   if (!activeUniMode) return;
   const prevKey = activeUniMode;
   activeUniMode = null;
+  // Qaytish animatsiyasi boshlanmoqda — bu davrda yangi rejimga kirish
+  // (enterUniMode) bloklanadi, va oldingi forward-parvozdan qolgan GPS
+  // javobi (agar hali kelmagan bo'lsa) endi eskirgan hisoblanadi.
+  ++uniPinToken;
+  uniPinReversing = true;
   applyUniModeMapVisibility();
   if (uniModeOpenTimer) { clearTimeout(uniModeOpenTimer); uniModeOpenTimer = null; }
   const btns = [...document.querySelectorAll('.uni-action-btn')];
@@ -3933,8 +4007,29 @@ if (window.Telegram && Telegram.WebApp) {
         applyTelegramThemeVars();
       }
     });
+    // Xarita 'trackResize:false' bilan yaratilgan (unumdorlik uchun), shu
+    // sabab Telegram konteyner o'lchamini o'zgartirganda (klaviatura ochilishi/
+    // yopilishi, ekran aylanishi, ilova kengayishi va h.k.) xaritaning ichki
+    // canvas o'lchami eskirib qoladi — natijada pinch-zoom/pan noto'g'ri
+    // nuqtaga qarab ishlaydi yoki xarita chetlari kesilgandek ko'rinadi.
+    // "viewportChanged" har safar buni to'g'irlaydi.
+    Telegram.WebApp.onEvent('viewportChanged', () => {
+      if (map) map.resize();
+      if (locationPickerMap) locationPickerMap.resize();
+    });
   } catch (_) {}
 }
+// Zaxira: Telegram tashqarisida (yoki 'viewportChanged' kelmagan holatlarda)
+// ham brauzer oynasi o'lchami o'zgarsa xarita yangilansin — tez-tez
+// chaqirilib ketmasligi uchun debounce qilingan.
+let __mapResizeDebounceTimer = null;
+window.addEventListener('resize', () => {
+  clearTimeout(__mapResizeDebounceTimer);
+  __mapResizeDebounceTimer = setTimeout(() => {
+    if (map) map.resize();
+    if (locationPickerMap) locationPickerMap.resize();
+  }, 150);
+});
 
 let map = null;
 let driverLocationMarker = null;
