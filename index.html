@@ -746,11 +746,12 @@ body.view-driver .driver-route-bar{
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
 .drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
 .drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;}
-/* Amal rejimiga kirilgach, "Qayerdan" ko'pincha GPS orqali o'zi
-   to'ldiriladi, lekin "Qayerga" foydalanuvchining o'zi bosishini kutadi —
-   buni ko'rsatish uchun bir necha soniyadan keyin (agar hali bo'sh bo'lsa)
-   yengil "meni bos" imo-ishorasi sifatida bir martalik silkinish
-   qo'llaniladi. */
+/* Umumiy "meni bos" imo-ishorasi — bir necha joyda qayta ishlatiladi:
+   1) Amal rejimiga kirilgach "Qayerga" hamon bo'sh qolsa (har 2.5s da
+      to'ldirilguncha qaytalanadi);
+   2) Bosh ekranda foydalanuvchi tepadagi Qayerdan/Qayerga pillarini
+      bossa (hali hech qanday amal tanlanmagan bo'lsa) — bu holda
+      pastdagi 3 ta asosiy tugma silkinib, "avval meni tanlang" deydi. */
 @keyframes drvNudgeWiggle{
   0%,100%{transform:translateX(0)}
   15%{transform:translateX(-7px)}
@@ -760,7 +761,7 @@ body.view-driver .driver-route-bar{
   80%{transform:translateX(-2px)}
   92%{transform:translateX(1px)}
 }
-.drv-route-btn.nudge-wiggle{animation:drvNudgeWiggle .62s cubic-bezier(.36,.07,.19,.97)}
+.nudge-wiggle{animation:drvNudgeWiggle .62s cubic-bezier(.36,.07,.19,.97)}
 /* Ikki nuqta ("Qayerdan"/"Qayerga") orasidagi strelka avval oddiy
    ingichka chiziq edi — oq fonda deyarli sezilmas, "yo'nalish" ma'nosi
    darhol tushunarli bo'lmas edi. Endi u alohida kichik glossy doira
@@ -1379,7 +1380,7 @@ body.view-driver .driver-route-bar{
   transition:transform .15s ease,background .15s ease;
 }
 .map-my-loc:active{transform:scale(.92);background:rgba(42,171,238,.16)}
-.map-my-loc svg{width:20px;height:20px;fill:#1C7FB0;stroke:none}
+.map-my-loc svg{width:20px;height:20px;fill:#1C7FB0;stroke:none;transform:rotate(210deg)}
 #driverView .map-my-loc{
   z-index:12;
   bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
@@ -2569,14 +2570,14 @@ html, body { font-size: var(--fs-base); }
       <div id="driverView">
         <!-- Yo'nalish qidiruv paneli — xarita ustida -->
         <div class="driver-route-bar">
-          <button class="drv-route-btn" id="driverFromBtn" onclick="openDriverRegionPicker('from')">
+          <button class="drv-route-btn" id="driverFromBtn" onclick="handleRouteBtnClick('from')">
             <div class="drv-dot drv-dot--a"></div>
             <span id="driverFromLabel">Qayerdan?</span>
           </button>
           <div class="drv-route-arrow" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 12h13"/><path d="M14 7l5 5-5 5"/></svg>
           </div>
-          <button class="drv-route-btn" id="driverToBtn" onclick="openDriverRegionPicker('to')">
+          <button class="drv-route-btn" id="driverToBtn" onclick="handleRouteBtnClick('to')">
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Qayerga?</span>
           </button>
@@ -3451,28 +3452,49 @@ const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out"
 // "Qayerdan" ko'pincha GPS orqali o'zi to'ldiriladi (Yo'lovchiman rejimida)
 // yoki umuman tegilmaydi (Yuk yuboraman/Haydovchiman), lekin "Qayerga"
 // har doim foydalanuvchining o'zi bosishini kutadi. Yo'nalish paneli
-// pastga tushib joyiga o'rnashgach, 2.5 soniyadan keyin — agar hamon bo'sh
+// pastga tushib joyiga o'rnashgach, HAR 2.5 SONIYADA — agar hamon bo'sh
 // bo'lsa — "meni bosish kerak" degan yengil silkinish bilan e'tibor
-// tortiladi (uchala amal — Yo'lovchiman, Yuk yuboraman, Haydovchiman —
-// uchun ham bir xil, chunki panelning o'zi barchasida bir xil tushadi).
+// tortiladi, TO'LDIRILGUNCHA yoki rejimdan chiqilguncha qaytalanaveradi
+// (uchala amal — Yo'lovchiman, Yuk yuboraman, Haydovchiman — uchun ham
+// bir xil, chunki panelning o'zi barchasida bir xil tushadi).
 let qayergaNudgeTimer = null;
 function scheduleQayergaNudge(token){
-  if (qayergaNudgeTimer) { clearTimeout(qayergaNudgeTimer); qayergaNudgeTimer = null; }
-  qayergaNudgeTimer = setTimeout(() => {
-    qayergaNudgeTimer = null;
+  cancelQayergaNudge();
+  qayergaNudgeTimer = setInterval(() => {
     // Shu orada foydalanuvchi allaqachon chiqib ketgan yoki boshqa
-    // amalga o'tgan bo'lishi mumkin — eskirgan chaqiruv bo'lsa e'tiborsiz.
-    if (token !== uniPinToken) return;
+    // amalga o'tgan bo'lishi mumkin — eskirgan chaqiruv bo'lsa to'xtatamiz.
+    if (token !== uniPinToken) { cancelQayergaNudge(); return; }
     const toBtn = document.getElementById('driverToBtn');
-    if (!toBtn || toBtn.classList.contains('has-value')) return;
+    if (!toBtn || toBtn.classList.contains('has-value')) { cancelQayergaNudge(); return; }
     toBtn.classList.remove('nudge-wiggle');
     void toBtn.offsetWidth; // reflow — animatsiyani qaytadan ishga tushirish uchun
     toBtn.classList.add('nudge-wiggle');
   }, 2500);
 }
 function cancelQayergaNudge(){
-  if (qayergaNudgeTimer) { clearTimeout(qayergaNudgeTimer); qayergaNudgeTimer = null; }
+  if (qayergaNudgeTimer) { clearInterval(qayergaNudgeTimer); qayergaNudgeTimer = null; }
   document.getElementById('driverToBtn')?.classList.remove('nudge-wiggle');
+}
+// Bosh ekranda (hali hech qanday amal tanlanmagan, yo'nalish paneli
+// yuqorida turgan payt) tepadagi Qayerdan/Qayerga pillari HALI ISHLAMAYDI
+// — ular faqat amal tanlangach, panel pastga tushgandan keyin funksional
+// bo'ladi. Bosh ekranda bosilsa, buning o'rniga pastdagi 3 ta asosiy
+// tugma birma-bir silkinib, "avval meni tanlang" deydi.
+function handleRouteBtnClick(which){
+  if (activeUniMode) { openDriverRegionPicker(which); return; }
+  nudgeMainActionButtons();
+}
+function nudgeMainActionButtons(){
+  const btns = [...document.querySelectorAll('.unified-actions .uni-action-btn')];
+  btns.forEach(btn => { btn.classList.remove('nudge-wiggle'); btn.style.animationDelay = ''; });
+  void document.querySelector('.unified-actions')?.offsetWidth; // reflow
+  btns.forEach((btn, i) => {
+    btn.style.animationDelay = (i * 70) + 'ms';
+    btn.classList.add('nudge-wiggle');
+  });
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.impactOccurred('light');
+  }
 }
 function playTravelPinAnimation(activeBtn, allBtns, key, token){
   // Faqat ikonkaning O'ZI (rasm/svg) — atrofidagi oq dumaloq ramka YO'Q.
