@@ -702,7 +702,7 @@ body.view-driver .driver-route-bar{
   background:
     linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
     linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
-  color:#4a5260;font-family:inherit;font-size:16px;font-weight:800;
+  color:#4a5260;font-family:inherit;font-size:18px;font-weight:800;
   position:relative;overflow:hidden;
   box-shadow:
     0 4px 0 0 var(--btn-darkest),
@@ -736,16 +736,25 @@ body.view-driver .driver-route-bar{
 /* Grammatik qo'shimcha ("Toshkentdan", "Farg'onaga") xom nomdan biroz
    uzunroq — pill ichida ellipsis bilan kesilib qolmasligi uchun
    to'ldirilgan holatda matn/joy biroz ixchamlashtiriladi. */
-.drv-route-btn.has-value{ padding:16px 14px; gap:9px; }
-.drv-route-btn.has-value .drv-dot{ width:9px;height:9px; }
-.drv-route-btn.has-value span{ font-size:16px; letter-spacing:-.2px; }
+.drv-route-btn.has-value{ padding:16px 14px; gap:8px; }
+.drv-route-btn.has-value .drv-dot,
+.drv-route-btn.has-value .drv-dot-spacer{ width:9px;height:9px; }
+.drv-route-btn.has-value span{ font-size:17px; letter-spacing:-.2px; }
 .drv-dot{
   width:12px;height:12px;border-radius:50%;flex-shrink:0;
   position:relative;z-index:1;
 }
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
 .drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
-.drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;}
+/* Chapda rangli nuqta, o'ngda AYNAN shu o'lchamdagi ko'rinmas "oyna"
+   elementi turadi — shu bilan matn (o'rtadagi flex:1 slot) nuqtaning
+   og'irligidan ta'sirlanmay, tugmaning HAQIQIY markazida, simmetrik
+   joylashadi (avval nuqta borligidan matn chapga siljib ko'rinardi). */
+.drv-dot-spacer{ width:12px;height:12px;flex-shrink:0;visibility:hidden; }
+.drv-route-btn span{
+  flex:1;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;
+}
 /* Umumiy "meni bos" imo-ishorasi — bir necha joyda qayta ishlatiladi:
    1) Amal rejimiga kirilgach "Qayerga" hamon bo'sh qolsa (har 2.5s da
       to'ldirilguncha qaytalanadi);
@@ -2573,6 +2582,7 @@ html, body { font-size: var(--fs-base); }
           <button class="drv-route-btn" id="driverFromBtn" onclick="handleRouteBtnClick('from')">
             <div class="drv-dot drv-dot--a"></div>
             <span id="driverFromLabel">Qayerdan?</span>
+            <div class="drv-dot-spacer" aria-hidden="true"></div>
           </button>
           <div class="drv-route-arrow" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 12h13"/><path d="M14 7l5 5-5 5"/></svg>
@@ -2580,6 +2590,7 @@ html, body { font-size: var(--fs-base); }
           <button class="drv-route-btn" id="driverToBtn" onclick="handleRouteBtnClick('to')">
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Qayerga?</span>
+            <div class="drv-dot-spacer" aria-hidden="true"></div>
           </button>
         </div>
 
