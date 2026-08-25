@@ -3486,7 +3486,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       return;
     }
     const lng = coords.longitude, lat = coords.latitude;
-    flyToSmooth(map, { center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
@@ -4185,26 +4185,31 @@ function showDriverLocationMarker(){
   if (driverLocationMarker) driverLocationMarker.getElement().style.display = '';
 }
 
-// Xarita kamerasi flyTo/easeTo bilan harakatlanayotganda, Mapbox matnli
-// yorliqlarni (ko'cha, joy nomlari) HAR BIR KADRDA qayta hisoblab,
-// darhol qayta joylashtiradi — animatsiya tugagach ular boshqa joyga
-// "sakrab" qolganday tuyuladi.
+// Xarita kamerasi harakatlanayotganda (flyTo/easeTo, SHUNINGDEK
+// foydalanuvchining o'z barmog'i bilan surish/pinch-zoom qilishi ham!),
+// Mapbox matnli yorliqlarni (ko'cha, joy nomlari) qayta hisoblab, boshqa
+// joyga "sakrab" qo'yadi.
 //
-// 1-urinish (to'liq yashirish/qaytarish) va 2-urinish (0→1 opacity fade,
-// faqat 'moveend'da) ikkalasi ham "yo'qolib-paydo bo'lish" sifatida
-// sezilarli edi — ayniqsa matn kamera to'liq to'xtaganidan BIR OZ KEYIN
-// paydo bo'lgani uchun harakat va matn orasida uzilish/kechikish sezilardi.
-// Endi ikkita jihat bilan takomillashtirildi:
-//  a) Matn HECH QACHON to'liq g'oyib bo'lmaydi — past (lekin nolga teng
-//     bo'lmagan) xiralikka tushadi, xuddi kamera harakatlanayotganda
-//     fokusdan bir oz chiqqanday (professional xarita ilovalarida keng
-//     tarqalgan "harakat vaqtida xiralashtirish" uslubi) — bu "glitch"
-//     emas, tabiiy fizik effekt sifatida qabul qilinadi.
-//  b) Qayta yorqinlashtirish 'moveend' hodisasini KUTIB O'TIRMAYDI —
-//     animatsiya davomiyligiga (duration) qarab OLDINDAN hisoblangan vaqtda
-//     boshlanadi, shunda kamera to'xtashi bilan matn deyarli BIR VAQTDA,
-//     sinxron ravishda yorqinlashadi. 'moveend' faqat zaxira/kafolat
-//     sifatida qoladi (masalan animatsiya to'satdan to'xtatilsa).
+// AVVALGI 2 TA URINISH FAQAT bizning o'zimiz chaqirgan flyTo/easeTo
+// chaqiruvlarini o'rab olgandi — lekin foydalanuvchi xaritani QO'LI BILAN
+// (barmoq bilan surish, ikki barmoq bilan zoom) harakatlantirganda bu
+// alohida chaqiruvlar umuman ishlamaydi, chunki bunday harakatlarni
+// Mapbox o'zi to'g'ridan-to'g'ri boshqaradi — bizning kodimiz bunga
+// aralashmaydi. Demak muammo davom etardi. Bundan tashqari, animatsiya
+// "taxminiy davomiyligi"ga qarab oldindan hisoblab matnni erta
+// yorqinlashtirish g'oyasi ham xato bo'lishi mumkin edi — chunki
+// duration berilmagan chaqiruvlarda (masalan flyToMyLocation) Mapbox
+// haqiqiy davomiylikni masofaga qarab O'ZI hisoblaydi, bizning taxminimiz
+// noto'g'ri chiqsa, matn hali xarita harakatlanayotganda erta yorishib
+// ketib, xuddi o'sha "sakrash"ning o'zini qayta hosil qilardi.
+//
+// TO'G'RI YECHIM: individual chaqiruvlarni o'rab olish o'rniga, xarita
+// OBYEKTINING O'ZIGA bir marta 'movestart'/'moveend' tinglovchi
+// qo'yamiz — bu ikkala hodisa ham HAR QANDAY kamera harakati uchun
+// (flyTo, easeTo, jumpTo, barmoq bilan surish, pinch-zoom, sichqoncha
+// g'ildiragi — FARQI YO'Q) ishonchli tarzda, faqat harakat BOSHLANGANDA
+// va HAQIQATAN TUGAGANDA ishga tushadi. Hech qanday taxmin/hisoblash
+// kerak emas — har doim to'g'ri sinxron bo'ladi.
 function setMapLabelLayersOpacity(mapInstance, opacity, transitionMs){
   if (!mapInstance || !mapInstance.getStyle) return;
   let layers;
@@ -4221,30 +4226,15 @@ function setMapLabelLayersOpacity(mapInstance, opacity, transitionMs){
     } catch (_) {}
   });
 }
-function runCameraMoveSmooth(mapInstance, opts, method){
+function setupMapLabelSmoothing(mapInstance){
   if (!mapInstance) return;
-  const estDuration = typeof opts.duration === 'number' ? opts.duration : 800;
-  // To'liq emas — past xiralikka (0.1) tushadi, shu bilan "yo'qolish"
-  // emas, "xiralashish" tuyg'usi hosil bo'ladi.
-  setMapLabelLayersOpacity(mapInstance, 0.1, 130);
-  let restored = false;
-  let timerId = null;
-  const restore = () => {
-    if (restored) return;
-    restored = true;
-    if (timerId) clearTimeout(timerId);
-    setMapLabelLayersOpacity(mapInstance, 1, 420);
-    mapInstance.off('moveend', restore);
-  };
-  // Harakat taxminan tugash vaqtidan ~35% oldinroq yorqinlashtirishni
-  // boshlaymiz — 420ms fade shu payt boshlanib, kamera to'xtagan payt
-  // (yoki undan ozgina keyin) allaqachon deyarli to'liq ko'ringan bo'ladi.
-  timerId = setTimeout(restore, Math.max(120, estDuration * 0.62));
-  mapInstance.once('moveend', restore);
-  mapInstance[method](opts);
+  // Harakat boshlanishi bilan TEZ va past (lekin nolga teng bo'lmagan)
+  // xiralikka tushadi — "yo'qolish" emas, fokusdan chiqqanday tuyuladi.
+  mapInstance.on('movestart', () => setMapLabelLayersOpacity(mapInstance, 0.12, 120));
+  // Harakat HAQIQATAN tugagach (manba qanday bo'lishidan qat'i nazar)
+  // sekin, plavni tarzda qayta to'liq yorqinlashadi.
+  mapInstance.on('moveend', () => setMapLabelLayersOpacity(mapInstance, 1, 420));
 }
-function flyToSmooth(mapInstance, opts){ runCameraMoveSmooth(mapInstance, opts, 'flyTo'); }
-function easeToSmooth(mapInstance, opts){ runCameraMoveSmooth(mapInstance, opts, 'easeTo'); }
 let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
@@ -6904,7 +6894,7 @@ function bindOrderMapEvents(){
       const cur = map.getZoom();
       // Markerlar ko'ringuncha progressiv yaqinlashish (getClusterExpansionZoom ishlatilmaydi — freeze qiladi)
       const step = count > 200 ? 1.5 : count > 50 ? 2 : 2.8;
-      easeToSmooth(map, { center, zoom: Math.min(cur + step, 18), duration: 420 });
+      map.easeTo({ center, zoom: Math.min(cur + step, 18), duration: 420 });
       return;
     }
     const iconFeat = map.queryRenderedFeatures(e.point, { layers: iconLayers })[0];
@@ -6942,7 +6932,7 @@ function locPickerFlyToMyLocation(){
   if (!locationPickerMap) return;
   getCurrentPosition()
     .then(coords => {
-      flyToSmooth(locationPickerMap, { center: [coords.longitude, coords.latitude], zoom: 14, essential: true });
+      locationPickerMap.flyTo({ center: [coords.longitude, coords.latitude], zoom: 14, essential: true });
     })
     .catch(() => showToast('Lokatsiya olinmadi', 'error'));
 }
@@ -6967,7 +6957,7 @@ function flyToMyLocation(){
       const lat = coords.latitude;
       ensureDriverLocationMarker(lng, lat);
       saveLastGPS(lng, lat);
-      flyToSmooth(map, {
+      map.flyTo({
         center: [lng, lat],
         zoom: Math.max(map.getZoom(), 14),
         essential: true
@@ -7031,7 +7021,7 @@ function getGeolocationPermissionState(){
 function flyToDefaultMapCenter(){
   if (!map) return;
   removeDriverRadiusLayers();
-  flyToSmooth(map, { center: [69.2401, 41.2991], zoom: DRIVER_ENTRY_ZOOM, essential: true });
+  map.flyTo({ center: [69.2401, 41.2991], zoom: DRIVER_ENTRY_ZOOM, essential: true });
 }
 
 function initDriverMap(){
@@ -7055,6 +7045,7 @@ function initDriverMap(){
     if (telegramUser.id == null) return;
     saveUserMapZoom(map.getZoom());
   });
+  setupMapLabelSmoothing(map);
   map.on('load', () => {
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
@@ -7081,7 +7072,7 @@ function openOrderFromUrlParam(){
       const lng = item.lng ?? item.longitude ?? item.coords?.lng;
       const lat = item.lat ?? item.latitude ?? item.coords?.lat;
       if (lng && lat) {
-        flyToSmooth(map, { center: [lng, lat], zoom: 14, duration: 800, essential: true });
+        map.flyTo({ center: [lng, lat], zoom: 14, duration: 800, essential: true });
       }
       setTimeout(() => {
         if (item.type === 'travel') openTravelMapSheet(item);
@@ -7103,7 +7094,7 @@ async function centerMapOnRouteFrom(){
   if (fromRegion && REGION_CENTERS[fromRegion]) {
     const [lng, lat] = REGION_CENTERS[fromRegion];
     removeDriverRadiusLayers();
-    easeToSmooth(map, { center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+    map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
     return;
   }
   // Marshrut yo'q — GPS ga qaraymiz
@@ -7132,7 +7123,7 @@ async function centerMapOnDriver(){
       const lat = coords.latitude;
       saveLastGPS(lng, lat);
       removeDriverRadiusLayers();
-      easeToSmooth(map, { center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+      map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
       ensureDriverLocationMarker(lng, lat);
     })
     .catch(() => { if (!cached) flyToDefaultMapCenter(); });
@@ -7279,7 +7270,7 @@ function initUnifiedMap(){
 function initLocationPickerMap(centerLng, centerLat){
   if (locationPickerMap) {
     locationPickerMap.resize();
-    flyToSmooth(locationPickerMap, { center: [centerLng, centerLat], zoom: 14, essential: true });
+    locationPickerMap.flyTo({ center: [centerLng, centerLat], zoom: 14, essential: true });
     const c = locationPickerMap.getCenter();
     locationPickerPin = { lng: c.lng, lat: c.lat };
     return;
@@ -7291,6 +7282,7 @@ function initLocationPickerMap(centerLng, centerLat){
     zoom: 14,
     attributionControl: false
   });
+  setupMapLabelSmoothing(locationPickerMap);
   const pinEl = document.getElementById('locPinFixed');
   locationPickerMap.on('load', () => {
     locationPickerMap.resize();
