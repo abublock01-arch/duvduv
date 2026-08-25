@@ -740,11 +740,23 @@ body.view-driver .driver-route-bar{
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
 .drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
 .drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;}
+/* Ikki nuqta ("Qayerdan"/"Qayerga") orasidagi strelka avval oddiy
+   ingichka chiziq edi — oq fonda deyarli sezilmas, "yo'nalish" ma'nosi
+   darhol tushunarli bo'lmas edi. Endi u alohida kichik glossy doira
+   ("bekilcha") ichiga olindi, aniq soya va kontrast bilan — ikki pill
+   orasidagi bog'lovchi ekanligi bir qarashda ko'rinadi. */
 .drv-route-arrow{
-  flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;
-  color:#2AABEE;
+  flex-shrink:0;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  border-radius:50%;position:relative;z-index:2;
+  background:radial-gradient(circle at 32% 26%,#FFFFFF 0%,#EAF6FF 55%,#CFE9FB 100%);
+  box-shadow:
+    0 4px 10px rgba(28,127,176,.32),
+    0 1px 3px rgba(0,0,0,.14),
+    inset 0 1px 1px rgba(255,255,255,.95),
+    inset 0 -3px 5px rgba(28,127,176,.12);
+  color:#1C7FB0;
 }
-.drv-route-arrow svg{width:28px;height:28px;display:block;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.drv-route-arrow svg{width:22px;height:22px;display:block;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 
 /* ── Bitta ekrandagi 3ta aniq amal: Haydovchiman / Yuk yuboraman / Yo'lovchiman ──
    Har biri bir-biridan alohida "suzuvchi" karta, tushunarli 3D ikonka bilan.
@@ -905,28 +917,29 @@ body.view-driver .driver-route-bar{
 
 /* "Yo'lovchiman" rejimida (pin animatsiyasi paytida) chip o'rniga xaritaning
    pastki chap burchagida ko'rinadigan "orqaga" tugmasi — uchta amal
-   tugmasi bilan bir xil glossy 3D uslub, lekin rangi ATAYLAB to'q sariq —
-   xaritaning turli fonlari (yashil/och rang) ustida oq/kumush rang
-   ko'zga tashlanmay, foydalanuvchi uni topa olmayotgan edi. Shu bilan
-   birga o'lchami kattaroq va biroz yuqoriroq qilindi. */
+   tugmasi bilan BIR XIL rangda (joriy tanlangan palitraga qarab, JS orqali
+   --btn-mid/base/dark/darkest o'zgaruvchilari bilan) — shu sabab u boshqa
+   amal tugmalari bilan bir butun ko'rinadi va foydalanuvchi uni darhol
+   "shu ilova tugmasi" deb taniydi. O'lchami kattaroq va biroz yuqoriroq. */
 .uni-back-btn{
   position:absolute;left:16px;bottom:22px;z-index:15;
   width:60px;height:60px;border-radius:50%;
   border:3px solid transparent;
+  --btn-mid:#FFFFFF;--btn-base:#F1F2F4;--btn-dark:#C7CBD1;--btn-darkest:#A9AEB6;--btn-text:#33445c;
   background:
-    linear-gradient(180deg,#FFB25C 0%,#F2790A 55%,#B85A00 100%) padding-box,
-    linear-gradient(180deg,#ffe3bd 0%,#e69433 35%,#9c5300 55%,#ffd9a3 100%) border-box;
+    linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
+    linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
   display:flex;align-items:center;justify-content:center;
   box-shadow:
-    0 5px 0 0 #8c4400,
-    0 0 0 5px rgba(242,121,10,.22),
-    0 14px 26px rgba(0,0,0,.35),
-    0 3px 7px rgba(0,0,0,.2),
+    0 5px 0 0 var(--btn-darkest),
+    0 0 0 5px rgba(0,0,0,.1),
+    0 14px 26px rgba(0,0,0,.32),
+    0 3px 7px rgba(0,0,0,.18),
     inset 0 2px 1px rgba(255,255,255,.6),
-    inset 0 -8px 12px -6px rgba(0,0,0,.45);
+    inset 0 -8px 12px -6px rgba(0,0,0,.42);
   cursor:pointer;-webkit-tap-highlight-color:transparent;outline:none;
   opacity:0;transform:scale(.7);pointer-events:none;overflow:hidden;
-  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1);
+  transition:opacity .3s ease,transform .3s cubic-bezier(.34,1.56,.64,1),background .3s ease;
 }
 .uni-back-btn.visible{opacity:1;transform:scale(1);pointer-events:auto}
 .uni-back-btn::before{
@@ -938,19 +951,19 @@ body.view-driver .driver-route-bar{
 .uni-back-btn:active{
   transform:scale(1) translateY(4px);
   background:
-    linear-gradient(180deg,#F2790A 0%,#B85A00 100%) padding-box,
-    linear-gradient(180deg,#e69433 0%,#9c5300 40%,#6e3900 60%,#f0a355 100%) border-box;
+    linear-gradient(180deg,var(--btn-dark) 0%,var(--btn-darkest) 100%) padding-box,
+    linear-gradient(180deg,#c9c9c9 0%,#8c8c8c 40%,#6b6b6b 60%,#d8d8d8 100%) border-box;
   box-shadow:
-    0 0 0 0 #8c4400,
-    0 0 0 5px rgba(242,121,10,.22),
-    0 4px 9px rgba(0,0,0,.25),
-    inset 0 3px 8px rgba(0,0,0,.5),
-    inset 0 -2px 4px rgba(255,255,255,.14);
+    0 0 0 0 var(--btn-darkest),
+    0 0 0 5px rgba(0,0,0,.1),
+    0 4px 9px rgba(0,0,0,.22),
+    inset 0 3px 8px rgba(0,0,0,.48),
+    inset 0 -2px 4px rgba(255,255,255,.12);
 }
 .uni-back-btn svg{
-  width:26px;height:26px;position:relative;z-index:1;
-  stroke:#fff;stroke-width:2.8;fill:none;stroke-linecap:round;stroke-linejoin:round;
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+  width:30px;height:30px;position:relative;z-index:1;
+  stroke:var(--btn-text,#33445c);stroke-width:2.9;fill:none;stroke-linecap:round;stroke-linejoin:round;
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
 
 /* ── Driver region picker overlay ── */
@@ -1254,28 +1267,46 @@ body.view-driver .driver-route-bar{
   box-shadow:0 0 0 6px rgba(42,171,238,.28),0 4px 14px rgba(42,171,238,.45);
   z-index:6;
 }
+/* Kattalashtirish/kichiklashtirish tugmalari — avval oddiy tekis matn
+   belgili ("+"/"−") doiralar edi, "eski" ko'rinardi. Endi bitta nozik
+   shisha (glass) kapsula ichida, aniq SVG belgilar bilan — nafisroq va
+   ilovaning boshqa elementlari bilan uyg'un. */
 .map-controls{
   position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  z-index:5;display:flex;flex-direction:column;gap:8px;
+  z-index:5;display:flex;flex-direction:column;
+  background:rgba(255,255,255,.7);
+  backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);
+  border-radius:22px;border:1px solid rgba(255,255,255,.65);
+  box-shadow:
+    0 10px 26px rgba(20,45,80,.16),
+    0 2px 7px rgba(20,45,80,.09),
+    inset 0 1px 0 rgba(255,255,255,.9);
+  overflow:hidden;
 }
 .map-ctrl-btn{
-  width:44px;height:44px;border-radius:50%;border:none;padding:0;
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  box-shadow:0 4px 16px rgba(42,171,238,.18);
-  font-size:22px;font-weight:700;color:var(--tg-blue);cursor:pointer;font-family:inherit;
+  width:44px;height:44px;border:none;padding:0;
+  background:transparent;
+  color:#1C7FB0;cursor:pointer;font-family:inherit;
   display:flex;align-items:center;justify-content:center;line-height:1;
+  transition:background .15s ease;
 }
-.map-ctrl-btn:active{transform:scale(.94)}
+.map-ctrl-btn + .map-ctrl-btn{border-top:1px solid rgba(20,45,80,.09)}
+.map-ctrl-btn:active{background:rgba(42,171,238,.14);transform:none}
+.map-ctrl-btn svg{width:18px;height:18px;display:block;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;fill:none}
 .map-my-loc{
   position:absolute;right:14px;bottom:14px;z-index:5;
-  width:48px;height:48px;border-radius:50%;border:none;padding:0;cursor:pointer;
-  background:rgba(255,255,255,.88);
-  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
-  box-shadow:0 4px 16px rgba(42,171,238,.18);
+  width:48px;height:48px;border-radius:50%;border:1px solid rgba(255,255,255,.65);padding:0;cursor:pointer;
+  background:rgba(255,255,255,.7);
+  backdrop-filter:blur(18px) saturate(1.5);-webkit-backdrop-filter:blur(18px) saturate(1.5);
+  box-shadow:
+    0 10px 22px rgba(20,45,80,.16),
+    0 2px 7px rgba(20,45,80,.09),
+    inset 0 1px 0 rgba(255,255,255,.9);
   display:flex;align-items:center;justify-content:center;
+  transition:transform .15s ease,background .15s ease;
 }
-.map-my-loc svg{width:22px;height:22px;stroke:var(--tg-blue);stroke-width:2.2;fill:none}
+.map-my-loc:active{transform:scale(.92);background:rgba(42,171,238,.16)}
+.map-my-loc svg{width:20px;height:20px;stroke:#1C7FB0;stroke-width:2.3;fill:none}
 #driverView .map-my-loc{
   z-index:12;
   bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
@@ -1922,8 +1953,10 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .detail-note::placeholder{color:var(--tg-hint)!important}
 .theme-telegram .detail-stepper-btn{background:var(--tg-bg)!important;color:var(--tg-text)!important}
 .theme-telegram .detail-cell--danger{color:#ff3b30!important}
+.theme-telegram .map-controls{background:var(--tg-section)!important;border-color:transparent!important}
 .theme-telegram .map-ctrl-btn,
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
+.theme-telegram .map-ctrl-btn+.map-ctrl-btn{border-top-color:color-mix(in srgb,var(--tg-btn) 18%,transparent)!important}
 .theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram #senderView,
@@ -2317,13 +2350,14 @@ html, body { font-size: var(--fs-base); }
   .driver-route-bar { padding:8px 10px; gap:6px; }
   .drv-route-btn { padding:11px 12px; font-size:13px; border-radius:18px; }
   .drv-dot { width:10px; height:10px; }
-  .drv-route-arrow { width:24px; height:24px; }
-  .drv-route-arrow svg { width:20px; height:20px; }
+  .drv-route-arrow { width:32px; height:32px; }
+  .drv-route-arrow svg { width:18px; height:18px; }
 
   /* Map controls */
-  .map-my-loc { width:38px; height:38px; right:10px; bottom:10px; }
+  .map-my-loc { width:40px; height:40px; right:10px; bottom:10px; }
   .map-my-loc svg { width:18px; height:18px; }
-  .map-ctrl-btn { width:36px; height:36px; font-size:18px; }
+  .map-ctrl-btn { width:38px; height:38px; }
+  .map-ctrl-btn svg { width:16px; height:16px; }
 
   /* Loc picker */
   .loc-picker-header { font-size:15px; padding: max(12px,env(safe-area-inset-top)) 14px 10px; }
@@ -2465,8 +2499,12 @@ html, body { font-size: var(--fs-base); }
         <div class="map-wrap" id="mapWrap">
           <div id="map"></div>
           <div class="map-controls">
-            <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">+</button>
-            <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">−</button>
+            <button type="button" class="map-ctrl-btn" onclick="mapZoomIn()" aria-label="Kattalashtirish">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <button type="button" class="map-ctrl-btn" onclick="mapZoomOut()" aria-label="Kichiklashtirish">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+            </button>
             <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
               <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
             </button>
@@ -2556,8 +2594,12 @@ html, body { font-size: var(--fs-base); }
       </svg>
     </div>
     <div class="map-controls">
-      <button type="button" class="map-ctrl-btn" onclick="locPickerZoomIn()" aria-label="Kattalashtirish">+</button>
-      <button type="button" class="map-ctrl-btn" onclick="locPickerZoomOut()" aria-label="Kichiklashtirish">−</button>
+      <button type="button" class="map-ctrl-btn" onclick="locPickerZoomIn()" aria-label="Kattalashtirish">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      </button>
+      <button type="button" class="map-ctrl-btn" onclick="locPickerZoomOut()" aria-label="Kichiklashtirish">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+      </button>
     </div>
     <button type="button" class="map-my-loc" onclick="locPickerFlyToMyLocation()" aria-label="Mening joylashuvim">
       <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
@@ -3200,7 +3242,10 @@ function applyActionPalette(index){
   const textShadow = p.light
     ? '0 -1px 1px rgba(0,0,0,.35),0 1px 1px rgba(255,255,255,.9)'
     : '0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22)';
-  document.querySelectorAll('.unified-actions .uni-action-btn').forEach(btn => {
+  // Orqaga tugmasi ham xuddi shu palitradan foydalanadi — shu sabab u
+  // doim uchta amal tugmasi bilan bir xil rangda ko'rinadi (foydalanuvchi
+  // qaysi rangni tanlasa ham, orqaga tugmasi avtomatik moslashadi).
+  document.querySelectorAll('.unified-actions .uni-action-btn, .uni-back-btn').forEach(btn => {
     btn.style.setProperty('--btn-mid', p.mid);
     btn.style.setProperty('--btn-base', p.base);
     btn.style.setProperty('--btn-dark', p.dark);
