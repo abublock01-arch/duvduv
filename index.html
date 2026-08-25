@@ -3480,7 +3480,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       return;
     }
     const lng = coords.longitude, lat = coords.latitude;
-    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+    flyToSmooth(map, { center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
@@ -4177,6 +4177,38 @@ function hideDriverLocationMarker(){
 }
 function showDriverLocationMarker(){
   if (driverLocationMarker) driverLocationMarker.getElement().style.display = '';
+}
+
+// Xarita kamerasi flyTo/easeTo bilan harakatlanayotganda, Mapbox matnli
+// yorliqlarni (ko'cha, joy nomlari) HAR BIR KADRDA qayta hisoblab,
+// darhol qayta joylashtiradi — animatsiya tugagach ular boshqa joyga
+// "sakrab" qolganday tuyuladi. Buni oldini olish uchun: kamera
+// harakati boshlanishi bilan barcha matnli qatlamlarni vaqtincha
+// yashiramiz, xarita to'xtab (moveend) YAKUNIY joylashuvga kelgach
+// qayta ko'rsatamiz — foydalanuvchi faqat barqaror natijani ko'radi.
+function setMapLabelLayersVisible(mapInstance, visible){
+  if (!mapInstance || !mapInstance.getStyle) return;
+  let layers;
+  try { layers = mapInstance.getStyle()?.layers; } catch (_) { return; }
+  if (!layers) return;
+  layers.forEach(layer => {
+    if (layer.type !== 'symbol') return;
+    try {
+      mapInstance.setLayoutProperty(layer.id, 'visibility', visible ? 'visible' : 'none');
+    } catch (_) {}
+  });
+}
+function flyToSmooth(mapInstance, opts){
+  if (!mapInstance) return;
+  setMapLabelLayersVisible(mapInstance, false);
+  mapInstance.once('moveend', () => setMapLabelLayersVisible(mapInstance, true));
+  mapInstance.flyTo(opts);
+}
+function easeToSmooth(mapInstance, opts){
+  if (!mapInstance) return;
+  setMapLabelLayersVisible(mapInstance, false);
+  mapInstance.once('moveend', () => setMapLabelLayersVisible(mapInstance, true));
+  mapInstance.easeTo(opts);
 }
 let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
@@ -6807,7 +6839,7 @@ function bindOrderMapEvents(){
       const cur = map.getZoom();
       // Markerlar ko'ringuncha progressiv yaqinlashish (getClusterExpansionZoom ishlatilmaydi — freeze qiladi)
       const step = count > 200 ? 1.5 : count > 50 ? 2 : 2.8;
-      map.easeTo({ center, zoom: Math.min(cur + step, 18), duration: 420 });
+      easeToSmooth(map, { center, zoom: Math.min(cur + step, 18), duration: 420 });
       return;
     }
     const iconFeat = map.queryRenderedFeatures(e.point, { layers: iconLayers })[0];
@@ -6845,7 +6877,7 @@ function locPickerFlyToMyLocation(){
   if (!locationPickerMap) return;
   getCurrentPosition()
     .then(coords => {
-      locationPickerMap.flyTo({ center: [coords.longitude, coords.latitude], zoom: 14, essential: true });
+      flyToSmooth(locationPickerMap, { center: [coords.longitude, coords.latitude], zoom: 14, essential: true });
     })
     .catch(() => showToast('Lokatsiya olinmadi', 'error'));
 }
@@ -6870,7 +6902,7 @@ function flyToMyLocation(){
       const lat = coords.latitude;
       ensureDriverLocationMarker(lng, lat);
       saveLastGPS(lng, lat);
-      map.flyTo({
+      flyToSmooth(map, {
         center: [lng, lat],
         zoom: Math.max(map.getZoom(), 14),
         essential: true
@@ -6934,7 +6966,7 @@ function getGeolocationPermissionState(){
 function flyToDefaultMapCenter(){
   if (!map) return;
   removeDriverRadiusLayers();
-  map.flyTo({ center: [69.2401, 41.2991], zoom: DRIVER_ENTRY_ZOOM, essential: true });
+  flyToSmooth(map, { center: [69.2401, 41.2991], zoom: DRIVER_ENTRY_ZOOM, essential: true });
 }
 
 function initDriverMap(){
@@ -6984,7 +7016,7 @@ function openOrderFromUrlParam(){
       const lng = item.lng ?? item.longitude ?? item.coords?.lng;
       const lat = item.lat ?? item.latitude ?? item.coords?.lat;
       if (lng && lat) {
-        map.flyTo({ center: [lng, lat], zoom: 14, duration: 800, essential: true });
+        flyToSmooth(map, { center: [lng, lat], zoom: 14, duration: 800, essential: true });
       }
       setTimeout(() => {
         if (item.type === 'travel') openTravelMapSheet(item);
@@ -7006,7 +7038,7 @@ async function centerMapOnRouteFrom(){
   if (fromRegion && REGION_CENTERS[fromRegion]) {
     const [lng, lat] = REGION_CENTERS[fromRegion];
     removeDriverRadiusLayers();
-    map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+    easeToSmooth(map, { center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
     return;
   }
   // Marshrut yo'q — GPS ga qaraymiz
@@ -7035,7 +7067,7 @@ async function centerMapOnDriver(){
       const lat = coords.latitude;
       saveLastGPS(lng, lat);
       removeDriverRadiusLayers();
-      map.easeTo({ center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
+      easeToSmooth(map, { center: [lng, lat], zoom: DRIVER_ENTRY_ZOOM, duration: 600 });
       ensureDriverLocationMarker(lng, lat);
     })
     .catch(() => { if (!cached) flyToDefaultMapCenter(); });
@@ -7182,7 +7214,7 @@ function initUnifiedMap(){
 function initLocationPickerMap(centerLng, centerLat){
   if (locationPickerMap) {
     locationPickerMap.resize();
-    locationPickerMap.flyTo({ center: [centerLng, centerLat], zoom: 14, essential: true });
+    flyToSmooth(locationPickerMap, { center: [centerLng, centerLat], zoom: 14, essential: true });
     const c = locationPickerMap.getCenter();
     locationPickerPin = { lng: c.lng, lat: c.lat };
     return;
