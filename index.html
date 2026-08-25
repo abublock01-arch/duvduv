@@ -738,7 +738,7 @@ body.view-driver .driver-route-bar{
    to'ldirilgan holatda matn/joy biroz ixchamlashtiriladi. */
 .drv-route-btn.has-value{ padding:16px 14px; gap:9px; }
 .drv-route-btn.has-value .drv-dot{ width:9px;height:9px; }
-.drv-route-btn.has-value span{ font-size:14.5px; letter-spacing:-.1px; }
+.drv-route-btn.has-value span{ font-size:16px; letter-spacing:-.2px; }
 .drv-dot{
   width:12px;height:12px;border-radius:50%;flex-shrink:0;
   position:relative;z-index:1;
@@ -746,6 +746,21 @@ body.view-driver .driver-route-bar{
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
 .drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
 .drv-route-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;}
+/* Amal rejimiga kirilgach, "Qayerdan" ko'pincha GPS orqali o'zi
+   to'ldiriladi, lekin "Qayerga" foydalanuvchining o'zi bosishini kutadi —
+   buni ko'rsatish uchun bir necha soniyadan keyin (agar hali bo'sh bo'lsa)
+   yengil "meni bos" imo-ishorasi sifatida bir martalik silkinish
+   qo'llaniladi. */
+@keyframes drvNudgeWiggle{
+  0%,100%{transform:translateX(0)}
+  15%{transform:translateX(-7px)}
+  32%{transform:translateX(6px)}
+  48%{transform:translateX(-5px)}
+  64%{transform:translateX(3px)}
+  80%{transform:translateX(-2px)}
+  92%{transform:translateX(1px)}
+}
+.drv-route-btn.nudge-wiggle{animation:drvNudgeWiggle .62s cubic-bezier(.36,.07,.19,.97)}
 /* Ikki nuqta ("Qayerdan"/"Qayerga") orasidagi strelka avval oddiy
    ingichka chiziq edi — oq fonda deyarli sezilmas, "yo'nalish" ma'nosi
    darhol tushunarli bo'lmas edi. Endi u alohida kichik glossy doira
@@ -1364,7 +1379,7 @@ body.view-driver .driver-route-bar{
   transition:transform .15s ease,background .15s ease;
 }
 .map-my-loc:active{transform:scale(.92);background:rgba(42,171,238,.16)}
-.map-my-loc svg{width:20px;height:20px;stroke:#1C7FB0;stroke-width:2.3;fill:none}
+.map-my-loc svg{width:20px;height:20px;fill:#1C7FB0;stroke:none}
 #driverView .map-my-loc{
   z-index:12;
   bottom:calc(78px + max(12px, env(safe-area-inset-bottom)));
@@ -2028,7 +2043,7 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .map-ctrl-btn,
 .theme-telegram .map-my-loc{background:var(--tg-section)!important;color:var(--tg-btn)!important}
 .theme-telegram .map-ctrl-btn+.map-ctrl-btn{border-top-color:color-mix(in srgb,var(--tg-btn) 18%,transparent)!important}
-.theme-telegram .map-my-loc svg{stroke:var(--tg-btn)!important}
+.theme-telegram .map-my-loc svg{fill:var(--tg-btn)!important}
 .theme-telegram .loc-picker-save{background:var(--tg-btn)!important;color:var(--tg-btn-text)!important}
 .theme-telegram #senderView,
 .theme-telegram.view-sender .content{background:var(--app-bg)!important}
@@ -2577,7 +2592,7 @@ html, body { font-size: var(--fs-base); }
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
             </button>
             <button type="button" class="map-my-loc" onclick="flyToMyLocation()" aria-label="Mening joylashuvim">
-              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg>
+              <svg viewBox="0 0 24 24"><path d="M12 2.2L4.2 20.5l.85.85L12 18l6.95 3.35.85-.85z"/></svg>
             </button>
           </div>
           <!-- Eski tugmalar saqlanmoqda (JS ular bilan ishlaydi) -->
@@ -3433,6 +3448,32 @@ let travelPinFlightClone = null;
 let travelPinFlightTimer = null;
 const TRAVEL_PIN_ANIM_MS = 1100;
 const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out" — juda tez emas
+// "Qayerdan" ko'pincha GPS orqali o'zi to'ldiriladi (Yo'lovchiman rejimida)
+// yoki umuman tegilmaydi (Yuk yuboraman/Haydovchiman), lekin "Qayerga"
+// har doim foydalanuvchining o'zi bosishini kutadi. Yo'nalish paneli
+// pastga tushib joyiga o'rnashgach, 2.5 soniyadan keyin — agar hamon bo'sh
+// bo'lsa — "meni bosish kerak" degan yengil silkinish bilan e'tibor
+// tortiladi (uchala amal — Yo'lovchiman, Yuk yuboraman, Haydovchiman —
+// uchun ham bir xil, chunki panelning o'zi barchasida bir xil tushadi).
+let qayergaNudgeTimer = null;
+function scheduleQayergaNudge(token){
+  if (qayergaNudgeTimer) { clearTimeout(qayergaNudgeTimer); qayergaNudgeTimer = null; }
+  qayergaNudgeTimer = setTimeout(() => {
+    qayergaNudgeTimer = null;
+    // Shu orada foydalanuvchi allaqachon chiqib ketgan yoki boshqa
+    // amalga o'tgan bo'lishi mumkin — eskirgan chaqiruv bo'lsa e'tiborsiz.
+    if (token !== uniPinToken) return;
+    const toBtn = document.getElementById('driverToBtn');
+    if (!toBtn || toBtn.classList.contains('has-value')) return;
+    toBtn.classList.remove('nudge-wiggle');
+    void toBtn.offsetWidth; // reflow — animatsiyani qaytadan ishga tushirish uchun
+    toBtn.classList.add('nudge-wiggle');
+  }, 2500);
+}
+function cancelQayergaNudge(){
+  if (qayergaNudgeTimer) { clearTimeout(qayergaNudgeTimer); qayergaNudgeTimer = null; }
+  document.getElementById('driverToBtn')?.classList.remove('nudge-wiggle');
+}
 function playTravelPinAnimation(activeBtn, allBtns, key, token){
   // Faqat ikonkaning O'ZI (rasm/svg) — atrofidagi oq dumaloq ramka YO'Q.
   const iconImg = activeBtn?.querySelector('.uni-action-icon-img, .uni-action-icon svg');
@@ -3477,6 +3518,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
     routeBar.style.transition = `transform ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
     routeBar.style.transform = `translateY(${deltaY}px)`;
     travelRouteBarShifted = true;
+    scheduleQayergaNudge(token);
   }
 
   requestAnimationFrame(() => {
@@ -3613,6 +3655,7 @@ function exitUniMode(){
   const prevKey = activeUniMode;
   activeUniMode = null;
   hideMapControls();
+  cancelQayergaNudge();
   // Qaytish animatsiyasi boshlanmoqda — bu davrda yangi rejimga kirish
   // (enterUniMode) bloklanadi, va oldingi forward-parvozdan qolgan GPS
   // javobi (agar hali kelmagan bo'lsa) endi eskirgan hisoblanadi.
@@ -3958,13 +4001,19 @@ function openDriverRegionPicker(forWhat) {
   dvrPickingFor = forWhat;
   const isFrom = forWhat === 'from';
   document.getElementById('driverPickerTitle').textContent =
-    isFrom ? '🟢  Қаердан йўл оласиз?' : '🔴  Қаерга борасиз?';
+    isFrom ? "🟢  Qayerdan yo'l olasiz?" : '🔴  Qayerga borasiz?';
 
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   const current = isFrom ? saved.from : saved.to;
   const grid = document.getElementById('driverPickerGrid');
   grid.innerHTML = '';
-  ROUTE_REGIONS.forEach(region => {
+  // ESLATMA: bu yerda ilgari eskirgan, faqat KIRILL alifbosida yozilgan
+  // ROUTE_REGIONS ro'yxati ishlatilardi (masalan "Тошкент шаҳри") — shu
+  // sabab tanlangach tepadagi pillarda kutilmaganda kirill matn chiqib
+  // qolardi (hatto "dan"/"ga" qo'shimchasi lotin harflarida qo'shilsa
+  // ham, natija aralash-alifbo bo'lib chiqardi). Endi ilovaning boshqa
+  // joylarida ishlatiladigan LOTIN UZ_REGIONS ro'yxati ishlatiladi.
+  UZ_REGIONS.forEach(region => {
     const btn = document.createElement('button');
     btn.className = 'drv-region-btn' + (region === current ? ' selected' : '');
     btn.textContent = region;
