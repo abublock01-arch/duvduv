@@ -1313,35 +1313,11 @@ body.view-driver .driver-route-bar{
   border:3px solid #fff;
   box-shadow:0 8px 22px rgba(211,84,0,.5),0 2px 6px rgba(0,0,0,.18);
 }
-/* "Men shu yerdaman" ko'k nuqta — Telegram/Google Maps'dagi live-location
-   uslubidagi pulsatsiyalanuvchi belgi. Markaziy qattiq nuqta (::after)
-   doim ko'rinadi, atrofidagi halqa (::before) esa asta kengayib so'nadi —
-   klassik "joylashuv jonli yangilanmoqda" taassurotini beradi. Faqat
-   CSS transform/opacity animatsiya qiladi (GPU'da arzon), shu sabab
-   telefonni sekinlashtirmaydi. */
 .map-driver-marker{
-  width:22px;height:22px;position:relative;
-  display:flex;align-items:center;justify-content:center;
-  z-index:6;pointer-events:none;
-}
-.map-driver-marker::before{
-  content:"";position:absolute;inset:-14px;border-radius:50%;
-  background:radial-gradient(circle,rgba(42,171,238,.4) 0%,rgba(42,171,238,0) 72%);
-  animation:mapDriverDotPulse 2.2s ease-out infinite;
-}
-.map-driver-marker::after{
-  content:"";width:16px;height:16px;border-radius:50%;
-  background:#2AABEE;border:3px solid #fff;
-  box-shadow:0 0 0 1px rgba(42,171,238,.32),0 4px 10px rgba(42,171,238,.5);
-  position:relative;z-index:1;
-}
-@keyframes mapDriverDotPulse{
-  0%{ transform:scale(.35); opacity:.8; }
-  70%{ transform:scale(1.7); opacity:0; }
-  100%{ transform:scale(1.7); opacity:0; }
-}
-@media (prefers-reduced-motion: reduce){
-  .map-driver-marker::before{ animation:none; opacity:.3; }
+  width:22px;height:22px;background:#2AABEE;border:3px solid #fff;
+  border-radius:50%;
+  box-shadow:0 0 0 6px rgba(42,171,238,.28),0 4px 14px rgba(42,171,238,.45);
+  z-index:6;
 }
 /* Kattalashtirish/kichiklashtirish tugmalari — avval oddiy tekis matn
    belgili ("+"/"−") doiralar edi, "eski" ko'rinardi. Endi bitta nozik
@@ -3505,12 +3481,6 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
     }
     const lng = coords.longitude, lat = coords.latitude;
     map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
-    // Doimiy "men shu yerdaman" ko'k nuqta — bu Yo'lovchiman rejimidan
-    // chiqib ketilganda ham xaritada qolaveradi (travelPinMarker'dan farqli
-    // o'laroq), va ruxsat endi bor ekan, jonli watch orqali yangilanib
-    // turishi uchun kuzatuvni ham ishga tushiramiz.
-    ensureDriverLocationMarker(lng, lat);
-    startGpsTracking();
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
@@ -3548,6 +3518,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       pinEl.style.height = pinSize + 'px';
       pinEl.innerHTML = iconImg.outerHTML;
       travelPinMarker = new mapboxgl.Marker({ element: pinEl, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+      hideDriverLocationMarker();
     }, TRAVEL_PIN_ANIM_MS);
   }).catch(() => {
     clone.style.transition = 'opacity .2s ease';
@@ -3671,6 +3642,9 @@ function exitUniMode(){
     fromRect = travelPinFlightClone.getBoundingClientRect();
   }
   travelPinFlightClone = null;
+  // Amal-ikonkasi xaritadan ketdi — yashiringan "mening joylashuvim"
+  // nuqtasini yana ko'rsatamiz (agar u ilgari mavjud bo'lgan bo'lsa).
+  showDriverLocationMarker();
   document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
   playTravelPinReverseAnimation(activeBtn, fromRect);
 }
@@ -3841,9 +3815,6 @@ async function startGpsTracking() {
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }
       }, { merge: true });
-      // Xaritadagi "men shu yerdaman" ko'k nuqtani ham jonli yangilab
-      // turamiz — watch ishlab turgan ekan, nuqta ham doim yangi turadi.
-      ensureDriverLocationMarker(pos.coords.longitude, pos.coords.latitude);
     },
     err => console.warn('GPS xato:', err.message),
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
@@ -4196,6 +4167,17 @@ window.addEventListener('resize', () => {
 
 let map = null;
 let driverLocationMarker = null;
+// Yo'lovchiman/Yuk yuboraman/Haydovchiman ikonkasi xaritaga pin bo'lib
+// tushganda, u AYNAN shu "mening joylashuvim" nuqtasi bilan bir joyda
+// (foydalanuvchining joriy koordinatasida) paydo bo'ladi — ikkalasi
+// ustma-ust ko'rinib, g'alati chiqib qolmasin uchun shu vaqt ichida
+// nuqtani vaqtincha yashiramiz, rejimdan chiqilganda yana ko'rsatamiz.
+function hideDriverLocationMarker(){
+  if (driverLocationMarker) driverLocationMarker.getElement().style.display = 'none';
+}
+function showDriverLocationMarker(){
+  if (driverLocationMarker) driverLocationMarker.getElement().style.display = '';
+}
 let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
@@ -6893,9 +6875,6 @@ function flyToMyLocation(){
         zoom: Math.max(map.getZoom(), 14),
         essential: true
       });
-      // Ruxsat endi bor ekan — "men shu yerdaman" nuqtasi shu yerda
-      // to'xtab qolmasin, jonli watch orqali doim yangilanib tursin.
-      startGpsTracking();
     })
     .catch(() => showToast('Lokatsiya olinmadi', 'error'));
 }
