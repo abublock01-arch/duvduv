@@ -675,8 +675,8 @@ body.view-driver .logo-brand{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px
 /* ── Yangi driver route bar (xarita ustida) ── */
 .driver-route-bar{
   order:1;flex:0 0 auto;
-  display:flex;align-items:center;gap:8px;
-  padding:10px 14px 10px;
+  display:flex;align-items:center;gap:6px;
+  padding:10px 10px 10px;
   background:#fff;
   border-bottom:1.5px solid #e8edf2;
   z-index:20;position:relative;
@@ -688,7 +688,7 @@ body.view-driver .driver-route-bar{
   position:absolute;left:0;right:0;
   top:calc(max(12px,env(safe-area-inset-top)) + 68px);
   background:transparent;border-bottom:none;
-  padding:0 14px;
+  padding:0 10px;
 }
 /* "Qayerdan / Qayerga" tugmalari — endi "Yo'lovchiman" va boshqa amal
    tugmalari bilan BIR XIL fizik bosiladigan glossy 3D uslubda: xrom bezel,
@@ -698,7 +698,7 @@ body.view-driver .driver-route-bar{
 .drv-route-btn{
   --btn-mid:#F5F6F8;--btn-base:#E6E8EC;--btn-dark:#C5C8CE;--btn-darkest:#9FA3AA;
   flex:1;display:flex;align-items:center;
-  padding:16px 14px 16px 32px;border:3px solid transparent;border-radius:26px;
+  padding:16px 14px;border:3px solid transparent;border-radius:26px;
   background:
     linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
     linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
@@ -733,13 +733,15 @@ body.view-driver .driver-route-bar{
 #driverToBtn.has-value{ --btn-mid:#FFA733;--btn-base:#FF8A00;--btn-dark:#C96800;--btn-darkest:#8F4900; color:#fff; }
 .drv-route-btn:not(.has-value) span{ text-shadow:0 -1px 1px rgba(0,0,0,.12),0 1px 1px rgba(255,255,255,.6); }
 .drv-route-btn.has-value span{ text-shadow:0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22); }
-/* Rangli nuqta endi FLEX oqimidan chiqarilib, chap chetga MUTLAQ
-   (absolute) joylashtirilgan — shu bilan matn uni "muvozanatlash" uchun
-   o'ng tomondan joy band qilib o'tirmaydi, balki tugmaning DEYARLI BUTUN
-   kengligidan foydalanib markazlashadi (avvalgi "oyna" (spacer) usuli
-   matnni ortiqcha siqib, kesilib qolishiga sabab bo'lgan edi). */
+/* Rangli nuqta FLEX oqimidan chiqarilib, chap chetga MUTLAQ (absolute)
+   joylashtirilgan — matn qutisi (span) endi tugmaning IKKALA tomonidan
+   BIR XIL padding oladi (simmetrik), shuning uchun matn markazi = tugma
+   markazi bo'ladi. Nuqta shunchaki shu bo'sh joy ustiga "suzib" turadi;
+   matn juda uzun bo'lib deyarli bor joyni egallasa, nuqta matn ORQASIDA
+   qoladi (span z-index:1 balandroq) — bu faqat eng chekka holatlarda
+   (allaqachon "..." ga tushadigan eng uzun nomlarda) sezilishi mumkin. */
 .drv-dot{
-  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
   width:12px;height:12px;border-radius:50%;
 }
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
@@ -752,9 +754,9 @@ body.view-driver .driver-route-bar{
    uzunroq — to'ldirilgan holatda nuqta biroz kichrayadi, matn esa
    JS orqali (fitPillLabelText) konteynerga sig'guncha avtomatik
    kichraytiriladi — hech qachon kesilib qolmaydi, imkon qadar katta
-   ko'rinadi. */
-.drv-route-btn.has-value .drv-dot{ width:9px;height:9px; }
-.drv-route-btn.has-value{ padding:16px 10px 16px 26px; }
+   ko'rinadi. Padding hamon SIMMETRIK qoladi — markazlashish buzilmasin. */
+.drv-route-btn.has-value .drv-dot{ width:9px;height:9px;left:10px; }
+.drv-route-btn.has-value{ padding:16px 10px; }
 /* Umumiy "meni bos" imo-ishorasi — bir necha joyda qayta ishlatiladi:
    1) Amal rejimiga kirilgach "Qayerga" hamon bo'sh qolsa (har 2.5s da
       to'ldirilguncha qaytalanadi);
@@ -777,7 +779,7 @@ body.view-driver .driver-route-bar{
    ("bekilcha") ichiga olindi, aniq soya va kontrast bilan — ikki pill
    orasidagi bog'lovchi ekanligi bir qarashda ko'rinadi. */
 .drv-route-arrow{
-  flex-shrink:0;width:38px;height:38px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;
   border-radius:50%;position:relative;z-index:2;
   background:radial-gradient(circle at 32% 26%,#FFFFFF 0%,#EAF6FF 55%,#CFE9FB 100%);
   box-shadow:
@@ -787,7 +789,7 @@ body.view-driver .driver-route-bar{
     inset 0 -3px 5px rgba(28,127,176,.12);
   color:#1C7FB0;
 }
-.drv-route-arrow svg{width:22px;height:22px;display:block;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+.drv-route-arrow svg{width:19px;height:19px;display:block;stroke:currentColor;fill:none;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
 
 /* ── Bitta ekrandagi 3ta aniq amal: Haydovchiman / Yuk yuboraman / Yo'lovchiman ──
    Har biri bir-biridan alohida "suzuvchi" karta, tushunarli 3D ikonka bilan.
@@ -2443,11 +2445,12 @@ html, body { font-size: var(--fs-base); }
   .region-picker--horizontal .region-picker-track { height:160px; }
 
   /* Driver route bar */
-  .driver-route-bar { padding:8px 10px; gap:6px; }
-  .drv-route-btn { padding:11px 12px; font-size:13px; border-radius:18px; }
-  .drv-dot { width:10px; height:10px; }
-  .drv-route-arrow { width:32px; height:32px; }
-  .drv-route-arrow svg { width:18px; height:18px; }
+  .driver-route-bar { padding:8px 8px; gap:5px; }
+  .drv-route-btn { padding:11px 10px; font-size:13px; border-radius:18px; }
+  .drv-dot { width:10px; height:10px; left:10px; }
+  .drv-route-btn.has-value .drv-dot { left:8px; }
+  .drv-route-arrow { width:28px; height:28px; }
+  .drv-route-arrow svg { width:16px; height:16px; }
 
   /* Map controls */
   .map-my-loc { width:40px; height:40px; right:10px; bottom:10px; }
@@ -4143,10 +4146,10 @@ function showDrvSavedBanner(text) {
 function loadDriverRouteState() {
   try { localStorage.removeItem(routeKey()); } catch (_) {}
   const fromLbl = document.getElementById('driverFromLabel');
-  if (fromLbl) { fromLbl.textContent = 'Qayerdan?'; fromLbl.style.fontSize = ''; }
+  if (fromLbl) { fromLbl.textContent = 'Qayerdan?'; fitPillLabelText(fromLbl); }
   document.getElementById('driverFromBtn')?.classList.remove('has-value');
   const toLbl = document.getElementById('driverToLabel');
-  if (toLbl) { toLbl.textContent = 'Qayerga?'; toLbl.style.fontSize = ''; }
+  if (toLbl) { toLbl.textContent = 'Qayerga?'; fitPillLabelText(toLbl); }
   document.getElementById('driverToBtn')?.classList.remove('has-value');
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
 }
