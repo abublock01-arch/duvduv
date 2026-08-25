@@ -3942,23 +3942,27 @@ function showDrvSavedBanner(text) {
   setTimeout(() => el.classList.remove('show'), 3000);
 }
 
+// Ilova HAR SAFAR ochilganda "Qayerdan"/"Qayerga" panellari yangidan
+// boshlanadi — avvalgi safar saqlangan (localStorage'dagi) qiymat endi
+// panelda "eskirgan" holda ko'rsatilmaydi va xaritani ham jim-jimgina
+// filtlamaydi. "Qayerdan" keyinchalik Yo'lovchiman bosilganda jonli GPS
+// orqali avtomatik to'ldiriladi (playTravelPinAnimation), "Qayerga" esa
+// foydalanuvchi shu safar o'zi tanlaguncha bo'sh turadi. Bu shu sabab
+// kerak: bu panel ikki xil vazifani bajaradi — (1) Haydovchiman uchun
+// o'z doimiy yo'nalishini e'lon qilish (bu Firestore'da alohida
+// saqlanadi, _saveDriverRouteToFirestore orqali — bot moslashtirish
+// logikasi buni ishlatishda davom etadi, HECH NARSA o'chirilmaydi), va
+// (2) Yo'lovchiman uchun HAR SAFARGI qidiruv filtri — bu esa har
+// safar yangi bo'lishi kerak, aks holda haftalar oldingi manzil
+// hech qanday tushuntirishsiz qayta-qayta ko'rinaverar edi.
 function loadDriverRouteState() {
-  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-  if (saved.from) {
-    const lbl = document.getElementById('driverFromLabel');
-    if (lbl) lbl.textContent = saved.from;
-    document.getElementById('driverFromBtn')?.classList.add('has-value');
-  }
-  if (saved.to) {
-    const lbl = document.getElementById('driverToLabel');
-    if (lbl) lbl.textContent = saved.to;
-    document.getElementById('driverToBtn')?.classList.add('has-value');
-  }
-  // Saqlangan route bo'lsa — xaritani shu yo'nalishda filtrlash
-  if (saved.from && saved.to) {
-    invalidateMapGeoCache();
-    refreshOrderMarkersDebounced();
-  }
+  try { localStorage.removeItem(routeKey()); } catch (_) {}
+  const fromLbl = document.getElementById('driverFromLabel');
+  if (fromLbl) fromLbl.textContent = 'Қаердан?';
+  document.getElementById('driverFromBtn')?.classList.remove('has-value');
+  const toLbl = document.getElementById('driverToLabel');
+  if (toLbl) toLbl.textContent = 'Қаерга?';
+  document.getElementById('driverToBtn')?.classList.remove('has-value');
 }
 
 function requestNotificationPermission(){
