@@ -4188,14 +4188,23 @@ function showDriverLocationMarker(){
 // Xarita kamerasi flyTo/easeTo bilan harakatlanayotganda, Mapbox matnli
 // yorliqlarni (ko'cha, joy nomlari) HAR BIR KADRDA qayta hisoblab,
 // darhol qayta joylashtiradi — animatsiya tugagach ular boshqa joyga
-// "sakrab" qolganday tuyuladi. Oldin bu qatlamlar to'liq
-// yashirilib/qaytarilardi — lekin ko'rinish/yo'qolish LAHZADA bo'lgani
-// uchun o'zi ham "glitch"dek ko'zga tashlanardi. Endi buning o'rniga
-// OPACITY orqali YUMSHOQ SO'NIB-YONISH qo'llaniladi: kamera harakati
-// boshlanishi bilan matnlar tez va sezilarsiz xiralashadi (e'tibor
-// xaritaning o'zi harakatiga qaratilgan payt), to'xtab (moveend) YAKUNIY
-// joyga kelgach esa SEKIN, plavni tarzda qayta paydo bo'ladi — hech qanday
-// keskin "sakrash" yoki "yonib-o'chish" sezilmaydi.
+// "sakrab" qolganday tuyuladi.
+//
+// 1-urinish (to'liq yashirish/qaytarish) va 2-urinish (0→1 opacity fade,
+// faqat 'moveend'da) ikkalasi ham "yo'qolib-paydo bo'lish" sifatida
+// sezilarli edi — ayniqsa matn kamera to'liq to'xtaganidan BIR OZ KEYIN
+// paydo bo'lgani uchun harakat va matn orasida uzilish/kechikish sezilardi.
+// Endi ikkita jihat bilan takomillashtirildi:
+//  a) Matn HECH QACHON to'liq g'oyib bo'lmaydi — past (lekin nolga teng
+//     bo'lmagan) xiralikka tushadi, xuddi kamera harakatlanayotganda
+//     fokusdan bir oz chiqqanday (professional xarita ilovalarida keng
+//     tarqalgan "harakat vaqtida xiralashtirish" uslubi) — bu "glitch"
+//     emas, tabiiy fizik effekt sifatida qabul qilinadi.
+//  b) Qayta yorqinlashtirish 'moveend' hodisasini KUTIB O'TIRMAYDI —
+//     animatsiya davomiyligiga (duration) qarab OLDINDAN hisoblangan vaqtda
+//     boshlanadi, shunda kamera to'xtashi bilan matn deyarli BIR VAQTDA,
+//     sinxron ravishda yorqinlashadi. 'moveend' faqat zaxira/kafolat
+//     sifatida qoladi (masalan animatsiya to'satdan to'xtatilsa).
 function setMapLabelLayersOpacity(mapInstance, opacity, transitionMs){
   if (!mapInstance || !mapInstance.getStyle) return;
   let layers;
@@ -4212,18 +4221,30 @@ function setMapLabelLayersOpacity(mapInstance, opacity, transitionMs){
     } catch (_) {}
   });
 }
-function flyToSmooth(mapInstance, opts){
+function runCameraMoveSmooth(mapInstance, opts, method){
   if (!mapInstance) return;
-  setMapLabelLayersOpacity(mapInstance, 0, 160);
-  mapInstance.once('moveend', () => setMapLabelLayersOpacity(mapInstance, 1, 450));
-  mapInstance.flyTo(opts);
+  const estDuration = typeof opts.duration === 'number' ? opts.duration : 800;
+  // To'liq emas — past xiralikka (0.1) tushadi, shu bilan "yo'qolish"
+  // emas, "xiralashish" tuyg'usi hosil bo'ladi.
+  setMapLabelLayersOpacity(mapInstance, 0.1, 130);
+  let restored = false;
+  let timerId = null;
+  const restore = () => {
+    if (restored) return;
+    restored = true;
+    if (timerId) clearTimeout(timerId);
+    setMapLabelLayersOpacity(mapInstance, 1, 420);
+    mapInstance.off('moveend', restore);
+  };
+  // Harakat taxminan tugash vaqtidan ~35% oldinroq yorqinlashtirishni
+  // boshlaymiz — 420ms fade shu payt boshlanib, kamera to'xtagan payt
+  // (yoki undan ozgina keyin) allaqachon deyarli to'liq ko'ringan bo'ladi.
+  timerId = setTimeout(restore, Math.max(120, estDuration * 0.62));
+  mapInstance.once('moveend', restore);
+  mapInstance[method](opts);
 }
-function easeToSmooth(mapInstance, opts){
-  if (!mapInstance) return;
-  setMapLabelLayersOpacity(mapInstance, 0, 160);
-  mapInstance.once('moveend', () => setMapLabelLayersOpacity(mapInstance, 1, 450));
-  mapInstance.easeTo(opts);
-}
+function flyToSmooth(mapInstance, opts){ runCameraMoveSmooth(mapInstance, opts, 'flyTo'); }
+function easeToSmooth(mapInstance, opts){ runCameraMoveSmooth(mapInstance, opts, 'easeTo'); }
 let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
