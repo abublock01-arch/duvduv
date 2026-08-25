@@ -697,8 +697,8 @@ body.view-driver .driver-route-bar{
    ko'k, to — to'q sariq) o'tadi. Oldingidan sezilarli kattaroq. */
 .drv-route-btn{
   --btn-mid:#F5F6F8;--btn-base:#E6E8EC;--btn-dark:#C5C8CE;--btn-darkest:#9FA3AA;
-  flex:1;display:flex;align-items:center;gap:12px;
-  padding:16px 18px;border:3px solid transparent;border-radius:26px;
+  flex:1;display:flex;align-items:center;
+  padding:16px 14px 16px 32px;border:3px solid transparent;border-radius:26px;
   background:
     linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
     linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
@@ -733,28 +733,28 @@ body.view-driver .driver-route-bar{
 #driverToBtn.has-value{ --btn-mid:#FFA733;--btn-base:#FF8A00;--btn-dark:#C96800;--btn-darkest:#8F4900; color:#fff; }
 .drv-route-btn:not(.has-value) span{ text-shadow:0 -1px 1px rgba(0,0,0,.12),0 1px 1px rgba(255,255,255,.6); }
 .drv-route-btn.has-value span{ text-shadow:0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22); }
-/* Grammatik qo'shimcha ("Toshkentdan", "Farg'onaga") xom nomdan biroz
-   uzunroq — pill ichida ellipsis bilan kesilib qolmasligi uchun
-   to'ldirilgan holatda matn/joy biroz ixchamlashtiriladi. */
-.drv-route-btn.has-value{ padding:16px 14px; gap:8px; }
-.drv-route-btn.has-value .drv-dot,
-.drv-route-btn.has-value .drv-dot-spacer{ width:9px;height:9px; }
-.drv-route-btn.has-value span{ font-size:17px; letter-spacing:-.2px; }
+/* Rangli nuqta endi FLEX oqimidan chiqarilib, chap chetga MUTLAQ
+   (absolute) joylashtirilgan — shu bilan matn uni "muvozanatlash" uchun
+   o'ng tomondan joy band qilib o'tirmaydi, balki tugmaning DEYARLI BUTUN
+   kengligidan foydalanib markazlashadi (avvalgi "oyna" (spacer) usuli
+   matnni ortiqcha siqib, kesilib qolishiga sabab bo'lgan edi). */
 .drv-dot{
-  width:12px;height:12px;border-radius:50%;flex-shrink:0;
-  position:relative;z-index:1;
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  width:12px;height:12px;border-radius:50%;
 }
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
 .drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
-/* Chapda rangli nuqta, o'ngda AYNAN shu o'lchamdagi ko'rinmas "oyna"
-   elementi turadi — shu bilan matn (o'rtadagi flex:1 slot) nuqtaning
-   og'irligidan ta'sirlanmay, tugmaning HAQIQIY markazida, simmetrik
-   joylashadi (avval nuqta borligidan matn chapga siljib ko'rinardi). */
-.drv-dot-spacer{ width:12px;height:12px;flex-shrink:0;visibility:hidden; }
 .drv-route-btn span{
-  flex:1;text-align:center;
+  flex:1;text-align:center;text-transform:uppercase;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;
 }
+/* Grammatik qo'shimcha ("Toshkentdan", "Farg'onaga") xom nomdan biroz
+   uzunroq — to'ldirilgan holatda nuqta biroz kichrayadi, matn esa
+   JS orqali (fitPillLabelText) konteynerga sig'guncha avtomatik
+   kichraytiriladi — hech qachon kesilib qolmaydi, imkon qadar katta
+   ko'rinadi. */
+.drv-route-btn.has-value .drv-dot{ width:9px;height:9px; }
+.drv-route-btn.has-value{ padding:16px 10px 16px 26px; }
 /* Umumiy "meni bos" imo-ishorasi — bir necha joyda qayta ishlatiladi:
    1) Amal rejimiga kirilgach "Qayerga" hamon bo'sh qolsa (har 2.5s da
       to'ldirilguncha qaytalanadi);
@@ -2582,7 +2582,6 @@ html, body { font-size: var(--fs-base); }
           <button class="drv-route-btn" id="driverFromBtn" onclick="handleRouteBtnClick('from')">
             <div class="drv-dot drv-dot--a"></div>
             <span id="driverFromLabel">Qayerdan?</span>
-            <div class="drv-dot-spacer" aria-hidden="true"></div>
           </button>
           <div class="drv-route-arrow" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M4 12h13"/><path d="M14 7l5 5-5 5"/></svg>
@@ -2590,7 +2589,6 @@ html, body { font-size: var(--fs-base); }
           <button class="drv-route-btn" id="driverToBtn" onclick="handleRouteBtnClick('to')">
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Qayerga?</span>
-            <div class="drv-dot-spacer" aria-hidden="true"></div>
           </button>
         </div>
 
@@ -3586,7 +3584,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       const regionName = detectRegionFromCoords(lng, lat);
       if (regionName) {
         const fromLbl = document.getElementById('driverFromLabel');
-        if (fromLbl) fromLbl.textContent = regionWithFromSuffix(regionName);
+        if (fromLbl) { fromLbl.textContent = regionWithFromSuffix(regionName); fitPillLabelText(fromLbl); }
         document.getElementById('driverFromBtn')?.classList.add('has-value');
         // "Qayerdan" avtomatik to'ldirildi — xaritadagi haydovchi yo'nalishlari
         // shu manzilga qarab qayta filtrlanadi.
@@ -4066,12 +4064,12 @@ function selectDriverRegion(region) {
   if (dvrPickingFor === 'from') {
     saved.from = region;
     const lbl = document.getElementById('driverFromLabel');
-    if (lbl) lbl.textContent = regionWithFromSuffix(region);
+    if (lbl) { lbl.textContent = regionWithFromSuffix(region); fitPillLabelText(lbl); }
     document.getElementById('driverFromBtn')?.classList.add('has-value');
   } else {
     saved.to = region;
     const lbl = document.getElementById('driverToLabel');
-    if (lbl) lbl.textContent = regionWithToSuffix(region);
+    if (lbl) { lbl.textContent = regionWithToSuffix(region); fitPillLabelText(lbl); }
     document.getElementById('driverToBtn')?.classList.add('has-value');
   }
   localStorage.setItem(routeKey(), JSON.stringify(saved));
@@ -4145,10 +4143,10 @@ function showDrvSavedBanner(text) {
 function loadDriverRouteState() {
   try { localStorage.removeItem(routeKey()); } catch (_) {}
   const fromLbl = document.getElementById('driverFromLabel');
-  if (fromLbl) fromLbl.textContent = 'Qayerdan?';
+  if (fromLbl) { fromLbl.textContent = 'Qayerdan?'; fromLbl.style.fontSize = ''; }
   document.getElementById('driverFromBtn')?.classList.remove('has-value');
   const toLbl = document.getElementById('driverToLabel');
-  if (toLbl) toLbl.textContent = 'Qayerga?';
+  if (toLbl) { toLbl.textContent = 'Qayerga?'; toLbl.style.fontSize = ''; }
   document.getElementById('driverToBtn')?.classList.remove('has-value');
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
 }
@@ -4484,6 +4482,24 @@ function regionWithToSuffix(name) {
   if (last === 'q') return short + 'qa';
   if (last === 'k') return short + 'ka';
   return short + 'ga';
+}
+// Pill matni (Qayerdan/Qayerga) o'zining tabiiy uzunligiga qarab
+// AVTOMATIK ravishda eng katta mumkin bo'lgan o'lchamda ko'rsatiladi —
+// qisqa nomlar ("Andijondan") katta va aniq chiqadi, uzunroqlari
+// ("Qoraqalpog'istonga") esa konteynerga sig'guncha asta-sekin
+// kichraytiriladi — hech qachon "..." bilan kesilib qolmaydi.
+const PILL_TEXT_MAX_SIZE = 18;
+const PILL_TEXT_MIN_SIZE = 10;
+function fitPillLabelText(labelEl){
+  if (!labelEl) return;
+  let size = PILL_TEXT_MAX_SIZE;
+  labelEl.style.fontSize = size + 'px';
+  let guard = 0;
+  while (labelEl.scrollWidth > labelEl.clientWidth && size > PILL_TEXT_MIN_SIZE && guard < 24) {
+    size -= 0.5;
+    labelEl.style.fontSize = size + 'px';
+    guard++;
+  }
 }
 
 const TRAVEL_TITLE_LATIN = "Qayerga borasiz?";
