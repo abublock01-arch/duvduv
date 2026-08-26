@@ -4132,28 +4132,58 @@ function selectDriverRegion(region) {
 function confirmDriverRoute() {
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   if (!saved.from || !saved.to || saved.from === saved.to) return;
-  // MUHIM: faqat "Haydovchiman" rejimida bu Firestore'ga yozib,
-  // foydalanuvchini haqiqiy haydovchi sifatida e'lon qiladi (bot shu
-  // asosida yo'lovchi/yuk e'lonlariga moslashtiradi). "Yo'lovchiman" va
-  // "Yuk yuboraman" rejimlarida bu xuddi shu panel — lekin u yerda faqat
-  // QIDIRUV FILTRI vazifasini bajaradi (xaritada qaysi haydovchi
-  // yo'nalishlarini ko'rsatish kerakligini tanlaydi, selectDriverRegion
-  // orqali darhol qo'llaniladi) — hech narsa "e'lon qilinmaydi", shu
-  // sabab bu holatda Firestore'ga UMUMAN YOZILMAYDI. Ilgari BARCHA uchala
-  // rejimda ham xatolik bilan 'driver' deb yozib qo'yilardi (ya'ni
-  // yo'lovchi yoki yuk yuboruvchi ham jimgina "haydovchi" bo'lib qolardi)
-  // — bu yerda shu xato tuzatildi.
+  // "Haydovchiman" rejimida bu Firestore'ga yozib, foydalanuvchini haqiqiy
+  // haydovchi sifatida e'lon qiladi (bot shu asosida yo'lovchi/yuk
+  // e'lonlariga moslashtiradi). "Yo'lovchiman" va "Yuk yuboraman"
+  // rejimlarida esa bu xuddi shu panel — lekin u yerda IKKI vazifani
+  // birdaniga bajaradi: (1) mahalliy qidiruv filtri (xaritada qaysi
+  // haydovchi yo'nalishlarini ko'rsatish — selectDriverRegion orqali
+  // darhol qo'llanadi), (2) O'ZINING oddiy A→B e'lonini (qisqa shakl,
+  // izoh/rasm/telefon so'ralmaydi) haydovchilarga ko'rinadigan qilib
+  // Firestore'ga yozadi — shu sabab boshqa haydovchilar buni topa oladi.
   const isDriverMode = activeUniMode === 'driver';
-  logPermEvent('MARSHRUT', `confirmDriverRoute (rejim: ${activeUniMode || '?'}) — ${isDriverMode ? 'Firestore\'ga "driver" deb yozildi' : 'faqat mahalliy qidiruv filtri, Firestore\'ga YOZILMADI'}`);
+  const isSeekerMode = activeUniMode === 'travel' || activeUniMode === 'cargo';
+  logPermEvent('MARSHRUT', `confirmDriverRoute (rejim: ${activeUniMode || '?'}) — ${isDriverMode ? 'Firestore\'ga "driver" deb yozildi' : (isSeekerMode ? `Firestore'ga oddiy "${activeUniMode}" e'loni sifatida yozildi + mahalliy filtr` : 'hech narsa yozilmadi')}`);
   if (isDriverMode) {
     _saveDriverRouteToFirestore(saved.from, saved.to);
     document.getElementById('routeSetBtn')?.classList.add('has-route');
+  } else if (isSeekerMode) {
+    _saveSeekerListingToFirestore(activeUniMode, saved.from, saved.to);
   }
   showDrvSavedBanner(`${regionWithFromSuffix(saved.from)} → ${regionWithToSuffix(saved.to)}`);
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   }
+}
+
+// Yo'lovchiman/Yuk yuboraman rejimida "Qayerdan/Qayerga" tasdiqlanganda —
+// oddiy, qisqa e'lon (faqat A→B marshrut + profil) 'orders'/'travels'
+// kolleksiyasiga yoziladi, shu bilan mos haydovchilar buni xaritada ko'ra
+// oladi. Har bir foydalanuvchi uchun DOIMIY hujjat ID (telegramUser.id)
+// ishlatiladi — shu sabab qayta-qayta tasdiqlash yangi-yangi "chang'i"
+// e'lonlar yaratib, ro'yxatni chalkashtirmaydi, faqat oxirgi marshrutni
+// yangilab boradi. Izoh/rasm/telefon kerak bo'lsa, mavjud "Mening
+// e'lonlarim" bo'limidan keyinroq qo'shib-tahrirlab bo'ladi.
+function _saveSeekerListingToFirestore(mode, from, to){
+  if (!db || !telegramUser.id) return;
+  const center = REGION_CENTERS[from];
+  const collectionName = mode === 'cargo' ? 'orders' : 'travels';
+  const doc = {
+    type: mode === 'cargo' ? 'order' : 'travel',
+    from, to, dest: to,
+    status: 'Aktiv',
+    gender: 'any',
+    lat: center ? center[1] : null,
+    lng: center ? center[0] : null,
+    telegramId: telegramUser.id,
+    telegramUsername: telegramUser.username || '',
+    firstName: telegramUser.first_name || '',
+    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  if (mode === 'travel') { doc.passengersCount = 1; doc.applicantsCount = 0; }
+  else { doc.applicantsCount = 0; }
+  db.collection(collectionName).doc(String(telegramUser.id)).set(doc, { merge: true }).catch(() => {});
 }
 
 function _saveDriverRouteToFirestore(from, to) {
