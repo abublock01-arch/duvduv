@@ -4132,10 +4132,24 @@ function selectDriverRegion(region) {
 function confirmDriverRoute() {
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   if (!saved.from || !saved.to || saved.from === saved.to) return;
-  logPermEvent('MARSHRUT', 'confirmDriverRoute ishga tushdi (bu funksiya HECH QANDAY ruxsat so\'ramaydi — faqat Firestore\'ga yozadi)');
-  _saveDriverRouteToFirestore(saved.from, saved.to);
+  // MUHIM: faqat "Haydovchiman" rejimida bu Firestore'ga yozib,
+  // foydalanuvchini haqiqiy haydovchi sifatida e'lon qiladi (bot shu
+  // asosida yo'lovchi/yuk e'lonlariga moslashtiradi). "Yo'lovchiman" va
+  // "Yuk yuboraman" rejimlarida bu xuddi shu panel — lekin u yerda faqat
+  // QIDIRUV FILTRI vazifasini bajaradi (xaritada qaysi haydovchi
+  // yo'nalishlarini ko'rsatish kerakligini tanlaydi, selectDriverRegion
+  // orqali darhol qo'llaniladi) — hech narsa "e'lon qilinmaydi", shu
+  // sabab bu holatda Firestore'ga UMUMAN YOZILMAYDI. Ilgari BARCHA uchala
+  // rejimda ham xatolik bilan 'driver' deb yozib qo'yilardi (ya'ni
+  // yo'lovchi yoki yuk yuboruvchi ham jimgina "haydovchi" bo'lib qolardi)
+  // — bu yerda shu xato tuzatildi.
+  const isDriverMode = activeUniMode === 'driver';
+  logPermEvent('MARSHRUT', `confirmDriverRoute (rejim: ${activeUniMode || '?'}) — ${isDriverMode ? 'Firestore\'ga "driver" deb yozildi' : 'faqat mahalliy qidiruv filtri, Firestore\'ga YOZILMADI'}`);
+  if (isDriverMode) {
+    _saveDriverRouteToFirestore(saved.from, saved.to);
+    document.getElementById('routeSetBtn')?.classList.add('has-route');
+  }
   showDrvSavedBanner(`${regionWithFromSuffix(saved.from)} → ${regionWithToSuffix(saved.to)}`);
-  document.getElementById('routeSetBtn')?.classList.add('has-route');
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.notificationOccurred('success');
