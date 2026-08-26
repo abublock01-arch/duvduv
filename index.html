@@ -2551,22 +2551,29 @@ html, body { font-size: var(--fs-base); }
   .cta-btn { min-height:104px; }
 }
 
-/* ══ Dev-only: ruxsat so'rovlari jonli jurnali ══ */
+/* ══ Dev-only: ruxsat so'rovlari jonli jurnali ══
+   Ekranning O'RTA-O'NG chetida turadi (yuqoridagi yo'nalish paneli va
+   pastdagi 3 ta asosiy tugma zonasidan chetlab) — hech qanday haqiqiy
+   tugmani yopmasligi kerak. Sarlavhaga bosilsa yig'ilib (faqat sarlavha
+   qoladi), yana bosilsa yoyilib ochiladi. */
 #dvDebugPanel{
-  position:fixed; right:8px; bottom:8px; z-index:99999;
-  width:min(86vw,300px); max-height:280px; overflow-y:auto;
+  position:fixed; right:8px; top:50%; transform:translateY(-50%); z-index:99999;
+  width:min(78vw,260px); max-height:170px; overflow-y:auto;
   background:rgba(18,18,22,.94); color:#8ef58e; font:11px/1.5 'SF Mono',Menlo,Consolas,monospace;
   border-radius:12px; padding:8px 10px; display:none;
   box-shadow:0 6px 24px rgba(0,0,0,.45); backdrop-filter:blur(6px);
 }
 #dvDebugPanel.show{ display:block; }
+#dvDebugPanel.collapsed{ max-height:none; overflow:visible; }
+#dvDebugPanel.collapsed #dvDebugPanelBody{ display:none; }
 #dvDebugPanel .dv-dbg-title{
-  color:#fff; font-weight:700; margin-bottom:4px;
-  display:flex; justify-content:space-between; align-items:center;
+  color:#fff; font-weight:700; margin-bottom:4px; cursor:pointer;
+  display:flex; justify-content:space-between; align-items:center; gap:6px;
 }
+#dvDebugPanel.collapsed .dv-dbg-title{ margin-bottom:0; }
 #dvDebugPanel .dv-dbg-title button{
   background:none; border:1px solid rgba(255,255,255,.25); border-radius:6px;
-  color:#f77; font:10px monospace; padding:2px 6px; cursor:pointer;
+  color:#f77; font:10px monospace; padding:2px 6px; cursor:pointer; flex-shrink:0;
 }
 #dvDebugPanel .dv-dbg-row{
   white-space:pre-wrap; word-break:break-word;
@@ -4721,10 +4728,14 @@ function toggleDebugPanel(){
   document.getElementById('dvDebugPanel')?.classList.toggle('show', _dvDebugOn);
   if (_dvDebugOn) logPermEvent('JURNAL', 'yoqildi ✅ — endi tugmalarni bosing');
 }
+function toggleDebugPanelCollapse(){
+  document.getElementById('dvDebugPanel')?.classList.toggle('collapsed');
+}
 function clearDebugPanel(){
   const body = document.getElementById('dvDebugPanelBody');
   if (body) body.innerHTML = '';
 }
+const DV_DEBUG_MAX_ROWS = 25; // panel cheksiz o'sib, tugmalarni yopib qo'ymasin
 function logPermEvent(kind, detail){
   if (!_dvDebugOn) return;
   const body = document.getElementById('dvDebugPanelBody');
@@ -4735,6 +4746,7 @@ function logPermEvent(kind, detail){
   row.className = 'dv-dbg-row';
   row.innerHTML = `<b>${stamp}</b> — <b>${kind}</b>: ${detail}`;
   body.insertBefore(row, body.firstChild);
+  while (body.children.length > DV_DEBUG_MAX_ROWS) body.removeChild(body.lastChild);
 }
 (function setupCloseButtonLongPress(){
   const LONG_PRESS_MS = 1200;
@@ -9579,7 +9591,7 @@ recoverSendFlow();
      bosilsa ochiladi/yopiladi. Hech qanday ruxsat holatini o'zgartirmaydi —
      faqat haqiqiy so'rov funksiyalari chaqirilgan zahoti shu yerga yozadi. -->
 <div id="dvDebugPanel">
-  <div class="dv-dbg-title">🐞 Ruxsat jurnali <button type="button" onclick="clearDebugPanel()">tozalash</button></div>
+  <div class="dv-dbg-title" onclick="toggleDebugPanelCollapse()">🐞 Ruxsat jurnali <button type="button" onclick="event.stopPropagation();clearDebugPanel()">tozalash</button></div>
   <div id="dvDebugPanelBody"></div>
 </div>
 
