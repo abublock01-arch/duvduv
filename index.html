@@ -3941,9 +3941,22 @@ let _gpsWatchId = null;
 async function startGpsTracking() {
   if (!navigator.geolocation || !telegramUser.id || !db) return;
   if (_gpsWatchId !== null) return; // allaqachon ishlamoqda
-  // Faqat ruxsat berilgan bo'lsa watch boshlaymiz — dialog chiqarmaymiz
-  const perm = await getGeolocationPermissionState();
-  if (perm !== 'granted') return;
+  // Faqat ruxsat ALLAQACHON berilgan bo'lsa watch boshlaymiz — dialog
+  // chiqarmaymiz. MUHIM TUZATISH: ilgari bu yerda faqat
+  // navigator.permissions('geolocation') (brauzer API'si) tekshirilardi —
+  // Telegram WebView ichida bu deyarli har doim noto'g'ri natija berardi
+  // (Telegram'ning o'z LocationManager orqali berilgan haqiqiy ruxsatidan
+  // bexabar edi), shu sabab GPS kuzatuv amalda deyarli hech qachon ishga
+  // tushmasdi. Endi refreshUserLocationRegion/centerMapOnDriver'da
+  // ishlatiladigan TO'G'RI usul qo'llaniladi.
+  const lm = window.Telegram?.WebApp?.LocationManager;
+  if (lm) {
+    const granted = await isTelegramLocationGranted();
+    if (!granted) return;
+  } else {
+    const perm = await getGeolocationPermissionState();
+    if (perm !== 'granted') return;
+  }
   _gpsWatchId = navigator.geolocation.watchPosition(
     pos => {
       db.collection('users').doc(String(telegramUser.id)).set({

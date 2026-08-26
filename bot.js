@@ -36,7 +36,46 @@ function docToObj(doc) {
     phone:            d.phone || '',
     archived:         d.archived === true,
     createdAt:        d.createdAt?.toMillis ? d.createdAt.toMillis() : (d.createdAt || 0),
+    lat:              typeof d.lat === 'number' ? d.lat : null,
+    lng:              typeof d.lng === 'number' ? d.lng : null,
   };
+}
+
+// ── Haydovchi-yaqinlik filtri ────────────────────────────────────────────
+// Haydovchi o'z marshrutini belgilagach, unga mos keladigan HAR BIR yangi
+// e'lon uchun bot xabar yuborardi — mashhur yo'nalishda bu tez orada juda
+// ko'p (masalan yuzlab) xabarga aylanishi mumkin. Shu sabab endi: agar
+// haydovchining jonli joylashuvi (users/{id}.location, ilovadagi
+// startGpsTracking orqali yoziladi) ma'lum bo'lsa — faqat NOTIF_RADIUS_KM
+// radiusidagi e'lonlar uchun xabar yuboriladi; radiusdan tashqaridagilar
+// bildirishnomasiz qoladi (lekin ilovaning xaritasida baribir ko'rinadi —
+// bu bot.js'ga aloqasi yo'q, mustaqil client-side filtr). Joylashuvi hali
+// noma'lum yoki juda eskirgan (LOCATION_MAX_AGE_MS dan katta) haydovchilar
+// uchun — xavfsizroq old: xabar BARIBIR yuboriladi (imkoniyat boy
+// berilmasin), faqat masofa ANIQ ma'lum bo'lgandagina filtrlanadi.
+const NOTIF_RADIUS_KM = 5;
+const LOCATION_MAX_AGE_MS = 30 * 60 * 1000; // 30 daqiqadan eski joylashuv — "noma'lum" deb hisoblanadi
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) ** 2 +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// true = xabar yuborilsin (masofa noma'lum yoki radius ichida)
+// false = xabar yuborilmasin (masofa ANIQ ma'lum va radiusdan tashqarida)
+function driverIsWithinNotifyRadius(driver, listingLat, listingLng) {
+  if (listingLat == null || listingLng == null) return true; // e'lon koordinatasi yo'q — filtrlay olmaymiz
+  const loc = driver.location;
+  if (!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number') return true; // haydovchi joylashuvi noma'lum
+  const updatedMs = loc.updatedAt?.toMillis ? loc.updatedAt.toMillis() : 0;
+  if (!updatedMs || (Date.now() - updatedMs) > LOCATION_MAX_AGE_MS) return true; // eskirgan — noma'lum deb hisoblaymiz
+  const distKm = haversineKm(loc.lat, loc.lng, listingLat, listingLng);
+  return distKm <= NOTIF_RADIUS_KM;
 }
 
 async function fsQuery(collectionId, afterMs) {
@@ -497,7 +536,7 @@ async function notifySender(telegramId, from, to, type) {
 }
 
 // ── Haydovchilarga yangi e'lon xabari ────────────────────────────────────
-async function notifyDrivers(from, to, type, senderUsername, senderChatId, orderId, senderPhone) {
+async function notifyDrivers(from, to, type, senderUsername, senderChatId, orderId, senderPhone, listingLat, listingLng) {
   if (!from || !to) { console.log('⚠️ notifyDrivers: from yoki to yo\'q'); return; }
   console.log(`🔍 Haydovchilar qidirilmoqda: ${from} → ${to}, jo'natuvchi: ${senderChatId}`);
 
@@ -546,6 +585,15 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId, order
       }
     }
 
+    // Marshrut mos kelsa ham — agar haydovchining jonli joylashuvi ANIQ
+    // ma'lum bo'lsa va e'lon undan NOTIF_RADIUS_KM dan uzoqda bo'lsa,
+    // bildirishnoma yuborilmaydi (mashhur yo'nalishda xabar-toshqiniga
+    // yo'l qo'ymaslik uchun) — e'lon baribir ilova xaritasida ko'rinaveradi.
+    if (!driverIsWithinNotifyRadius(driver, listingLat, listingLng)) {
+      console.log(`⏭ ${doc.id}: ${NOTIF_RADIUS_KM} km radiusdan tashqarida, xabar yuborilmadi`);
+      continue;
+    }
+
     console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
     await bot.sendMessage(driver.chatId, text, {
       parse_mode: 'HTML',
@@ -575,7 +623,7 @@ async function pollOrders() {
       console.log(`📦 Order: "${from}"→"${to}" id=${d.telegramId}`);
       if (!from || !to) continue;
       await notifySender(d.telegramId, from, to, type).catch(e => console.error('notifySender:', e.message));
-      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId, d.id, d.phone || '').catch(e => console.error('notifyDrivers:', e.message));
+      await notifyDrivers(from, to, type, d.telegramUsername || '', d.telegramId, d.id, d.phone || '', d.lat, d.lng).catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollOrders xato:', e.message); }
 }
@@ -594,7 +642,7 @@ async function pollTravels() {
       console.log(`🚐 Travel: "${from}"→"${to}" id=${d.telegramId}`);
       if (!from || !to) continue;
       await notifySender(d.telegramId, from, to, 'travel').catch(e => console.error('notifySender:', e.message));
-      await notifyDrivers(from, to, 'travel', d.telegramUsername || '', d.telegramId, d.id, d.phone || '').catch(e => console.error('notifyDrivers:', e.message));
+      await notifyDrivers(from, to, 'travel', d.telegramUsername || '', d.telegramId, d.id, d.phone || '', d.lat, d.lng).catch(e => console.error('notifyDrivers:', e.message));
     }
   } catch(e) { console.error('pollTravels xato:', e.message); }
 }
