@@ -6870,7 +6870,8 @@ function mapItemProps(item, itemType){
     mapTo: mapTo || '—',
     itemType,
     thumbUrl: item.thumbUrl || '',
-    telegramUsername: item.telegramUsername || ''
+    telegramUsername: item.telegramUsername || '',
+    telegramId: item.telegramId != null ? String(item.telegramId) : ''
   };
 }
 
@@ -7041,27 +7042,42 @@ function buildDriverRouteGeo(){
   return { type: 'FeatureCollection', features };
 }
 
-// Yo'lovchiman rejimi faol bo'lganda: yo'lovchi/yuk e'lonlari yashiriladi,
-// haydovchi yo'nalishlari ko'rsatiladi. Aks holda — teskarisi.
+// Berilgan qatlam-prefiksi (masalan "map-orders") uchun cluster/unclustered
+// filtrlariga qo'shimcha ravishda faqat JORIY foydalanuvchining O'Z
+// e'lonlarini ko'rsatadigan cheklov qo'shadi (yoki olib tashlaydi).
+function applyMapLayerOwnFilter(prefix, restrictToOwn){
+  const ownId = telegramUser.id != null ? String(telegramUser.id) : null;
+  const ownFilter = (restrictToOwn && ownId)
+    ? ['==', ['get', 'telegramId'], ownId]
+    : null;
+  const clusterFilter = ownFilter ? ['all', ['has', 'point_count'], ownFilter] : ['has', 'point_count'];
+  const unclusteredFilter = ownFilter ? ['all', ['!', ['has', 'point_count']], ownFilter] : ['!', ['has', 'point_count']];
+  [`${prefix}-clusters`, `${prefix}-cluster-count`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, clusterFilter); });
+  [`${prefix}-unclustered-icon`, `${prefix}-unclustered-label`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, unclusteredFilter); });
+}
+
+// Yo'lovchiman rejimi faol bo'lganda: yo'lovchi/yuk e'lonlari orasidan
+// FAQAT o'zining qo'ygan e'loni (tasdiq sifatida) ko'rsatiladi, haydovchi
+// yo'nalishlari esa to'liq ko'rsatiladi. Haydovchiman rejimida esa —
+// teskarisi: barcha mos yo'lovchi/yuk E'LONLARI (hammasi, faqat o'ziniki
+// emas) ko'rsatiladi, haydovchi yo'nalishlari yashiriladi.
 function applyUniModeMapVisibility(){
   if (!map || !map.getLayer('map-orders-clusters')) return;
-  // Yo'lovchiman VA Yuk yuboraman — ikkalasi ham "qidiruvchi" tomon:
-  // ular xaritada O'ZINING A→B manzillariga mos HAYDOVCHI yo'nalishlarini
-  // ko'rishi kerak. Haydovchiman esa — u xaritada O'ZINING marshrutiga mos
-  // yo'lovchi/yuk E'LONLARINI ko'rishi kerak. Ilgari faqat 'travel' rejimi
-  // haydovchi qatlamini ko'rsatardi, 'cargo' esa xato ravishda 'driver'
-  // bilan bir xil (e'lonlar qatlami) ko'rsatilardi — bu tuzatildi.
   const isSeekerMode = activeUniMode === 'travel' || activeUniMode === 'cargo';
-  const hideIds = [
+  const orderTravelIds = [
     'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
     'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
   ];
-  const showIds = [
+  const driverRouteIds = [
     'map-driver-routes-clusters', 'map-driver-routes-cluster-count',
     'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
   ];
-  hideIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'none' : 'visible'); });
-  showIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'visible' : 'none'); });
+  // Yo'lovchi/yuk e'lonlari qatlami endi HAR IKKALA rejimda ham ko'rinadi —
+  // farq filtrda: seeker rejimida faqat o'ziniki, driver rejimida hammasi.
+  orderTravelIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible'); });
+  driverRouteIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'visible' : 'none'); });
+  applyMapLayerOwnFilter('map-orders', isSeekerMode);
+  applyMapLayerOwnFilter('map-travels', isSeekerMode);
 }
 
 function findOrderByMapId(orderId){
