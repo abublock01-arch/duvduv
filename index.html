@@ -3397,6 +3397,7 @@ function uniModeMeta(){
   };
 }
 function enterUniMode(key){
+  debugPermsLog('▶ TUGMA BOSILDI: ' + key + ' — lokatsiya so\'rovi shu yerdan boshlanishi kerak (pastda "getLocation() CHAQIRILDI" ni kuting)');
   // Reverse (orqaga qaytish) animatsiyasi hali tugamagan bo'lsa ham yangi
   // rejimga kirishga yo'l qo'ymaymiz — aks holda ikkita animatsiya bir
   // xil tugmada bir-biriga qarshi kelib, ikonka g'alati "chaqnab" ketishi
@@ -4177,7 +4178,9 @@ function requestNotificationPermission(){
     if (window.Telegram?.WebApp?.requestWriteAccess) {
       // Telegram o'zi eslab qoladi: ruxsat allaqachon berilgan bo'lsa dialog CHIQMAYDI
       // Birinchi marta ochsa — dialog chiqadi
-      Telegram.WebApp.requestWriteAccess(() => {
+      if (typeof debugPermsLog === 'function') debugPermsLog('requestWriteAccess() CHAQIRILDI (requestNotificationPermission orqali) — Telegram HAQIQIY dialog ko\'rsatishi mumkin (agar hali ruxsat berilmagan bo\'lsa).');
+      Telegram.WebApp.requestWriteAccess((granted) => {
+        if (typeof debugPermsLog === 'function') debugPermsLog('requestWriteAccess() natija (requestNotificationPermission):', granted);
         // granted yoki yo'q — har ikki holatda ham saqlaymiz
         // /start bosgan user uchun bot yozish huquqiga ega
         saveToFirestore();
@@ -7065,6 +7068,15 @@ function flyToMyLocation(){
     .catch(() => showToast('Lokatsiya olinmadi', 'error'));
 }
 
+// ═══ VAQTINCHALIK DEBUG LOG (ruxsat so'rovlari QACHON ketayotganini
+// Telegram debug konsolida tekshirish uchun) — tasdiqlangandan keyin bu
+// bloqni va DEBUG_PERMS_LOG ishlatilgan barcha joylarni olib tashlash
+// mumkin. Qidirish uchun: "DEBUG_PERMS_LOG" ════════════════════════════
+const DEBUG_PERMS_LOG = true;
+function debugPermsLog(...args){
+  if (DEBUG_PERMS_LOG) console.log('%c[DUV-PERM]', 'color:#fff;background:#e64980;padding:1px 5px;border-radius:3px;font-weight:bold', ...args);
+}
+
 function getCurrentPosition(){
   return new Promise((resolve, reject) => {
     // Telegram LocationManager — native dialog (avvalgi xulq)
@@ -7085,10 +7097,14 @@ function getCurrentPosition(){
         clearTimeout(timer);
         fn(val);
       };
-      const doGet = () => lm.getLocation(loc => {
-        if (loc && loc.latitude != null) finish(resolve, { latitude: loc.latitude, longitude: loc.longitude });
-        else finish(reject, new Error('Location unavailable'));
-      });
+      const doGet = () => {
+        debugPermsLog('lm.getLocation() CHAQIRILDI — Telegram HAQIQIY dialog ko\'rsatishi mumkin (agar hali ruxsat berilmagan bo\'lsa). Stack:', new Error().stack.split('\n').slice(2,4).join(' <- '));
+        lm.getLocation(loc => {
+          debugPermsLog('lm.getLocation() natija:', loc);
+          if (loc && loc.latitude != null) finish(resolve, { latitude: loc.latitude, longitude: loc.longitude });
+          else finish(reject, new Error('Location unavailable'));
+        });
+      };
       if (lm.isInited) { doGet(); return; }
       lm.init(() => { doGet(); });
       return;
@@ -7130,10 +7146,11 @@ function isTelegramLocationGranted(){
   return new Promise(resolve => {
     const lm = window.Telegram?.WebApp?.LocationManager;
     if (!lm) { resolve(null); return; } // Telegram muhiti emas — bu tekshiruv daxlsiz
-    if (lm.isInited) { resolve(!!lm.isAccessGranted); return; }
+    const report = (v) => { debugPermsLog('isTelegramLocationGranted() — SIZ DIALOG KO\'RMAYSIZ, faqat holat tekshirilmoqda. Natija:', v); resolve(v); };
+    if (lm.isInited) { report(!!lm.isAccessGranted); return; }
     try {
-      lm.init(() => resolve(!!lm.isAccessGranted));
-    } catch (_) { resolve(false); }
+      lm.init(() => report(!!lm.isAccessGranted));
+    } catch (_) { report(false); }
   });
 }
 
@@ -7373,6 +7390,7 @@ function persistUserRole(role){
 
 // Bitta birlashtirilgan ekran — xarita hammaga bir xil, darhol ko'rsatiladi.
 function initUnifiedMap(){
+  debugPermsLog('═══ ILOVA OCHILDI (initUnifiedMap) — bu yerdan keyin, tugma bosilmaguncha, "CHAQIRILDI" degan log HECH QACHON chiqmasligi kerak ═══');
   document.body.classList.add('view-driver');
   // Lokatsiya ruxsati endi bu yerda DARHOL so'ralmaydi — foydalanuvchi
   // "Yo'lovchiman"ni bosib, pin animatsiyasi boshlanganda so'raladi
@@ -9286,7 +9304,9 @@ function maybeAskNotifAfterSubmit(){
   setTimeout(() => {
     try {
       if (window.Telegram?.WebApp?.requestWriteAccess) {
+        debugPermsLog('requestWriteAccess() CHAQIRILDI (birinchi submit\'dan keyin, maybeAskNotifAfterSubmit orqali) — Telegram HAQIQIY dialog ko\'rsatishi mumkin (agar hali ruxsat berilmagan bo\'lsa).');
         Telegram.WebApp.requestWriteAccess(granted => {
+          debugPermsLog('requestWriteAccess() natija (maybeAskNotifAfterSubmit):', granted);
           if (db && telegramUser.id) {
             db.collection('users').doc(String(telegramUser.id))
               .set({ notifications: granted !== false, chatId: telegramUser.id }, { merge: true })
