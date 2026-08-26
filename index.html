@@ -2550,6 +2550,29 @@ html, body { font-size: var(--fs-base); }
   .velocity-search-card { padding:16px 18px; gap:12px; }
   .cta-btn { min-height:104px; }
 }
+
+/* ══ Dev-only: ruxsat so'rovlari jonli jurnali ══ */
+#dvDebugPanel{
+  position:fixed; right:8px; bottom:8px; z-index:99999;
+  width:min(86vw,300px); max-height:280px; overflow-y:auto;
+  background:rgba(18,18,22,.94); color:#8ef58e; font:11px/1.5 'SF Mono',Menlo,Consolas,monospace;
+  border-radius:12px; padding:8px 10px; display:none;
+  box-shadow:0 6px 24px rgba(0,0,0,.45); backdrop-filter:blur(6px);
+}
+#dvDebugPanel.show{ display:block; }
+#dvDebugPanel .dv-dbg-title{
+  color:#fff; font-weight:700; margin-bottom:4px;
+  display:flex; justify-content:space-between; align-items:center;
+}
+#dvDebugPanel .dv-dbg-title button{
+  background:none; border:1px solid rgba(255,255,255,.25); border-radius:6px;
+  color:#f77; font:10px monospace; padding:2px 6px; cursor:pointer;
+}
+#dvDebugPanel .dv-dbg-row{
+  white-space:pre-wrap; word-break:break-word;
+  border-top:1px solid rgba(255,255,255,.08); padding:4px 0;
+}
+#dvDebugPanel .dv-dbg-row b{ color:#7ec8ff; }
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -2563,7 +2586,7 @@ html, body { font-size: var(--fs-base); }
     <div class="header">
       <div class="header-bar">
         <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
-        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
+        <h1 class="logo-brand" id="logoBrand" onclick="handleLogoTapForDebug()">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
         <div class="header-right">
           <button type="button" class="header-mine-btn" id="headerDriversBtn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
@@ -3940,6 +3963,7 @@ function onNotifOnboardHa(){
     if (tg?.expand) tg.expand();
   };
   if (tg?.requestWriteAccess) {
+    logPermEvent('BILDIRISHNOMA', 'haqiqiy so\'raldi (onNotifOnboardHa — onboarding oynasidan "Ha" bosildi)');
     tg.requestWriteAccess(finish);
   } else {
     finish(true);
@@ -4177,6 +4201,7 @@ function requestNotificationPermission(){
     if (window.Telegram?.WebApp?.requestWriteAccess) {
       // Telegram o'zi eslab qoladi: ruxsat allaqachon berilgan bo'lsa dialog CHIQMAYDI
       // Birinchi marta ochsa — dialog chiqadi
+      logPermEvent('BILDIRISHNOMA', 'haqiqiy so\'raldi (requestNotificationPermission — /start orqali kirganda)');
       Telegram.WebApp.requestWriteAccess(() => {
         // granted yoki yo'q — har ikki holatda ham saqlaymiz
         // /start bosgan user uchun bot yozish huquqiga ega
@@ -4675,6 +4700,46 @@ function mapItemHasMapCoords(item){
 // ── PROD: false — ruxsatlar (lokatsiya/telefon/bildirishnoma) faqat
 //          bir marta so'raladi, har submitda qayta-qayta chiqmaydi ─────────
 const TEST_MODE = true;
+
+// ── Dev-only: ruxsat so'rovlari jonli jurnali ──────────────────────────────
+// Logotipga (yuqorida, "duv • duv") ketma-ket 5 marta bosilsa (2s ichida)
+// panel ochiladi/yopiladi. Bu jurnal HECH QANDAY ruxsat holatini
+// o'zgartirmaydi, hech qanday API'ni soxta qilmaydi — u faqat kod HAQIQIY
+// so'rov funksiyasini (requestContact / getCurrentPosition / requestWriteAccess)
+// chaqirgan aniq lahzada shu yerga bir qator yozib qo'yadi. Shu tufayli
+// allaqachon barcha ruxsatlarga ega akkauntda ham — Telegram ko'k oyna
+// ko'rsatmasa-da — "aynan shu yerda so'ralardi" degan haqiqiy vaqt bilinadi.
+let _dvDebugOn = false;
+function toggleDebugPanel(){
+  _dvDebugOn = !_dvDebugOn;
+  document.getElementById('dvDebugPanel')?.classList.toggle('show', _dvDebugOn);
+  if (_dvDebugOn) logPermEvent('JURNAL', 'yoqildi ✅ — endi tugmalarni bosing');
+}
+function clearDebugPanel(){
+  const body = document.getElementById('dvDebugPanelBody');
+  if (body) body.innerHTML = '';
+}
+function logPermEvent(kind, detail){
+  if (!_dvDebugOn) return;
+  const body = document.getElementById('dvDebugPanelBody');
+  if (!body) return;
+  const t = new Date();
+  const stamp = [t.getHours(), t.getMinutes(), t.getSeconds()].map(n => String(n).padStart(2,'0')).join(':');
+  const row = document.createElement('div');
+  row.className = 'dv-dbg-row';
+  row.innerHTML = `<b>${stamp}</b> — <b>${kind}</b>: ${detail}`;
+  body.insertBefore(row, body.firstChild);
+}
+let _dvLogoTaps = 0, _dvLogoTapTimer = null;
+function handleLogoTapForDebug(){
+  _dvLogoTaps++;
+  clearTimeout(_dvLogoTapTimer);
+  _dvLogoTapTimer = setTimeout(() => { _dvLogoTaps = 0; }, 2000);
+  if (_dvLogoTaps >= 5){
+    _dvLogoTaps = 0;
+    toggleDebugPanel();
+  }
+}
 
 function locAskedKey(){
   return userPrefKey('loc_asked') || 'duvduv_loc_asked';
@@ -7066,6 +7131,7 @@ function flyToMyLocation(){
 }
 
 function getCurrentPosition(){
+  logPermEvent('LOKATSIYA', 'haqiqiy so\'rov funksiyasi chaqirildi (getCurrentPosition) — yangi userda aynan shu yerda ko\'k oyna chiqadi');
   return new Promise((resolve, reject) => {
     // Telegram LocationManager — native dialog (avvalgi xulq)
     const lm = window.Telegram?.WebApp?.LocationManager;
@@ -9188,6 +9254,7 @@ function requestPhoneOnce(){
     }
     if (!window.Telegram?.WebApp?.requestContact) { resolve(null); return; }
     // Tushuntirish ekranini ko'rsat
+    logPermEvent('TELEFON', 'tushuntirish oynasi ko\'rsatildi (requestPhoneOnce) — hali haqiqiy so\'rov emas, "Ruxsat beraman" bosilishini kutmoqda');
     _phoneResolve = resolve;
     document.getElementById('phoneEduOverlay').classList.add('open');
   });
@@ -9202,6 +9269,7 @@ function acceptPhoneEdu(){
     setTimeout(() => {
       try {
         if (window.Telegram?.WebApp?.requestWriteAccess) {
+          logPermEvent('BILDIRISHNOMA', 'haqiqiy so\'raldi (acceptPhoneEdu → doNotif, telefondan keyin)');
           Telegram.WebApp.requestWriteAccess(granted => {
             if (db && telegramUser.id) {
               db.collection('users').doc(String(telegramUser.id))
@@ -9243,6 +9311,7 @@ function acceptPhoneEdu(){
     if (_phoneResolve){ _phoneResolve(null); _phoneResolve = null; }
     doNotif();
   }, 15000);
+  logPermEvent('TELEFON', 'KONTAKT haqiqiy so\'raldi (requestContact, "Ruxsat beraman" bosildi)');
   Telegram.WebApp.requestContact((sent, response) => {
     if (contactSettled) return;
     contactSettled = true;
@@ -9286,6 +9355,7 @@ function maybeAskNotifAfterSubmit(){
   setTimeout(() => {
     try {
       if (window.Telegram?.WebApp?.requestWriteAccess) {
+        logPermEvent('BILDIRISHNOMA', 'haqiqiy so\'raldi (maybeAskNotifAfterSubmit — birinchi submitdan keyin)');
         Telegram.WebApp.requestWriteAccess(granted => {
           if (db && telegramUser.id) {
             db.collection('users').doc(String(telegramUser.id))
@@ -9479,6 +9549,14 @@ recoverSendFlow();
     </div>
     <button type="button" class="coach-next" id="coachNextBtn" onclick="nextOnboardingStep()">Keyingi</button>
   </div>
+</div>
+
+<!-- Dev-only: ruxsat so'rovlari jonli jurnali. Logotipga 5 marta ketma-ket
+     bosilsa ochiladi/yopiladi. Hech qanday ruxsat holatini o'zgartirmaydi —
+     faqat haqiqiy so'rov funksiyalari chaqirilgan zahoti shu yerga yozadi. -->
+<div id="dvDebugPanel">
+  <div class="dv-dbg-title">🐞 Ruxsat jurnali <button type="button" onclick="clearDebugPanel()">tozalash</button></div>
+  <div id="dvDebugPanelBody"></div>
 </div>
 
 </body>
