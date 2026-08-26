@@ -99,6 +99,18 @@ const bot = new TelegramBot(TOKEN, {
   }
 });
 const APP_URL = 'https://duvduv.vercel.app';
+// Telegram ba'zan Mini App'ni ESKI keshlangan holda ochib qo'yadi — hatto
+// server "no-cache" header yuborsa ham (buni to'g'ridan-to'g'ri tekshirib
+// tasdiqladik: Vercel'dagi index.html doim eng oxirgi versiya bo'lsa ham,
+// foydalanuvchi telefonida Telegram vaqti-vaqti bilan eski nusxani
+// ko'rsatib qo'yardi). Shu sabab har bir tugma URL'iga versiya parametri
+// qo'shiladi — bu bot HAR safar qayta ishga tushganda (ya'ni har yangi
+// deploy'da) avtomatik o'zgaradi, Telegram'ni har doim yangi nusxani
+// yuklashga majbur qiladi.
+const APP_VERSION = String(Date.now());
+function appUrl(extraQuery){
+  return `${APP_URL}?v=${APP_VERSION}${extraQuery ? '&' + extraQuery : ''}`;
+}
 
 console.log('✅ duvduv bot ishga tushdi');
 
@@ -123,26 +135,26 @@ const APP_BTN_TEXT  = '▶️  Иловани очиш';
 const MENU_BTN_TEXT = 'Қани бошладик';   // keyboard pastki tugма матни (ўзгармайди)
 
 bot.setChatMenuButton({
-  menu_button: { type: 'web_app', text: MENU_BTN_TEXT, web_app: { url: APP_URL } }
+  menu_button: { type: 'web_app', text: MENU_BTN_TEXT, web_app: { url: appUrl() } }
 })
   .then(() => console.log('✅ Menu tugmasi sozlandi'))
   .catch(err => console.warn('Menu tugmasi:', err.message));
 
 // Pastki doimiy klaviatura
 const persistentKeyboard = {
-  keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: APP_URL } }]],
+  keyboard: [[{ text: MENU_BTN_TEXT, web_app: { url: appUrl() } }]],
   resize_keyboard: true,
   persistent: true
 };
 
 // Standart inline "Иловани очиш" tugmasi
 const appBtn = () => ({
-  inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }]]
+  inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: appUrl() } }]]
 });
 
 // E'lon ID bilan — xaritada ochiladi
 const orderBtn = (orderId) => ({
-  inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: `${APP_URL}?order=${orderId}` } }]]
+  inline_keyboard: [[{ text: APP_BTN_TEXT, web_app: { url: appUrl(`order=${orderId}`) } }]]
 });
 
 // ── Latin → Kirill normalizatsiya (mini app Latin, bot Kirill yozadi) ────
@@ -246,7 +258,7 @@ const roleMenu = {
 // Xabarnoma menyu
 const notifMenu = (notif) => ({
   inline_keyboard: [
-    [{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }],
+    [{ text: APP_BTN_TEXT, web_app: { url: appUrl() } }],
     notif
       ? [{ text: '🔔  Билдиришномалар: ёқилган', callback_data: 'notif_off' }]
       : [{ text: '🔕  Билдиришномалар: ўчирилган', callback_data: 'notif_on' }],
@@ -327,7 +339,7 @@ bot.onText(/\/menu/, async (msg) => {
 
     const keyboard = {
       inline_keyboard: [
-        [{ text: APP_BTN_TEXT, web_app: { url: APP_URL } }],
+        [{ text: APP_BTN_TEXT, web_app: { url: appUrl() } }],
         ...(isDriver ? [[{ text: `🛣  ${fromCity} → ${toCity}`, callback_data: 'set_route' }]] : []),
         [notif
           ? { text: '🔔  Билдиришномалар: ёқилган', callback_data: 'notif_off' }
