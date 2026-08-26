@@ -2585,8 +2585,8 @@ html, body { font-size: var(--fs-base); }
     <!-- Header -->
     <div class="header">
       <div class="header-bar">
-        <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
-        <h1 class="logo-brand" id="logoBrand" onclick="handleLogoTapForDebug()">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
+        <button type="button" class="header-close" id="headerCloseBtn" aria-label="Yopish">×</button>
+        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
         <div class="header-right">
           <button type="button" class="header-mine-btn" id="headerDriversBtn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
@@ -4702,13 +4702,19 @@ function mapItemHasMapCoords(item){
 const TEST_MODE = true;
 
 // ── Dev-only: ruxsat so'rovlari jonli jurnali ──────────────────────────────
-// Logotipga (yuqorida, "duv • duv") ketma-ket 5 marta bosilsa (2s ichida)
-// panel ochiladi/yopiladi. Bu jurnal HECH QANDAY ruxsat holatini
-// o'zgartirmaydi, hech qanday API'ni soxta qilmaydi — u faqat kod HAQIQIY
-// so'rov funksiyasini (requestContact / getCurrentPosition / requestWriteAccess)
-// chaqirgan aniq lahzada shu yerga bir qator yozib qo'yadi. Shu tufayli
-// allaqachon barcha ruxsatlarga ega akkauntda ham — Telegram ko'k oyna
-// ko'rsatmasa-da — "aynan shu yerda so'ralardi" degan haqiqiy vaqt bilinadi.
+// Yopish (×) tugmasini ~1.2 soniya BOSIB TURSA (oddiy tez bosish hamon
+// ilovani yopadi, hech narsa o'zgarmaydi) panel ochiladi/yopiladi. Avval
+// logotipga 5 marta bosish sinalgan edi, lekin .logo-brand'da
+// pointer-events:none bo'lgani uchun (u boshqa tugmalar ustidan chiqib
+// ketmasligi uchun atayin shunday qilingan) bosishlar element'ga umuman
+// yetib bormas edi — shu sabab uzoq-bosish (long-press) ga o'tildi, chunki
+// bu allaqachon to'liq bosiladigan (pointer-events:auto) haqiqiy tugma.
+// Bu jurnal HECH QANDAY ruxsat holatini o'zgartirmaydi, hech qanday API'ni
+// soxta qilmaydi — u faqat kod HAQIQIY so'rov funksiyasini (requestContact /
+// getCurrentPosition / requestWriteAccess) chaqirgan aniq lahzada shu yerga
+// bir qator yozib qo'yadi. Shu tufayli allaqachon barcha ruxsatlarga ega
+// akkauntda ham — Telegram ko'k oyna ko'rsatmasa-da — "aynan shu yerda
+// so'ralardi" degan haqiqiy vaqt bilinadi.
 let _dvDebugOn = false;
 function toggleDebugPanel(){
   _dvDebugOn = !_dvDebugOn;
@@ -4730,16 +4736,34 @@ function logPermEvent(kind, detail){
   row.innerHTML = `<b>${stamp}</b> — <b>${kind}</b>: ${detail}`;
   body.insertBefore(row, body.firstChild);
 }
-let _dvLogoTaps = 0, _dvLogoTapTimer = null;
-function handleLogoTapForDebug(){
-  _dvLogoTaps++;
-  clearTimeout(_dvLogoTapTimer);
-  _dvLogoTapTimer = setTimeout(() => { _dvLogoTaps = 0; }, 2000);
-  if (_dvLogoTaps >= 5){
-    _dvLogoTaps = 0;
-    toggleDebugPanel();
+(function setupCloseButtonLongPress(){
+  const LONG_PRESS_MS = 1200;
+  let pressTimer = null, longFired = false;
+  function bind(){
+    const btn = document.getElementById('headerCloseBtn');
+    if (!btn) { setTimeout(bind, 300); return; }
+    const start = (e) => {
+      longFired = false;
+      clearTimeout(pressTimer);
+      pressTimer = setTimeout(() => {
+        longFired = true;
+        toggleDebugPanel();
+        if (window.Telegram?.WebApp?.HapticFeedback) Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }, LONG_PRESS_MS);
+    };
+    const cancel = () => clearTimeout(pressTimer);
+    const end = () => {
+      clearTimeout(pressTimer);
+      if (!longFired) closeMiniApp();
+      longFired = false;
+    };
+    btn.addEventListener('pointerdown', start);
+    btn.addEventListener('pointerup', end);
+    btn.addEventListener('pointerleave', cancel);
+    btn.addEventListener('pointercancel', cancel);
   }
-}
+  bind();
+})();
 
 function locAskedKey(){
   return userPrefKey('loc_asked') || 'duvduv_loc_asked';
