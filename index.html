@@ -4196,6 +4196,18 @@ function confirmListingPostOk(){
   if (isDriverMode) {
     _saveDriverRouteToFirestore(from, to);
     document.getElementById('routeSetBtn')?.classList.add('has-route');
+    // Marshrut e'lon qilingach: Qayerdan/Qayerga paneli avvalgi (yuqori)
+    // joyiga qaytadi, xarita esa biroz uzoqlashadi — shu bilan o'zining
+    // joylashuvi VA shu marshrut bo'yicha qo'yilgan mijoz (yo'lovchi/yuk)
+    // e'lonlari bir vaqtda ko'rinadigan bo'ladi (aks holda yaqin zoom'da
+    // faqat o'z joylashuvi ko'rinib, uzoqroqdagi mijoz e'lonlari kadrdan
+    // chetda qolib ketardi).
+    const routeBar = document.querySelector('.driver-route-bar');
+    if (routeBar && travelRouteBarShifted) {
+      routeBar.style.transform = '';
+      travelRouteBarShifted = false;
+    }
+    if (map) map.easeTo({ zoom: DRIVER_ENTRY_ZOOM, duration: 700 });
   } else if (isSeekerMode) {
     _saveSeekerListingToFirestore(mode, from, to);
   }
