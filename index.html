@@ -4742,10 +4742,24 @@ async function requestLocationOnce(){
 async function refreshUserLocationRegion(){
   const prevRegion = userLocationRegion;
   try {
-    // Telegram LocationManager o'z ruxsat tizimiga ega — browser
-    // permission tekshiruvi unga taalluqli emas, to'g'ridan so'raymiz
+    // MUHIM: bu funksiya xarita YUKLANGANDA (ilova ochilgan zahoti,
+    // foydalanuvchi hali hech qanday tugma bosmasdan) avtomatik chaqiriladi
+    // — shu sabab bu yerda lokatsiya so'ROVI (dialog) HECH QACHON
+    // ko'rsatilmasligi kerak. Faqat ALLAQACHON ruxsat berilgan bo'lsa
+    // jimgina (dialogsiz) yangilanadi; aks holda keshdagi oxirgi GPS bilan
+    // kifoyalanamiz. Haqiqiy so'rov FAQAT foydalanuvchi pastdagi 3 ta
+    // asosiy tugmadan birini bosganda chiqadi (playTravelPinAnimation).
     const lm = window.Telegram?.WebApp?.LocationManager;
-    if (!lm) {
+    if (lm) {
+      const granted = await isTelegramLocationGranted();
+      if (!granted) {
+        const cached = loadLastGPS();
+        if (cached && !userLocationRegion) {
+          userLocationRegion = detectRegionFromCoords(cached.lng, cached.lat);
+        }
+        return;
+      }
+    } else {
       const perm = await getGeolocationPermissionState();
       if (perm !== 'granted') {
         // Ruxsat yo'q — keshdan olamiz
@@ -7103,6 +7117,26 @@ function getGeolocationPermissionState(){
   return queryPermissionState('geolocation');
 }
 
+// Telegram LocationManager'ning "ruxsat berilganmi" holatini SO'RAMASDAN
+// (dialog chiqarmasdan) tekshiradi — init() o'zi hech qanday prompt
+// ko'rsatmaydi, faqat holatni o'qib beradi. Bu funksiya ilova ochilishi
+// bilan (foydalanuvchi hali hech qanday tugma bosmasdan) fonda avtomatik
+// ishga tushadigan joylarda ishlatiladi — u yerda lokatsiya SO'RALMASLIGI
+// kerak, faqat ALLAQACHON ruxsat berilgan bo'lsa jimgina foydalaniladi.
+// Haqiqiy so'rov (dialog) FAQAT foydalanuvchi pastdagi 3 ta asosiy
+// tugmadan birini bosganda (playTravelPinAnimation -> getCurrentPosition)
+// chiqadi.
+function isTelegramLocationGranted(){
+  return new Promise(resolve => {
+    const lm = window.Telegram?.WebApp?.LocationManager;
+    if (!lm) { resolve(null); return; } // Telegram muhiti emas — bu tekshiruv daxlsiz
+    if (lm.isInited) { resolve(!!lm.isAccessGranted); return; }
+    try {
+      lm.init(() => resolve(!!lm.isAccessGranted));
+    } catch (_) { resolve(false); }
+  });
+}
+
 function flyToDefaultMapCenter(){
   if (!map) return;
   removeDriverRadiusLayers();
@@ -7186,6 +7220,11 @@ async function centerMapOnRouteFrom(){
 }
 
 async function centerMapOnDriver(){
+  // MUHIM: bu ham xarita YUKLANGANDA avtomatik chaqiriladi (foydalanuvchi
+  // hali hech qanday tugma bosmagan bo'lishi mumkin) — shu sabab bu yerda
+  // ham lokatsiya SO'RALMAYDI, faqat ALLAQACHON ruxsat berilgan bo'lsa
+  // jimgina ishlatiladi. Aks holda faqat keshdagi (yoki standart) markazga
+  // qaraymiz — haqiqiy so'rov 3 ta asosiy tugmadan biri bosilganda chiqadi.
   if (!map) return;
   const cached = loadLastGPS();
   if (cached) {
@@ -7194,7 +7233,13 @@ async function centerMapOnDriver(){
     ensureDriverLocationMarker(cached.lng, cached.lat);
   }
   const lm = window.Telegram?.WebApp?.LocationManager;
-  if (!lm) {
+  if (lm) {
+    const granted = await isTelegramLocationGranted();
+    if (!granted) {
+      if (!cached) flyToDefaultMapCenter();
+      return;
+    }
+  } else {
     const perm = await getGeolocationPermissionState();
     if (perm !== 'granted') {
       if (!cached) flyToDefaultMapCenter();
