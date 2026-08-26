@@ -7584,6 +7584,10 @@ function refreshOrderMarkers(){
     return;
   }
   const geo = buildMapGeoCollections();
+  if (typeof logPermEvent === 'function') {
+    const route = getDriverRouteFilter();
+    logPermEvent('XARITA', `rejim:${activeUniMode||'-'} marshrut:${route.from||'-'}→${route.to||'-'} | jami orders:${orders.length} travels:${travels.length} | xaritada orders:${geo.orders.features.length} travels:${geo.travels.features.length}`);
+  }
   map.getSource('map-orders').setData(geo.orders);
   map.getSource('map-travels').setData(geo.travels);
   if (map.getSource('map-driver-routes')) {
