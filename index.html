@@ -3752,12 +3752,17 @@ function exitUniMode(){
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
   document.getElementById('uniModeBackBtn')?.classList.remove('visible');
-  // Yo'lovchiman rejimidan tasdiqlanmagan A/B tanlov bilan chiqib
-  // ketilsa — bu "bekor qilish" hisoblanadi, keyingi safar yangi qidiruv
-  // yangidan boshlansin (loadDriverRouteState panellarni ham, kutilayotgan
-  // "Tasdiqlash" tugmasini ham tozalaydi). Allaqachon tasdiqlangan
-  // Haydovchiman yo'nalishi Firestore'da saqlanib qolaveradi — bu yerda
-  // faqat ekrandagi holat tozalanadi.
+  // "Orqaga" bosilishi — ongli ravishda ushbu rejimdan chiqish/bekor
+  // qilish hisoblanadi: ekrandagi A/B tanlov VA saqlangan marshrut
+  // tozalanadi, keyingi safar yangi qidiruv yangidan boshlansin. Bu —
+  // ilova shunchaki YOPIB-OCHILGANDA (yoki bildirishnomadan qaytilganda)
+  // sodir bo'ladigan avtomatik "davom ettirish" bilan bir xil emas — u
+  // holatda marshrut ATAYLAB saqlanib qolishi kerak (resumeUniMode).
+  // Allaqachon tasdiqlangan Haydovchiman yo'nalishi Firestore'da
+  // saqlanib qolaveradi — bu yerda faqat mahalliy (localStorage) holat
+  // tozalanadi.
+  try { localStorage.removeItem(routeKey()); } catch(_) {}
+  try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
   loadDriverRouteState();
   // Tugmalar konteyneri (.unified-actions) o'zi "shaffof" bo'lsa ham
   // pastga tushgan Qayerdan/Qayerga panelini bosishga to'sqinlik qilmasin.
@@ -3787,6 +3792,80 @@ function exitUniMode(){
   document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
   playTravelPinReverseAnimation(activeBtn, fromRect);
 }
+
+// Foydalanuvchi ALLAQACHON tasdiqlagan (e'lon qo'ygan) rejimni qaytaradi —
+// masalan "driver" yoki "travel" — agar u hali "orqaga" bosib bekor
+// qilmagan bo'lsa. Marshrut ma'lumoti bo'lmasa (masalan localStorage
+// tozalangan bo'lsa) null qaytaradi — bunday holatda oddiy bosh ekran
+// (3 ta tugma) ko'rsatiladi.
+function getSavedActiveMode(){
+  if (telegramUser.id == null) return null;
+  const mode = localStorage.getItem(userPrefKey('activeMode'));
+  if (mode !== 'driver' && mode !== 'travel' && mode !== 'cargo') return null;
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (!saved.from || !saved.to) return null;
+  return mode;
+}
+
+// Ilova YOPIB-OCHILGANDA (yoki bildirishnoma orqali qaytilganda) —
+// foydalanuvchi ALLAQACHON tasdiqlagan rejim va marshrutni qayta,
+// AMMO animatsiyasiz (pin-parvoz, GPS so'rovi va h.k. — ular faqat
+// BIRINCHI marta tanlanganda kerak) tiklaydi: 3 ta tugma o'rniga
+// to'g'ridan-to'g'ri xarita + o'sha marshrut ko'rsatiladi, xaritada esa
+// (haydovchi bo'lsa) mos mijoz e'lonlari yoki (mijoz bo'lsa) mos
+// haydovchilar + o'zining e'loni darhol ko'rinadi.
+function resumeUniMode(key){
+  const meta = uniModeMeta()[key];
+  if (!meta || !map) return;
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (!saved.from || !saved.to) return;
+  activeUniMode = key;
+  applyUniModeMapVisibility();
+  invalidateMapGeoCache();
+
+  // 3 ta asosiy tugmani ANIMATSIYASIZ, to'g'ridan-to'g'ri yakuniy
+  // ("rejim tanlangan") holatga qo'yamiz.
+  const btns = [...document.querySelectorAll('.uni-action-btn')];
+  const activeIndex = btns.findIndex(b => b.dataset.uniKey === key);
+  btns.forEach((btn, i) => {
+    btn.style.transition = 'none';
+    btn.style.transform = i === activeIndex ? '' : ((i < activeIndex ? 'translateY(-130%)' : 'translateY(130%)') + ' scale(.7)');
+    btn.style.opacity = '0';
+    btn.style.pointerEvents = 'none';
+  });
+  document.getElementById('uniModeBackBtn')?.classList.add('visible');
+  const unifiedActions = document.querySelector('.unified-actions');
+  if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
+
+  // Qayerdan/Qayerga panelini saqlangan marshrut bilan to'ldiramiz —
+  // yuqori (asl) joyida, pastga tushish animatsiyasi kerak emas.
+  loadDriverRouteState();
+  if (key === 'driver') document.getElementById('routeSetBtn')?.classList.add('has-route');
+
+  showMapControls();
+  refreshOrderMarkersDebounced();
+  centerMapOnRouteFrom();
+  if (map) map.once('moveend', () => map.easeTo({ zoom: DRIVER_ENTRY_ZOOM, duration: 500 }));
+
+  // O'zining joylashuvini xaritada jimgina belgilaymiz (faqat ruxsat
+  // ALLAQACHON berilgan bo'lsa — yangi dialog ochilmaydi).
+  const myToken = ++uniPinToken;
+  getCurrentPosition().then(coords => {
+    if (myToken !== uniPinToken || activeUniMode !== key) return;
+    if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
+    const iconImg = document.querySelector(`.uni-action-btn[data-uni-key="${key}"] .uni-action-icon-img, .uni-action-btn[data-uni-key="${key}"] .uni-action-icon svg`);
+    if (!iconImg) return;
+    const pinSize = Math.round(iconImg.getBoundingClientRect().width * 1.35) || 44;
+    const pinEl = document.createElement('div');
+    pinEl.className = 'travel-pin-marker';
+    pinEl.style.width = pinSize + 'px';
+    pinEl.style.height = pinSize + 'px';
+    pinEl.innerHTML = iconImg.outerHTML;
+    travelPinMarker = new mapboxgl.Marker({ element: pinEl, anchor: 'center' }).setLngLat([coords.longitude, coords.latitude]).addTo(map);
+    hideDriverLocationMarker();
+  }).catch(() => {});
+}
+
 function renderDriverRoutesList(){
   const list = document.getElementById('driverRoutesList');
   if (!list) return;
@@ -4196,20 +4275,27 @@ function confirmListingPostOk(){
   if (isDriverMode) {
     _saveDriverRouteToFirestore(from, to);
     document.getElementById('routeSetBtn')?.classList.add('has-route');
-    // Marshrut e'lon qilingach: Qayerdan/Qayerga paneli avvalgi (yuqori)
-    // joyiga qaytadi, xarita esa biroz uzoqlashadi — shu bilan o'zining
-    // joylashuvi VA shu marshrut bo'yicha qo'yilgan mijoz (yo'lovchi/yuk)
-    // e'lonlari bir vaqtda ko'rinadigan bo'ladi (aks holda yaqin zoom'da
-    // faqat o'z joylashuvi ko'rinib, uzoqroqdagi mijoz e'lonlari kadrdan
-    // chetda qolib ketardi).
-    const routeBar = document.querySelector('.driver-route-bar');
-    if (routeBar && travelRouteBarShifted) {
-      routeBar.style.transform = '';
-      travelRouteBarShifted = false;
-    }
     if (map) map.easeTo({ zoom: DRIVER_ENTRY_ZOOM, duration: 700 });
   } else if (isSeekerMode) {
     _saveSeekerListingToFirestore(mode, from, to);
+  }
+  // E'lon (yoki marshrut) tasdiqlangach: Qayerdan/Qayerga paneli avvalgi
+  // (yuqori) joyiga qaytadi — uchala rejim (Haydovchiman/Yo'lovchiman/
+  // Yuk yuboraman) uchun bir xil. Shuningdek — TASDIQLANGAN rejim
+  // "esda saqlanadi" (userPrefKey('activeMode')): ilova keyingi safar
+  // ochilganda (yoki bildirishnomadan qaytilganda) foydalanuvchi qayta
+  // 3 ta tugmadan birini bosishi shart emas — resumeUniMode() shu
+  // ma'lumot asosida to'g'ridan-to'g'ri shu ekranga, shu marshrut bilan
+  // qaytaradi (xaritada o'zi VA shu marshrut bo'yicha mijozlar/haydovchilar
+  // bir vaqtda ko'rinadi). "Orqaga" tugmasi bosilsa bu esda saqlash
+  // bekor qilinadi (exitUniMode).
+  const routeBar = document.querySelector('.driver-route-bar');
+  if (routeBar && travelRouteBarShifted) {
+    routeBar.style.transform = '';
+    travelRouteBarShifted = false;
+  }
+  if (mode) {
+    try { localStorage.setItem(userPrefKey('activeMode'), mode); } catch(_) {}
   }
   showDrvSavedBanner(`${regionWithFromSuffix(from)} → ${regionWithToSuffix(to)}`);
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
@@ -4323,14 +4409,27 @@ function showDrvSavedBanner(text) {
 // (2) Yo'lovchiman uchun HAR SAFARGI qidiruv filtri — bu esa har
 // safar yangi bo'lishi kerak, aks holda haftalar oldingi manzil
 // hech qanday tushuntirishsiz qayta-qayta ko'rinaverar edi.
+// Qayerdan/Qayerga panelini localStorage'dagi HOZIRGI holatga moslaydi —
+// ENDI hech narsani o'chirmaydi (avval har chaqirilganda marshrutni
+// butunlay tozalab tashlardi, shu sabab ilova yopib-ochilganda yoki
+// bildirishnomadan qaytilganda foydalanuvchining allaqachon tasdiqlagan
+// marshruti "unutilib" ketardi). Marshrut saqlangan bo'lsa — o'sha
+// ko'rsatiladi, bo'lmasa — bo'sh holat.
 function loadDriverRouteState() {
-  try { localStorage.removeItem(routeKey()); } catch (_) {}
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   const fromLbl = document.getElementById('driverFromLabel');
-  if (fromLbl) { fromLbl.textContent = 'Qayerdan?'; fitPillLabelText(fromLbl); }
-  document.getElementById('driverFromBtn')?.classList.remove('has-value');
   const toLbl = document.getElementById('driverToLabel');
-  if (toLbl) { toLbl.textContent = 'Qayerga?'; fitPillLabelText(toLbl); }
-  document.getElementById('driverToBtn')?.classList.remove('has-value');
+  if (saved.from && saved.to) {
+    if (fromLbl) { fromLbl.textContent = regionWithFromSuffix(saved.from); fitPillLabelText(fromLbl); }
+    document.getElementById('driverFromBtn')?.classList.add('has-value');
+    if (toLbl) { toLbl.textContent = regionWithToSuffix(saved.to); fitPillLabelText(toLbl); }
+    document.getElementById('driverToBtn')?.classList.add('has-value');
+  } else {
+    if (fromLbl) { fromLbl.textContent = 'Qayerdan?'; fitPillLabelText(fromLbl); }
+    document.getElementById('driverFromBtn')?.classList.remove('has-value');
+    if (toLbl) { toLbl.textContent = 'Qayerga?'; fitPillLabelText(toLbl); }
+    document.getElementById('driverToBtn')?.classList.remove('has-value');
+  }
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
 }
 
@@ -7447,7 +7546,16 @@ function initDriverMap(){
       // xaritani noto'g'ri joyda qoldirib ketmasligi uchun shu holatda
       // centerMapOnRouteFrom() chaqirilmaydi.
       const hasOrderDeepLink = openOrderFromUrlParam();
-      if (!hasOrderDeepLink) centerMapOnRouteFrom();
+      // Foydalanuvchi ALLAQACHON bir rejimni tasdiqlagan (e'lon qo'ygan)
+      // bo'lsa — 3 ta tugmali bosh ekran o'rniga to'g'ridan-to'g'ri o'sha
+      // rejim+marshrut bilan xaritaga qaytamiz (ilova yopib-ochilganda ham
+      // "shu oyna" saqlanib qoladi).
+      const savedMode = getSavedActiveMode();
+      if (savedMode) {
+        resumeUniMode(savedMode);
+      } else if (!hasOrderDeepLink) {
+        centerMapOnRouteFrom();
+      }
       ensureDriverRegionPicker();
     });
   });
@@ -7698,6 +7806,28 @@ function initUnifiedMap(){
   // tushunarliroq bo'ladi. Shuningdek xaritadagi "mening lokatsiyam"
   // tugmasi ham (flyToMyLocation) o'z vaqtida so'raydi.
   loadDriverRouteState();
+  // Agar foydalanuvchi allaqachon bir rejimni tasdiqlagan bo'lsa — xarita
+  // hali yuklanmagan bo'lsa ham 3 ta asosiy tugmani DARHOL (yaltirab
+  // ko'rinib qolmasin deb) yashiramiz; xaritaga tegishli qismi (markazlash,
+  // markerlar) resumeUniMode() orqali xarita yuklangach bajariladi.
+  {
+    const earlyMode = getSavedActiveMode();
+    if (earlyMode) {
+      activeUniMode = earlyMode;
+      const btns = [...document.querySelectorAll('.uni-action-btn')];
+      const activeIndex = btns.findIndex(b => b.dataset.uniKey === earlyMode);
+      btns.forEach((btn, i) => {
+        btn.style.transition = 'none';
+        btn.style.transform = i === activeIndex ? '' : ((i < activeIndex ? 'translateY(-130%)' : 'translateY(130%)') + ' scale(.7)');
+        btn.style.opacity = '0';
+        btn.style.pointerEvents = 'none';
+      });
+      document.getElementById('uniModeBackBtn')?.classList.add('visible');
+      const unifiedActions = document.querySelector('.unified-actions');
+      if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
+      if (earlyMode === 'driver') document.getElementById('routeSetBtn')?.classList.add('has-route');
+    }
+  }
   ensureDriverRegionPicker();
   scheduleDriverDistrictReveal();
   if (!map) initDriverMap();
