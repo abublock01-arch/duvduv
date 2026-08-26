@@ -2607,7 +2607,7 @@ html, body { font-size: var(--fs-base); }
     <div class="header">
       <div class="header-bar">
         <button type="button" class="header-close" id="headerCloseBtn" onclick="closeMiniApp()" aria-label="Yopish">×</button>
-        <h1 class="logo-brand" id="logoBrand">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
+        <h1 class="logo-brand" id="logoBrand" onclick="handleLogoTapForSim()">duv <span class="logo-sep" aria-hidden="true"></span> duv</h1>
         <div class="header-right">
           <button type="button" class="header-mine-btn" id="headerDriversBtn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
@@ -7164,6 +7164,30 @@ function stopSimulatingNewUser(){
 }
 window.simulateNewUser = simulateNewUser;
 window.stopSimulatingNewUser = stopSimulatingNewUser;
+
+// 🧪 SIM-PERM: konsol kerak bo'lmasin uchun — sarlavhadagi "duv•duv"
+// logotipiga 2,5 soniya ichida 5 marta ketma-ket bosilsa, simulyatsiya
+// rejimi YONADI/O'CHADI (telefonda ham, konsolsiz ham ishlaydi).
+let _logoTapCount = 0;
+let _logoTapTimer = null;
+function handleLogoTapForSim(){
+  _logoTapCount++;
+  clearTimeout(_logoTapTimer);
+  _logoTapTimer = setTimeout(() => { _logoTapCount = 0; }, 2500);
+  if (_logoTapCount < 5) return;
+  _logoTapCount = 0;
+  clearTimeout(_logoTapTimer);
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+  if (isSimulatingNewUser()) {
+    showToast("🧪 Sinov rejimi O'CHIRILDI", 'info');
+    setTimeout(() => stopSimulatingNewUser(), 500);
+  } else {
+    showToast('🧪 Sinov rejimi YOQILDI — pastdagi tugmani bosing', 'success');
+    setTimeout(() => simulateNewUser(), 500);
+  }
+}
 
 function ensureSimBadge(){
   if (!isSimulatingNewUser()) return;
