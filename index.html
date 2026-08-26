@@ -7413,17 +7413,39 @@ function initDriverMap(){
     refreshUserLocationRegion().then(() => {
       setupOrderClusterLayers();
       refreshOrderMarkersDebounced();
-      openOrderFromUrlParam();
-      centerMapOnRouteFrom();
+      // Agar botdan "order=" deep-link bilan kelingan bo'lsa, o'sha aniq
+      // e'longa uchib borish USTUVOR — o'zining saqlangan marshruti markaziga
+      // (centerMapOnRouteFrom) qaytish bilan bir vaqtda ikkalasi urishib,
+      // xaritani noto'g'ri joyda qoldirib ketmasligi uchun shu holatda
+      // centerMapOnRouteFrom() chaqirilmaydi.
+      const hasOrderDeepLink = openOrderFromUrlParam();
+      if (!hasOrderDeepLink) centerMapOnRouteFrom();
       ensureDriverRegionPicker();
     });
   });
 }
 
+// Botdan "order=" bilan kelgan deep-link'ni qayta ishlaydi. Telegram ba'zan
+// Mini App allaqachon ochiq bo'lsa, yangi bildirishnoma tugmasi bosilganda
+// sahifani QAYTA yuklamay, faqat OLDIN ochilgan oynani old planga chiqaradi —
+// shu holatda oddiy map.on('load') boot ketma-ketligi qayta ishlamaydi.
+// Shu sabab bu funksiya alohida ham, ilova qayta faollashganda ham
+// (handleAppReactivated) chaqiriladi. Muvaffaqiyatli ochilgach URL'dagi
+// "order" parametri tozalanadi — aks holda keyingi safar ilova faollashganda
+// (yangi bildirishnoma bo'lmasa ham) xaritani yana o'sha eski e'longa
+// uchirib yuboraveradi.
 function openOrderFromUrlParam(){
   const params = new URLSearchParams(window.location.search);
   const targetId = params.get('order');
-  if (!targetId) return;
+  if (!targetId || !map) return false;
+
+  const clearOrderParam = () => {
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('order');
+      window.history.replaceState(null, '', url.toString());
+    } catch(e) {}
+  };
 
   // Biroz kuting — markerlar yuklansin
   let attempts = 0;
@@ -7440,11 +7462,31 @@ function openOrderFromUrlParam(){
         if (item.type === 'travel') openTravelMapSheet(item);
         else openOrderSheet(item);
       }, 900);
-    } else if (attempts++ < 10) {
+      clearOrderParam();
+    } else if (attempts++ < 12) {
       setTimeout(tryOpen, 400);
+    } else {
+      // 5 soniyadan keyin ham topilmadi — yangilikni qayta so'rab ko'ramiz
+      // va parametrni tozalab, cheksiz urinishning oldini olamiz
+      refreshOrderMarkersDebounced();
+      clearOrderParam();
     }
   };
   setTimeout(tryOpen, 500);
+  return true;
+}
+
+// Ilova fon rejimidan qaytganda (Telegram "activated" hodisasi yoki
+// visibilitychange) — agar Mini App ayni shu WebView'da qayta ishlatilgan
+// bo'lsa (qayta yuklanmagan bo'lsa), xarita bilan bog'liq boot funksiyalari
+// qayta chaqirilmagan bo'ladi. Shu sabab bu yerda xavfsizlik uchun: (1)
+// Firestore'dan kelgan, lekin fon rejimida ekranga chizilmagan bo'lishi
+// mumkin bo'lgan yangi e'lonlarni majburan qayta chizamiz, (2) agar yangi
+// "order=" havolasi bo'lsa — o'sha e'longa xaritani olib boramiz.
+function handleAppReactivated(){
+  if (!map) return;
+  refreshOrderMarkersDebounced();
+  openOrderFromUrlParam();
 }
 
 
@@ -9613,7 +9655,7 @@ if (window.mapboxgl) {
   if (mbScript) mbScript.addEventListener('load', () => { setTimeout(() => { if (!map) initDriverMap(); }, 500); });
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopGpsTracking(); else setTimeout(startGpsTracking, 500);
+  if (document.hidden) stopGpsTracking(); else { setTimeout(startGpsTracking, 500); handleAppReactivated(); }
 });
 
 // ── lastSeen har 2 daqiqada yangilanadi — admin "Onlayn" ko'rsatishi uchun
@@ -9633,7 +9675,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', () => syncSendDraft());
 if (window.Telegram?.WebApp?.onEvent) {
   Telegram.WebApp.onEvent('deactivated', () => syncSendDraft());
-  Telegram.WebApp.onEvent('activated', () => recoverSendFlow());
+  Telegram.WebApp.onEvent('activated', () => { recoverSendFlow(); handleAppReactivated(); });
 }
 recoverSendFlow();
 </script>
