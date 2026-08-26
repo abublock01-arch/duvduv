@@ -7694,7 +7694,11 @@ function refreshOrderMarkers(){
   const geo = buildMapGeoCollections();
   if (typeof logPermEvent === 'function') {
     const route = getDriverRouteFilter();
-    logPermEvent('XARITA', `rejim:${activeUniMode||'-'} marshrut:${route.from||'-'}→${route.to||'-'} | jami orders:${orders.length} travels:${travels.length} | xaritada orders:${geo.orders.features.length} travels:${geo.travels.features.length}`);
+    const listFeats = feats => feats.slice(0, 4).map(f => `${f.properties.from||'?'}→${f.properties.to||'?'}@[${f.geometry.coordinates.map(n=>n.toFixed(2)).join(',')}]`).join(' | ') || '(yoq)';
+    const c = map.getCenter();
+    logPermEvent('XARITA', `rejim:${activeUniMode||'-'} marshrut:${route.from||'-'}→${route.to||'-'} | jami orders:${orders.length} travels:${travels.length} | xaritada orders:${geo.orders.features.length} travels:${geo.travels.features.length} | zoom:${map.getZoom().toFixed(1)} markaz:[${c.lng.toFixed(2)},${c.lat.toFixed(2)}]`);
+    logPermEvent('XARITA-travels', listFeats(geo.travels.features));
+    logPermEvent('XARITA-orders', listFeats(geo.orders.features));
   }
   map.getSource('map-orders').setData(geo.orders);
   map.getSource('map-travels').setData(geo.travels);
