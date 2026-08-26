@@ -3579,11 +3579,12 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
-    // uni mijozning o'zi tanlaydi. Bu faqat Yo'lovchiman uchun — u yerdagi
-    // qayerdan/qayerga haydovchi-qidiruv filtri sifatida ishlatiladi;
-    // Yuk yuboraman/Haydovchiman'da bu maydonni o'zgartirmaymiz, chunki
-    // ular o'z sheetida alohida manzil so'raydi.
-    if (key === 'travel') {
+    // uni mijozning o'zi tanlaydi. Ilgari bu faqat Yo'lovchiman uchun
+    // ishlardi ('travel'), lekin uchala amal (Yo'lovchiman, Yuk yuboraman,
+    // Haydovchiman) HAM BIR XIL yuqoridagi Qayerdan/Qayerga panelidan
+    // foydalanadi — shuning uchun endi bu avtomatik to'ldirish key'dan
+    // qat'i nazar (travel/cargo/driver) barcha uchtasida ham ishlaydi.
+    {
       const regionName = detectRegionFromCoords(lng, lat);
       if (regionName) {
         const fromLbl = document.getElementById('driverFromLabel');
