@@ -3445,7 +3445,7 @@ function enterUniMode(key){
   // Yo'lovchiman rejimida xaritada faqat haydovchi yo'nalishlari ko'rinsin —
   // yo'lovchi/yuk e'lonlari yashiriladi (applyUniModeMapVisibility).
   applyUniModeMapVisibility();
-  if (key === 'travel') { invalidateMapGeoCache(); refreshOrderMarkersDebounced(); }
+  if (key === 'travel' || key === 'cargo') { invalidateMapGeoCache(); refreshOrderMarkersDebounced(); }
   const btns = [...document.querySelectorAll('.uni-action-btn')];
   const activeIndex = btns.findIndex(b => b.dataset.uniKey === key);
   const activeBtn = btns[activeIndex];
@@ -6924,7 +6924,13 @@ function buildDriverRouteGeo(){
 // haydovchi yo'nalishlari ko'rsatiladi. Aks holda — teskarisi.
 function applyUniModeMapVisibility(){
   if (!map || !map.getLayer('map-orders-clusters')) return;
-  const travelMode = activeUniMode === 'travel';
+  // Yo'lovchiman VA Yuk yuboraman — ikkalasi ham "qidiruvchi" tomon:
+  // ular xaritada O'ZINING A→B manzillariga mos HAYDOVCHI yo'nalishlarini
+  // ko'rishi kerak. Haydovchiman esa — u xaritada O'ZINING marshrutiga mos
+  // yo'lovchi/yuk E'LONLARINI ko'rishi kerak. Ilgari faqat 'travel' rejimi
+  // haydovchi qatlamini ko'rsatardi, 'cargo' esa xato ravishda 'driver'
+  // bilan bir xil (e'lonlar qatlami) ko'rsatilardi — bu tuzatildi.
+  const isSeekerMode = activeUniMode === 'travel' || activeUniMode === 'cargo';
   const hideIds = [
     'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
     'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
@@ -6933,8 +6939,8 @@ function applyUniModeMapVisibility(){
     'map-driver-routes-clusters', 'map-driver-routes-cluster-count',
     'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
   ];
-  hideIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', travelMode ? 'none' : 'visible'); });
-  showIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', travelMode ? 'visible' : 'none'); });
+  hideIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'none' : 'visible'); });
+  showIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'visible' : 'none'); });
 }
 
 function findOrderByMapId(orderId){
