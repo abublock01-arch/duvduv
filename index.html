@@ -2550,6 +2550,50 @@ html, body { font-size: var(--fs-base); }
   .velocity-search-card { padding:16px 18px; gap:12px; }
   .cta-btn { min-height:104px; }
 }
+
+/* ═══ VAQTINCHALIK: "yangi foydalanuvchi" simulyatsiyasi uchun soxta
+   ruxsat-so'rov varag'i — Telegram'ning haqiqiy tizim dialogini ANIQ
+   TAQLID qiladi (lekin haqiqiysi emas), faqat allaqachon ruxsat bergan
+   akkountda ham SO'RALISH VAQTINI (qachon chiqishini) sinab ko'rish uchun.
+   Faqat localStorage'da maxsus bayroq yoqilganda ishlaydi — oddiy
+   foydalanuvchilarga hech qanday ta'siri yo'q. Qidirish: "SIM-PERM" */
+.sim-perm-overlay{
+  position:fixed;inset:0;z-index:99999;
+  background:rgba(0,0,0,.4);
+  display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.sim-perm-overlay.open{opacity:1;pointer-events:auto}
+.sim-perm-sheet{
+  width:100%;max-width:480px;background:#fff;border-radius:20px 20px 0 0;
+  padding:10px 20px max(22px,env(safe-area-inset-bottom));
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.34,1.2,.4,1);
+  box-shadow:0 -8px 30px rgba(0,0,0,.25);
+  font-family:inherit;
+}
+.sim-perm-overlay.open .sim-perm-sheet{transform:translateY(0)}
+.sim-perm-drag{width:36px;height:4px;border-radius:3px;background:#d8dbe0;margin:6px auto 16px}
+.sim-perm-icon{
+  width:54px;height:54px;border-radius:14px;margin:0 auto 14px;
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  background:linear-gradient(180deg,#2AABEE,#1C7FB0);color:#fff;
+}
+.sim-perm-title{font-size:17px;font-weight:700;text-align:center;color:#111;margin-bottom:6px}
+.sim-perm-desc{font-size:14px;line-height:1.4;text-align:center;color:#6b7280;margin-bottom:20px}
+.sim-perm-allow,.sim-perm-deny{
+  width:100%;border:none;border-radius:14px;padding:14px;font-size:16px;font-weight:700;
+  font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;
+}
+.sim-perm-allow{background:#2AABEE;color:#fff;margin-bottom:8px}
+.sim-perm-allow:active{background:#1C7FB0}
+.sim-perm-deny{background:transparent;color:#2AABEE}
+.sim-perm-deny:active{opacity:.6}
+.sim-badge{
+  position:fixed;top:max(8px,env(safe-area-inset-top));left:50%;transform:translateX(-50%);
+  z-index:99998;background:#e64980;color:#fff;font-size:11px;font-weight:700;
+  padding:5px 12px;border-radius:20px;box-shadow:0 3px 10px rgba(0,0,0,.25);
+  pointer-events:none;letter-spacing:.2px;
+}
 </style>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -4175,7 +4219,21 @@ function requestNotificationPermission(){
   };
 
   try {
-    if (window.Telegram?.WebApp?.requestWriteAccess) {
+    // 🧪 SIM-PERM: "yangi foydalanuvchi" simulyatsiyasi yoqiq bo'lsa —
+    // soxta ruxsat varag'ini ko'rsatamiz (haqiqiy requestWriteAccess
+    // o'rniga, chunki bu akkountda allaqachon ruxsat berilgan).
+    if (typeof isSimulatingNewUser === 'function' && isSimulatingNewUser() && window.Telegram?.WebApp) {
+      showSimPermSheet({
+        icon: '🔔',
+        title: '"duv•duv" sizga xabar yubormoqchi',
+        desc: "E'lon holati o'zgarganda yoki mos yo'lovchi/yuk topilganda sizga bot orqali xabar beriladi.  🧪 (BU SOXTA VARAQ — sinov rejimi, haqiqiy Telegram dialogi emas)",
+        allowLabel: 'Ruxsat berish',
+        denyLabel: 'Kerak emas'
+      }).then(granted => {
+        debugPermsLog('SIM-PERM notification natijasi (requestNotificationPermission):', granted);
+        saveToFirestore();
+      });
+    } else if (window.Telegram?.WebApp?.requestWriteAccess) {
       // Telegram o'zi eslab qoladi: ruxsat allaqachon berilgan bo'lsa dialog CHIQMAYDI
       // Birinchi marta ochsa — dialog chiqadi
       if (typeof debugPermsLog === 'function') debugPermsLog('requestWriteAccess() CHAQIRILDI (requestNotificationPermission orqali) — Telegram HAQIQIY dialog ko\'rsatishi mumkin (agar hali ruxsat berilmagan bo\'lsa).');
@@ -7077,10 +7135,116 @@ function debugPermsLog(...args){
   if (DEBUG_PERMS_LOG) console.log('%c[DUV-PERM]', 'color:#fff;background:#e64980;padding:1px 5px;border-radius:3px;font-weight:bold', ...args);
 }
 
+// ═══ VAQTINCHALIK: "YANGI FOYDALANUVCHI" SIMULYATSIYASI (SIM-PERM) ═══
+// Siz (ishlab chiquvchi) bu botga ALLAQACHON ruxsat bergansiz — Telegram
+// buni abadiy eslab qoladi va boshqa hech qachon haqiqiy dialog
+// ko'rsatmaydi (bu Telegramning o'zi, biz o'zgartira olmaymiz). Yangi
+// akkount ochmasdan HAM QACHON so'ralishini "ko'z bilan" ko'rish uchun —
+// bu rejim yoqilganda, xuddi shu joyda (tugma bosilganda / birinchi
+// e'lon yuborilganda) HAQIQIY Telegram API o'rniga, Telegramning tabiiy
+// ruxsat-varag'iga o'xshab yasalgan SOXTA varaq ko'rsatiladi. Bu ANIQ
+// ravishda "🧪 SOXTA" deb belgilangan — hech qachon haqiqiy foydalanuvchi
+// buni ko'rmaydi (faqat maxsus localStorage bayrog'i bilan yoqiladi).
+// YOQISH:  konsolda   simulateNewUser()
+// O'CHIRISH: konsolda stopSimulatingNewUser()
+// Qidirish uchun: "SIM-PERM" yoki "isSimulatingNewUser"
+const SIM_NEW_USER_KEY = 'duv_sim_new_user';
+function isSimulatingNewUser(){
+  try { return localStorage.getItem(SIM_NEW_USER_KEY) === '1'; } catch(_) { return false; }
+}
+function simulateNewUser(){
+  try { localStorage.setItem(SIM_NEW_USER_KEY, '1'); } catch(_) {}
+  console.log('%c🧪 Yangi foydalanuvchi simulyatsiyasi YOQILDI — sahifa qayta yuklanmoqda...', 'color:#fff;background:#e64980;padding:2px 6px;border-radius:3px;font-weight:bold');
+  location.reload();
+}
+function stopSimulatingNewUser(){
+  try { localStorage.removeItem(SIM_NEW_USER_KEY); } catch(_) {}
+  console.log('%c🧪 Simulyatsiya O\'CHIRILDI — sahifa qayta yuklanmoqda...', 'color:#fff;background:#2AABEE;padding:2px 6px;border-radius:3px;font-weight:bold');
+  location.reload();
+}
+window.simulateNewUser = simulateNewUser;
+window.stopSimulatingNewUser = stopSimulatingNewUser;
+
+function ensureSimBadge(){
+  if (!isSimulatingNewUser()) return;
+  if (document.getElementById('simNewUserBadge')) return;
+  const b = document.createElement('div');
+  b.id = 'simNewUserBadge';
+  b.className = 'sim-badge';
+  b.textContent = "🧪 TEST: yangi foydalanuvchi simulyatsiyasi yoqiq";
+  document.body.appendChild(b);
+}
+
+// Telegramning tabiiy ruxsat-varag'iga o'xshab yasalgan SOXTA bottom
+// sheet. Promise<boolean> qaytaradi ("Ruxsat berish" bossa true).
+function showSimPermSheet({ icon, title, desc, allowLabel, denyLabel }){
+  return new Promise(resolve => {
+    let overlay = document.getElementById('simPermOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'simPermOverlay';
+      overlay.className = 'sim-perm-overlay';
+      overlay.innerHTML =
+        '<div class="sim-perm-sheet" onclick="event.stopPropagation()">' +
+          '<div class="sim-perm-drag"></div>' +
+          '<div class="sim-perm-icon" id="simPermIcon"></div>' +
+          '<div class="sim-perm-title" id="simPermTitle"></div>' +
+          '<div class="sim-perm-desc" id="simPermDesc"></div>' +
+          '<button class="sim-perm-allow" id="simPermAllowBtn"></button>' +
+          '<button class="sim-perm-deny" id="simPermDenyBtn"></button>' +
+        '</div>';
+      document.body.appendChild(overlay);
+    }
+    overlay.querySelector('#simPermIcon').textContent = icon || '📍';
+    overlay.querySelector('#simPermTitle').textContent = title || '';
+    overlay.querySelector('#simPermDesc').textContent = desc || '';
+    const allowBtn = overlay.querySelector('#simPermAllowBtn');
+    const denyBtn = overlay.querySelector('#simPermDenyBtn');
+    allowBtn.textContent = allowLabel || 'Ruxsat berish';
+    denyBtn.textContent = denyLabel || 'Ruxsat bermaslik';
+    const cleanup = (granted) => {
+      overlay.classList.remove('open');
+      allowBtn.onclick = null; denyBtn.onclick = null;
+      resolve(granted);
+    };
+    allowBtn.onclick = () => cleanup(true);
+    denyBtn.onclick = () => cleanup(false);
+    requestAnimationFrame(() => overlay.classList.add('open'));
+    debugPermsLog('🧪 SIM-PERM soxta varaq ko\'rsatildi:', title);
+  });
+}
+
 function getCurrentPosition(){
   return new Promise((resolve, reject) => {
     // Telegram LocationManager — native dialog (avvalgi xulq)
     const lm = window.Telegram?.WebApp?.LocationManager;
+    // 🧪 SIM-PERM: "yangi foydalanuvchi" simulyatsiyasi yoqiq bo'lsa —
+    // haqiqiy Telegram API o'rniga soxta varaqni ko'rsatamiz (chunki
+    // haqiqiysi bu akkountda allaqachon ruxsat berilgani sabab
+    // ko'rinmaydi). Bu FAQAT sinov uchun, oddiy foydalanuvchiga
+    // umuman ta'sir qilmaydi.
+    if (lm && isSimulatingNewUser()) {
+      showSimPermSheet({
+        icon: '📍',
+        title: '"duv•duv" joylashuvingizdan foydalanishni so\'ramoqda',
+        desc: "Bu sizga eng yaqin yo'nalish va buyurtmalarni ko'rsatish uchun kerak.  🧪 (BU SOXTA VARAQ — sinov rejimi, haqiqiy Telegram dialogi emas)",
+        allowLabel: 'Ruxsat berish',
+        denyLabel: 'Ruxsat bermaslik'
+      }).then(granted => {
+        debugPermsLog('SIM-PERM lokatsiya natijasi:', granted);
+        if (!granted) { reject(new Error('Simulated: user denied')); return; }
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            pos => resolve(pos.coords),
+            () => resolve({ latitude: 41.2995, longitude: 69.2401 }),
+            { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+          );
+        } else {
+          resolve({ latitude: 41.2995, longitude: 69.2401 });
+        }
+      });
+      return;
+    }
     if (lm) {
       let settled = false;
       // Xavfsizlik taymeri: ba'zi Telegram klientlarida init/getLocation
@@ -7144,6 +7308,14 @@ function getGeolocationPermissionState(){
 // chiqadi.
 function isTelegramLocationGranted(){
   return new Promise(resolve => {
+    // 🧪 SIM-PERM: simulyatsiya yoqiq bo'lsa — HAQIQIY holatdan qat'i
+    // nazar, har doim "hali ruxsat berilmagan" deb hisoblaymiz (aynan
+    // yangi foydalanuvchining boshlang'ich holati shunday).
+    if (isSimulatingNewUser()) {
+      debugPermsLog('isTelegramLocationGranted() — 🧪 SIMULYATSIYA rejimida, har doim "false" qaytariladi (yangi foydalanuvchi kabi)');
+      resolve(false);
+      return;
+    }
     const lm = window.Telegram?.WebApp?.LocationManager;
     if (!lm) { resolve(null); return; } // Telegram muhiti emas — bu tekshiruv daxlsiz
     const report = (v) => { debugPermsLog('isTelegramLocationGranted() — SIZ DIALOG KO\'RMAYSIZ, faqat holat tekshirilmoqda. Natija:', v); resolve(v); };
@@ -7391,6 +7563,7 @@ function persistUserRole(role){
 // Bitta birlashtirilgan ekran — xarita hammaga bir xil, darhol ko'rsatiladi.
 function initUnifiedMap(){
   debugPermsLog('═══ ILOVA OCHILDI (initUnifiedMap) — bu yerdan keyin, tugma bosilmaguncha, "CHAQIRILDI" degan log HECH QACHON chiqmasligi kerak ═══');
+  if (isSimulatingNewUser()) { debugPermsLog('🧪 SIMULYATSIYA REJIMI YOQIQ — barcha ruxsat so\'rovlari soxta varaq bilan almashtiriladi.'); ensureSimBadge(); }
   document.body.classList.add('view-driver');
   // Lokatsiya ruxsati endi bu yerda DARHOL so'ralmaydi — foydalanuvchi
   // "Yo'lovchiman"ni bosib, pin animatsiyasi boshlanganda so'raladi
@@ -9295,15 +9468,34 @@ function skipPhoneEdu(){
 function notifAskedKey(){ return 'dv_notif_asked_' + (telegramUser.id || 'anon'); }
 
 function maybeAskNotifAfterSubmit(){
+  // 🧪 SIM-PERM: simulyatsiya rejimida "faqat bir marta so'raladi" degan
+  // local bayroqni HAM e'tiborsiz qoldiramiz — aks holda avvalgi (real)
+  // sinovlardan qolgan bayroq soxta varaqni ko'rsatishga to'sqinlik qiladi.
+  const simulating = typeof isSimulatingNewUser === 'function' && isSimulatingNewUser();
   // Edu screen orqali allaqachon so'raldi — qaytamaymiz
-  if (!TEST_MODE && localStorage.getItem(notifAskedKey())) return;
+  if (!TEST_MODE && !simulating && localStorage.getItem(notifAskedKey())) return;
   // Edu screen ochiq bo'lsa — u o'zi so'raydi
   if (document.getElementById('phoneEduOverlay')?.classList.contains('open')) return;
-  if (!TEST_MODE) localStorage.setItem(notifAskedKey(), '1');
+  if (!TEST_MODE && !simulating) localStorage.setItem(notifAskedKey(), '1');
   // Kichik kechikish — sheet yopilsin, keyin dialog chiqsin
   setTimeout(() => {
     try {
-      if (window.Telegram?.WebApp?.requestWriteAccess) {
+      if (simulating && window.Telegram?.WebApp) {
+        showSimPermSheet({
+          icon: '🔔',
+          title: '"duv•duv" sizga xabar yubormoqchi',
+          desc: "E'lon holati o'zgarganda yoki mos yo'lovchi/yuk topilganda sizga bot orqali xabar beriladi.  🧪 (BU SOXTA VARAQ — sinov rejimi, haqiqiy Telegram dialogi emas)",
+          allowLabel: 'Ruxsat berish',
+          denyLabel: 'Kerak emas'
+        }).then(granted => {
+          debugPermsLog('SIM-PERM notification natijasi (maybeAskNotifAfterSubmit):', granted);
+          if (db && telegramUser.id) {
+            db.collection('users').doc(String(telegramUser.id))
+              .set({ notifications: granted, chatId: telegramUser.id }, { merge: true })
+              .catch(()=>{});
+          }
+        });
+      } else if (window.Telegram?.WebApp?.requestWriteAccess) {
         debugPermsLog('requestWriteAccess() CHAQIRILDI (birinchi submit\'dan keyin, maybeAskNotifAfterSubmit orqali) — Telegram HAQIQIY dialog ko\'rsatishi mumkin (agar hali ruxsat berilmagan bo\'lsa).');
         Telegram.WebApp.requestWriteAccess(granted => {
           debugPermsLog('requestWriteAccess() natija (maybeAskNotifAfterSubmit):', granted);
