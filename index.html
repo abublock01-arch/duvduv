@@ -3313,12 +3313,21 @@ function subscribeDriverUsersForMap(){
       const d = doc.data();
       if (d.driverActive === false) return; // seeker rejimiga o'tganda o'chiriladi
       if (!d.routeFrom || !d.routeTo) return;
+      // Haydovchining HAQIQIY jonli GPS joyi (startGpsTracking orqali
+      // yoziladi) bo'lsa — o'shani ishlatamiz, aks holda REGION_CENTERS
+      // (butun viloyat uchun bitta qotib qolgan nuqta) + jitter'ga
+      // tushamiz. Aks holda mashina belgisi haydovchi haqiqatda qayerda
+      // turganidan qat'i nazar doim bir xil "shahar markazi"da chiqaverardi.
+      const loc = d.location;
+      const hasRealLoc = loc && typeof loc.lat === 'number' && typeof loc.lng === 'number';
       driverUsers.push({
         id: doc.id, firestoreId: doc.id,
         from: d.routeFrom, to: d.routeTo,
         telegramId: d.chatId != null ? d.chatId : Number(doc.id),
         telegramUsername: d.username || '',
-        driverName: d.firstName || ''
+        driverName: d.firstName || '',
+        realLat: hasRealLoc ? loc.lat : null,
+        realLng: hasRealLoc ? loc.lng : null
       });
     });
     refreshOrderMarkersDebounced();
@@ -7267,15 +7276,23 @@ function buildDriverRouteGeo(){
   // Asosiy manba: "users" kolleksiyasidagi haqiqiy haydovchilar (Haydovchiman
   // rejimidan tasdiqlangan) — hozirgi unified xarita aynan shulardan foydalanadi.
   driverUsers.filter(driverUserMatchesTravelFilter).forEach(d => {
-    const center = REGION_CENTERS[d.from];
-    if (!center) return;
     const key = String(d.telegramId != null ? d.telegramId : (d.firestoreId || d.id));
     if (seenIds.has(key)) return;
+    // Haqiqiy jonli GPS joyi bo'lsa — aynan o'shani ko'rsatamiz (haydovchi
+    // haqiqatda qayerda turgani), aks holda REGION_CENTERS + jitter'ga tushamiz.
+    let lng, lat;
+    if (d.realLat != null && d.realLng != null) {
+      lat = d.realLat; lng = d.realLng;
+    } else {
+      const center = REGION_CENTERS[d.from];
+      if (!center) return;
+      const [jx, jy] = jitterForRouteId(d.firestoreId || d.id, 0.045);
+      lng = center[0] + jx; lat = center[1] + jy;
+    }
     seenIds.add(key);
-    const [jx, jy] = jitterForRouteId(d.firestoreId || d.id, 0.045);
     features.push({
       type: 'Feature',
-      geometry: { type: 'Point', coordinates: [center[0] + jx, center[1] + jy] },
+      geometry: { type: 'Point', coordinates: [lng, lat] },
       properties: driverRouteMapProps(d)
     });
   });
