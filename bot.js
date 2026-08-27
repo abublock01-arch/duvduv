@@ -626,7 +626,18 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId, order
 }
 
 // ── Polling (REST API orqali — gRPC bypass) ───────────────────────────────
-const POLL_MS     = 6000;
+// MUHIM (tuzatildi): har 6 soniyada, HATTO yangi hech narsa bo'lmasa ham,
+// 2 ta so'rov (orders + travels) Firestore'ga yuborilardi. Bo'sh natijali
+// so'rov ham Firestore hisobida kamida 1 ta o'qish sifatida hisoblanadi —
+// shu sabab BOT HECH KIM ILOVANI OCHMASA HAM kuniga ~28 000+ bekorchi
+// o'qish hosil qilardi (24 soat / 6s * 2). Bu — loyihaning kunlik BEPUL
+// kvotasini (Spark tarifda 50 000 o'qish/kun) tez tugatishi, natijada
+// kvota tugagan kunlarda PROYEKT DOIRASIDA barcha foydalanuvchilar uchun
+// xaritadagi e'lonlar/marshrutlar TASODIFIY ko'rinmay/yangilanmay qolishi
+// mumkin edi ("goh ishlaydi, goh yo'q" muammolarining asosiy sababi shu
+// bo'lishi ehtimoli katta). Interval oshirildi — bu holda ham bildirishnoma
+// kechikishi (eng ko'pi bilan ~20s) foydalanuvchi uchun sezilarli emas.
+const POLL_MS     = 20000;
 let lastOrderMs   = Date.now();
 let lastTravelMs  = Date.now();
 
@@ -671,7 +682,7 @@ async function pollTravels() {
 
 setInterval(pollOrders,  POLL_MS);
 setInterval(pollTravels, POLL_MS);
-console.log('✅ REST polling tayyor (har 6 soniya)');
+console.log('✅ REST polling tayyor (har 20 soniya)');
 
 // ── Admin broadcast ───────────────────────────────────────────────────────
 let initAdminMsg = false;

@@ -4176,8 +4176,24 @@ async function startGpsTracking() {
     const perm = await getGeolocationPermissionState();
     if (perm !== 'granted') return;
   }
+  // MUHIM (tuzatildi): watchPosition callback'i ba'zi qurilmalarda
+  // maximumAge'dan qat'i nazar HAR SONIYADA (yoki tez-tezroq) chaqirilishi
+  // mumkin — bu yerda ilgari HAR bir chaqiriqda Firestore'ga yozilardi.
+  // Har bir faol foydalanuvchi (endi barcha rol uchun — sender ham,
+  // driver ham — ishga tushadi) shu tarzda kuniga o'n minglab yozuv hosil
+  // qilishi mumkin edi, bu esa Firestore kvota (RESOURCE_EXHAUSTED)ni tez
+  // tugatib, PROYEKT DOIRASIDA barcha foydalanuvchilar uchun xaritadagi
+  // e'lonlar/marshrutlar tasodifiy ko'rinmay/yangilanmay qolishiga olib
+  // kelishi mumkin edi (aynan shu turdagi "goh ko'rinadi, goh yo'q"
+  // muammolarni tushuntiradi). Endi yozuvlar kamida 15 soniyada bir marta
+  // bilan cheklanadi — bu masofa/marshrut moslashtirish uchun yetarli.
+  let _lastGpsWriteAt = 0;
+  const GPS_WRITE_MIN_INTERVAL_MS = 15000;
   _gpsWatchId = navigator.geolocation.watchPosition(
     pos => {
+      const now = Date.now();
+      if (now - _lastGpsWriteAt < GPS_WRITE_MIN_INTERVAL_MS) return;
+      _lastGpsWriteAt = now;
       db.collection('users').doc(String(telegramUser.id)).set({
         location: {
           lat: pos.coords.latitude,
@@ -4185,7 +4201,7 @@ async function startGpsTracking() {
           accuracy: Math.round(pos.coords.accuracy),
           updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         }
-      }, { merge: true });
+      }, { merge: true }).catch(err => console.warn('GPS yozish xatosi:', err.message));
     },
     err => console.warn('GPS xato:', err.message),
     { enableHighAccuracy: true, maximumAge: 10000, timeout: 15000 }
