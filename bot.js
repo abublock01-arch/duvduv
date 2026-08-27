@@ -53,7 +53,17 @@ function docToObj(doc) {
 // noma'lum yoki juda eskirgan (LOCATION_MAX_AGE_MS dan katta) haydovchilar
 // uchun — xavfsizroq old: xabar BARIBIR yuboriladi (imkoniyat boy
 // berilmasin), faqat masofa ANIQ ma'lum bo'lgandagina filtrlanadi.
-const NOTIF_RADIUS_KM = 5;
+//
+// MUHIM TUZATISH: bu radius avval 5 km edi — juda tor! Chunki e'lonning
+// koordinatasi foydalanuvchining ANIQ joyi emas, balki butun VILOYAT/SHAHAR
+// uchun bitta QOTIB QOLGAN markaziy nuqta (REGION_CENTERS). Haydovchining
+// haqiqiy GPS joyi esa o'sha bitta nuqtadan har doim bir necha km narida
+// bo'ladi (masalan katta shaharning istalgan boshqa nuqtasida turgan bo'lsa
+// ham) — shu sabab MARSHRUT ANIQ MOS kelsa ham, bildirishnoma deyarli hech
+// qachon kelmasdi (masalan real testda: 8.3 km chiqdi, radiusdan tashqarida
+// qolib, xabar bloklangan edi). Endi butun shahar/tuman doirasini qamrab
+// olish uchun ancha kengaytirildi.
+const NOTIF_RADIUS_KM = 50;
 const LOCATION_MAX_AGE_MS = 30 * 60 * 1000; // 30 daqiqadan eski joylashuv — "noma'lum" deb hisoblanadi
 
 function haversineKm(lat1, lng1, lat2, lng2) {
