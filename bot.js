@@ -607,15 +607,15 @@ async function notifyDrivers(from, to, type, senderUsername, senderChatId, order
       }
     }
 
-    // Marshrut mos kelsa ham — agar haydovchining jonli joylashuvi ANIQ
-    // ma'lum bo'lsa va e'lon undan NOTIF_RADIUS_KM dan uzoqda bo'lsa,
-    // bildirishnoma yuborilmaydi (mashhur yo'nalishda xabar-toshqiniga
-    // yo'l qo'ymaslik uchun) — e'lon baribir ilova xaritasida ko'rinaveradi.
-    if (!driverIsWithinNotifyRadius(driver, listingLat, listingLng)) {
-      console.log(`⏭ ${doc.id}: ${NOTIF_RADIUS_KM} km radiusdan tashqarida, xabar yuborilmadi`);
-      continue;
-    }
-
+    // MUHIM: radius bo'yicha filtrlash VAQTINCHA BUTUNLAY OLIB TASHLANDI.
+    // Sabab: e'lon koordinatasi foydalanuvchining aniq joyi emas, balki
+    // butun viloyat/shahar uchun bitta qotib qolgan markaziy nuqta edi —
+    // shu sabab marshrut ANIQ mos kelsa ham, haydovchining haqiqiy GPS
+    // joyi deyarli har doim "radiusdan tashqarida" chiqib, bildirishnoma
+    // asossiz bloklanardi (real testda tekshirildi: 8.3 km chiqqan,
+    // hatto radius 50 km'ga kengaytirilgandan keyin ham noaniqlik
+    // qolishi mumkin edi). Endi marshrut mos kelsa — bildirishnoma
+    // SO'ZSIZ yuboriladi, masofadan qat'i nazar.
     console.log(`📤 Xabar yuborilmoqda: chatId=${driver.chatId} (${doc.id})`);
     await bot.sendMessage(driver.chatId, text, {
       parse_mode: 'HTML',
