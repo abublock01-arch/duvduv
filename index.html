@@ -4362,6 +4362,16 @@ function _saveSeekerListingToFirestore(mode, from, to){
     type: mode === 'cargo' ? 'order' : 'travel',
     from, to, dest: to,
     status: 'Aktiv',
+    // MUHIM: bu yozuv HAR DOIM bir xil (doim String(telegramUser.id))
+    // hujjatga merge:true bilan yoziladi — agar foydalanuvchi ILGARI
+    // shu e'lonini o'chirgan (archived:true qo'yilgan) bo'lsa-yu, keyin
+    // YANGI marshrut bilan qayta e'lon qo'ysa, "archived" maydoni
+    // ANIQ shu yerda false qilib qo'yilmasa, u ESKI true holatida
+    // abadiy qolib ketardi — hujjat "Aktiv" statusda bo'lsa ham
+    // subscribeFirestoreOrders/Travels uni har doim yashirib
+    // ("arxivlanganlarni o'tkazib yubor") tashlab yuborardi. Shu sabab
+    // haydovchi mijozning YANGI e'lonini xaritada UMUMAN ko'ra olmasdi.
+    archived: false,
     gender: 'any',
     lat: center ? center[1] : null,
     lng: center ? center[0] : null,
