@@ -3807,6 +3807,13 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
 function exitUniMode(){
   if (!activeUniMode) return;
   const prevKey = activeUniMode;
+  // Haydovchiman rejimidan "orqaga" bosib chiqilsa — endi mijozlarga
+  // "faol haydovchi" sifatida ko'rinishni to'xtatadi (driverActive:false).
+  // Marshrut tarixi Firestore'da saqlanib qoladi (keyinroq yana
+  // "Haydovchiman"ni bossa tezda tiklanadi), faqat FAOL holat o'chadi.
+  if (prevKey === 'driver' && db && telegramUser.id) {
+    db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
+  }
   activeUniMode = null;
   hideMapControls();
   cancelQayergaNudge();
@@ -8549,6 +8556,12 @@ function setupShipmentsListEvents(){
   if (!list) return;
   shipmentsListBound = true;
   list.addEventListener('click', e => {
+    const deactivateBtn = e.target.closest('[data-action="deactivate-driver"]');
+    if (deactivateBtn) {
+      e.stopPropagation();
+      deactivateMyDriverRoute();
+      return;
+    }
     const delBtn = e.target.closest('[data-action="delete"]');
     if (delBtn) {
       e.stopPropagation();
@@ -8556,6 +8569,7 @@ function setupShipmentsListEvents(){
       return;
     }
     const card = e.target.closest('.shipment-card');
+    if (card?.dataset.driverRoute) return; // haydovchi kartasi — alohida detail sahifasi yo'q
     if (card?.dataset.id) openShipmentDetail(card.dataset.id);
   });
 }
@@ -9030,17 +9044,54 @@ function formatDate(ts) {
   return d.toLocaleDateString('uz',{day:'numeric',month:'short'});
 }
 
+// "Haydovchiman" rejimida A/B tasdiqlangan marshrut — bu orders/travels
+// EMAS, alohida "users" hujjatiga yoziladi, shu sabab avval "Mening
+// e'lonlarim" ro'yxatida umuman ko'rinmasdi (foydalanuvchiga "elonim
+// qoyilmadimikin" degan taassurot qoldirardi). Endi shu ro'yxatga ham
+// (faqat ko'rsatish uchun, alohida — orders/travels massivlariga
+// aralashtirilmaydi) qo'shib chiqamiz.
+function getMyActiveDriverRouteCardHtml(){
+  if (getSavedActiveMode() !== 'driver') return '';
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (!saved.from || !saved.to) return '';
+  return `
+    <div class="shipment-card" data-driver-route="1" role="button" tabindex="0">
+      <div class="shipment-card-left">
+        <div class="shipment-type-icon">${ICON_CTA_TRAVEL || ''}</div>
+        <div class="shipment-body">
+          <span class="shipment-route">${escapeHtml(regionWithFromSuffix(saved.from))} → ${escapeHtml(regionWithToSuffix(saved.to))}</span>
+          <span class="shipment-status">🚗 Haydovchi sifatida faol</span>
+        </div>
+      </div>
+      <div class="shipment-actions">
+        <button type="button" class="shipment-icon-btn shipment-icon-btn--delete" data-action="deactivate-driver" aria-label="To'xtatish">${SHIPMENT_ICON_TRASH}</button>
+      </div>
+    </div>`;
+}
+function deactivateMyDriverRoute(){
+  if (db && telegramUser.id) {
+    db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
+  }
+  try { localStorage.removeItem(routeKey()); } catch(_) {}
+  try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
+  if (activeUniMode === 'driver') exitUniMode();
+  renderShipments();
+  showToast('Haydovchi faolligi to\'xtatildi');
+}
+
 function renderShipments(){
   const wrap = document.getElementById('shipmentsWrap');
   const list = document.getElementById('shipmentsList');
   if (!wrap || !list) return;
   const mine = getMyShipments();
+  const driverCardHtml = getMyActiveDriverRouteCardHtml();
   const badge = document.getElementById('headerMineBadge');
   if (badge) {
-    badge.hidden = mine.length === 0;
-    badge.textContent = String(mine.length);
+    const count = mine.length + (driverCardHtml ? 1 : 0);
+    badge.hidden = count === 0;
+    badge.textContent = String(count);
   }
-  if (!mine.length) {
+  if (!mine.length && !driverCardHtml) {
     wrap.classList.add('visible');
     list.innerHTML = `<div class="shipments-empty">
     <p class="shipments-empty-title">Ҳали фаол эълонлар йўқ</p>
@@ -9049,7 +9100,7 @@ function renderShipments(){
     return;
   }
   wrap.classList.add('visible');
-  list.innerHTML = mine.map(s => {
+  list.innerHTML = driverCardHtml + mine.map(s => {
     const key = escapeHtml(getShipmentKey(s));
     return `
     <div class="shipment-card" data-id="${key}" role="button" tabindex="0">
