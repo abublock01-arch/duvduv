@@ -3110,6 +3110,26 @@ html, body { font-size: var(--fs-base); }
 </div>
 
 <script>
+// Ba'zi Telegram klientlari Mini App WebView'ni yopmasdan xotirada saqlab
+// qo'yadi — foydalanuvchi keyinchalik HOHLAGAN bildirishnomadan (yoki
+// ilovalar ro'yxatidan) qayta kirganda, browser hech qanday yangi so'rov
+// yubormasdan, ESKI, xotiradagi JS bilan davom etadi (URL'dagi ?v=
+// versiyalash bunda yordam bermaydi, chunki umuman yangi navigatsiya
+// bo'lmaydi). Natijada: serverda va Firestore'da hamma narsa to'g'ri
+// bo'lsa ham, foydalanuvchi ekranida haftalar oldingi eski kod ishlab
+// turaveradi. Yechim: 'activated' voqeasi uzoq vaqtdan keyin kelsa —
+// sahifani to'liq qayta yuklaymiz, shunda doim eng oxirgi kod ishga tushadi.
+const __appBootTime = Date.now();
+let __didForceFreshReload = false;
+function maybeForceFreshReload(){
+  if (__didForceFreshReload) return false;
+  if (Date.now() - __appBootTime > 4000) {
+    __didForceFreshReload = true;
+    try { location.reload(); } catch(e) {}
+    return true;
+  }
+  return false;
+}
 if (window.Telegram && Telegram.WebApp) {
   if (typeof Telegram.WebApp.disableClosingConfirmation === 'function') {
     Telegram.WebApp.disableClosingConfirmation();
@@ -9831,7 +9851,9 @@ if (window.mapboxgl) {
   if (mbScript) mbScript.addEventListener('load', () => { setTimeout(() => { if (!map) initDriverMap(); }, 500); });
 }
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) stopGpsTracking(); else { setTimeout(startGpsTracking, 500); handleAppReactivated(); }
+  if (document.hidden) { stopGpsTracking(); return; }
+  if (maybeForceFreshReload()) return;
+  setTimeout(startGpsTracking, 500); handleAppReactivated();
 });
 
 // ── lastSeen har 2 daqiqada yangilanadi — admin "Onlayn" ko'rsatishi uchun
@@ -9851,7 +9873,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('pagehide', () => syncSendDraft());
 if (window.Telegram?.WebApp?.onEvent) {
   Telegram.WebApp.onEvent('deactivated', () => syncSendDraft());
-  Telegram.WebApp.onEvent('activated', () => { recoverSendFlow(); handleAppReactivated(); });
+  Telegram.WebApp.onEvent('activated', () => { if (maybeForceFreshReload()) return; recoverSendFlow(); handleAppReactivated(); });
 }
 recoverSendFlow();
 </script>
