@@ -3305,6 +3305,12 @@ function subscribeDriverRoutes(){
 // interfeys orqali marshrut tasdiqlagan haydovchi hech qachon mijozlarga
 // KO'RINMASDI. Endi "users" kolleksiyasidan ham jonli obuna qilinadi.
 const driverUsers = [];
+// Mening (joriy foydalanuvchi) shaxsiy haydovchi holatim — Firestore
+// "users/{men}" hujjatidan JONLI kuzatiladi (subscribeOwnDriverStateSync).
+// Bu — YAGONA haqiqat manbai: "Mening e'lonlarim" ro'yxatidagi haydovchi
+// kartochkasi HAM, orqaga bosilganda mahalliy holatni tozalash-tozalamaslik
+// qarori HAM shundan kelib chiqadi (localStorage'ga emas).
+let myDriverState = { active: false, from: '', to: '' };
 function subscribeDriverUsersForMap(){
   if (!db) return;
   db.collection('users').where('role', '==', 'driver').onSnapshot(snap => {
@@ -3363,7 +3369,11 @@ function subscribeOwnDriverStateSync(){
   db.collection('users').doc(String(telegramUser.id)).onSnapshot(doc => {
     const d = doc.data();
     if (!d) return;
-    if (d.driverActive === true && d.routeFrom && d.routeTo) {
+    const wasActive = myDriverState.active;
+    const isActive = d.driverActive === true && !!d.routeFrom && !!d.routeTo;
+    const stateChanged = wasActive !== isActive || myDriverState.from !== (d.routeFrom||'') || myDriverState.to !== (d.routeTo||'');
+    myDriverState = { active: isActive, from: d.routeFrom || '', to: d.routeTo || '' };
+    if (isActive) {
       const current = JSON.parse(localStorage.getItem(routeKey()) || '{}');
       if (current.from !== d.routeFrom || current.to !== d.routeTo) {
         localStorage.setItem(routeKey(), JSON.stringify({ from: d.routeFrom, to: d.routeTo }));
@@ -3375,12 +3385,14 @@ function subscribeOwnDriverStateSync(){
         }
       }
     }
-    // ESLATMA: driverActive:false holatida ataylab hech narsa tozalanmaydi —
-    // aks holda haydovchi hali TASDIQLAMAGAN yangi A/B tanlovini (region
-    // picker'da) shu payt Firestore'ga tushayotgan boshqa (masalan GPS
-    // location) yozuv snapshot'ni qayta tetiklab, tasodifan o'chirib
-    // qo'yishi mumkin edi. Mahalliy tozalash allaqachon exitUniMode() da
-    // to'g'ridan-to'g'ri, shu harakat bilan bir vaqtda amalga oshiriladi.
+    // ESLATMA: driverActive:false holatida ataylab localStorage'dagi
+    // marshrut TOZALANMAYDI — aks holda haydovchi hali TASDIQLAMAGAN yangi
+    // A/B tanlovini (region picker'da) shu payt Firestore'ga tushayotgan
+    // boshqa (masalan GPS location) yozuv snapshot'ni qayta tetiklab,
+    // tasodifan o'chirib qo'yishi mumkin edi. Mahalliy tozalash FAQAT aniq
+    // "o'chirish" harakatida (deactivateMyDriverRoute) to'g'ridan-to'g'ri
+    // amalga oshiriladi.
+    if (stateChanged) renderShipments();
   }, err => console.warn('Firestore own-user snapshot xatosi:', err));
 }
 
@@ -3732,6 +3744,11 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
     }
     const lng = coords.longitude, lat = coords.latitude;
     map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+    // "A manzil" — foydalanuvchining ANIQ (haqiqiy GPS) joyi. Buni keyinroq
+    // e'lon tasdiqlanganda (_saveSeekerListingToFirestore) xaritadagi
+    // nuqta sifatida ishlatish uchun saqlab qo'yamiz — aks holda faqat
+    // butun viloyat markazi + tasodifiy siljish ishlatilardi.
+    saveLastGPS(lng, lat);
 
     // "Qayerdan?" maydonini foydalanuvchi hozir turgan viloyat/shahar
     // nomi bilan avtomatik to'ldiramiz. "Qayerga?" esa bo'sh qoladi —
@@ -3844,13 +3861,12 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
 function exitUniMode(){
   if (!activeUniMode) return;
   const prevKey = activeUniMode;
-  // Haydovchiman rejimidan "orqaga" bosib chiqilsa — endi mijozlarga
-  // "faol haydovchi" sifatida ko'rinishni to'xtatadi (driverActive:false).
-  // Marshrut tarixi Firestore'da saqlanib qoladi (keyinroq yana
-  // "Haydovchiman"ni bossa tezda tiklanadi), faqat FAOL holat o'chadi.
-  if (prevKey === 'driver' && db && telegramUser.id) {
-    db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
-  }
+  // MUHIM: "Orqaga" bosish shunchaki EKRAN almashtirish, ya'ni e'lonni
+  // bekor qilish/o'chirish EMAS — shu sabab bu yerda ENDI driverActive
+  // Firestore'da O'CHIRILMAYDI. Haydovchi (yoki mijoz) o'z e'lonini
+  // haqiqatan olib tashlashni xohlasa, buning uchun aniq "o'chirish"
+  // tugmasi bor ("Mening e'lonlarim" ro'yxatida — deactivateMyDriverRoute /
+  // confirmDeleteShipment). Faqat O'SHA harakat xaritadan olib tashlaydi.
   activeUniMode = null;
   hideMapControls();
   cancelQayergaNudge();
@@ -3875,17 +3891,18 @@ function exitUniMode(){
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
   document.getElementById('uniModeBackBtn')?.classList.remove('visible');
-  // "Orqaga" bosilishi — ongli ravishda ushbu rejimdan chiqish/bekor
-  // qilish hisoblanadi: ekrandagi A/B tanlov VA saqlangan marshrut
-  // tozalanadi, keyingi safar yangi qidiruv yangidan boshlansin. Bu —
-  // ilova shunchaki YOPIB-OCHILGANDA (yoki bildirishnomadan qaytilganda)
-  // sodir bo'ladigan avtomatik "davom ettirish" bilan bir xil emas — u
-  // holatda marshrut ATAYLAB saqlanib qolishi kerak (resumeUniMode).
-  // Allaqachon tasdiqlangan Haydovchiman yo'nalishi Firestore'da
-  // saqlanib qolaveradi — bu yerda faqat mahalliy (localStorage) holat
-  // tozalanadi.
-  try { localStorage.removeItem(routeKey()); } catch(_) {}
-  try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
+  // "Orqaga" bosilganda mahalliy (localStorage) A/B tanlov faqat
+  // TASDIQLANMAGAN, hali Firestore'ga yozilmagan tanlov bo'lsa tozalanadi
+  // (ongli bekor qilish sifatida) — lekin agar bu "Haydovchiman" bo'lib,
+  // marshrut Firestore'da ALLAQACHON faol/tasdiqlangan bo'lsa (myDriverState),
+  // hech narsa tozalanmaydi: aks holda faol e'lon xaritada qolsa-da,
+  // "Mening e'lonlarim" kartochkasi va picker matni yo'qolib, foydalanuvchiga
+  // "elonim ochib ketdimikin" degan noto'g'ri taassurot qoldirardi.
+  const keepDriverRoute = prevKey === 'driver' && myDriverState.active;
+  if (!keepDriverRoute) {
+    try { localStorage.removeItem(routeKey()); } catch(_) {}
+    try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
+  }
   loadDriverRouteState();
   // Tugmalar konteyneri (.unified-actions) o'zi "shaffof" bo'lsa ham
   // pastga tushgan Qayerdan/Qayerga panelini bosishga to'sqinlik qilmasin.
@@ -4508,10 +4525,14 @@ function _saveSeekerListingToFirestore(mode, from, to){
   if (!db || !telegramUser.id) return;
   const center = REGION_CENTERS[from];
   const collectionName = mode === 'cargo' ? 'orders' : 'travels';
-  // Bir xil "Toshkent shahar"dan chiqqan barcha e'lonlar aynan bitta
-  // koordinatada ustma-ust tushib qolmasligi uchun — har bir foydalanuvchi
-  // uchun barqaror (doim bir xil) kichik siljish qo'shiladi (driverRoutes'da
-  // ishlatilgan jitterForRouteId bilan bir xil usul).
+  // "A manzil" — HAQIQIY GPS joyi (playTravelPinAnimation orqali saqlangan,
+  // 30 daqiqagacha eski bo'lishi mumkin) bo'lsa aynan o'shani ishlatamiz —
+  // xuddi haydovchi belgisi uchun qilinganidek (buildDriverRouteGeo). Aks
+  // holda — zaxira sifatida — butun viloyat markazi + har bir foydalanuvchi
+  // uchun barqaror kichik siljish (bir xil "Toshkent shahar"dan chiqqan
+  // barcha e'lonlar aynan bitta koordinatada ustma-ust tushib qolmasligi
+  // uchun; driverRoutes'da ishlatilgan jitterForRouteId bilan bir xil usul).
+  const realGPS = loadLastGPS();
   const [jx, jy] = center ? jitterForRouteId(telegramUser.id, 0.03) : [0, 0];
   const doc = {
     type: mode === 'cargo' ? 'order' : 'travel',
@@ -4528,8 +4549,8 @@ function _saveSeekerListingToFirestore(mode, from, to){
     // haydovchi mijozning YANGI e'lonini xaritada UMUMAN ko'ra olmasdi.
     archived: false,
     gender: 'any',
-    lat: center ? center[1] + jy : null,
-    lng: center ? center[0] + jx : null,
+    lat: realGPS ? realGPS.lat : (center ? center[1] + jy : null),
+    lng: realGPS ? realGPS.lng : (center ? center[0] + jx : null),
     telegramId: telegramUser.id,
     telegramUsername: telegramUser.username || '',
     firstName: telegramUser.first_name || '',
@@ -9102,15 +9123,19 @@ function formatDate(ts) {
 // (faqat ko'rsatish uchun, alohida — orders/travels massivlariga
 // aralashtirilmaydi) qo'shib chiqamiz.
 function getMyActiveDriverRouteCardHtml(){
-  if (getSavedActiveMode() !== 'driver') return '';
-  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-  if (!saved.from || !saved.to) return '';
+  // ESLATMA: bu ENDI localStorage'ga (getSavedActiveMode/routeKey) emas,
+  // Firestore'dan jonli kuzatilayotgan myDriverState'ga qaraydi — shu
+  // sabab "Yo'lovchiman/Yuk yuboraman" ekraniga orqaga chiqib ketilsa ham,
+  // yoki ilova qayta ochilsa ham, haqiqatan FAOL bo'lgan haydovchi
+  // marshruti shu yerda to'g'ri ko'rinaveradi (faqat aniq "to'xtatish"
+  // tugmasi bosilgandagina yo'qoladi).
+  if (!myDriverState.active || !myDriverState.from || !myDriverState.to) return '';
   return `
     <div class="shipment-card" data-driver-route="1" role="button" tabindex="0">
       <div class="shipment-card-left">
         <div class="shipment-type-icon">${ICON_CTA_TRAVEL || ''}</div>
         <div class="shipment-body">
-          <span class="shipment-route">${escapeHtml(regionWithFromSuffix(saved.from))} → ${escapeHtml(regionWithToSuffix(saved.to))}</span>
+          <span class="shipment-route">${escapeHtml(regionWithFromSuffix(myDriverState.from))} → ${escapeHtml(regionWithToSuffix(myDriverState.to))}</span>
           <span class="shipment-status">🚗 Haydovchi sifatida faol</span>
         </div>
       </div>
