@@ -3119,6 +3119,12 @@ html, body { font-size: var(--fs-base); }
 // bo'lsa ham, foydalanuvchi ekranida haftalar oldingi eski kod ishlab
 // turaveradi. Yechim: 'activated' voqeasi uzoq vaqtdan keyin kelsa —
 // sahifani to'liq qayta yuklaymiz, shunda doim eng oxirgi kod ishga tushadi.
+// Foydalanuvchi qaysi qurilmada QAYSI kod versiyasi ishlab turganini
+// TASHQARIDAN (skrinshot orqali) darhol bilish uchun — shu paytgacha buni
+// aniqlash uchun har safar git/Vercel checksumini qo'lda solishtirishga
+// to'g'ri kelardi. Endi debug jurnal panelini yoqqanda birinchi qatorda
+// shu versiya chiqadi — skrinshotda ko'rinib turadi.
+const BUILD_VERSION = '2026-08-27-2020-driverUsers-fix';
 const __appBootTime = Date.now();
 let __didForceFreshReload = false;
 function maybeForceFreshReload(){
@@ -5088,7 +5094,10 @@ let _dvDebugOn = false;
 function toggleDebugPanel(){
   _dvDebugOn = !_dvDebugOn;
   document.getElementById('dvDebugPanel')?.classList.toggle('show', _dvDebugOn);
-  if (_dvDebugOn) logPermEvent('JURNAL', 'yoqildi ✅ — endi tugmalarni bosing');
+  if (_dvDebugOn) {
+    logPermEvent('JURNAL', 'yoqildi ✅ — endi tugmalarni bosing');
+    logPermEvent('VERSIYA', BUILD_VERSION + ' | mening ID: ' + (telegramUser?.id ?? '?') + ' | mening marshrutim: ' + JSON.stringify(getDriverRouteFilter ? getDriverRouteFilter() : {}));
+  }
 }
 function toggleDebugPanelCollapse(){
   document.getElementById('dvDebugPanel')?.classList.toggle('collapsed');
