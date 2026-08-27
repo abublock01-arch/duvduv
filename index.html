@@ -3343,14 +3343,19 @@ function driverUserMatchesTravelFilter(d){
   if (!d || !d.from || !d.to) return false;
   if (!REGION_CENTERS[d.from]) return false;
   const filter = getDriverRouteFilter();
-  if (filter.from && filter.to) {
-    const rFrom = toCanonRegion(d.from || '');
-    const rTo   = toCanonRegion(d.to || '');
-    const dFrom = toCanonRegion(filter.from);
-    const dTo   = toCanonRegion(filter.to);
-    return (rFrom === dFrom && rTo === dTo) || (rFrom === dTo && rTo === dFrom);
-  }
-  return true;
+  // MUHIM: agar mijoz hali A VA B manzilini TO'LIQ tanlamagan bo'lsa
+  // (masalan A GPS orqali avtomatik to'ldirilgan-u, B hali tanlanmagan) —
+  // ILGARI bu yerda "return true" (HAMMA haydovchini ko'rsat) qilinardi.
+  // Natijada mijoz tugmani bosgan zahoti, hali B manzilni tanlamasidan
+  // TURIB, hech qanday aloqasi yo'q haydovchining mashinasi xaritada
+  // paydo bo'lib qolardi. Endi — aksincha — A/B TO'LIQ tanlanmaguncha
+  // HECH QANDAY haydovchi ko'rsatilmaydi (soxta/vaqtinchalik moslik yo'q).
+  if (!filter.from || !filter.to) return false;
+  const rFrom = toCanonRegion(d.from || '');
+  const rTo   = toCanonRegion(d.to || '');
+  const dFrom = toCanonRegion(filter.from);
+  const dTo   = toCanonRegion(filter.to);
+  return (rFrom === dFrom && rTo === dTo) || (rFrom === dTo && rTo === dFrom);
 }
 
 // MUHIM: xaritada "haydovchi mijozni ko'radimi" (mapItemMatchesDriverFilter)
@@ -7245,25 +7250,24 @@ function mapItemMatchesDriverFilter(item){
   if (!isActiveListing(item)) return false;
   if (!mapItemHasMapCoords(item)) return false;
 
-  // Yangi A→B yo'nalish filtri
+  // A→B yo'nalish filtri. MUHIM: A VA B TO'LIQ tanlanmaguncha (masalan
+  // haydovchi hali B'ni tanlamagan bo'lsa) — hech qanday mijoz e'loni
+  // ko'rsatilmaydi. Ilgari bu yerda A/B to'liq bo'lmasa "eski region
+  // filtri"ga (selectedDriverRegion — bu har doim biror standart
+  // qiymatga ega, masalan 'Samarqand') tushib ketilardi, bu esa haydovchi
+  // hali marshrutini tugatmasdan turib, unga aloqasi bo'lmagan
+  // eski/standart filtr bo'yicha e'lonlar ko'rsatilishiga sabab bo'lardi
+  // (mijoz tomonidagi xuddi shu turdagi bug bilan bir xil — pastdagi
+  // driverUserMatchesTravelFilter/driverRouteMatchesTravelFilter'ga
+  // qarang).
   const route = getDriverRouteFilter();
-  if (route.from && route.to) {
-    const iFrom = toCanonRegion(item.from || '');
-    const iTo   = toCanonRegion(item.to || item.dest || '');
-    const dFrom = toCanonRegion(route.from);
-    const dTo   = toCanonRegion(route.to);
-    // Faqat to'g'ri (A→B) yoki teskari (B→A) yo'nalish
-    return (iFrom === dFrom && iTo === dTo) || (iFrom === dTo && iTo === dFrom);
-  }
-
-  // Eski region filtri (A/B tanlanmagan bo'lsa)
-  if (!selectedDriverRegion) return true;
-  if (item.type === 'travel') {
-    const to = item.to || item.dest || '';
-    return destMatchesDriverRegion(to) && destMatchesDriverDistrict(to);
-  }
-  const dest = item.dest || '';
-  return destMatchesDriverRegion(dest) && destMatchesDriverDistrict(dest);
+  if (!route.from || !route.to) return false;
+  const iFrom = toCanonRegion(item.from || '');
+  const iTo   = toCanonRegion(item.to || item.dest || '');
+  const dFrom = toCanonRegion(route.from);
+  const dTo   = toCanonRegion(route.to);
+  // Faqat to'g'ri (A→B) yoki teskari (B→A) yo'nalish
+  return (iFrom === dFrom && iTo === dTo) || (iFrom === dTo && iTo === dFrom);
 }
 
 function getMapGeoCacheKey(){
@@ -7322,14 +7326,14 @@ function driverRouteMatchesTravelFilter(route){
   if (!route.carriesPerson) return false;
   if (!REGION_CENTERS[route.from]) return false;
   const filter = getDriverRouteFilter();
-  if (filter.from && filter.to) {
-    const rFrom = toCanonRegion(route.from || '');
-    const rTo   = toCanonRegion(route.to || '');
-    const dFrom = toCanonRegion(filter.from);
-    const dTo   = toCanonRegion(filter.to);
-    return (rFrom === dFrom && rTo === dTo) || (rFrom === dTo && rTo === dFrom);
-  }
-  return true;
+  // driverUserMatchesTravelFilter'dagi bilan bir xil tuzatish: A/B to'liq
+  // tanlanmaguncha hech narsa ko'rsatilmasin (pastdagi izohga qarang).
+  if (!filter.from || !filter.to) return false;
+  const rFrom = toCanonRegion(route.from || '');
+  const rTo   = toCanonRegion(route.to || '');
+  const dFrom = toCanonRegion(filter.from);
+  const dTo   = toCanonRegion(filter.to);
+  return (rFrom === dFrom && rTo === dTo) || (rFrom === dTo && rTo === dFrom);
 }
 
 function driverRouteMapProps(route){
