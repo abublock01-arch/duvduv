@@ -3155,6 +3155,7 @@ function initFirebase(){
     subscribeFirestoreOrders();
     subscribeFirestoreTravels();
     subscribeDriverRoutes();
+    subscribeDriverUsersForMap();
   } catch(e){ console.warn('Firebase init xatosi:', e); }
 }
 async function saveOrderToFirestore(order){
@@ -3288,6 +3289,49 @@ function subscribeDriverRoutes(){
     refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore driverRoutes snapshot xatosi:', err));
 }
+
+// MUHIM: "Haydovchiman" rejimidagi asosiy unified-xarita oqimi
+// (_saveDriverRouteToFirestore) marshrutni "driverRoutes" kolleksiyasiga
+// EMAS, balki "users" kolleksiyasiga (routeFrom/routeTo) yozadi. Shu
+// paytgacha "Yo'lovchiman"/"Yuk yuboraman" rejimida xaritada haydovchi
+// belgisini chizadigan buildDriverRouteGeo() FAQAT "driverRoutes" massivini
+// o'qirdi — bu ikkisi bir-biriga ULANMAGAN edi! Shu sabab hozirgi
+// interfeys orqali marshrut tasdiqlagan haydovchi hech qachon mijozlarga
+// KO'RINMASDI. Endi "users" kolleksiyasidan ham jonli obuna qilinadi.
+const driverUsers = [];
+function subscribeDriverUsersForMap(){
+  if (!db) return;
+  db.collection('users').where('role', '==', 'driver').onSnapshot(snap => {
+    driverUsers.length = 0;
+    snap.forEach(doc => {
+      const d = doc.data();
+      if (d.driverActive === false) return; // seeker rejimiga o'tganda o'chiriladi
+      if (!d.routeFrom || !d.routeTo) return;
+      driverUsers.push({
+        id: doc.id, firestoreId: doc.id,
+        from: d.routeFrom, to: d.routeTo,
+        telegramId: d.chatId != null ? d.chatId : Number(doc.id),
+        telegramUsername: d.username || '',
+        driverName: d.firstName || ''
+      });
+    });
+    refreshOrderMarkersDebounced();
+  }, err => console.warn('Firestore driverUsers snapshot xatosi:', err));
+}
+function driverUserMatchesTravelFilter(d){
+  if (!d || !d.from || !d.to) return false;
+  if (!REGION_CENTERS[d.from]) return false;
+  const filter = getDriverRouteFilter();
+  if (filter.from && filter.to) {
+    const rFrom = toCanonRegion(d.from || '');
+    const rTo   = toCanonRegion(d.to || '');
+    const dFrom = toCanonRegion(filter.from);
+    const dTo   = toCanonRegion(filter.to);
+    return (rFrom === dFrom && rTo === dTo) || (rFrom === dTo && rTo === dFrom);
+  }
+  return true;
+}
+
 async function saveDriverRouteToFirestore(route){
   if (!db) return null;
   try {
@@ -4374,10 +4418,42 @@ function closeListingConfirmOverlay(){
 // e'lonlar yaratib, ro'yxatni chalkashtirmaydi, faqat oxirgi marshrutni
 // yangilab boradi. Izoh/rasm/telefon kerak bo'lsa, mavjud "Mening
 // e'lonlarim" bo'limidan keyinroq qo'shib-tahrirlab bo'ladi.
+// Bir foydalanuvchi bir vaqtning o'zida faqat BITTA turdagi e'lon
+// (Yo'lovchiman YOKI Yuk yuboraman) bilan "faol" hisoblanadi — chunki
+// interfeys ham shunday ishlaydi (bitta marshrut paneli, 3 rejimdan
+// FAQAT bittasi tanlanadi). Muammo: avval rejim almashtirilganda oldingi
+// rejimning Firestore hujjati (masalan "travels/<id>") ARXIVLANMASDI —
+// shu sabab foydalanuvchi "Yuk yuboraman"ga o'tsa ham, uning ESKI
+// "Yo'lovchiman" e'loni haydovchilarga abadiy ko'rinaverardi (xatto
+// keyinchalik "o'chirib tashlasa" ham — chunki o'sha "o'chirish" faqat
+// JORIY (masalan orders) hujjatga tegadi, travels'dagi eskisiga emas).
+function _archiveOtherSeekerListing(currentMode){
+  if (!db || !telegramUser.id) return;
+  const otherCollection = currentMode === 'cargo' ? 'travels' : 'orders';
+  db.collection(otherCollection).doc(String(telegramUser.id)).set({
+    archived: true,
+    archivedAt: firebase.firestore.FieldValue.serverTimestamp()
+  }, { merge: true }).catch(() => {});
+}
+function _archiveAllSeekerListings(){
+  if (!db || !telegramUser.id) return;
+  ['orders', 'travels'].forEach(coll => {
+    db.collection(coll).doc(String(telegramUser.id)).set({
+      archived: true,
+      archivedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(() => {});
+  });
+}
+
 function _saveSeekerListingToFirestore(mode, from, to){
   if (!db || !telegramUser.id) return;
   const center = REGION_CENTERS[from];
   const collectionName = mode === 'cargo' ? 'orders' : 'travels';
+  // Bir xil "Toshkent shahar"dan chiqqan barcha e'lonlar aynan bitta
+  // koordinatada ustma-ust tushib qolmasligi uchun — har bir foydalanuvchi
+  // uchun barqaror (doim bir xil) kichik siljish qo'shiladi (driverRoutes'da
+  // ishlatilgan jitterForRouteId bilan bir xil usul).
+  const [jx, jy] = center ? jitterForRouteId(telegramUser.id, 0.03) : [0, 0];
   const doc = {
     type: mode === 'cargo' ? 'order' : 'travel',
     from, to, dest: to,
@@ -4393,8 +4469,8 @@ function _saveSeekerListingToFirestore(mode, from, to){
     // haydovchi mijozning YANGI e'lonini xaritada UMUMAN ko'ra olmasdi.
     archived: false,
     gender: 'any',
-    lat: center ? center[1] : null,
-    lng: center ? center[0] : null,
+    lat: center ? center[1] + jy : null,
+    lng: center ? center[0] + jx : null,
     telegramId: telegramUser.id,
     telegramUsername: telegramUser.username || '',
     firstName: telegramUser.first_name || '',
@@ -4403,6 +4479,11 @@ function _saveSeekerListingToFirestore(mode, from, to){
   if (mode === 'travel') { doc.passengersCount = 1; doc.applicantsCount = 0; }
   else { doc.applicantsCount = 0; }
   db.collection(collectionName).doc(String(telegramUser.id)).set(doc, { merge: true }).catch(() => {});
+  // Boshqa turdagi eski e'lonni arxivlaymiz + endi haydovchi sifatida
+  // faol emasligini belgilaymiz (aks holda eski marshruti mijozlarga
+  // xaritada ko'rinishda davom etaverardi).
+  _archiveOtherSeekerListing(mode);
+  db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
 }
 
 function _saveDriverRouteToFirestore(from, to) {
@@ -4411,11 +4492,15 @@ function _saveDriverRouteToFirestore(from, to) {
     routeFrom: from,
     routeTo: to,
     role: 'driver',
+    driverActive: true,
     chatId: telegramUser.id,
     notifications: true,
     firstName: telegramUser.first_name || '',
     username: telegramUser.username || ''
   }, { merge: true }).catch(() => {});
+  // Haydovchi bo'lib e'lon berganda — eski Yo'lovchiman/Yuk yuboraman
+  // e'lonlari (agar bo'lsa) endi noto'g'ri, arxivlanadi.
+  _archiveAllSeekerListings();
 }
 
 function showDrvSavedBanner(text) {
@@ -7147,6 +7232,7 @@ function driverRouteMapProps(route){
     mapFrom: mapFrom || '—',
     mapTo: mapTo || '—',
     itemType: 'driverRoute',
+    telegramId: route.telegramId != null ? String(route.telegramId) : '',
     thumbUrl: '',
     telegramUsername: route.telegramUsername || ''
   };
@@ -7167,19 +7253,38 @@ function jitterForRouteId(id, scale){
 }
 
 function buildDriverRouteGeo(){
-  const features = driverRoutes
-    .filter(driverRouteMatchesTravelFilter)
-    .map(r => {
-      const center = REGION_CENTERS[r.from];
-      if (!center) return null;
-      const [jx, jy] = jitterForRouteId(r.firestoreId || r.id, 0.045);
-      return {
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [center[0] + jx, center[1] + jy] },
-        properties: driverRouteMapProps(r)
-      };
-    })
-    .filter(Boolean);
+  const seenIds = new Set();
+  const features = [];
+  // Asosiy manba: "users" kolleksiyasidagi haqiqiy haydovchilar (Haydovchiman
+  // rejimidan tasdiqlangan) — hozirgi unified xarita aynan shulardan foydalanadi.
+  driverUsers.filter(driverUserMatchesTravelFilter).forEach(d => {
+    const center = REGION_CENTERS[d.from];
+    if (!center) return;
+    const key = String(d.telegramId != null ? d.telegramId : (d.firestoreId || d.id));
+    if (seenIds.has(key)) return;
+    seenIds.add(key);
+    const [jx, jy] = jitterForRouteId(d.firestoreId || d.id, 0.045);
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [center[0] + jx, center[1] + jy] },
+      properties: driverRouteMapProps(d)
+    });
+  });
+  // Eski "Haydovchi yo'nalish e'loni" formasidan qolgan yozuvlar (agar hali
+  // ishlatilayotgan bo'lsa) — bir xil telegramId uchun ikki marta chizmaymiz.
+  driverRoutes.filter(driverRouteMatchesTravelFilter).forEach(r => {
+    const center = REGION_CENTERS[r.from];
+    if (!center) return;
+    const key = String(r.telegramId != null ? r.telegramId : (r.firestoreId || r.id));
+    if (seenIds.has(key)) return;
+    seenIds.add(key);
+    const [jx, jy] = jitterForRouteId(r.firestoreId || r.id, 0.045);
+    features.push({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [center[0] + jx, center[1] + jy] },
+      properties: driverRouteMapProps(r)
+    });
+  });
   return { type: 'FeatureCollection', features };
 }
 
