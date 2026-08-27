@@ -4807,10 +4807,16 @@ const ORDER_MAP_LAYER_IDS = [
 ];
 // Professional xarita ilovalari (Yandex, Google Maps, Uber) belgilarni deyarli
 // bir xil ekran o'lchamida ushlab turadi — zoom bilan drastik kattalashmaydi.
-// Shu sabab bu yerda interval juda tor (0.78–0.95), keskin o'sish yo'q.
+// MUHIM: endi xaritada faqat tegishli (o'zining marshrutiga mos) belgilar
+// ko'rsatiladi — demak har bir ko'rinadigan ikonka MUHIM va uzoqdan
+// (butun mamlakat ko'rinishida, kichik zoom'da) ham yaxshi ko'rinishi
+// kerak. Shu sabab pastki chegara (kichik zoom) sezilarli oshirildi —
+// endi eng uzoq zoom'da ham ikonka "yo'qolib" ketmaydi, eng yaqin
+// zoom'da ham haddan tashqari kattalashib ketmaydi (deyarli bir xil,
+// qulay o'lcham).
 const ORDER_ICON_SIZE_LAYOUT = [
   'interpolate', ['linear'], ['zoom'],
-  3, 0.78, 10, 0.85, 16, 0.95
+  3, 1.0, 8, 1.05, 13, 1.1, 18, 1.18
 ];
 // Mashina (haydovchi) rasmi kенг-va-past proporsiyada (haqiqiy yo'l
 // mashinasi ko'rinishi) — shu sabab xuddi shu icon-size qiymatlarida
@@ -4818,12 +4824,11 @@ const ORDER_ICON_SIZE_LAYOUT = [
 // (rasm balandligi canvas'ning atigi ~48%ini egallaydi, boshqalarida esa
 // ~88%). Haydovchi rasmi endi (assets/icon-driver-3d.png) qirqilib qayta
 // markazlashtirildi, LEKIN baribir baland emas — shu sabab bu yerda
-// alohida, biroz kattaroq shkala beriladi, xaritada mashina belgisi
-// boshqa 2ta belgi bilan vizual jihatdan bir xil "og'irlikda" ko'rinishi
-// uchun.
+// alohida, kattaroq shkala beriladi, xaritada mashina belgisi boshqa
+// 2ta belgi bilan vizual jihatdan bir xil "og'irlikda" ko'rinishi uchun.
 const DRIVER_ICON_SIZE_LAYOUT = [
   'interpolate', ['linear'], ['zoom'],
-  3, 1.05, 10, 1.15, 16, 1.3
+  3, 1.3, 8, 1.35, 13, 1.4, 18, 1.5
 ];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
