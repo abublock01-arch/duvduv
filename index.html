@@ -3347,6 +3347,43 @@ function driverUserMatchesTravelFilter(d){
   return true;
 }
 
+// MUHIM: xaritada "haydovchi mijozni ko'radimi" (mapItemMatchesDriverFilter)
+// FAQAT shu qurilmaning localStorage'idagi marshrutga (getDriverRouteFilter,
+// routeKey()) qarab ishlaydi — bu Firestore'dagi "users.routeFrom/routeTo"
+// bilan bog'liq EMAS edi. Natijada: agar localStorage'dagi marshrut
+// (masalan orqaga bosilganda, ilova keshi tozalanganda yoki boshqa
+// qurilma/sessiyada) Firestore'dagi HAQIQIY tasdiqlangan marshrutdan
+// eskirib/farqlanib qolsa — haydovchi Firestore'da to'liq faol (driverActive
+// true) bo'lsa ham, xaritada mijozlarni "ko'rmay qolardi" (bir tomonlama
+// ko'rinish bug'i). Endi Firestore — yagona haqiqat manbai: har safar
+// "users/{men}" hujjati o'zgarganda (yoki ilova ochilganda) localStorage
+// shu bilan avtomatik sinxronlanadi.
+function subscribeOwnDriverStateSync(){
+  if (!db || telegramUser.id == null) return;
+  db.collection('users').doc(String(telegramUser.id)).onSnapshot(doc => {
+    const d = doc.data();
+    if (!d) return;
+    if (d.driverActive === true && d.routeFrom && d.routeTo) {
+      const current = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+      if (current.from !== d.routeFrom || current.to !== d.routeTo) {
+        localStorage.setItem(routeKey(), JSON.stringify({ from: d.routeFrom, to: d.routeTo }));
+        if (typeof loadDriverRouteState === 'function') loadDriverRouteState();
+        if (typeof invalidateMapGeoCache === 'function') invalidateMapGeoCache();
+        refreshOrderMarkersDebounced();
+        if (typeof logPermEvent === 'function') {
+          logPermEvent('SYNC', `Firestore'dan marshrut sinxronlandi: ${d.routeFrom} → ${d.routeTo}`);
+        }
+      }
+    }
+    // ESLATMA: driverActive:false holatida ataylab hech narsa tozalanmaydi —
+    // aks holda haydovchi hali TASDIQLAMAGAN yangi A/B tanlovini (region
+    // picker'da) shu payt Firestore'ga tushayotgan boshqa (masalan GPS
+    // location) yozuv snapshot'ni qayta tetiklab, tasodifan o'chirib
+    // qo'yishi mumkin edi. Mahalliy tozalash allaqachon exitUniMode() da
+    // to'g'ridan-to'g'ri, shu harakat bilan bir vaqtda amalga oshiriladi.
+  }, err => console.warn('Firestore own-user snapshot xatosi:', err));
+}
+
 async function saveDriverRouteToFirestore(route){
   if (!db) return null;
   try {
@@ -4732,6 +4769,19 @@ const ORDER_MAP_LAYER_IDS = [
 const ORDER_ICON_SIZE_LAYOUT = [
   'interpolate', ['linear'], ['zoom'],
   3, 0.78, 10, 0.85, 16, 0.95
+];
+// Mashina (haydovchi) rasmi kенг-va-past proporsiyada (haqiqiy yo'l
+// mashinasi ko'rinishi) — shu sabab xuddi shu icon-size qiymatlarida
+// yuk/yo'lovchi belgilariga qaraganda "juda kichkina" bo'lib ko'rinardi
+// (rasm balandligi canvas'ning atigi ~48%ini egallaydi, boshqalarida esa
+// ~88%). Haydovchi rasmi endi (assets/icon-driver-3d.png) qirqilib qayta
+// markazlashtirildi, LEKIN baribir baland emas — shu sabab bu yerda
+// alohida, biroz kattaroq shkala beriladi, xaritada mashina belgisi
+// boshqa 2ta belgi bilan vizual jihatdan bir xil "og'irlikda" ko'rinishi
+// uchun.
+const DRIVER_ICON_SIZE_LAYOUT = [
+  'interpolate', ['linear'], ['zoom'],
+  3, 1.05, 10, 1.15, 16, 1.3
 ];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
@@ -7426,6 +7476,7 @@ function removeMapOrderLayers(){
 
 function addMapTypeLayers(sourceId, iconImage, iconOffset){
   const prefix = sourceId;
+  const iconSizeLayout = iconImage === MAP_ICON_DRIVER ? DRIVER_ICON_SIZE_LAYOUT : ORDER_ICON_SIZE_LAYOUT;
   const clusterBase = iconImage === MAP_ICON_BOX ? '#2AABEE' : iconImage === MAP_ICON_DRIVER ? '#34A853' : '#E8820A';
   const clusterDark = iconImage === MAP_ICON_BOX ? '#1565C0' : iconImage === MAP_ICON_DRIVER ? '#1E7E34' : '#B45309';
   map.addLayer({
@@ -7474,7 +7525,7 @@ function addMapTypeLayers(sourceId, iconImage, iconOffset){
     filter: ['!', ['has', 'point_count']],
     layout: {
       'icon-image': iconImage,
-      'icon-size': ORDER_ICON_SIZE_LAYOUT,
+      'icon-size': iconSizeLayout,
       'icon-anchor': 'center',
       'icon-offset': iconOffset,
       'icon-allow-overlap': true,
@@ -10015,6 +10066,7 @@ loadPersistedData();
 setupShipmentsListEvents();
 setupDetailRoutePickerEvents();
 initTelegramUser();
+subscribeOwnDriverStateSync();
 initRouteBtn();
 // Lokatsiya ruxsati endi ilova ochilganda DARHOL so'ralmaydi — buning
 // o'rniga "Yo'lovchiman" bosilib, pin xaritaga tushish animatsiyasi
