@@ -4106,7 +4106,7 @@ function loadLastGPS(){
 }
 
 const DRIVER_ENTRY_ZOOM = 11;
-const MAP_LAYER_CONFIG_VERSION = 5;
+const MAP_LAYER_CONFIG_VERSION = 6;
 
 function getDriverMapZoom(){
   return persistedMapZoom ?? DRIVER_ENTRY_ZOOM;
@@ -4798,7 +4798,17 @@ function hideMapControls(){
 // olib tashlandi. Endi matnlar hech qachon sun'iy ravishda
 // xiralashtirilmaydi — Mapbox'ning tabiiy, standart ko'rinishi ishlatiladi.
 let orderClusterLayersReady = false;
-const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
+// MUHIM: klasterlash O'CHIRILDI. Ilgari uzoqlashtirilganda (kichik
+// zoom'da) yaqin turgan belgilar bitta rangli doiraga ("klaster",
+// ikonkasiz, faqat son bilan) birlashtirilardi — yuk (ko'k) va yo'lovchi
+// (to'q sariq) turli rangda ko'rinishi ham shundan edi, va bu doiraning
+// o'lchami alohida (ikonka o'lchamidan mustaqil) formula bilan
+// hisoblanardi, shu sabab "g'alati" o'zgarardi. Endi xaritada FAQAT
+// tegishli (o'zining marshrutiga mos) belgilar ko'rsatilgani uchun
+// (bir vaqtning o'zida odatda bir nechtagina) klaster shart emas — har
+// bir nuqta har doim, qaysi zoom'da bo'lmasin, O'ZINING haqiqiy 3D
+// ikonkasi bilan ko'rinadi.
+const MAP_CLUSTER_OPTS = { cluster: false };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
 const ORDER_MAP_LAYER_IDS = [
   'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
