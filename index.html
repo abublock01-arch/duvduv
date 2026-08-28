@@ -4106,7 +4106,7 @@ function loadLastGPS(){
 }
 
 const DRIVER_ENTRY_ZOOM = 11;
-const MAP_LAYER_CONFIG_VERSION = 3;
+const MAP_LAYER_CONFIG_VERSION = 4;
 
 function getDriverMapZoom(){
   return persistedMapZoom ?? DRIVER_ENTRY_ZOOM;
@@ -4801,9 +4801,9 @@ let orderClusterLayersReady = false;
 const MAP_CLUSTER_OPTS = { cluster: true, clusterMaxZoom: 15, clusterRadius: 60 };
 const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
 const ORDER_MAP_LAYER_IDS = [
-  'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
-  'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label',
-  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
+  'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-icon-shadow', 'map-orders-icon-plate', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
+  'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-icon-shadow', 'map-travels-icon-plate', 'map-travels-unclustered-icon', 'map-travels-unclustered-label',
+  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-icon-shadow', 'map-driver-routes-icon-plate', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
 ];
 // Professional xarita ilovalari (Yandex, Google Maps, Uber) belgilarni deyarli
 // bir xil ekran o'lchamida ushlab turadi — zoom bilan drastik kattalashmaydi.
@@ -4829,6 +4829,18 @@ const ORDER_ICON_SIZE_LAYOUT = [
 const DRIVER_ICON_SIZE_LAYOUT = [
   'interpolate', ['linear'], ['zoom'],
   3, 1.3, 8, 1.35, 13, 1.4, 18, 1.5
+];
+// Ikonka ortidagi "plastinka" (backing plate) — oq doira + yumshoq soya.
+// Xarita qanday rangda (yashil park, ko'k suv, yo'l chizig'i) bo'lishidan
+// QAT'I NAZAR kontrastni ta'minlaydi, ikonkaning o'zini o'zgartirmasdan
+// (Google Maps POI belgilari, Airbnb narx pufakchalari shu tamoyilda).
+const ICON_BACKING_RADIUS = [
+  'interpolate', ['linear'], ['zoom'],
+  3, 20, 8, 22, 13, 24, 18, 27
+];
+const DRIVER_ICON_BACKING_RADIUS = [
+  'interpolate', ['linear'], ['zoom'],
+  3, 24, 8, 26, 13, 29, 18, 33
 ];
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
@@ -7428,7 +7440,7 @@ function applyMapLayerOwnFilter(prefix, restrictToOwn){
   const clusterFilter = ownFilter ? ['all', ['has', 'point_count'], ownFilter] : ['has', 'point_count'];
   const unclusteredFilter = ownFilter ? ['all', ['!', ['has', 'point_count']], ownFilter] : ['!', ['has', 'point_count']];
   [`${prefix}-clusters`, `${prefix}-cluster-count`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, clusterFilter); });
-  [`${prefix}-unclustered-icon`, `${prefix}-unclustered-label`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, unclusteredFilter); });
+  [`${prefix}-icon-shadow`, `${prefix}-icon-plate`, `${prefix}-unclustered-icon`, `${prefix}-unclustered-label`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, unclusteredFilter); });
 }
 
 // Yo'lovchiman rejimi faol bo'lganda: yo'lovchi/yuk e'lonlari orasidan
@@ -7440,11 +7452,12 @@ function applyUniModeMapVisibility(){
   if (!map || !map.getLayer('map-orders-clusters')) return;
   const isSeekerMode = activeUniMode === 'travel' || activeUniMode === 'cargo';
   const orderTravelIds = [
-    'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
-    'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
+    'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-icon-shadow', 'map-orders-icon-plate', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
+    'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-icon-shadow', 'map-travels-icon-plate', 'map-travels-unclustered-icon', 'map-travels-unclustered-label'
   ];
   const driverRouteIds = [
     'map-driver-routes-clusters', 'map-driver-routes-cluster-count',
+    'map-driver-routes-icon-shadow', 'map-driver-routes-icon-plate',
     'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
   ];
   // Yo'lovchi/yuk e'lonlari qatlami endi HAR IKKALA rejimda ham ko'rinadi —
@@ -7564,6 +7577,40 @@ function addMapTypeLayers(sourceId, iconImage, iconOffset){
       'text-halo-width': 0.4
     }
   });
+  const backingRadius = iconImage === MAP_ICON_DRIVER ? DRIVER_ICON_BACKING_RADIUS : ICON_BACKING_RADIUS;
+  // Yumshoq soya — plastinka ostida, biroz kattaroq va xira, "ko'tarilib
+  // turgan" taassurot uchun (Uber/Yandex uslubi).
+  map.addLayer({
+    id: `${prefix}-icon-shadow`,
+    type: 'circle',
+    source: sourceId,
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-radius': backingRadius,
+      'circle-color': '#0f172a',
+      'circle-opacity': 0.16,
+      'circle-blur': 0.7,
+      'circle-translate': [0, 3],
+      'circle-translate-anchor': 'viewport'
+    }
+  });
+  // Oq "plastinka" — ikonka qanday fonda (yashil park, ko'k suv, yo'l
+  // chizig'i) bo'lishidan qat'i nazar kontrastni ta'minlaydi. Ingichka
+  // rangli halqa (clusterBase) toifani bildiradi — ikonkaning o'zi
+  // tegilmaydi/o'zgarmaydi.
+  map.addLayer({
+    id: `${prefix}-icon-plate`,
+    type: 'circle',
+    source: sourceId,
+    filter: ['!', ['has', 'point_count']],
+    paint: {
+      'circle-radius': backingRadius,
+      'circle-color': '#ffffff',
+      'circle-opacity': 0.97,
+      'circle-stroke-width': 2,
+      'circle-stroke-color': clusterBase
+    }
+  });
   map.addLayer({
     id: `${prefix}-unclustered-icon`,
     type: 'symbol',
@@ -7617,7 +7664,10 @@ function bindOrderMapEvents(){
   map._orderMapEventsReady = true;
 
   const clusterLayers = ['map-orders-clusters', 'map-orders-cluster-count', 'map-travels-clusters', 'map-travels-cluster-count', 'map-driver-routes-clusters', 'map-driver-routes-cluster-count'];
-  const iconLayers = ['map-orders-unclustered-icon', 'map-travels-unclustered-icon', 'map-driver-routes-unclustered-icon'];
+  // "-icon-plate" ham shu ro'yxatda — oq plastinka ustiga bosilsa ham
+  // (ikonkaning aynan ustiga tegmasa ham) tugma ishlaydi, teginish
+  // maydoni kattaroq va qulayroq bo'ladi.
+  const iconLayers = ['map-orders-icon-plate', 'map-orders-unclustered-icon', 'map-travels-icon-plate', 'map-travels-unclustered-icon', 'map-driver-routes-icon-plate', 'map-driver-routes-unclustered-icon'];
   const hoverLayers = [...clusterLayers, ...iconLayers];
 
   map.on('click', e => {
