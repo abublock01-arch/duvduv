@@ -4111,7 +4111,7 @@ const DRIVER_ENTRY_ZOOM = 11;
 // bolgandan keyin chiqib kirsam ham men korinib turishim kerak, yaqinroq
 // rakursdan") ishlatiladigan, ancha YAQINROQ zoom darajasi.
 const OWN_LISTING_ZOOM = 15;
-const MAP_LAYER_CONFIG_VERSION = 6;
+const MAP_LAYER_CONFIG_VERSION = 7;
 
 function getDriverMapZoom(){
   return persistedMapZoom ?? DRIVER_ENTRY_ZOOM;
@@ -4870,31 +4870,25 @@ const ORDER_MAP_LAYER_IDS = [
   'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label',
   'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
 ];
-// Professional xarita ilovalari (Yandex, Google Maps, Uber) belgilarni deyarli
-// bir xil ekran o'lchamida ushlab turadi — zoom bilan drastik kattalashmaydi.
-// MUHIM: endi xaritada faqat tegishli (o'zining marshrutiga mos) belgilar
-// ko'rsatiladi — demak har bir ko'rinadigan ikonka MUHIM va uzoqdan
-// (butun mamlakat ko'rinishida, kichik zoom'da) ham yaxshi ko'rinishi
-// kerak. Shu sabab pastki chegara (kichik zoom) sezilarli oshirildi —
-// endi eng uzoq zoom'da ham ikonka "yo'qolib" ketmaydi, eng yaqin
-// zoom'da ham haddan tashqari kattalashib ketmaydi (deyarli bir xil,
-// qulay o'lcham).
+// Xaritadagi belgilar o'lchami. Uchala ikonka ham endi BIR XIL o'lchamdagi
+// oq doira ichida (assets/icon-*-3d.png rasmlariga doira ichiga qurib
+// berilgan) - shu sabab ular uchun ham BITTA, bir xil shkala ishlatiladi:
+// xaritada yuk, yo'lovchi va haydovchi belgilari aynan bir xil "og'irlikda"
+// ko'rinadi (ilgari mashina rasmi keng-va-past bo'lgani uchun alohida,
+// kattaroq shkala kerak edi - doira ichiga olingach bunga hojat qolmadi).
+//
+// MUHIM: ilgari shkala deyarli tekis edi (1.0 -> 1.18), ya'ni xaritani
+// yaqinlashtirsangiz ham, uzoqlashtirsangiz ham belgi bir xil o'lchamda
+// qolib, mantiqsiz ko'rinardi. Endi tabiiy, ko'z bilan sezilarli darajada
+// kattalashib-kichrayadi, lekin chekkalarda me'yorida to'xtaydi:
+//   zoom 3-6   (butun mamlakat)  - kichik, lekin baribir tanib olsa bo'ladi
+//   zoom 11-13 (viloyat/shahar)  - o'rtacha, qulay o'lcham
+//   zoom 16-18 (ko'cha)          - katta, bosish oson
 const ORDER_ICON_SIZE_LAYOUT = [
   'interpolate', ['linear'], ['zoom'],
-  3, 1.0, 8, 1.05, 13, 1.1, 18, 1.18
+  3, 0.60, 6, 0.72, 9, 0.88, 11, 1.0, 13, 1.18, 15, 1.42, 17, 1.65, 18, 1.78
 ];
-// Mashina (haydovchi) rasmi kенг-va-past proporsiyada (haqiqiy yo'l
-// mashinasi ko'rinishi) — shu sabab xuddi shu icon-size qiymatlarida
-// yuk/yo'lovchi belgilariga qaraganda "juda kichkina" bo'lib ko'rinardi
-// (rasm balandligi canvas'ning atigi ~48%ini egallaydi, boshqalarida esa
-// ~88%). Haydovchi rasmi endi (assets/icon-driver-3d.png) qirqilib qayta
-// markazlashtirildi, LEKIN baribir baland emas — shu sabab bu yerda
-// alohida, kattaroq shkala beriladi, xaritada mashina belgisi boshqa
-// 2ta belgi bilan vizual jihatdan bir xil "og'irlikda" ko'rinishi uchun.
-const DRIVER_ICON_SIZE_LAYOUT = [
-  'interpolate', ['linear'], ['zoom'],
-  3, 1.3, 8, 1.35, 13, 1.4, 18, 1.5
-];
+const DRIVER_ICON_SIZE_LAYOUT = ORDER_ICON_SIZE_LAYOUT;
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
 const MAP_ICON_PERSON = 'map-icon-person';
@@ -7530,9 +7524,13 @@ function findOrderByMapId(orderId){
 function loadMapMarkerImage(map, id, source){
   return new Promise((resolve, reject) => {
     if (map.hasImage(id)) { resolve(); return; }
-    const img = new Image(64, 64);
+    // 128px + pixelRatio 4 = icon-size 1.0 da 32 CSS px (ilgarigidek), LEKIN
+    // 4 barobar aniqroq: endi ikonka zoom bilan sezilarli kattalashadigan
+    // bo'lgani uchun (icon-size 1.78 gacha) past aniqlikda xiralashib
+    // ketardi. Retina ekranlarda ham tiniq chiqadi.
+    const img = new Image(128, 128);
     img.onload = () => {
-      if (!map.hasImage(id)) map.addImage(id, img, { pixelRatio: 2 });
+      if (!map.hasImage(id)) map.addImage(id, img, { pixelRatio: 4 });
       resolve();
     };
     img.onerror = reject;
@@ -7546,12 +7544,18 @@ function loadMapMarkerImage(map, id, source){
 
 function loadMapMarkerImages(map){
   return Promise.all([
-    // Xaritadagi ikonkalar pastdagi 3ta tugmadagi bilan aynan bir xil bo'lishi
-    // uchun endi o'sha 3D PNG rasmlarning o'zidan foydalanamiz (avvalgi
-    // qo'lda chizilgan MAP_MARKER_BOX_SVG/MAP_MARKER_PERSON_SVG o'rniga).
-    loadMapMarkerImage(map, MAP_ICON_BOX, 'assets/icon-cargo-3d.png'),
-    loadMapMarkerImage(map, MAP_ICON_PERSON, 'assets/icon-travel-3d.png'),
-    loadMapMarkerImage(map, MAP_ICON_DRIVER, 'assets/icon-driver-3d.png')
+    // Xaritada ikonkalar OQ DOIRA ichida ko'rsatiladi (Google Maps POI,
+    // Yandex, Uber uslubi) - shunda xaritaning istalgan foni ustida
+    // (ko'cha, park, suv, bino) kontrast kafolatlanadi va uchala tur ham
+    // bir xil "og'irlikda" ko'rinadi. Bu doira RASMNING O'ZIGA qurib
+    // berilgan (alohida qatlam emas), shuning uchun zoom bilan ikonka
+    // kattalashib-kichrayganda doira ham aynan shu nisbatda o'zgaradi.
+    // MUHIM: pastdagi 3 ta amal tugmasi esa eski (doirasiz) rasmlardan
+    // foydalanishda davom etadi - u yerda tugmaning o'zi allaqachon
+    // dumaloq oq ramkada, ikkinchi doira kerak emas.
+    loadMapMarkerImage(map, MAP_ICON_BOX, 'assets/icon-cargo-map.png'),
+    loadMapMarkerImage(map, MAP_ICON_PERSON, 'assets/icon-travel-map.png'),
+    loadMapMarkerImage(map, MAP_ICON_DRIVER, 'assets/icon-driver-map.png')
   ]);
 }
 
@@ -7745,9 +7749,9 @@ function setupOwnMapIndicators(){
   removeOwnMapIndicators();
   const filter = ownIndicatorFilter();
 
-  // Yuk yuboraman / Yo'lovchiman — ikonka ichida/atrofida nafis "nafas
-  // oluvchi" pulsatsiya qiluvchi doira (ikkalasida ham BIR XIL, qaysi
-  // birini tanlaganingizdan qat'i nazar).
+  // Yuk yuboraman / Yo'lovchiman - ikonka atrofida nafis "nafas oluvchi"
+  // pulsatsiya qiluvchi doira (ikkalasida ham BIR XIL, qaysi birini
+  // tanlaganingizdan qat'i nazar).
   ['map-orders', 'map-travels'].forEach(prefix => {
     const color = prefix === 'map-orders' ? '#2AABEE' : '#E8820A';
     map.addLayer({
@@ -7757,7 +7761,7 @@ function setupOwnMapIndicators(){
     }, `${prefix}-unclustered-icon`);
   });
 
-  // Haydovchiman — radar uslubida kengayib-yo'qoluvchi ikkita halqa
+  // Haydovchiman - radar uslubida kengayib-yo'qoluvchi ikkita halqa
   // (chiziqli aylana, to'ldirilmagan).
   if (map.getLayer('map-driver-routes-unclustered-icon')) {
     ['a', 'b'].forEach(tag => {
@@ -7772,8 +7776,21 @@ function setupOwnMapIndicators(){
   let breathT = 0;
   let radarT = 0;
   _ownIndicatorTimer = setInterval(() => {
+    if (!map) return;
+    // MUHIM: ikonkaning o'zi zoom bilan kattalashib-kichrayadi
+    // (ORDER_ICON_SIZE_LAYOUT), shu sabab uning atrofidagi pulsatsiya/radar
+    // halqalari ham AYNAN SHU nisbatda o'lchanishi kerak - aks holda
+    // uzoqlashtirilganda halqa ikonkadan kattaligicha qolib, yaqinlashtirilganda
+    // esa ikonka ichida yo'qolib ketardi. ownIconScaleNow() joriy zoom uchun
+    // ikonka koeffitsientini beradi va hamma radiuslar shunga ko'paytiriladi.
+    const k = ownIconScaleNow();
+
+    // Oq doira radiusi icon-size 1.0 da ~16 px - shu sabab pulsatsiya
+    // halqasi ALBATTA shundan kattaroq bo'lishi kerak, aks holda u
+    // doiraning ORQASIDA butunlay yashirinib qolardi va hech narsa
+    // ko'rinmasdi.
     breathT = (breathT + 0.09) % (Math.PI * 2);
-    const pr = 14 + Math.sin(breathT) * 5;
+    const pr = (24 + Math.sin(breathT) * 5) * k;
     const po = 0.3 - Math.sin(breathT) * 0.15;
     ['map-orders-own-pulse', 'map-travels-own-pulse'].forEach(id => {
       if (map.getLayer(id)) { map.setPaintProperty(id, 'circle-radius', pr); map.setPaintProperty(id, 'circle-opacity', po); }
@@ -7784,10 +7801,32 @@ function setupOwnMapIndicators(){
       const id = `map-driver-routes-own-radar-${tag}`;
       if (!map.getLayer(id)) return;
       const phase = (radarT + (i === 0 ? 0 : 0.5)) % 1;
-      map.setPaintProperty(id, 'circle-radius', 10 + phase * 24);
+      map.setPaintProperty(id, 'circle-radius', (18 + phase * 26) * k);
+      map.setPaintProperty(id, 'circle-stroke-width', 2.5 * k);
       map.setPaintProperty(id, 'circle-stroke-opacity', Math.max(0, 0.85 * (1 - phase)));
     });
   }, 90);
+}
+
+// ORDER_ICON_SIZE_LAYOUT ichidagi ['interpolate','linear',['zoom'], z1,v1, z2,v2, ...]
+// jadvalidan joriy zoom uchun koeffitsientni hisoblab beradi (Mapbox buni
+// ichida o'zi qiladi, lekin JS tarafda ham kerak - halqalarni ikonka bilan
+// bir xil nisbatda o'lchash uchun).
+function ownIconScaleNow(){
+  if (!map) return 1;
+  const z = map.getZoom();
+  const stops = ORDER_ICON_SIZE_LAYOUT.slice(3);
+  let prevZ = stops[0], prevV = stops[1];
+  if (z <= prevZ) return prevV;
+  for (let i = 2; i < stops.length; i += 2) {
+    const curZ = stops[i], curV = stops[i + 1];
+    if (z <= curZ) {
+      const t = (z - prevZ) / (curZ - prevZ || 1);
+      return prevV + (curV - prevV) * t;
+    }
+    prevZ = curZ; prevV = curV;
+  }
+  return prevV;
 }
 // ══════════════════════════════════════════════════════════════════════
 
