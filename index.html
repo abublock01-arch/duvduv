@@ -946,7 +946,22 @@ body.view-driver .driver-route-bar{
   -webkit-tap-highlight-color:transparent;
 }
 .uni-mode-chip.visible{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
-.uni-mode-chip-x{font-size:12px;opacity:.85}
+.uni-mode-chip:active{transform:translate(-50%,-50%) scale(.95)}
+/* Chip ichidagi rejim ikonkasi — oq dumaloq fonda, xaritadagi belgi bilan
+   bir xil "til"da gapirsin (foydalanuvchi matnni o'qimasa ham, ikonkadan
+   qaysi rejimda ekanini darhol taniydi). */
+.uni-mode-chip-icon{
+  width:26px;height:26px;flex-shrink:0;
+  border-radius:50%;background:#fff;padding:2px;
+  object-fit:contain;
+  box-shadow:0 1px 3px rgba(0,0,0,.18);
+}
+.uni-mode-chip-x{
+  font-size:11px;opacity:.9;margin-left:2px;
+  width:20px;height:20px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:50%;background:rgba(255,255,255,.22);
+}
 
 /* "Yo'lovchiman" rejimida (pin animatsiyasi paytida) chip o'rniga xaritaning
    pastki chap burchagida ko'rinadigan "orqaga" tugmasi — uchta amal
@@ -2689,6 +2704,7 @@ html, body { font-size: var(--fs-base); }
             <span class="uni-action-label" id="uniRouteText">Haydovchiman</span>
           </button>
           <button type="button" class="uni-mode-chip" id="uniModeChip" onclick="exitUniMode()" aria-label="Bekor qilish">
+            <img class="uni-mode-chip-icon" id="uniModeChipIcon" src="" alt="" aria-hidden="true">
             <span class="uni-mode-chip-label" id="uniModeChipLabel"></span>
             <span class="uni-mode-chip-x" aria-hidden="true">✕</span>
           </button>
@@ -3563,12 +3579,48 @@ function selectActionPalette(index){
 let activeUniMode = null;
 let uniModeOpenTimer = null;
 function uniModeMeta(){
+  // MUHIM: bu yerdagi "color" faqat FAOL REJIM CHIPI uchun ishlatiladi
+  // (pastdagi 3 ta tugmaning rangi bunga bog'liq emas — u foydalanuvchi
+  // tanlaydigan palitradan keladi). Ranglar ataylab XARITADAGI o'sha
+  // turning belgisi bilan bir xil qilib olindi: chipda ko'rgan rang —
+  // xaritada o'z ikonkangiz atrofida pulsatsiya qilayotgan rang.
+  // Ilgari "Yo'lovchiman" (#ff8a00) va "Haydovchiman" (#E8820A) deyarli
+  // BIR XIL to'q sariq edi — ya'ni rang bo'yicha ularni ajratib
+  // bo'lmasdi; endi haydovchi yashil (xaritadagi radar halqasi rangi).
   return {
-    driver: { label: 'Haydovchiman', cyr: 'Ҳайдовчиман', color: '#E8820A', open: openDriverRouteSheet },
-    cargo:  { label: 'Yuk yuboraman', cyr: 'Юк юбораман', color: '#33a0fd', open: openOrder },
-    travel: { label: "Yo'lovchiman", cyr: 'Йўловчиман', color: '#ff8a00', open: openTravelSheet }
+    driver: { label: 'Haydovchiman', cyr: 'Ҳайдовчиман', color: '#22C55E', open: openDriverRouteSheet },
+    cargo:  { label: 'Yuk yuboraman', cyr: 'Юк юбораман', color: '#2AABEE', open: openOrder },
+    travel: { label: "Yo'lovchiman", cyr: 'Йўловчиман', color: '#E8820A', open: openTravelSheet }
   };
 }
+// ═══ Faol rejim chipi ═══
+// Amal tanlangach (Yo'lovchiman / Yuk yuboraman / Haydovchiman), 3 ta
+// tugma chetga chiqib ketadi va ularning O'RNIDA — aynan shu bo'shagan
+// joyda — rejim nomi va ikonkasi bo'lgan rangli chip paydo bo'ladi.
+// Shu tufayli foydalanuvchi qaysi bo'limda ekanini darhol, xaritaga
+// qaramasdan ham biladi; ✕ bosilsa rejimdan chiqadi.
+// MUHIM: chip yangi joy egallamaydi — u tugmalar bo'shatgan joyda turadi,
+// shuning uchun xaritani to'smaydi va hech narsaga xalaqit bermaydi.
+const UNI_CHIP_ICONS = {
+  travel: 'assets/icon-travel-3d.png',
+  cargo:  'assets/icon-cargo-3d.png',
+  driver: 'assets/icon-driver-3d.png'
+};
+function showUniModeChip(key){
+  const meta = uniModeMeta()[key];
+  const chip = document.getElementById('uniModeChip');
+  if (!meta || !chip) return;
+  chip.style.setProperty('--uni-chip-color', meta.color);
+  const icon = document.getElementById('uniModeChipIcon');
+  if (icon) icon.src = UNI_CHIP_ICONS[key] || '';
+  const label = document.getElementById('uniModeChipLabel');
+  if (label) setI18nText(label, meta.label, meta.cyr);
+  chip.classList.add('visible');
+}
+function hideUniModeChip(){
+  hideUniModeChip();
+}
+
 function enterUniMode(key){
   // Reverse (orqaga qaytish) animatsiyasi hali tugamagan bo'lsa ham yangi
   // rejimga kirishga yo'l qo'ymaymiz — aks holda ikkita animatsiya bir
@@ -3616,6 +3668,13 @@ function enterUniMode(key){
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
   const myPinToken = ++uniPinToken;
+  // Chip 3 ta tugmaning chetga chiqish animatsiyasi (.48s) tugagach
+  // paydo bo'ladi — shunda u bo'shagan joyga tabiiy "o'rnashadi",
+  // tugmalar bilan ustma-ust tushib chalkashlik hosil qilmaydi.
+  setTimeout(() => {
+    if (myPinToken !== uniPinToken || activeUniMode !== key) return;
+    showUniModeChip(key);
+  }, 520);
   playTravelPinAnimation(activeBtn, btns, key, myPinToken);
 }
 // ═══ "Yo'lovchiman" ikonkasi xaritada foydalanuvchi lokatsiyasiga
@@ -3990,6 +4049,10 @@ function resumeUniMode(key){
   document.getElementById('uniModeBackBtn')?.classList.add('visible');
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
+  // Ilova yopib-ochilgan: bu yerda animatsiya yo'q, shu sabab chip
+  // DARHOL ko'rsatiladi — foydalanuvchi ilovaga qaytishi bilanoq qaysi
+  // bo'limda ekanini ko'radi.
+  showUniModeChip(key);
 
   // Qayerdan/Qayerga panelini saqlangan marshrut bilan to'ldiramiz —
   // yuqori (asl) joyida, pastga tushish animatsiyasi kerak emas.
@@ -8292,6 +8355,10 @@ function initUnifiedMap(){
       document.getElementById('uniModeBackBtn')?.classList.add('visible');
       const unifiedActions = document.querySelector('.unified-actions');
       if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
+      // Xarita hali yuklanmagan bo'lsa ham chip darhol ko'rinsin — aks
+      // holda tugmalar yashiringan, chip esa hali yo'q bo'lgan qisqa
+      // oraliqda ekranning pastki qismi bo'p-bo'sh qolib ketardi.
+      showUniModeChip(earlyMode);
       if (earlyMode === 'driver') document.getElementById('routeSetBtn')?.classList.add('has-route');
     }
   }
