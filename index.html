@@ -3932,8 +3932,17 @@ function exitUniMode(){
   }
   travelPinFlightClone = null;
   // Amal-ikonkasi xaritadan ketdi — yashiringan "mening joylashuvim"
-  // nuqtasini yana ko'rsatamiz (agar u ilgari mavjud bo'lgan bo'lsa).
-  showDriverLocationMarker();
+  // nuqtasini yana ko'rsatamiz. MUHIM: lekin agar shu payt aynan shu
+  // joyda (haqiqiy GPS koordinatada) foydalanuvchining o'zining ALLAQACHON
+  // tasdiqlangan/faol e'loni (yoki haydovchi marshruti) ko'rinib turgan
+  // bo'lsa — buni QILMAYMIZ. Aks holda "mening joylashuvim" nuqtasi
+  // aynan yangi qo'yilgan e'lon belgisi ustiga tushib, ikkalasi
+  // ustma-ust ko'rinib qolar edi ("bu qaysi biri — o'zim turgan joymi,
+  // yoki eloni mmi?" degan chalkashlik).
+  const hasOwnVisibleMarker = (prevKey === 'travel' || prevKey === 'cargo')
+    ? getMyShipments().length > 0
+    : (prevKey === 'driver' && myDriverState.active);
+  if (!hasOwnVisibleMarker) showDriverLocationMarker();
   document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
   playTravelPinReverseAnimation(activeBtn, fromRect);
 }
@@ -4585,6 +4594,8 @@ function _saveSeekerListingToFirestore(mode, from, to){
   // xaritada ko'rinishda davom etaverardi).
   _archiveOtherSeekerListing(mode);
   db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
+  // VAQTINCHALIK TEST (OWN_ICON_TEST, 2-variant) — pastda olib tashlanadi:
+  setTimeout(() => { if (typeof triggerOwnSpotlight === 'function') triggerOwnSpotlight(); }, 700);
 }
 
 function _saveDriverRouteToFirestore(from, to) {
@@ -7619,6 +7630,9 @@ function setupOrderClusterLayers(){
     map._ordersLayerConfigVersion = MAP_LAYER_CONFIG_VERSION;
     bindOrderMapEvents();
     orderClusterLayersReady = true;
+    // VAQTINCHALIK TEST (OWN_ICON_TEST) — pastda olib tashlanadi:
+    applyOwnIconTestVariant();
+    injectOwnIconTestSwitcher();
   }).catch(err => console.warn('Map marker icons:', err));
 }
 
@@ -7659,6 +7673,177 @@ function bindOrderMapEvents(){
     map.on('mouseleave', id, () => { map.getCanvas().style.cursor = ''; });
   });
 }
+
+// ══════════════════════════════════════════════════════════════════════
+// VAQTINCHALIK TEST: "bu — MENING eloningizmi?" muammosi uchun 3 ta
+// yechim varianti, jonli almashtirib ko'rish uchun. Foydalanuvchi birini
+// tanlagach — bu butun blok (shu yerdan pastgacha, OWN_ICON_TEST bilan
+// belgilangan joygacha) OLIB TASHLANADI, faqat tanlangan variant kodi
+// doimiy qoladi.
+// ══════════════════════════════════════════════════════════════════════
+let _ownIconTestVariant = (() => {
+  const v = parseInt(localStorage.getItem('__ownIconTestVariant') || '1', 10);
+  return (v >= 1 && v <= 3) ? v : 1;
+})();
+let _ownPulseTimer = null;
+
+function getOwnSeekerMapPoint(){
+  const id = telegramUser.id != null ? String(telegramUser.id) : null;
+  if (!id) return null;
+  const item = orders.find(o => String(o.telegramId) === id && isActiveListing(o))
+            || travels.find(t => String(t.telegramId) === id && isActiveListing(t));
+  if (!item || item.lat == null || item.lng == null) return null;
+  return { lng: item.lng, lat: item.lat };
+}
+
+function removeOwnIconTestLayers(){
+  if (!map) return;
+  if (_ownPulseTimer) { clearInterval(_ownPulseTimer); _ownPulseTimer = null; }
+  ['map-orders', 'map-travels'].forEach(prefix => {
+    [`${prefix}-own-pulse`, `${prefix}-own-siz-label`, `${prefix}-own-ring`].forEach(id => {
+      if (map.getLayer(id)) map.removeLayer(id);
+    });
+    // 3-variantda kattalashtirilgan icon-size'ni asliga qaytaramiz
+    if (map.getLayer(`${prefix}-unclustered-icon`)) {
+      map.setLayoutProperty(`${prefix}-unclustered-icon`, 'icon-size', ORDER_ICON_SIZE_LAYOUT);
+    }
+  });
+  document.getElementById('ownIconLocateBtn')?.remove();
+}
+
+function applyOwnIconTestVariant(){
+  if (!map || !map.getLayer('map-orders-unclustered-icon')) return;
+  removeOwnIconTestLayers();
+  const ownId = telegramUser.id != null ? String(telegramUser.id) : null;
+  if (!ownId) return;
+  const ownFilter = ['all', ['!', ['has', 'point_count']], ['==', ['get', 'telegramId'], ownId]];
+
+  if (_ownIconTestVariant === 1) {
+    // 1-VARIANT: ikonka atrofida nafis pulsatsiya qiluvchi halqa.
+    ['map-orders', 'map-travels'].forEach(prefix => {
+      const color = prefix === 'map-orders' ? '#2AABEE' : '#E8820A';
+      map.addLayer({
+        id: `${prefix}-own-pulse`, type: 'circle', source: prefix,
+        filter: ownFilter,
+        paint: { 'circle-radius': 18, 'circle-color': color, 'circle-opacity': 0.35, 'circle-stroke-width': 0 }
+      }, `${prefix}-unclustered-icon`);
+    });
+    let t = 0;
+    _ownPulseTimer = setInterval(() => {
+      t = (t + 0.12) % (Math.PI * 2);
+      const r = 18 + Math.sin(t) * 8;
+      const o = 0.38 - Math.sin(t) * 0.18;
+      ['map-orders-own-pulse', 'map-travels-own-pulse'].forEach(id => {
+        if (map.getLayer(id)) { map.setPaintProperty(id, 'circle-radius', r); map.setPaintProperty(id, 'circle-opacity', o); }
+      });
+    }, 90);
+  }
+
+  if (_ownIconTestVariant === 2) {
+    // 2-VARIANT: doimiy "SIZ" yorlig'i + qo'yilganda spotlight (pastda
+    // triggerOwnSpotlight() orqali _saveSeekerListingToFirestore'da
+    // chaqiriladi).
+    ['map-orders', 'map-travels'].forEach(prefix => {
+      map.addLayer({
+        id: `${prefix}-own-siz-label`, type: 'symbol', source: prefix,
+        filter: ownFilter,
+        layout: {
+          'text-field': 'SIZ',
+          'text-font': ['DIN Pro Bold', 'Arial Unicode MS Bold'],
+          'text-size': 12, 'text-offset': [0, -2.6], 'text-allow-overlap': true, 'text-ignore-placement': true
+        },
+        paint: { 'text-color': '#ffffff', 'text-halo-color': '#111111', 'text-halo-width': 2 }
+      });
+    });
+  }
+
+  if (_ownIconTestVariant === 3) {
+    // 3-VARIANT: kattaroq ikonka + rangli halqa + "Mening joyim" tugmasi.
+    const BIG_SIZE = ['interpolate', ['linear'], ['zoom'], 3, 1.35, 8, 1.42, 13, 1.5, 18, 1.6];
+    ['map-orders', 'map-travels'].forEach(prefix => {
+      const color = prefix === 'map-orders' ? '#2AABEE' : '#E8820A';
+      map.addLayer({
+        id: `${prefix}-own-ring`, type: 'circle', source: prefix,
+        filter: ownFilter,
+        paint: { 'circle-radius': 30, 'circle-color': 'transparent', 'circle-stroke-width': 3, 'circle-stroke-color': color }
+      }, `${prefix}-unclustered-icon`);
+      map.setLayoutProperty(`${prefix}-unclustered-icon`, 'icon-size', ['case', ['==', ['get', 'telegramId'], ownId], BIG_SIZE, ORDER_ICON_SIZE_LAYOUT]);
+    });
+    const btn = document.createElement('button');
+    btn.id = 'ownIconLocateBtn';
+    btn.type = 'button';
+    btn.textContent = '📍 Mening joyim';
+    btn.style.cssText = 'position:fixed;left:14px;bottom:110px;z-index:9000;background:#111827;color:#fff;border:none;border-radius:22px;padding:11px 16px;font-size:14px;font-weight:600;box-shadow:0 6px 18px rgba(0,0,0,.25);';
+    btn.onclick = () => {
+      const p = getOwnSeekerMapPoint();
+      if (p && map) map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 15), duration: 600 });
+    };
+    document.body.appendChild(btn);
+  }
+}
+
+function triggerOwnSpotlight(){
+  if (_ownIconTestVariant !== 2 || !map) return;
+  const p = getOwnSeekerMapPoint();
+  if (!p) return;
+  map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 15), duration: 700 });
+  const id = '__spotlightPulse';
+  if (map.getLayer(id)) map.removeLayer(id);
+  if (map.getSource(id)) map.removeSource(id);
+  map.addSource(id, { type: 'geojson', data: { type: 'Feature', geometry: { type: 'Point', coordinates: [p.lng, p.lat] }, properties: {} } });
+  map.addLayer({ id, type: 'circle', source: id, paint: { 'circle-radius': 10, 'circle-color': '#2563EB', 'circle-opacity': 0.55 } });
+  let step = 0;
+  const anim = setInterval(() => {
+    step++;
+    if (!map.getLayer(id)) { clearInterval(anim); return; }
+    map.setPaintProperty(id, 'circle-radius', 10 + step * 4);
+    map.setPaintProperty(id, 'circle-opacity', Math.max(0, 0.55 - step * 0.05));
+    if (step >= 11) {
+      clearInterval(anim);
+      if (map.getLayer(id)) map.removeLayer(id);
+      if (map.getSource(id)) map.removeSource(id);
+    }
+  }, 60);
+}
+
+function setOwnIconTestVariant(v){
+  _ownIconTestVariant = v;
+  try { localStorage.setItem('__ownIconTestVariant', String(v)); } catch(_) {}
+  applyOwnIconTestVariant();
+  if (v === 2) triggerOwnSpotlight();
+  document.querySelectorAll('.own-icon-test-btn').forEach(b => {
+    b.classList.toggle('active', Number(b.dataset.v) === v);
+  });
+}
+
+function injectOwnIconTestSwitcher(){
+  if (document.getElementById('ownIconTestSwitcher')) return;
+  const wrap = document.createElement('div');
+  wrap.id = 'ownIconTestSwitcher';
+  wrap.style.cssText = 'position:fixed;left:14px;bottom:60px;z-index:9001;display:flex;gap:6px;background:rgba(17,24,39,.85);backdrop-filter:blur(10px);padding:6px;border-radius:16px;box-shadow:0 6px 18px rgba(0,0,0,.25);align-items:center;';
+  wrap.innerHTML = `
+    <span style="color:#fff;font-size:11px;font-weight:700;padding:0 4px;">TEST:</span>
+    ${[1,2,3].map(v => `<button type="button" class="own-icon-test-btn" data-v="${v}" style="width:30px;height:30px;border-radius:50%;border:none;background:#374151;color:#fff;font-weight:700;font-size:13px;">${v}</button>`).join('')}
+    <button type="button" id="ownIconTestClose" style="width:24px;height:24px;border-radius:50%;border:none;background:#7f1d1d;color:#fff;font-size:12px;margin-left:4px;">✕</button>
+  `;
+  document.body.appendChild(wrap);
+  wrap.querySelectorAll('.own-icon-test-btn').forEach(b => {
+    if (Number(b.dataset.v) === _ownIconTestVariant) b.classList.add('active');
+    b.style.outline = Number(b.dataset.v) === _ownIconTestVariant ? '2px solid #22c55e' : 'none';
+    b.addEventListener('click', () => {
+      wrap.querySelectorAll('.own-icon-test-btn').forEach(x => x.style.outline = 'none');
+      b.style.outline = '2px solid #22c55e';
+      setOwnIconTestVariant(Number(b.dataset.v));
+    });
+  });
+  document.getElementById('ownIconTestClose').addEventListener('click', () => {
+    removeOwnIconTestLayers();
+    wrap.remove();
+  });
+}
+// ══════════════════════════════════════════════════════════════════════
+// OWN_ICON_TEST tugadi
+// ══════════════════════════════════════════════════════════════════════
 
 function mapZoomIn(){
   if (map) map.zoomIn({ duration: 280 });
