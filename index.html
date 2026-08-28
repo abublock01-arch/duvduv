@@ -4790,6 +4790,42 @@ function showDriverLocationMarker(){
   if (driverLocationMarker) driverLocationMarker.getElement().style.display = '';
 }
 
+// Foydalanuvchining o'zining hozir FAOL bo'lgan yuk/yo'lovchi e'loni
+// xarita bo'yicha koordinatasini qaytaradi (bor bo'lsa). Buni "mening
+// joylashuvim" nuqtasini yashirish/markazlash uchun YAGONA manba sifatida
+// ishlatamiz — shunda barcha joylarda bir xil mantiq ishlaydi.
+function getOwnActiveSeekerPoint(){
+  const id = (typeof telegramUser !== 'undefined' && telegramUser.id != null) ? String(telegramUser.id) : null;
+  if (!id) return null;
+  const list1 = (typeof orders !== 'undefined') ? orders : [];
+  const list2 = (typeof travels !== 'undefined') ? travels : [];
+  const item = list1.find(o => String(o.telegramId) === id && isActiveListing(o))
+            || list2.find(t => String(t.telegramId) === id && isActiveListing(t));
+  if (!item || item.lat == null || item.lng == null) return null;
+  return { lng: item.lng, lat: item.lat };
+}
+
+// Amal-ikonkasi (buyurtma/yo'lovchi e'loni YOKI haydovchi marshruti) xarita
+// bo'yicha allaqachon FAOL/ko'rinib turgan bo'lsa — true.
+function hasOwnActiveMapMarker(){
+  return !!getOwnActiveSeekerPoint() || (typeof myDriverState !== 'undefined' && myDriverState.active);
+}
+
+// Xaritani foydalanuvchining o'zining faol yuk/yo'lovchi e'loni ustiga
+// markazlaydi (agar bor bo'lsa) va "mening joylashuvim" nuqtasini shu
+// yerda YASHIRADI (ustma-ust chiqib qolmasin). Muvaffaqiyatli markazlagan
+// bo'lsa true qaytaradi — chaqiruvchi shu holda generik GPS-markazlashni
+// o'tkazib yuborishi kerak.
+function centerMapOnOwnActiveListing(){
+  if (!map) return false;
+  const p = getOwnActiveSeekerPoint();
+  if (!p) return false;
+  if (typeof removeDriverRadiusLayers === 'function') removeDriverRadiusLayers();
+  map.jumpTo({ center: [p.lng, p.lat], zoom: DRIVER_ENTRY_ZOOM });
+  if (driverLocationMarker) hideDriverLocationMarker();
+  return true;
+}
+
 // Asosiy ekranda (3 ta amal tugmasi) xaritani kattalashtirish/joylashuv
 // boshqaruvlari (+/-/mening joylashuvim) boshida yashirin turadi — faqat
 // foydalanuvchi shu 3 tugmadan birini bosib, pin-tushish animatsiyasi
@@ -7810,7 +7846,20 @@ function setOwnIconTestVariant(v){
   _ownIconTestVariant = v;
   try { localStorage.setItem('__ownIconTestVariant', String(v)); } catch(_) {}
   applyOwnIconTestVariant();
-  if (v === 2) triggerOwnSpotlight();
+  if (v === 2) {
+    triggerOwnSpotlight();
+  } else {
+    // MUHIM: ilgari faqat 2-variant xaritani o'zining e'loniga uchirib
+    // borardi — shu sabab 1 va 3-variantlarni bosganda, agar o'sha payt
+    // ekранда o'zining ikonkasi ko'rinmayotgan bo'lsa, hech qanday farq
+    // sezilmasdi. Endi HAMMA variant tanlanganda ham xarita o'sha nuqtaga
+    // uchib boradi, shunda samara darhol ko'zga tashlanadi.
+    const p = (typeof getOwnSeekerMapPoint === 'function') ? getOwnSeekerMapPoint() : null;
+    if (p && map) map.flyTo({ center: [p.lng, p.lat], zoom: Math.max(map.getZoom(), 15), duration: 600 });
+    else if (typeof showToast === 'function') {
+      showToast("Sinash uchun avval faol e'lon (yuk/yo'lovchi) qo'ying", 'error');
+    }
+  }
   document.querySelectorAll('.own-icon-test-btn').forEach(b => {
     b.classList.toggle('active', Number(b.dataset.v) === v);
   });
@@ -7876,6 +7925,15 @@ function ensureDriverLocationMarker(lng, lat){
   } else {
     driverLocationMarker.setLngLat([lng, lat]);
   }
+  // MUHIM: yangi yaratilgan marker odatiy holda ko'rinadigan (visible)
+  // bo'ladi. Agar aynan shu payt foydalanuvchining o'zining FAOL
+  // e'loni/marshruti xaritada allaqachon ko'rinib tursa — ustma-ust chiqib
+  // qolmasligi uchun DARHOL yashiramiz. Bu tekshiruv shu funksiyani
+  // chaqiradigan boshqa funksiyalar orasidagi ketma-ketlik/poyga holatidan
+  // (race condition) qat'i nazar ishlaydi, chunki markerning oxirgi
+  // ko'rinish holati har doim shu yerda hal qilinadi.
+  if (hasOwnActiveMapMarker()) hideDriverLocationMarker();
+  else showDriverLocationMarker();
 }
 
 function flyToMyLocation(){
@@ -8088,6 +8146,11 @@ function handleAppReactivated(){
 
 async function centerMapOnRouteFrom(){
   if (!map) return;
+  // Foydalanuvchining o'zining FAOL yuk/yo'lovchi e'loni bo'lsa — ENG
+  // AVVALO aynan o'sha nuqtaga markazlaymiz (bu "e'lonim hozir faol"
+  // ekanini ko'rsatadigan vizual belgi bo'lib xizmat qiladi: ilova
+  // yopib-ochilganda ekran o'sha e'lon ustida turadi).
+  if (centerMapOnOwnActiveListing()) return;
   // Marshrut A nuqtasi bor bo'lsa — o'sha viloyat markaziga qaraymiz
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   const fromRegion = saved.from ? destToRegion(saved.from) : null;
@@ -8108,6 +8171,10 @@ async function centerMapOnDriver(){
   // jimgina ishlatiladi. Aks holda faqat keshdagi (yoki standart) markazga
   // qaraymiz — haqiqiy so'rov 3 ta asosiy tugmadan biri bosilganda chiqadi.
   if (!map) return;
+  // Bu yerga ham (masalan ilova fondan qaytganda, xarita QAYTA
+  // yuklanmagan holatda) to'g'ridan-to'g'ri kelinishi mumkin — shu sabab
+  // bu yerda ham avval o'zining faol e'loni bor-yo'qligini tekshiramiz.
+  if (centerMapOnOwnActiveListing()) return;
   const cached = loadLastGPS();
   if (cached) {
     removeDriverRadiusLayers();
