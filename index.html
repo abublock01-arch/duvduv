@@ -3618,7 +3618,7 @@ function showUniModeChip(key){
   chip.classList.add('visible');
 }
 function hideUniModeChip(){
-  hideUniModeChip();
+  document.getElementById('uniModeChip')?.classList.remove('visible');
 }
 
 function enterUniMode(key){
@@ -4931,7 +4931,13 @@ const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
 const ORDER_MAP_LAYER_IDS = [
   'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
   'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label',
-  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
+  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label',
+  // "Bu mening e'lonim" belgilari ham shu ro'yxatda bo'lishi SHART: qatlamlar
+  // qayta qurilganda (removeMapOrderLayers) ular ham o'chirilmasa, manbasi
+  // (source) o'chirilgan "yetim" qatlam bo'lib qolib, Mapbox xato beradi va
+  // xaritada hech narsa yo'q joyda pulsatsiya ko'rinib turadi.
+  'map-orders-own-pulse', 'map-travels-own-pulse',
+  'map-driver-routes-own-radar-a', 'map-driver-routes-own-radar-b'
 ];
 // Xaritadagi belgilar o'lchami. Uchala ikonka ham endi BIR XIL o'lchamdagi
 // oq doira ichida (assets/icon-*-3d.png rasmlariga doira ichiga qurib
@@ -7567,10 +7573,18 @@ function applyUniModeMapVisibility(){
   ];
   const driverRouteIds = [
     'map-driver-routes-clusters', 'map-driver-routes-cluster-count',
-    'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
+    'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label',
+    // MUHIM: "bu mening e'lonim" belgisi (radar halqalari) HAR DOIM o'zining
+    // ikonkasi bilan BIRGA yashirinishi/ko'rinishi kerak. Ilgari bu ro'yxatda
+    // yo'q edi va natijada haydovchi orqaga bosganda mashina ikonkasi
+    // yashirinib, uning ostidagi yashil pulsatsiya xaritada yolg'iz qolib
+    // ketardi ("hech narsa yo'q joyda yashil doira pulsatsiya qilyapti").
+    'map-driver-routes-own-radar-a', 'map-driver-routes-own-radar-b'
   ];
   // Yo'lovchi/yuk e'lonlari qatlami endi HAR IKKALA rejimda ham ko'rinadi —
   // farq filtrda: seeker rejimida faqat o'ziniki, driver rejimida hammasi.
+  // Yuk/yo'lovchi pulsatsiyasi ham xuddi shunday — o'z ikonkasi bilan birga.
+  orderTravelIds.push('map-orders-own-pulse', 'map-travels-own-pulse');
   orderTravelIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible'); });
   driverRouteIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'visible' : 'none'); });
   applyMapLayerOwnFilter('map-orders', isSeekerMode);
@@ -7644,6 +7658,11 @@ const MAP_LABEL_PAINT = {
 
 function removeMapOrderLayers(){
   if (!map) return;
+  // Animatsiya taymerini ham to'xtatamiz — qatlamlar o'chirilgach u bekorga
+  // ishlab turmasin.
+  if (typeof _ownIndicatorTimer !== 'undefined' && _ownIndicatorTimer) {
+    clearInterval(_ownIndicatorTimer); _ownIndicatorTimer = null;
+  }
   [...ORDER_MAP_LAYER_IDS, 'orders-clusters', 'orders-unclustered-icon', 'orders-unclustered-label', 'orders-cluster-count'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id);
   });
