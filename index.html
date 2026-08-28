@@ -946,22 +946,7 @@ body.view-driver .driver-route-bar{
   -webkit-tap-highlight-color:transparent;
 }
 .uni-mode-chip.visible{opacity:1;transform:translate(-50%,-50%) scale(1);pointer-events:auto}
-.uni-mode-chip:active{transform:translate(-50%,-50%) scale(.95)}
-/* Chip ichidagi rejim ikonkasi — oq dumaloq fonda, xaritadagi belgi bilan
-   bir xil "til"da gapirsin (foydalanuvchi matnni o'qimasa ham, ikonkadan
-   qaysi rejimda ekanini darhol taniydi). */
-.uni-mode-chip-icon{
-  width:26px;height:26px;flex-shrink:0;
-  border-radius:50%;background:#fff;padding:2px;
-  object-fit:contain;
-  box-shadow:0 1px 3px rgba(0,0,0,.18);
-}
-.uni-mode-chip-x{
-  font-size:11px;opacity:.9;margin-left:2px;
-  width:20px;height:20px;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  border-radius:50%;background:rgba(255,255,255,.22);
-}
+.uni-mode-chip-x{font-size:12px;opacity:.85}
 
 /* "Yo'lovchiman" rejimida (pin animatsiyasi paytida) chip o'rniga xaritaning
    pastki chap burchagida ko'rinadigan "orqaga" tugmasi — uchta amal
@@ -2704,7 +2689,6 @@ html, body { font-size: var(--fs-base); }
             <span class="uni-action-label" id="uniRouteText">Haydovchiman</span>
           </button>
           <button type="button" class="uni-mode-chip" id="uniModeChip" onclick="exitUniMode()" aria-label="Bekor qilish">
-            <img class="uni-mode-chip-icon" id="uniModeChipIcon" src="" alt="" aria-hidden="true">
             <span class="uni-mode-chip-label" id="uniModeChipLabel"></span>
             <span class="uni-mode-chip-x" aria-hidden="true">✕</span>
           </button>
@@ -3593,34 +3577,6 @@ function uniModeMeta(){
     travel: { label: "Yo'lovchiman", cyr: 'Йўловчиман', color: '#E8820A', open: openTravelSheet }
   };
 }
-// ═══ Faol rejim chipi ═══
-// Amal tanlangach (Yo'lovchiman / Yuk yuboraman / Haydovchiman), 3 ta
-// tugma chetga chiqib ketadi va ularning O'RNIDA — aynan shu bo'shagan
-// joyda — rejim nomi va ikonkasi bo'lgan rangli chip paydo bo'ladi.
-// Shu tufayli foydalanuvchi qaysi bo'limda ekanini darhol, xaritaga
-// qaramasdan ham biladi; ✕ bosilsa rejimdan chiqadi.
-// MUHIM: chip yangi joy egallamaydi — u tugmalar bo'shatgan joyda turadi,
-// shuning uchun xaritani to'smaydi va hech narsaga xalaqit bermaydi.
-const UNI_CHIP_ICONS = {
-  travel: 'assets/icon-travel-3d.png',
-  cargo:  'assets/icon-cargo-3d.png',
-  driver: 'assets/icon-driver-3d.png'
-};
-function showUniModeChip(key){
-  const meta = uniModeMeta()[key];
-  const chip = document.getElementById('uniModeChip');
-  if (!meta || !chip) return;
-  chip.style.setProperty('--uni-chip-color', meta.color);
-  const icon = document.getElementById('uniModeChipIcon');
-  if (icon) icon.src = UNI_CHIP_ICONS[key] || '';
-  const label = document.getElementById('uniModeChipLabel');
-  if (label) setI18nText(label, meta.label, meta.cyr);
-  chip.classList.add('visible');
-}
-function hideUniModeChip(){
-  document.getElementById('uniModeChip')?.classList.remove('visible');
-}
-
 function enterUniMode(key){
   // Reverse (orqaga qaytish) animatsiyasi hali tugamagan bo'lsa ham yangi
   // rejimga kirishga yo'l qo'ymaymiz — aks holda ikkita animatsiya bir
@@ -3668,13 +3624,6 @@ function enterUniMode(key){
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
   const myPinToken = ++uniPinToken;
-  // Chip 3 ta tugmaning chetga chiqish animatsiyasi (.48s) tugagach
-  // paydo bo'ladi — shunda u bo'shagan joyga tabiiy "o'rnashadi",
-  // tugmalar bilan ustma-ust tushib chalkashlik hosil qilmaydi.
-  setTimeout(() => {
-    if (myPinToken !== uniPinToken || activeUniMode !== key) return;
-    showUniModeChip(key);
-  }, 520);
   playTravelPinAnimation(activeBtn, btns, key, myPinToken);
 }
 // ═══ "Yo'lovchiman" ikonkasi xaritada foydalanuvchi lokatsiyasiga
@@ -3922,6 +3871,26 @@ function playTravelPinReverseAnimation(activeBtn, fromRect){
     uniPinReversing = false;
   }, TRAVEL_PIN_ANIM_MS);
 }
+// Foydalanuvchining hozir HAQIQATAN tirik (Firestore'da faol, arxivlanmagan)
+// e'lonini qaytaradi: {mode, from, to} yoki null. Bu "men kerakli oynadamanmi?"
+// savoliga javob beradigan YAGONA ishonchli manba — localStorage emas,
+// balki serverdagi holat. Ilova bir vaqtda faqat BITTA tirik e'longa ruxsat
+// beradi (yangi e'lon qo'yilganda _archiveOtherSeekerListing eskisini
+// arxivlaydi), shu sabab birinchi topilgani yetarli.
+function getOwnLiveListingRoute(){
+  if (typeof myDriverState !== 'undefined' && myDriverState.active && myDriverState.from && myDriverState.to) {
+    return { mode: 'driver', from: myDriverState.from, to: myDriverState.to };
+  }
+  const id = (typeof telegramUser !== 'undefined' && telegramUser.id != null) ? String(telegramUser.id) : null;
+  if (!id) return null;
+  const mine = (list, mode) => {
+    const it = (list || []).find(x => String(x.telegramId) === id && isActiveListing(x) && x.from && x.to);
+    return it ? { mode, from: it.from, to: it.to } : null;
+  };
+  return mine(typeof orders !== 'undefined' ? orders : [], 'cargo')
+      || mine(typeof travels !== 'undefined' ? travels : [], 'travel');
+}
+
 function exitUniMode(){
   if (!activeUniMode) return;
   const prevKey = activeUniMode;
@@ -3955,17 +3924,47 @@ function exitUniMode(){
   });
   document.getElementById('uniModeChip')?.classList.remove('visible');
   document.getElementById('uniModeBackBtn')?.classList.remove('visible');
-  // "Orqaga" bosilganda mahalliy (localStorage) A/B tanlov faqat
-  // TASDIQLANMAGAN, hali Firestore'ga yozilmagan tanlov bo'lsa tozalanadi
-  // (ongli bekor qilish sifatida) — lekin agar bu "Haydovchiman" bo'lib,
-  // marshrut Firestore'da ALLAQACHON faol/tasdiqlangan bo'lsa (myDriverState),
-  // hech narsa tozalanmaydi: aks holda faol e'lon xaritada qolsa-da,
-  // "Mening e'lonlarim" kartochkasi va picker matni yo'qolib, foydalanuvchiga
-  // "elonim ochib ketdimikin" degan noto'g'ri taassurot qoldirardi.
-  const keepDriverRoute = prevKey === 'driver' && myDriverState.active;
-  if (!keepDriverRoute) {
+  // ═══ "Orqaga" != "bekor qilish" ═══
+  // Bu yerda MUHIM tuzatish bor. Ilgari faqat "Haydovchiman" istisno edi,
+  // ya'ni yuk/yo'lovchi e'loni qo'yilgandan keyin "orqaga" bosilsa —
+  // activeMode va A/B marshrut localStorage'dan O'CHIRILARDI. Natijada:
+  // e'lon Firestore'da TIRIK qolar, boshqalarga ko'rinib turar, lekin
+  // bosh ekranda undan hech qanday iz qolmasdi va ilova qayta ochilganda
+  // ham oddiy bosh ekran chiqardi. Ya'ni E'LON O'Z EGASIGA KO'RINMAY
+  // QOLARDI — uni faqat yuqoridagi "Mening e'lonlarim" menyusidan topish
+  // mumkin edi. Aynan shu "men kerakli oynadamanmi?" degan chalkashlikning
+  // asosiy sababi edi.
+  //
+  // Endi mezon aniq va uchala rejim uchun BIR XIL: activeMode kaliti
+  // FAQAT confirmListingPostOk() ichida, ya'ni e'lon haqiqatan qo'yilgan
+  // paytda yoziladi. Demak u hozir shu rejimga teng bo'lsa — e'lon
+  // TASDIQLANGAN, va "orqaga" uni yo'q qilmasligi kerak. Aks holda
+  // (tasdiqlanmagan, yarim qolgan tanlov) — ongli bekor qilish sifatida
+  // tozalanadi.
+  //
+  // E'lonni haqiqatan olib tashlash faqat aniq "o'chirish" amali orqali
+  // bo'ladi: deactivateMyDriverRoute() yoki confirmDeleteShipment() —
+  // ikkalasi ham bu kalitlarni o'zi tozalaydi.
+  // Mezon: Firestore'da TIRIK e'lon bormi? Bor bo'lsa — saqlangan holat
+  // o'chirilmaydi, aksincha aynan O'SHA e'longa moslab qayta yoziladi
+  // (o'zini-o'zi tuzatuvchi mantiq). Bu muhim, chunki masalan tirik
+  // "Yo'lovchiman" e'loni bor foydalanuvchi "Yuk yuboraman"ni bosib,
+  // tasdiqlamay orqaga qaytsa — eski, hali ham tirik e'lonning holati
+  // yo'qolib ketmasligi kerak.
+  const savedModeKey = userPrefKey('activeMode');
+  const live = getOwnLiveListingRoute();
+  // Endigina tasdiqlangan bo'lsa, Firestore snapshot'i hali kelib
+  // ulgurmagan bo'lishi mumkin — shu sababli localStorage'dagi belgi ham
+  // hisobga olinadi (activeMode FAQAT confirmListingPostOk ichida yoziladi).
+  const justPosted = !!savedModeKey && localStorage.getItem(savedModeKey) === prevKey;
+  if (live) {
+    try {
+      if (savedModeKey) localStorage.setItem(savedModeKey, live.mode);
+      localStorage.setItem(routeKey(), JSON.stringify({ from: live.from, to: live.to }));
+    } catch(_) {}
+  } else if (!justPosted) {
     try { localStorage.removeItem(routeKey()); } catch(_) {}
-    try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
+    if (savedModeKey) { try { localStorage.removeItem(savedModeKey); } catch(_) {} }
   }
   loadDriverRouteState();
   // Tugmalar konteyneri (.unified-actions) o'zi "shaffof" bo'lsa ham
@@ -4049,10 +4048,6 @@ function resumeUniMode(key){
   document.getElementById('uniModeBackBtn')?.classList.add('visible');
   const unifiedActions = document.querySelector('.unified-actions');
   if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
-  // Ilova yopib-ochilgan: bu yerda animatsiya yo'q, shu sabab chip
-  // DARHOL ko'rsatiladi — foydalanuvchi ilovaga qaytishi bilanoq qaysi
-  // bo'limda ekanini ko'radi.
-  showUniModeChip(key);
 
   // Qayerdan/Qayerga panelini saqlangan marshrut bilan to'ldiramiz —
   // yuqori (asl) joyida, pastga tushish animatsiyasi kerak emas.
@@ -8374,10 +8369,6 @@ function initUnifiedMap(){
       document.getElementById('uniModeBackBtn')?.classList.add('visible');
       const unifiedActions = document.querySelector('.unified-actions');
       if (unifiedActions) unifiedActions.style.pointerEvents = 'none';
-      // Xarita hali yuklanmagan bo'lsa ham chip darhol ko'rinsin — aks
-      // holda tugmalar yashiringan, chip esa hali yo'q bo'lgan qisqa
-      // oraliqda ekranning pastki qismi bo'p-bo'sh qolib ketardi.
-      showUniModeChip(earlyMode);
       if (earlyMode === 'driver') document.getElementById('routeSetBtn')?.classList.add('has-route');
     }
   }
@@ -9570,6 +9561,18 @@ async function confirmDeleteShipment(key){
     else await deleteOrderFromFirestore(s.firestoreId);
   }
   removeShipmentLocal(key, s.type);
+  // MUHIM: e'lon haqiqatan o'chirildi — demak saqlangan "faol rejim"
+  // holatini ham tozalash SHART. Aks holda ilova keyingi ochilishida
+  // allaqachon yo'q e'lonning oynasini tiklashga urinardi (resumeUniMode),
+  // ya'ni foydalanuvchi o'chirgan e'loni yana "faol"dek ko'rinardi.
+  const deletedMode = s.type === 'travel' ? 'travel' : 'cargo';
+  const savedModeKey = userPrefKey('activeMode');
+  if (savedModeKey && localStorage.getItem(savedModeKey) === deletedMode) {
+    try { localStorage.removeItem(savedModeKey); } catch(_) {}
+    try { localStorage.removeItem(routeKey()); } catch(_) {}
+    if (activeUniMode === deletedMode) exitUniMode();
+    else loadDriverRouteState();
+  }
   persistData();
   renderShipments();
   refreshOrderMarkersDebounced();
