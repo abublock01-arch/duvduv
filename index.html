@@ -5627,6 +5627,7 @@ function toggleDebugPanel(){
   if (_dvDebugOn) {
     logPermEvent('JURNAL', 'yoqildi ✅ — endi tugmalarni bosing');
     logPermEvent('VERSIYA', BUILD_VERSION + ' | mening ID: ' + (telegramUser?.id ?? '?') + ' | mening marshrutim: ' + JSON.stringify(getDriverRouteFilter ? getDriverRouteFilter() : {}));
+    logMapSizeDiag();
   }
 }
 function toggleDebugPanelCollapse(){
@@ -5637,6 +5638,31 @@ function clearDebugPanel(){
   if (body) body.innerHTML = '';
 }
 const DV_DEBUG_MAX_ROWS = 25; // panel cheksiz o'sib, tugmalarni yopib qo'ymasin
+// Xarita o'lchamlari diagnostikasi. MUHIM: logPermEvent jurnal YOQILMAGAN
+// bo'lsa hech narsa yozmaydi (birinchi qatoridayoq return qiladi), shu sabab
+// bu o'lchov jurnal ochilgan HAR SAFAR qayta chaqiriladi — shunda raqamlar
+// har doim yangi va albatta ko'rinadi.
+function logMapSizeDiag(){
+  if (typeof map === 'undefined' || !map || !map.getCanvas) return;
+  const px = sel => {
+    const e = document.querySelector(sel); if (!e) return '-';
+    const r = e.getBoundingClientRect();
+    return `${Math.round(r.top)}/${Math.round(r.height)}`;
+  };
+  let cv = '-';
+  try {
+    const r = map.getCanvas().getBoundingClientRect();
+    cv = `${Math.round(r.top)}/${Math.round(r.height)}`;
+  } catch(_) {}
+  const safeTop = (getComputedStyle(document.documentElement)
+    .getPropertyValue('--probe-safe-top') || 'n/a').trim();
+  logPermEvent('XARITA-OLCHAM',
+    `ekran=${window.innerHeight} | header=${px('.header')} | content=${px('.content')} | ` +
+    `driverView=${px('#driverView')} | mapwrap=${px('.map-wrap')} | tuval=${cv} | ` +
+    `tgVH=${window.Telegram?.WebApp?.viewportHeight ?? '-'} | safeTop=${safeTop} | ` +
+    `body=${document.body.className}`);
+}
+
 function logPermEvent(kind, detail){
   if (!_dvDebugOn) return;
   const body = document.getElementById('dvDebugPanelBody');
@@ -8389,21 +8415,7 @@ function initDriverMap(){
     map.resize();
     requestAnimationFrame(() => { if (map) map.resize(); });
     [120, 400, 900].forEach(ms => setTimeout(() => { if (map) map.resize(); }, ms));
-    // Yashirin diagnostika (faqat "×" tugmasini uzoq bosganda ochiladigan
-    // jurnalda ko'rinadi): agar tepada oq chiziq qolsa, shu raqamlar
-    // sababni aniq ko'rsatadi.
-    setTimeout(() => {
-      if (typeof logPermEvent !== 'function' || !map) return;
-      const px = el => { const e = document.querySelector(el); if (!e) return '-';
-        const r = e.getBoundingClientRect(); return `${Math.round(r.top)}/${Math.round(r.height)}`; };
-      const cv = map.getCanvas();
-      const safeTop = getComputedStyle(document.documentElement)
-        .getPropertyValue('--probe-safe-top') || 'n/a';
-      logPermEvent('XARITA-OLCHAM',
-        `ekran=${window.innerHeight} header=${px('.header')} mapwrap=${px('.map-wrap')} ` +
-        `tuval=${Math.round(cv.getBoundingClientRect().top)}/${Math.round(cv.getBoundingClientRect().height)} ` +
-        `tgViewport=${window.Telegram?.WebApp?.viewportHeight || '-'} safeTop=${safeTop}`);
-    }, 1400);
+    setTimeout(logMapSizeDiag, 1400);
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
       setupOrderClusterLayers();
