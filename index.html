@@ -102,6 +102,10 @@ body.view-driver .logo-brand{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px
 body.view-driver #driverView{background:transparent}
 body.view-driver .map-wrap{
   background:transparent;border:none;box-shadow:none;border-radius:0;
+  /* Butun ekranga qat'iy biriktiramiz — flex hisob-kitobiga bog'liq
+     bo'lmasin, ya'ni sarlavha oqimdan chiqqan-chiqmaganidan qat'i nazar
+     xarita har doim to'liq ekranni egallaydi. */
+  position:absolute;inset:0;
 }
 body.view-driver #map{border-radius:0}
 
@@ -8341,13 +8345,25 @@ function initDriverMap(){
     bearing: 0,
     antialias: false,
     fadeDuration: 0,
-    trackResize: false
+    // MUHIM: ilgari bu false edi. Mapbox konteyner o'lchamini FAQAT yaratilgan
+    // paytda o'lchaydi, keyin esa kuzatmaydi. Sarlavha (.header) esa
+    // body.view-driver qo'shilganda oqimdan chiqadi va konteyner ~68px ga
+    // KENGAYADI — lekin tuval eski, qisqa o'lchamida qolib ketardi. Natijada
+    // sarlavha ortida xarita chizilmay, ilova foni (oq) ko'rinib turardi.
+    // true qilinganda Mapbox ResizeObserver orqali o'zi moslashadi.
+    trackResize: true
   });
   map.on('zoomend', () => {
     if (telegramUser.id == null) return;
     saveUserMapZoom(map.getZoom());
   });
   map.on('load', () => {
+    // Zaxira: tuval konteynerga aniq mos kelishiga kafolat. Telegram
+    // ichidagi WebView'da tartib (layout) bir necha kadr kechikib
+    // o'rnashishi mumkin, shu sabab bir necha marta takrorlaymiz.
+    map.resize();
+    requestAnimationFrame(() => { if (map) map.resize(); });
+    [120, 400, 900].forEach(ms => setTimeout(() => { if (map) map.resize(); }, ms));
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
       setupOrderClusterLayers();
