@@ -85,6 +85,45 @@ body.view-driver .header{
 }
 body.view-driver .header-close{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px rgba(255,255,255,.6)}
 body.view-driver .logo-brand{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px rgba(255,255,255,.6)}
+
+/* ═══════════════════════════════════════════════════════════════════
+   BOSH EKRAN QAYTA JIHOZLANDI (oldingi ko'rinish: git tag "yunusobod1")
+   1) "Qayerdan / Qayerga" paneli bosh ekranda KO'RINMAYDI — u faqat
+      3 ta amaldan biri tanlangandan keyin (body.uni-active) paydo
+      bo'ladi. Bosh ekranda u baribir ishlamas edi (bosilsa tugmalarni
+      silkitardi), ya'ni faqat joy egallab, chalkashlik tug'dirardi.
+   2) 3 ta tugma ekranning O'RTASIDA, simmetrik turadi.
+   3) Sarlavha ortida ham xarita ko'rinadi — oq fon yo'q.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* (3) Xarita butun ekranni egallaydi: yuqori burchak yumaloqligi va
+   ostidagi oqimtir fon olib tashlandi — shu sabab logotip, odamcha va
+   profil tugmasi ortida to'g'ridan-to'g'ri xarita turadi. */
+body.view-driver #driverView{background:transparent}
+body.view-driver .map-wrap{
+  background:transparent;border:none;box-shadow:none;border-radius:0;
+}
+body.view-driver #map{border-radius:0}
+
+/* (1) Yo'nalish paneli — faqat amal tanlangach */
+body.view-driver .driver-route-bar{
+  opacity:0;pointer-events:none;transform:translateY(-12px);
+  transition:opacity .3s ease,transform .3s cubic-bezier(.22,.61,.16,1);
+}
+body.view-driver.uni-active .driver-route-bar{
+  opacity:1;pointer-events:auto;transform:none;
+}
+
+/* (2) 3 ta tugma — ekran markazida, simmetrik. Konteyner butun balandlikni
+   egallagani uchun xaritaga bosishni to'smasin deb o'zi "shaffof"
+   (pointer-events:none), faqat tugmalarning o'zi bosiladi. */
+body.view-driver .unified-actions{
+  top:0;bottom:0;
+  align-content:center;
+  padding:12px 16px;
+  pointer-events:none;
+}
+body.view-driver .unified-actions .uni-action-btn{pointer-events:auto}
 .header-bar{
   position:relative;
   display:flex;align-items:center;justify-content:space-between;
@@ -3786,6 +3825,13 @@ function uniModeMeta(){
     travel: { label: "Yo'lovchiman", cyr: 'Йўловчиман', color: '#E8820A', open: openTravelSheet }
   };
 }
+// Tanaga "uni-active" sinfini qo'yadi/oladi — CSS shu orqali bosh ekran
+// bilan amal ekranini ajratadi (yo'nalish paneli faqat amal tanlangach
+// ko'rinadi). activeUniMode o'zgargan HAR joyda chaqirilishi shart.
+function syncUniActiveClass(){
+  document.body.classList.toggle('uni-active', !!activeUniMode);
+}
+
 function enterUniMode(key){
   // Reverse (orqaga qaytish) animatsiyasi hali tugamagan bo'lsa ham yangi
   // rejimga kirishga yo'l qo'ymaymiz — aks holda ikkita animatsiya bir
@@ -3802,6 +3848,7 @@ function enterUniMode(key){
     closeOnboarding(true);
   }
   activeUniMode = key;
+  syncUniActiveClass();
   // Yo'lovchiman rejimida xaritada faqat haydovchi yo'nalishlari ko'rinsin —
   // yo'lovchi/yuk e'lonlari yashiriladi (applyUniModeMapVisibility).
   applyUniModeMapVisibility();
@@ -3932,18 +3979,13 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
   activeBtn.style.opacity = '0';
   activeBtn.style.pointerEvents = 'none';
 
-  // Tepadagi "qayerdan → qayerga" paneli bo'shagan "Yuk yuboraman" joyiga
-  // tushadi (markazlarini tekislab, faqat translateY bilan) — endi boshqa
-  // animatsiyalar bilan bir xil davomiylik va yumshoq ease bilan, plavniy.
-  if (routeBar && cargoBtn) {
-    const barRect = routeBar.getBoundingClientRect();
-    const cargoRect = cargoBtn.getBoundingClientRect();
-    const deltaY = (cargoRect.top + cargoRect.height / 2) - (barRect.top + barRect.height / 2);
-    routeBar.style.transition = `transform ${TRAVEL_PIN_ANIM_MS}ms ${TRAVEL_EASE}`;
-    routeBar.style.transform = `translateY(${deltaY}px)`;
-    travelRouteBarShifted = true;
-    scheduleQayergaNudge(token);
-  }
+  // ESLATMA: ilgari bu yerda yo'nalish paneli bo'shagan "Yuk yuboraman"
+  // tugmasi joyiga pastga "tushar" edi. Endi bunga hojat yo'q: panel
+  // bosh ekranda umuman ko'rinmaydi va amal tanlangach o'zining tepadagi
+  // joyida yumshoq paydo bo'ladi (CSS: body.uni-active .driver-route-bar).
+  // Tugmalar ham endi ekran o'rtasida, ya'ni "bo'shagan joy" tushunchasi
+  // eski joylashuvga tegishli edi.
+  if (routeBar) scheduleQayergaNudge(token);
 
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -4110,6 +4152,7 @@ function exitUniMode(){
   // tugmasi bor ("Mening e'lonlarim" ro'yxatida — deactivateMyDriverRoute /
   // confirmDeleteShipment). Faqat O'SHA harakat xaritadan olib tashlaydi.
   activeUniMode = null;
+  syncUniActiveClass();
   hideMapControls();
   cancelQayergaNudge();
   // Qaytish animatsiyasi boshlanmoqda — bu davrda yangi rejimga kirish
@@ -4241,6 +4284,7 @@ function resumeUniMode(key){
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   if (!saved.from || !saved.to) return;
   activeUniMode = key;
+  syncUniActiveClass();
   applyUniModeMapVisibility();
   invalidateMapGeoCache();
 
@@ -8595,6 +8639,7 @@ function initUnifiedMap(){
     const earlyMode = getSavedActiveMode();
     if (earlyMode) {
       activeUniMode = earlyMode;
+      syncUniActiveClass();
       const btns = [...document.querySelectorAll('.uni-action-btn')];
       const activeIndex = btns.findIndex(b => b.dataset.uniKey === earlyMode);
       btns.forEach((btn, i) => {
