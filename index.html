@@ -3215,6 +3215,7 @@ function subscribeFirestoreOrders(){
       if (d.archived) return; // arxivlanganlarni o'tkazib yubor
       orders.push({ id: doc.id, firestoreId: doc.id, type: d.type || 'order', from: d.from || '', ...d });
     });
+    _fsListingsSnapshotSeen = true;
     syncShipmentsFromFirestore();
     refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore snapshot xatosi:', err));
@@ -3272,6 +3273,7 @@ function subscribeFirestoreTravels(){
       if (d.archived) return; // arxivlanganlarni o'tkazib yubor
       travels.push({ id: doc.id, firestoreId: doc.id, type: 'travel', ...d });
     });
+    _fsListingsSnapshotSeen = true;
     syncShipmentsFromFirestore();
     refreshOrderMarkersDebounced();
   }, err => console.warn('Firestore travels snapshot xatosi:', err));
@@ -3313,7 +3315,18 @@ const driverUsers = [];
 let myDriverState = { active: false, from: '', to: '' };
 function subscribeDriverUsersForMap(){
   if (!db) return;
-  db.collection('users').where('role', '==', 'driver').onSnapshot(snap => {
+  // MUHIM TUZATISH: ilgari bu yerda where('role','==','driver') turardi.
+  // Lekin 'role' maydonini har ilova ochilganda applySavedUserRole() qayta
+  // yozadi va u localStorage'dagi 'duvduv_role_<id>' kalitiga qaraydi —
+  // o'sha kalitga 'driver' qiymatini yozadigan YAGONA joy esa (submitDriverRoute)
+  // allaqachon O'LIK KOD bo'lib qolgan (u ochadigan varaq endi hech qachon
+  // ochilmaydi). Natijada har ilova qayta yuklanganda faol haydovchining
+  // roli jimgina 'sender'ga tushib qolar va u BARCHA yo'lovchilarning
+  // xaritasidan yo'qolardi — o'zining ekranida esa hamon "faol" deb turardi.
+  // Endi so'rov haqiqiy manbaga — driverActive bayrog'iga tayanadi (u ikkala
+  // tomonda ham to'g'ri yuritiladi), shu sabab eski buzilgan foydalanuvchilar
+  // ham hech qanday migratsiyasiz o'z-o'zidan tuzaladi.
+  db.collection('users').where('driverActive', '==', true).onSnapshot(snap => {
     driverUsers.length = 0;
     snap.forEach(doc => {
       const d = doc.data();
@@ -3378,9 +3391,24 @@ function subscribeOwnDriverStateSync(){
     const isActive = d.driverActive === true && !!d.routeFrom && !!d.routeTo;
     const stateChanged = wasActive !== isActive || myDriverState.from !== (d.routeFrom||'') || myDriverState.to !== (d.routeTo||'');
     myDriverState = { active: isActive, from: d.routeFrom || '', to: d.routeTo || '' };
+    // MUHIM TUZATISH. Ilgari bu blok localStorage'ni Firestore bilan HAR
+    // QANDAY holatda tenglashtirardi. Buning oqibati og'ir edi: faol
+    // haydovchi yangi "Qayerga"ni tanlab, hali TASDIQLAMAY turganda,
+    // users/<id> hujjatiga tushadigan istalgan boshqa yozuv (GPS har 15
+    // soniyada, pingLastSeen, rol yozuvi...) shu snapshot'ni qayta tetiklar
+    // va tanlovni jimgina ESKISIGA qaytarib, yashil tasdiqlash tugmasini
+    // ham yo'q qilardi. Foydalanuvchi uchun bu "tanlaganim o'zi o'chib
+    // qolyapti" bo'lib ko'rinardi.
+    //
+    // Sinxronlash aslida faqat BITTA holat uchun kerak: mahalliy nusxa
+    // Firestore'dan ayrilib qolganda (masalan ilova yangi ochilganda yoki
+    // boshqa qurilmada o'zgartirilganda) uni tiklash. Shu sabab endi u
+    // faqat foydalanuvchi HOZIR hech qanday rejimni tahrirlamayotgan
+    // bo'lsa (bosh ekran) yoki mahalliy marshrut umuman bo'lmasa ishlaydi.
     if (isActive) {
       const current = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-      if (current.from !== d.routeFrom || current.to !== d.routeTo) {
+      const userIsEditing = activeUniMode !== null && !!current.from && !!current.to;
+      if (!userIsEditing && (current.from !== d.routeFrom || current.to !== d.routeTo)) {
         localStorage.setItem(routeKey(), JSON.stringify({ from: d.routeFrom, to: d.routeTo }));
         if (typeof loadDriverRouteState === 'function') loadDriverRouteState();
         if (typeof invalidateMapGeoCache === 'function') invalidateMapGeoCache();
@@ -4191,6 +4219,11 @@ function restoreUserPrefs(){
 
 function applySavedUserRole(){
   const role = telegramUser.id != null ? localStorage.getItem(userPrefKey('role')) : null;
+  // MUHIM: bu yerda 'sender' deb yozib yuborish faol haydovchini bot uchun
+  // ko'rinmas qilib qo'yardi (bot bildirishnomalarni 'role' bo'yicha
+  // ajratadi). Endi rol haydovchi marshruti tasdiqlanganda saqlanadi
+  // (_saveDriverRouteToFirestore) va o'chirilganda qaytariladi, shu sabab
+  // bu yerdagi qiymat ishonchli.
   persistUserRole(role === 'driver' ? 'driver' : 'sender');
   initUnifiedMap();
 }
@@ -4647,7 +4680,8 @@ function _saveSeekerListingToFirestore(mode, from, to){
   // faol emasligini belgilaymiz (aks holda eski marshruti mijozlarga
   // xaritada ko'rinishda davom etaverardi).
   _archiveOtherSeekerListing(mode);
-  db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
+  db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false, role: 'sender' }, { merge: true }).catch(() => {});
+  saveUserRole('sender');
 }
 
 function _saveDriverRouteToFirestore(from, to) {
@@ -4662,6 +4696,10 @@ function _saveDriverRouteToFirestore(from, to) {
     firstName: telegramUser.first_name || '',
     username: telegramUser.username || ''
   }, { merge: true }).catch(() => {});
+  // MUHIM: rolni MAHALLIY ham eslab qolamiz. Aks holda ilova keyingi safar
+  // ochilganda applySavedUserRole() localStorage'da 'driver' topolmay,
+  // Firestore'dagi rolni 'sender'ga tushirib yuborardi.
+  saveUserRole('driver');
   // Haydovchi bo'lib e'lon berganda — eski Yo'lovchiman/Yuk yuboraman
   // e'lonlari (agar bo'lsa) endi noto'g'ri, arxivlanadi.
   _archiveAllSeekerListings();
@@ -8911,8 +8949,35 @@ function dedupeMyShipments(){
   }
 }
 
+// Firestore'dan e'lonlar ro'yxati kamida bir marta kelganini bildiradi.
+// Tozalash faqat shundan keyin xavfsiz: aks holda ilova endi ochilganda,
+// snapshot hali yetib kelmagan payt, o'zining barcha e'lonlari "yo'q" deb
+// hisoblanib o'chib ketardi.
+let _fsListingsSnapshotSeen = false;
+
 function syncShipmentsFromFirestore(){
   if (telegramUser.id == null) return;
+  // ═══ Arxivlangan e'lonlarni ro'yxatdan olib tashlash ═══
+  // subscribeFirestoreOrders/Travels arxivlangan hujjatlarni o'tkazib
+  // yuboradi, ya'ni ular orders/travels massivlaridan chiqib ketadi. Lekin
+  // shipments massivi ilgari HECH QACHON tozalanmasdi — faqat qo'shilardi.
+  // Natijada, masalan haydovchi marshruti qo'yilganda eski yuk e'loni
+  // arxivlansa, u "Mening e'lonlarim"da o'lik kartochka bo'lib abadiy
+  // qolib ketardi: badge noto'g'ri sanardi, kartochkani tahrirlash jimgina
+  // hech narsa qilmasdi, va u localStorage keshiga yozilib har ochilishda
+  // qayta tiklanardi.
+  if (_fsListingsSnapshotSeen) {
+    const mine = String(telegramUser.id);
+    const live = new Set();
+    orders.forEach(o => { if (o.firestoreId) live.add(String(o.firestoreId)); });
+    travels.forEach(t => { if (t.firestoreId) live.add(String(t.firestoreId)); });
+    for (let i = shipments.length - 1; i >= 0; i--) {
+      const sh = shipments[i];
+      if (String(sh.telegramId) !== mine) continue;
+      if (!sh.firestoreId) continue;              // hali yozilmagan mahalliy yozuv
+      if (!live.has(String(sh.firestoreId))) shipments.splice(i, 1);
+    }
+  }
   orders.filter(o => String(o.telegramId) === String(telegramUser.id))
     .forEach(o => mergeFirestoreShipment(o, 'order'));
   travels.filter(t => String(t.telegramId) === String(telegramUser.id))
@@ -9448,6 +9513,15 @@ function deactivateMyDriverRoute(){
   if (db && telegramUser.id) {
     db.collection('users').doc(String(telegramUser.id)).set({ driverActive: false }, { merge: true }).catch(() => {});
   }
+  // MUHIM: mahalliy holatni Firestore snapshot'i kelishini KUTMASDAN
+  // darhol o'chiramiz. Aks holda quyidagi exitUniMode() ichidagi
+  // getOwnLiveListingRoute() hali eski (active:true) qiymatni ko'rib,
+  // endigina o'chirilgan kalitlarni qaytadan yozib qo'yardi — natijada
+  // ilova keyingi ochilishida o'chirilgan marshrut bilan haydovchi
+  // oynasiga tushib qolar, "Mening e'lonlarim"da esa uni o'chirish uchun
+  // kartochka ham qolmasdi (ya'ni chiqib bo'lmaydigan holat).
+  myDriverState = { active: false, from: '', to: '' };
+  saveUserRole('sender');
   try { localStorage.removeItem(routeKey()); } catch(_) {}
   try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
   if (activeUniMode === 'driver') exitUniMode();
