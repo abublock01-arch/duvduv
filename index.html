@@ -19,7 +19,7 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 /* ── Har qanday qurilmada, dark mode bo'lsa ham — light majburiy ── */
-:root{
+:root{--probe-safe-top:env(safe-area-inset-top,0px);
   color-scheme: light only;
   --tg-blue:#2AABEE;
   --app-bg:#fff;
@@ -100,6 +100,9 @@ body.view-driver .logo-brand{text-shadow:0 1px 3px rgba(255,255,255,.9),0 0 10px
    ostidagi oqimtir fon olib tashlandi — shu sabab logotip, odamcha va
    profil tugmasi ortida to'g'ridan-to'g'ri xarita turadi. */
 body.view-driver #driverView{background:transparent}
+/* Ilovaning umumiy foni ham xarita rangida — agar biror sabab bilan
+   xarita biror joyni qoplamay qolsa, oq emas, xaritaga yaqin rang chiqadi. */
+body.view-driver, body.view-driver .app{background:#ECE8E0}
 body.view-driver .map-wrap{
   background:transparent;border:none;box-shadow:none;border-radius:0;
   /* Butun ekranga qat'iy biriktiramiz — flex hisob-kitobiga bog'liq
@@ -4421,6 +4424,10 @@ function loadLastGPS(){
   } catch (_) { return null; }
 }
 
+// Mapbox "streets-v12" uslubidagi asosiy yer (quruqlik) rangi. Telegram
+// Mini App foni ham shu rangga qo'yiladi — shunda veb-sahifadan tashqarida
+// Telegram bo'yaydigan joy xarita bilan qo'shilib ketadi.
+const MAP_LAND_COLOR = '#ECE8E0';
 const DRIVER_ENTRY_ZOOM = 11;
 // Foydalanuvchining o'zining faol e'loniga markazlanganda ("qoyib
 // bolgandan keyin chiqib kirsam ham men korinib turishim kerak, yaqinroq
@@ -5060,9 +5067,18 @@ if (window.Telegram && Telegram.WebApp) {
   try {
     Telegram.WebApp.ready();
     Telegram.WebApp.expand();
-    // Dark mode ni o'chiramiz — ilova faqat light uchun
-    if (Telegram.WebApp.setBackgroundColor) Telegram.WebApp.setBackgroundColor('#ffffff');
-    if (Telegram.WebApp.setHeaderColor) Telegram.WebApp.setHeaderColor('#ffffff');
+    // Dark mode ni o'chiramiz — ilova faqat light uchun.
+    // MUHIM: bu yerda ilgari '#ffffff' turardi, ya'ni biz Telegramning
+    // O'ZIGA "Mini App fonini va sarlavhani OQ qilib bo'ya" deb aytardik.
+    // Bu rang Telegram tomonidan veb-sahifadan TASHQARIDA (yuqoridagi
+    // xavfsiz zona va fon sifatida) chiziladi — shu sabab uni CSS bilan
+    // hech qanday yo'l bilan olib bo'lmasdi va brauzerda ham ko'rinmasdi
+    // (Telegram ichida bo'lgani uchun). Sarlavha ortidagi oq chiziqning
+    // qolgan qismi aynan shu edi.
+    // Endi xaritaning asosiy yer rangi beriladi — Telegram bo'yaydigan
+    // joy xarita bilan bir xil bo'lib, ko'zga tashlanmaydi.
+    if (Telegram.WebApp.setBackgroundColor) Telegram.WebApp.setBackgroundColor(MAP_LAND_COLOR);
+    if (Telegram.WebApp.setHeaderColor) Telegram.WebApp.setHeaderColor(MAP_LAND_COLOR);
     initTelegramUser();
     // Bildirishnoma: birinchi e'lon qo'ygandan keyin so'raladi (maybeAskNotifAfterSubmit)
     if (!document.documentElement.classList.contains('theme-telegram')) {
@@ -8364,6 +8380,21 @@ function initDriverMap(){
     map.resize();
     requestAnimationFrame(() => { if (map) map.resize(); });
     [120, 400, 900].forEach(ms => setTimeout(() => { if (map) map.resize(); }, ms));
+    // Yashirin diagnostika (faqat "×" tugmasini uzoq bosganda ochiladigan
+    // jurnalda ko'rinadi): agar tepada oq chiziq qolsa, shu raqamlar
+    // sababni aniq ko'rsatadi.
+    setTimeout(() => {
+      if (typeof logPermEvent !== 'function' || !map) return;
+      const px = el => { const e = document.querySelector(el); if (!e) return '-';
+        const r = e.getBoundingClientRect(); return `${Math.round(r.top)}/${Math.round(r.height)}`; };
+      const cv = map.getCanvas();
+      const safeTop = getComputedStyle(document.documentElement)
+        .getPropertyValue('--probe-safe-top') || 'n/a';
+      logPermEvent('XARITA-OLCHAM',
+        `ekran=${window.innerHeight} header=${px('.header')} mapwrap=${px('.map-wrap')} ` +
+        `tuval=${Math.round(cv.getBoundingClientRect().top)}/${Math.round(cv.getBoundingClientRect().height)} ` +
+        `tgViewport=${window.Telegram?.WebApp?.viewportHeight || '-'} safeTop=${safeTop}`);
+    }, 1400);
     removeDriverRadiusLayers();
     refreshUserLocationRegion().then(() => {
       setupOrderClusterLayers();
