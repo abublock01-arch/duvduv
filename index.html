@@ -103,6 +103,23 @@ body.view-driver #driverView{background:transparent}
 /* Ilovaning umumiy foni ham xarita rangida — agar biror sabab bilan
    xarita biror joyni qoplamay qolsa, oq emas, xaritaga yaqin rang chiqadi. */
 body.view-driver, body.view-driver .app{background:#ECE8E0}
+
+/* ═══ SARLAVHA ORTIDAGI OQ MAYDONNING HAQIQIY SABABI ═══
+   Telegram temasi bloki (.theme-telegram) sarlavhaga "!important" bilan
+   oq fon beradi:
+       .theme-telegram .header{background:var(--app-bg)!important}
+   Bizning "background:transparent" qoidamiz esa !important siz edi va
+   shu sabab YUTQAZARDI — sarlavha xarita ustiga oq to'rtburchak chizib
+   turardi. Diagnostika buni aniq ko'rsatdi: tuval=0/800, ya'ni xarita
+   sarlavha ortida to'liq bor edi, faqat ustidan bo'yalgan edi.
+   Brauzerda takrorlanmagani ham shundan: .theme-telegram sinfi FAQAT
+   Telegram ichida qo'shiladi.
+   Quyidagi qoidalar aynan o'sha !important larni bosadi. */
+html.theme-telegram body.view-driver .header{background:transparent!important}
+html.theme-telegram body.view-driver,
+html.theme-telegram body.view-driver .app{background:#ECE8E0!important}
+html.theme-telegram body.view-driver #driverView,
+html.theme-telegram body.view-driver .map-wrap{background:transparent!important}
 body.view-driver .map-wrap{
   background:transparent;border:none;box-shadow:none;border-radius:0;
   /* MUHIM: bu yerda "absolute" edi, ya'ni konteyner OTA-ELEMENTGA
