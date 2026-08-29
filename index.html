@@ -105,19 +105,28 @@ body.view-driver #driverView{background:transparent}
 body.view-driver, body.view-driver .app{background:#ECE8E0}
 body.view-driver .map-wrap{
   background:transparent;border:none;box-shadow:none;border-radius:0;
-  /* Butun ekranga qat'iy biriktiramiz — flex hisob-kitobiga bog'liq
-     bo'lmasin, ya'ni sarlavha oqimdan chiqqan-chiqmaganidan qat'i nazar
-     xarita har doim to'liq ekranni egallaydi. */
-  position:absolute;inset:0;
+  /* MUHIM: bu yerda "absolute" edi, ya'ni konteyner OTA-ELEMENTGA
+     (#driverView) biriktirilgan edi. Agar ota-element biror sabab bilan
+     sarlavha balandligicha pastdan boshlansa, xarita ham o'sha yerdan
+     boshlanardi — tepada oq maydon qolardi. Endi "fixed": konteyner
+     to'g'ridan-to'g'ri EKRANGA biriktiriladi va hech qanday ota-element
+     tartibiga bog'liq emas. z-index:0 — sarlavha (30), yo'nalish paneli
+     va tugmalar (20) baribir ustida qoladi. */
+  position:fixed;inset:0;z-index:0;
 }
 body.view-driver #map{border-radius:0}
 
 /* (1) Yo'nalish paneli — faqat amal tanlangach */
 body.view-driver .driver-route-bar{
-  opacity:0;pointer-events:none;transform:translateY(-12px);
-  transition:opacity .3s ease,transform .3s cubic-bezier(.22,.61,.16,1);
+  opacity:0;pointer-events:none;transform:translateY(14px);
+  transition:opacity .3s ease,transform .35s cubic-bezier(.22,.61,.16,1);
 }
+/* Amal tanlangach panel EKRANNING PASTIDA paydo bo'ladi (avvalgidek —
+   barmoqqa yaqin), tepada emas. Orqaga/tasdiqlash tugmalari ustidan
+   joy oladi. */
 body.view-driver.uni-active .driver-route-bar{
+  top:auto;
+  bottom:calc(max(22px, env(safe-area-inset-bottom)) + 74px);
   opacity:1;pointer-events:auto;transform:none;
 }
 
