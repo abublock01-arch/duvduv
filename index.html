@@ -932,6 +932,63 @@ body.view-driver .driver-route-bar{
 }
 .mine-palette-name{font-size:12px;font-weight:700;color:#8b95a3;flex-shrink:0}
 
+/* ═══ PROFIL ═══ Sarlavhadagi avatar tugmasi */
+.header-profile-btn{padding:0;overflow:visible}
+.header-avatar{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;letter-spacing:-.02em;
+  background:linear-gradient(160deg,#4FC3F7,#2AABEE);
+  background-size:cover;background-position:center;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.9),0 1px 3px rgba(0,0,0,.2);
+  overflow:hidden;flex-shrink:0;
+}
+/* Profil varag'ining boshi */
+.profile-head{display:flex;align-items:center;gap:13px;flex-shrink:0;margin:0 0 16px}
+.profile-avatar{
+  width:56px;height:56px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:23px;font-weight:800;color:#fff;
+  background:linear-gradient(160deg,#4FC3F7,#2AABEE);
+  background-size:cover;background-position:center;
+  box-shadow:0 3px 10px rgba(42,171,238,.32),inset 0 0 0 3px rgba(255,255,255,.9);
+}
+.profile-head-text{min-width:0;display:flex;flex-direction:column;gap:2px}
+.profile-name{font-size:19px;font-weight:800;color:#1a1c1e;line-height:1.15;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.profile-sub{font-size:13px;font-weight:600;color:#8b95a3}
+.profile-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  display:flex;flex-direction:column;padding-bottom:4px}
+/* Tahrirlanadigan maydonlar */
+.profile-fields{display:flex;flex-direction:column;gap:9px;flex-shrink:0;margin-bottom:6px}
+.profile-field{display:flex;align-items:center;gap:10px;
+  background:#f4f6f8;border-radius:15px;padding:10px 14px;border:1.5px solid transparent;
+  transition:border-color .15s ease,background .15s ease}
+.profile-field:focus-within{border-color:#2AABEE;background:#fff}
+.profile-field-label{font-size:13px;font-weight:700;color:#8b95a3;
+  flex:0 0 74px;letter-spacing:.01em}
+.profile-input{flex:1;min-width:0;border:none;background:transparent;outline:none;
+  font-family:inherit;font-size:15px;font-weight:600;color:#1a1c1e;padding:0}
+.profile-input::placeholder{color:#b9c1cb;font-weight:500}
+.profile-save{
+  margin-top:3px;border:none;border-radius:15px;padding:13px;
+  font-family:inherit;font-size:15px;font-weight:800;color:#fff;letter-spacing:.01em;
+  background:linear-gradient(180deg,#4FC3F7,#2AABEE);
+  box-shadow:0 3px 0 0 #1d8ec4,0 6px 14px rgba(42,171,238,.32);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:transform .09s ease,box-shadow .09s ease,opacity .15s ease;
+}
+.profile-save:active{transform:translateY(2px);box-shadow:0 1px 0 0 #1d8ec4,0 3px 8px rgba(42,171,238,.28)}
+.profile-save.saved{background:linear-gradient(180deg,#4ade80,#22C55E);box-shadow:0 3px 0 0 #16a34a,0 6px 14px rgba(34,197,94,.3)}
+/* Bo'lim sarlavhasi */
+.profile-section-head{display:flex;align-items:baseline;gap:8px;
+  margin:18px 0 9px;flex-shrink:0}
+.profile-section-title{font-size:15px;font-weight:800;color:#1a1c1e}
+.profile-section-count{font-size:13px;font-weight:700;color:#8b95a3}
+.sheet--mine .profile-scroll .shipments-wrap{flex:0 0 auto;overflow:visible}
+.sheet--mine .profile-scroll .shipments-list{overflow:visible;max-height:none}
+.profile-scroll .mine-palette-row{margin-top:18px;flex-shrink:0}
+
 /* Faol rejim chipi — o'rtada, boshqa ikki tugma chetga chiqqach ko'rinadi */
 .uni-mode-chip{
   position:absolute;left:50%;top:50%;
@@ -2608,8 +2665,8 @@ html, body { font-size: var(--fs-base); }
           <button type="button" class="header-mine-btn" id="headerDriversBtn" onclick="openDriverListSheet()" aria-label="Haydovchilarni ko'rish">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="8" cy="9" r="2.6"/><circle cx="17" cy="10" r="2.2"/><path d="M2.5 19c0-2.9 2.5-5 5.5-5s5.5 2.1 5.5 5"/><path d="M13.3 15.2c.9-.5 2-.7 3-.5 2 .4 3.7 2 3.7 4.3"/></svg>
           </button>
-          <button type="button" class="header-mine-btn" id="headerMineBtn" onclick="openMineSheet()" aria-label="Mening e'lonlarim">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+          <button type="button" class="header-mine-btn header-profile-btn" id="headerMineBtn" onclick="openMineSheet()" aria-label="Profil">
+            <span class="header-avatar" id="headerAvatar"></span>
             <span class="header-mine-badge" id="headerMineBadge" hidden>0</span>
           </button>
         </div>
@@ -2703,14 +2760,44 @@ html, body { font-size: var(--fs-base); }
   <div class="sheet sheet--mine" onclick="event.stopPropagation()">
     <button type="button" class="sheet-close" onclick="closeMineSheet()" aria-label="Yopish">×</button>
     <div class="sheet-drag"></div>
-    <h2 class="mine-sheet-title" id="mineSheetTitle">Mening e'lonlarim</h2>
-    <div class="mine-palette-row">
-      <span class="mine-palette-label">Tugmalar rangi</span>
-      <div class="mine-palette-swatches" id="minePaletteSwatches"></div>
-      <span class="mine-palette-name" id="minePaletteName"></span>
+    <div class="profile-head">
+      <span class="profile-avatar" id="profileAvatar"></span>
+      <div class="profile-head-text">
+        <span class="profile-name" id="profileHeadName">Profil</span>
+        <span class="profile-sub" id="profileHeadSub"></span>
+      </div>
     </div>
-    <div class="shipments-wrap visible" id="shipmentsWrap">
-      <div class="shipments-list" id="shipmentsList"></div>
+
+    <div class="profile-scroll">
+      <div class="profile-fields">
+        <label class="profile-field">
+          <span class="profile-field-label">Ism</span>
+          <input type="text" class="profile-input" id="profileFirstName" placeholder="Ismingiz" autocomplete="given-name" maxlength="40">
+        </label>
+        <label class="profile-field">
+          <span class="profile-field-label">Familiya</span>
+          <input type="text" class="profile-input" id="profileLastName" placeholder="Familiyangiz" autocomplete="family-name" maxlength="40">
+        </label>
+        <label class="profile-field">
+          <span class="profile-field-label">Telefon</span>
+          <input type="tel" class="profile-input" id="profilePhone" placeholder="+998 90 123 45 67" autocomplete="tel" maxlength="20">
+        </label>
+        <button type="button" class="profile-save" id="profileSaveBtn" onclick="saveProfileFields()">Saqlash</button>
+      </div>
+
+      <div class="profile-section-head">
+        <span class="profile-section-title">Mening e'lonlarim</span>
+        <span class="profile-section-count" id="profileListingCount"></span>
+      </div>
+      <div class="shipments-wrap visible" id="shipmentsWrap">
+        <div class="shipments-list" id="shipmentsList"></div>
+      </div>
+
+      <div class="mine-palette-row">
+        <span class="mine-palette-label">Tugmalar rangi</span>
+        <div class="mine-palette-swatches" id="minePaletteSwatches"></div>
+        <span class="mine-palette-name" id="minePaletteName"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -3387,6 +3474,14 @@ function subscribeOwnDriverStateSync(){
   db.collection('users').doc(String(telegramUser.id)).onSnapshot(doc => {
     const d = doc.data();
     if (!d) return;
+    // Profil ma'lumotlari ham shu yagona snapshot'dan olinadi — alohida
+    // Firestore o'qishi qilinmaydi (kvota tejaladi).
+    myProfile = {
+      firstName: d.firstName || myProfile.firstName || '',
+      lastName:  d.lastName  || myProfile.lastName  || '',
+      phone:     d.phone     || myProfile.phone     || ''
+    };
+    if (!_profileLoadedOnce) { _profileLoadedOnce = true; refreshProfileChrome(); }
     const wasActive = myDriverState.active;
     const isActive = d.driverActive === true && !!d.routeFrom && !!d.routeTo;
     const stateChanged = wasActive !== isActive || myDriverState.from !== (d.routeFrom||'') || myDriverState.to !== (d.routeTo||'');
@@ -3514,9 +3609,95 @@ function closeDriverListSheet(){
   document.getElementById('driverListSheetOverlay')?.classList.remove('open');
   document.body.style.overflow = '';
 }
+// ══════════════════════════════════════════════════════════════════════
+// PROFIL — foydalanuvchining o'z ma'lumotlari va e'lonlari bir joyda.
+// Ilgari tepadagi tugma faqat e'lonlar ro'yxatini ochardi; endi u profil
+// oynasini ochadi va e'lonlar ham o'sha yerda, alohida bo'lim sifatida
+// turadi. Ism/familiya/telefon Firestore'dagi users/<id> hujjatida
+// saqlanadi — bot ham xuddi shu maydonlardan foydalanadi.
+// ══════════════════════════════════════════════════════════════════════
+let myProfile = { firstName: '', lastName: '', phone: '' };
+let _profileLoadedOnce = false;
+
+function profileInitials(){
+  const a = (myProfile.firstName || telegramUser.first_name || '').trim();
+  const b = (myProfile.lastName || telegramUser.last_name || '').trim();
+  const t = (a.charAt(0) + b.charAt(0)).toUpperCase();
+  return t || (telegramUser.username || '?').charAt(0).toUpperCase();
+}
+
+function profileDisplayName(){
+  const n = [myProfile.firstName || telegramUser.first_name || '',
+             myProfile.lastName || telegramUser.last_name || ''].join(' ').trim();
+  return n || (telegramUser.username ? '@' + telegramUser.username : 'Profil');
+}
+
+// Avatarni (sarlavhadagi kichik va profildagi katta) yangilaydi. Telegram
+// rasmi bo'lsa o'shani, bo'lmasa ism-familiya bosh harflarini ko'rsatadi.
+function paintAvatar(el, size){
+  if (!el) return;
+  const photo = telegramUser.photo_url;
+  if (photo) {
+    el.style.backgroundImage = `url("${photo}")`;
+    el.textContent = '';
+  } else {
+    el.style.backgroundImage = '';
+    el.textContent = profileInitials();
+  }
+}
+
+function refreshProfileChrome(){
+  paintAvatar(document.getElementById('headerAvatar'));
+  paintAvatar(document.getElementById('profileAvatar'));
+  const nameEl = document.getElementById('profileHeadName');
+  if (nameEl) nameEl.textContent = profileDisplayName();
+  const subEl = document.getElementById('profileHeadSub');
+  if (subEl) {
+    subEl.textContent = telegramUser.username ? '@' + telegramUser.username
+                      : (myProfile.phone || '');
+  }
+}
+
+// Maydonlarni to'ldiradi. MUHIM: faqat varaq OCHILGANDA chaqiriladi —
+// foydalanuvchi yozib turganda ustidan yozib yubormasligi uchun.
+function fillProfileFields(){
+  const f = document.getElementById('profileFirstName');
+  const l = document.getElementById('profileLastName');
+  const ph = document.getElementById('profilePhone');
+  if (f) f.value = myProfile.firstName || telegramUser.first_name || '';
+  if (l) l.value = myProfile.lastName || telegramUser.last_name || '';
+  if (ph) ph.value = myProfile.phone || '';
+  const btn = document.getElementById('profileSaveBtn');
+  if (btn) { btn.classList.remove('saved'); btn.textContent = 'Saqlash'; }
+  refreshProfileChrome();
+}
+
+function saveProfileFields(){
+  const firstName = (document.getElementById('profileFirstName')?.value || '').trim();
+  const lastName  = (document.getElementById('profileLastName')?.value || '').trim();
+  const phone     = (document.getElementById('profilePhone')?.value || '').trim();
+  myProfile = { firstName, lastName, phone };
+  if (db && telegramUser.id != null) {
+    db.collection('users').doc(String(telegramUser.id))
+      .set({ firstName, lastName, phone }, { merge: true })
+      .catch(err => console.warn('Profil saqlash xatosi:', err.message));
+  }
+  refreshProfileChrome();
+  const btn = document.getElementById('profileSaveBtn');
+  if (btn) {
+    btn.classList.add('saved');
+    btn.textContent = 'Saqlandi ✓';
+    setTimeout(() => { btn.classList.remove('saved'); btn.textContent = 'Saqlash'; }, 1800);
+  }
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+}
+
 function openMineSheet(){
   renderShipments();
   renderMinePaletteSwatches();
+  fillProfileFields();
   document.getElementById('mineSheetOverlay')?.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -4139,7 +4320,7 @@ function contactDriverRoute(id){
 const STORAGE_KEY = 'duvduv_data_v1';
 mapboxgl.accessToken = 'pk.eyJ1IjoiaWJuYWtyb20iLCJhIjoiY21wOG1jeGJiMGN4MzJwc2N4cWI4cmJrNSJ9.zU5-pMTZKPslJgYDvx5jdw';
 
-const telegramUser = { id: null, first_name: '', username: '' };
+const telegramUser = { id: null, first_name: '', last_name: '', username: '', photo_url: '' };
 let persistedMapZoom = null;
 
 function userPrefKey(suffix){
@@ -4233,7 +4414,9 @@ function initTelegramUser(){
   if (!user) return;
   telegramUser.id = user.id != null ? Number(user.id) : null;
   telegramUser.first_name = user.first_name || '';
+  telegramUser.last_name = user.last_name || '';
   telegramUser.username = user.username || '';
+  telegramUser.photo_url = user.photo_url || '';
 }
 
 function closeNotifOnboardOverlay(){
@@ -7614,14 +7797,30 @@ function applyUniModeMapVisibility(){
     // ketardi ("hech narsa yo'q joyda yashil doira pulsatsiya qilyapti").
     'map-driver-routes-own-radar-a', 'map-driver-routes-own-radar-b'
   ];
-  // Yo'lovchi/yuk e'lonlari qatlami endi HAR IKKALA rejimda ham ko'rinadi —
-  // farq filtrda: seeker rejimida faqat o'ziniki, driver rejimida hammasi.
-  // Yuk/yo'lovchi pulsatsiyasi ham xuddi shunday — o'z ikonkasi bilan birga.
+  const isDriverMode = activeUniMode === 'driver';
+  // ═══ YAGONA, SIMMETRIK QOIDA ═══
+  //   "Har doim O'ZINGNI ko'rasan + QARAMA-QARSHI tomonning e'lonlarini."
+  //
+  // Ilgari haydovchi rejimida haydovchi yo'nalishlari qatlami BUTUNLAY
+  // yashirilardi — ya'ni haydovchi o'zining mashina belgisini xaritada
+  // HECH QACHON ko'rmasdi. U esa e'lon qo'ygandan keyin "men qayerdaman,
+  // e'lonim ishlayaptimi?" degan savolga javob topolmasdi. Bundan ham
+  // yomoni: "bu mening e'lonim" yashil radar halqasi o'sha ro'yxatda yo'q
+  // edi, shu sabab ikonkasiz yolg'iz qolib, xaritada hech narsa yo'q joyda
+  // yashil doira pulsatsiya qilib turardi.
+  //
+  // Endi:
+  //   seeker rejimi  → o'zining yuk/yo'lovchi e'loni + BARCHA mos haydovchilar
+  //   driver rejimi  → o'zining mashinasi      + BARCHA mos yuk/yo'lovchilar
+  //   bosh ekran     → haydovchi yo'nalishlari yashirin (avvalgidek)
   orderTravelIds.push('map-orders-own-pulse', 'map-travels-own-pulse');
   orderTravelIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible'); });
-  driverRouteIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', isSeekerMode ? 'visible' : 'none'); });
+  driverRouteIds.forEach(id => {
+    if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', (isSeekerMode || isDriverMode) ? 'visible' : 'none');
+  });
   applyMapLayerOwnFilter('map-orders', isSeekerMode);
   applyMapLayerOwnFilter('map-travels', isSeekerMode);
+  applyMapLayerOwnFilter('map-driver-routes', isDriverMode);
 }
 
 function findOrderByMapId(orderId){
@@ -9536,6 +9735,11 @@ function renderShipments(){
   const mine = getMyShipments();
   const driverCardHtml = getMyActiveDriverRouteCardHtml();
   const badge = document.getElementById('headerMineBadge');
+  {
+    const n = mine.length + (driverCardHtml ? 1 : 0);
+    const cnt = document.getElementById('profileListingCount');
+    if (cnt) cnt.textContent = n ? `${n} ta faol` : '';
+  }
   if (badge) {
     const count = mine.length + (driverCardHtml ? 1 : 0);
     badge.hidden = count === 0;
@@ -10477,6 +10681,9 @@ loadPersistedData();
 setupShipmentsListEvents();
 setupDetailRoutePickerEvents();
 initTelegramUser();
+// Sarlavhadagi avatar Firestore javobini kutmasdan DARHOL chiziladi —
+// Telegramdan kelgan ism/rasm shu payt allaqachon ma'lum.
+refreshProfileChrome();
 subscribeOwnDriverStateSync();
 initRouteBtn();
 // Lokatsiya ruxsati endi ilova ochilganda DARHOL so'ralmaydi — buning
