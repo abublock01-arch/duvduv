@@ -957,6 +957,26 @@ body.view-driver .driver-route-bar{
 /* "Yo'lovchiman" bosilganda xarita ustida suzib boradigan ikonka klon-nusxasi
    va xaritaga tushgan pin — join qilish/bosish ta'sir qilmasin */
 .travel-pin-fly,.travel-pin-marker{pointer-events:none!important}
+/* ═══ Xaritaga qo'nadigan PIN ═══
+   Ikonka oq dumaloq ichida (assets/icon-*-map.png rasmining o'zida), pastida
+   ingichka oyoqcha va uchida nuqta — shunda foydalanuvchi e'lon AYNAN qaysi
+   nuqtaga qo'yilayotganini ko'radi. Oyoqcha absolyut joylashgan (top:100%),
+   shu sabab dumaloqning o'lchami animatsiyada o'zgarganda ham u doim
+   dumaloqqa "yopishib" turadi. */
+.travel-pin{position:relative;display:block}
+.travel-pin-img{width:100%;height:100%;display:block;object-fit:contain}
+.travel-pin-stem{
+  position:absolute;left:50%;top:100%;transform:translateX(-50%);
+  width:3px;height:15px;border-radius:2px;
+  background:#2f3640;box-shadow:0 0 0 1.5px rgba(255,255,255,.95);
+}
+/* uchidagi nuqta */
+.travel-pin-stem::after{
+  content:'';position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
+  width:9px;height:9px;border-radius:50%;
+  background:#2f3640;box-shadow:0 0 0 2px rgba(255,255,255,.95);
+}
+
 /* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
    faqat CSS transform (GPU'da arzon, layout/reflow triggermaydi), shu sabab
    telefonda sekinlashuv yoki qotishga olib kelmaydi. */
@@ -3978,6 +3998,35 @@ function nudgeMainActionButtons(){
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
 }
+// Xaritaga qo'nadigan pin uchun ikonkalar — oq doira ichidagi variant
+// (xaritadagi boshqa belgilar bilan bir xil "til"da bo'lsin).
+const UNI_PIN_ICONS = {
+  travel: 'assets/icon-travel-map.png',
+  cargo:  'assets/icon-cargo-map.png',
+  driver: 'assets/icon-driver-map.png'
+};
+// Oyoqcha balandligi (px). Marker aynan shu masofaga yuqoriga suriladi,
+// shunda uchidagi NUQTANING MARKAZI koordinataga to'g'ri tushadi
+// (nuqtaning pastki cheti emas — aks holda pin nishondan biroz yuqorida
+// turgandek ko'rinardi).
+const PIN_STEM_TOTAL = 15;
+
+function buildPinElement(key, size){
+  const wrap = document.createElement('div');
+  wrap.className = 'travel-pin';
+  wrap.style.width = size + 'px';
+  wrap.style.height = size + 'px';
+  const img = document.createElement('img');
+  img.className = 'travel-pin-img';
+  img.src = UNI_PIN_ICONS[key] || UNI_PIN_ICONS.travel;
+  img.alt = '';
+  const stem = document.createElement('span');
+  stem.className = 'travel-pin-stem';
+  wrap.appendChild(img);
+  wrap.appendChild(stem);
+  return wrap;
+}
+
 function playTravelPinAnimation(activeBtn, allBtns, key, token){
   // Faqat ikonkaning O'ZI (rasm/svg) — atrofidagi oq dumaloq ramka YO'Q.
   const iconImg = activeBtn?.querySelector('.uni-action-icon-img, .uni-action-icon svg');
@@ -3990,12 +4039,15 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
   const mapRect = mapEl.getBoundingClientRect();
   const pinSize = Math.round(imgRect.width * 1.35); // xaritada biroz kattaroq ko'rinsin
   const targetX = mapRect.left + mapRect.width / 2 - pinSize / 2;
-  const targetY = mapRect.top + mapRect.height / 2 - pinSize / 2;
+  // MUHIM: endi pinning OYOQCHA UCHI xaritaning markaziga (ya'ni
+  // foydalanuvchining koordinatasiga) tushishi kerak — shu sabab dumaloq
+  // qismi o'shandan yuqoriroqqa, oyoqcha balandligicha suriladi.
+  const targetY = mapRect.top + mapRect.height / 2 - pinSize - PIN_STEM_TOTAL;
 
-  // Ikonka rasmining suzuvchi klon-nusxasi — asl tugma shu zahoti yashiriladi,
-  // klon esa aynan o'sha o'rinda (xuddi shu o'lchamda) qoladi, shu sabab
-  // almashinuv ko'zga tashlanmaydi (klassik FLIP hiylasi).
-  const clone = iconImg.cloneNode(true);
+  // Suzuvchi klon — endi oddiy ikonka emas, to'liq PIN (oq doira ichidagi
+  // ikonka + oyoqcha + soya). Shunda uchish paytining o'zidayoq e'lon
+  // xaritaning qaysi nuqtasiga qo'yilayotgani ko'rinib turadi.
+  const clone = buildPinElement(key, imgRect.width);
   clone.classList.add('travel-pin-fly');
   clone.style.position = 'fixed';
   clone.style.left = imgRect.left + 'px';
@@ -4078,12 +4130,15 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       // yaratilmasin ("ghost" marker qolib ketmasin).
       if (token !== uniPinToken) return;
       if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
-      const pinEl = document.createElement('div');
-      pinEl.className = 'travel-pin-marker';
-      pinEl.style.width = pinSize + 'px';
-      pinEl.style.height = pinSize + 'px';
-      pinEl.innerHTML = iconImg.outerHTML;
-      travelPinMarker = new mapboxgl.Marker({ element: pinEl, anchor: 'center' }).setLngLat([lng, lat]).addTo(map);
+      const pinEl = buildPinElement(key, pinSize);
+      pinEl.classList.add('travel-pin-marker');
+      // anchor:'center' + offset: elementni yuqoriga suramiz, shunda
+      // OYOQCHA UCHI aynan koordinataga tushadi (dumaloqning markazi emas).
+      travelPinMarker = new mapboxgl.Marker({
+        element: pinEl,
+        anchor: 'center',
+        offset: [0, -(pinSize / 2 + PIN_STEM_TOTAL)]
+      }).setLngLat([lng, lat]).addTo(map);
       hideDriverLocationMarker();
       showMapControls();
     }, TRAVEL_PIN_ANIM_MS);
