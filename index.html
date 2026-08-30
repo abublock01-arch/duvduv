@@ -1020,95 +1020,6 @@ body.view-driver .driver-route-bar{
 @media (prefers-reduced-motion:reduce){
   .own-indicator::before,.own-indicator::after{animation:none!important}
 }
-/* ═══════════ E'LON JOYLANGANDAN KEYINGI XABAR ═══════════
-   Uchta qisqa gap KETMA-KET chiqadi (~0.5s oralab). Bu tasodifiy tanlov
-   emas: uzun matnli xabarni ko'pchilik o'qimaydi, qisqa gaplar esa
-   birin-ketin chiqqanda ko'z har biriga alohida tushadi va oxirigacha
-   o'qiladi. Uchtadan ortiq gap qo'yilmaydi — e'tibor shu yerda tugaydi.
-   Ketma-ketlik ham ma'noli: 1) tabrik  2) nima bo'layotgani  3) foydalanuvchi
-   nima qila olishi (eng muhimi — oxirida, chunki oxirgi gap eng yaxshi
-   esda qoladi). */
-.post-ok{
-  position:absolute;left:0;right:0;bottom:96px;z-index:16;
-  display:flex;justify-content:center;padding:0 16px;
-  opacity:0;pointer-events:none;
-  transition:opacity .25s ease;
-}
-.post-ok.open{opacity:1;pointer-events:auto}
-.post-ok-card{
-  width:100%;max-width:400px;
-  display:flex;flex-direction:column;gap:11px;
-  padding:18px 18px 16px;border-radius:26px;
-  border:2.5px solid transparent;
-  background:
-    linear-gradient(180deg,#FFFFFF 0%,#F7F8FA 55%,#E9EBEF 100%) padding-box,
-    linear-gradient(180deg,#ffffff 0%,#d2d5da 38%,#9aa0a8 58%,#f0f1f3 100%) border-box;
-  box-shadow:
-    0 6px 0 0 #B9BEC6,
-    0 20px 38px -10px rgba(0,0,0,.38),
-    0 4px 10px rgba(0,0,0,.16),
-    inset 0 2px 1px rgba(255,255,255,.9),
-    inset 0 -10px 16px -8px rgba(0,0,0,.16);
-}
-.post-ok-line{
-  display:flex;align-items:center;gap:12px;
-  opacity:0;transform:translateY(14px) scale(.96);
-}
-.post-ok.open .post-ok-line{
-  animation:postOkIn .5s cubic-bezier(.34,1.45,.64,1) forwards;
-}
-.post-ok.open .post-ok-line--1{animation-delay:.05s}
-.post-ok.open .post-ok-line--2{animation-delay:.55s}
-.post-ok.open .post-ok-line--3{animation-delay:1.05s}
-.post-ok.open .post-ok-line--4{animation-delay:1.60s}
-@keyframes postOkIn{to{opacity:1;transform:none}}
-
-/* Har gap yonidagi 3D dumaloq belgi — ilovadagi tugmalar bilan bir uslubda */
-.post-ok-badge{
-  width:38px;height:38px;flex-shrink:0;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  border:2px solid transparent;
-  box-shadow:
-    0 3px 0 0 rgba(0,0,0,.16),
-    0 5px 10px rgba(0,0,0,.22),
-    inset 0 2px 1px rgba(255,255,255,.55),
-    inset 0 -5px 8px -4px rgba(0,0,0,.3);
-}
-.post-ok-badge svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2.6;
-  stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 1px rgba(0,0,0,.3))}
-.post-ok-badge--ok  {background:linear-gradient(180deg,#6EE7A8,#22B369 60%,#0E7C46)}
-.post-ok-badge--eye {background:linear-gradient(180deg,#6EC3FF,#2AABEE 60%,#1C7FB0)}
-.post-ok-badge--tap {background:linear-gradient(180deg,#FF9B80,#FF6B4A 60%,#BA4E36)}
-
-.post-ok-text{
-  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
-  font-size:16.5px;font-weight:800;line-height:1.28;color:#1b2430;
-  letter-spacing:-.01em;
-}
-.post-ok-line--1 .post-ok-text{font-size:19px;color:#0f172a}
-
-.post-ok-btn{
-  margin-top:4px;border:2.5px solid transparent;border-radius:18px;
-  padding:13px;font-family:inherit;font-size:16px;font-weight:900;
-  letter-spacing:.01em;color:#fff;cursor:pointer;
-  -webkit-tap-highlight-color:transparent;
-  background:
-    linear-gradient(180deg,#7DA6D9 0%,#2C5FA8 55%,#1B3E73 100%) padding-box,
-    linear-gradient(180deg,#fbfbfb 0%,#c9c9c9 35%,#8c8c8c 55%,#ececec 100%) border-box;
-  box-shadow:
-    0 5px 0 0 #10254A,
-    0 12px 20px rgba(0,0,0,.28),
-    inset 0 2px 1px rgba(255,255,255,.5),
-    inset 0 -8px 12px -6px rgba(0,0,0,.4);
-  text-shadow:0 1px 2px rgba(0,0,0,.35);
-  transition:transform .09s ease,box-shadow .09s ease;
-}
-.post-ok-btn:active{transform:translateY(3px);
-  box-shadow:0 2px 0 0 #10254A,0 6px 12px rgba(0,0,0,.24),inset 0 2px 1px rgba(255,255,255,.5)}
-
-@media (prefers-reduced-motion:reduce){
-  .post-ok.open .post-ok-line{animation-duration:.01s}
-}
 /* Xabar ochilganda yo'nalish paneli TEPAGA chiqadi */
 body.view-driver.uni-active.uni-posted .driver-route-bar{
   top:calc(max(12px, env(safe-area-inset-top)) + 68px);
@@ -2954,31 +2865,6 @@ html, body { font-size: var(--fs-base); }
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
           </button>
 
-          <!-- E'lon joylangandan keyingi xabar. Uchta qisqa gap KETMA-KET
-               chiqadi — uzun matnni ko'pchilik o'qimaydi. -->
-          <div class="post-ok" id="postOkPanel" aria-live="polite">
-            <div class="post-ok-card">
-              <div class="post-ok-line post-ok-line--1">
-                <span class="post-ok-badge post-ok-badge--ok" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
-                </span>
-                <span class="post-ok-text" id="postOkTitle">Safaringiz hayrli bo'lsin!</span>
-              </div>
-              <div class="post-ok-line post-ok-line--2">
-                <span class="post-ok-badge post-ok-badge--eye" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6-10-6-10-6z"/><circle cx="12" cy="12" r="2.6"/></svg>
-                </span>
-                <span class="post-ok-text">Haydovchilar sizni xaritada ko'rmoqda</span>
-              </div>
-              <div class="post-ok-line post-ok-line--3">
-                <span class="post-ok-badge post-ok-badge--tap" aria-hidden="true">
-                  <svg viewBox="0 0 24 24"><path d="M9 11V6.5a2 2 0 0 1 4 0V11"/><path d="M13 11V9.5a2 2 0 0 1 4 0V12"/><path d="M17 12v4a5 5 0 0 1-5 5h-.5a5 5 0 0 1-4.3-2.5L5 15.5a1.8 1.8 0 0 1 2.8-2.2L9 14.5V11"/></svg>
-                </span>
-                <span class="post-ok-text">Yoki haydovchini xaritadan o'zingiz tanlang</span>
-              </div>
-              <button type="button" class="post-ok-btn post-ok-line--4" onclick="hidePostOkPanel()">Tushunarli</button>
-            </div>
-          </div>
         </div>
         <!-- Eski picker — yashirildi, JS uchun saqlanmoqda -->
         <div class="driver-picker-zone" aria-hidden="true">
@@ -5090,19 +4976,14 @@ function confirmDriverRoute() {
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
   if (!saved.from || !saved.to || saved.from === saved.to) return;
   _pendingListingConfirm = { mode: activeUniMode, from: saved.from, to: saved.to };
-  const textEl = document.getElementById('listingConfirmText');
-  if (textEl) {
-    textEl.textContent = `Siz ${regionWithFromSuffix(saved.from)} ${regionWithToSuffix(saved.to)} ketish e'lonini berdingiz. Tasdiqlash uchun OK ni bosing.`;
-  }
-  const overlay = document.getElementById('listingConfirmOverlay');
-  if (overlay) {
-    overlay.hidden = false;
-    overlay.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('show')));
-  }
   if (window.Telegram?.WebApp?.HapticFeedback) {
     Telegram.WebApp.HapticFeedback.impactOccurred('light');
   }
+  // ESLATMA: ilgari bu yerda oraliq "E'lonni tasdiqlang ... OK" oynasi
+  // ochilardi. U ortiqcha edi: foydalanuvchi yashil ✓ ni bosish bilan
+  // allaqachon tasdiqlagan bo'ladi, ikkinchi marta so'rash faqat yo'lni
+  // uzaytiradi. Endi ✓ to'g'ridan-to'g'ri e'lonni qo'yadi.
+  confirmListingPostOk();
 }
 
 // OK bosilganda — haqiqiy saqlash shu yerda amalga oshadi:
@@ -5122,36 +5003,16 @@ function confirmDriverRoute() {
 // uzoqlashadi va e'lon belgisi biroz yuqoriga suriladi, pastda xabarga
 // joy ochiladi; (3) uchta qisqa gap ketma-ket chiqadi.
 // ══════════════════════════════════════════════════════════════════════
-const POST_OK_TITLES = {
-  travel: "Safaringiz hayrli bo'lsin!",
-  cargo:  "Yukingiz manziliga yetib borsin!",
-  driver: "Yo'lingiz oq bo'lsin!"
-};
-
-function showPostOkPanel(mode){
-  const panel = document.getElementById('postOkPanel');
-  if (!panel) return;
-  const title = document.getElementById('postOkTitle');
-  if (title) title.textContent = POST_OK_TITLES[mode] || POST_OK_TITLES.travel;
-
-  // Yo'nalish paneli tepaga
+function applyPostedLayout(mode){
+  // Yo'nalish paneli TEPAGA chiqadi — endi u "tanlanayotgan" emas,
+  // "tasdiqlangan" ma'lumot.
   document.body.classList.add('uni-posted');
-
-  // Xarita uzoqlashadi, belgi esa biroz tepaga suriladi — pastda xabar
-  // uchun joy ochiladi va ikonka xabarning ustida qoladi.
-  if (map) {
-    map.easeTo({ zoom: POST_OK_ZOOM, offset: [0, -70], duration: 900, essential: true });
-  }
-
-  // Animatsiya har safar boshidan ketishi uchun sinfni qayta qo'yamiz
-  panel.classList.remove('open');
-  void panel.offsetWidth;
-  panel.classList.add('open');
+  // Xarita uzoqlashadi: atrofdagi haydovchilar ko'rinadigan, lekin o'z
+  // belgisi hamon aniq turadigan masofa.
+  if (map) map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true });
 }
 
-function hidePostOkPanel(){
-  document.getElementById('postOkPanel')?.classList.remove('open');
-}
+function hidePostOkPanel(){ /* xabar oynasi olib tashlandi */ }
 
 function confirmListingPostOk(){
   const pending = _pendingListingConfirm;
@@ -5197,9 +5058,9 @@ function confirmListingPostOk(){
   }
   _pendingListingConfirm = null;
   playListingConfirmFlyAnimation();
-  // Kulminatsiya — tasdiqlash kartasi uchib ketgach ko'rsatamiz, shunda
-  // ikkita animatsiya bir-birining ustiga tushmaydi.
-  setTimeout(() => showPostOkPanel(mode), 520);
+  // Yo'nalish paneli tepaga chiqadi va xarita uzoqlashadi (ikkalasi ham
+  // alohida so'ralgan edi). Xabar oynasi esa ko'rsatilmaydi.
+  applyPostedLayout(mode);
 }
 
 // OK karta kichrayib, "Mening e'lonlarim" belgisi tomon uchib, shu yerda
@@ -5207,30 +5068,13 @@ function confirmListingPostOk(){
 // qo'shildi" degan vizual tasdiqni beradi (FLIP-uslubidagi oddiy
 // transform animatsiyasi, alohida klon kerak emas — karta o'zi suzadi).
 function playListingConfirmFlyAnimation(){
-  const card = document.getElementById('listingConfirmCard');
-  const overlay = document.getElementById('listingConfirmOverlay');
+  // ESLATMA: ilgari bu yerda "E'lonni tasdiqlang" kartasi kichrayib,
+  // tepadagi profil tugmasiga uchib borardi. O'sha oraliq oyna olib
+  // tashlangani uchun uchadigan karta ham qolmadi. Lekin foydalanuvchiga
+  // e'lon QAYERGA ketganini ko'rsatish foydali — shu sabab profil
+  // tugmasining "sakrashi" saqlanadi (badge ham shu yerda o'sadi).
   const target = document.getElementById('headerMineBtn');
-  if (!card || !overlay) return;
-  if (!target) { closeListingConfirmOverlay(); return; }
-  const cardRect = card.getBoundingClientRect();
-  const targetRect = target.getBoundingClientRect();
-  const deltaX = (targetRect.left + targetRect.width / 2) - (cardRect.left + cardRect.width / 2);
-  const deltaY = (targetRect.top + targetRect.height / 2) - (cardRect.top + cardRect.height / 2);
-  overlay.style.background = 'transparent';
-  overlay.style.backdropFilter = 'none';
-  overlay.style.webkitBackdropFilter = 'none';
-  card.style.transition = 'transform .55s cubic-bezier(.55,0,.85,.35), opacity .5s ease .1s';
-  card.style.transform = `translate(${deltaX}px, ${deltaY}px) scale(.05)`;
-  card.style.opacity = '0';
-  setTimeout(() => {
-    closeListingConfirmOverlay();
-    card.style.transition = '';
-    card.style.transform = '';
-    card.style.opacity = '';
-    overlay.style.background = '';
-    overlay.style.backdropFilter = '';
-    overlay.style.webkitBackdropFilter = '';
-  }, 620);
+  if (!target) return;
   target.classList.add('mine-btn-pop');
   setTimeout(() => target.classList.remove('mine-btn-pop'), 420);
 }
