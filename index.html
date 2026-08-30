@@ -4242,12 +4242,14 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
 
     travelPinFlightTimer = setTimeout(() => {
       travelPinFlightTimer = null;
-      clone.remove();
-      if (travelPinFlightClone === clone) travelPinFlightClone = null;
       // Shu orada foydalanuvchi allaqachon chiqib ketgan yoki boshqa
       // amalga o'tgan bo'lishi mumkin — bunday holda eskirgan marker
       // yaratilmasin ("ghost" marker qolib ketmasin).
-      if (token !== uniPinToken) return;
+      if (token !== uniPinToken) {
+        clone.remove();
+        if (travelPinFlightClone === clone) travelPinFlightClone = null;
+        return;
+      }
       // MUHIM O'ZGARISH: ilgari bu mapboxgl.Marker edi, ya'ni pin
       // koordinataga bog'lanib, xarita surilganda u bilan birga siljirdi.
       // Endi pin EKRANGA qotib turadi (xarita konteynerining markazida),
@@ -4265,6 +4267,18 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       map.on('moveend', syncUniPinCoord);
       hideDriverLocationMarker();
       showMapControls();
+      // MILTILLASHNI YO'Q QILISH: uchuvchi klon endi shu yerda emas, qotgan
+      // pin EKRANGA CHIZILGANDAN KEYIN o'chiriladi. Ilgari ikkalasi bir
+      // vaqtda bajarilardi: klon darhol yo'q bo'lar, yangi element esa
+      // hali chizilmagan bo'lardi — natijada ikonka bir kadrga g'oyib
+      // bo'lib, qayta paydo bo'lardi. Ikki marta rAF — birinchisi
+      // joylashuvni (layout), ikkinchisi chizishni (paint) kafolatlaydi.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          clone.remove();
+          if (travelPinFlightClone === clone) travelPinFlightClone = null;
+        });
+      });
     }, TRAVEL_PIN_ANIM_MS);
   }).catch(() => {
     clone.style.transition = 'opacity .2s ease';
@@ -5453,6 +5467,17 @@ const ORDER_ICON_SIZE_LAYOUT = [
   3, 0.60, 6, 0.72, 9, 0.88, 11, 1.0, 13, 1.18, 15, 1.42, 17, 1.65, 18, 1.78
 ];
 const DRIVER_ICON_SIZE_LAYOUT = ORDER_ICON_SIZE_LAYOUT;
+// O'ZINING e'loni uchun — sezilarli KATTAROQ shkala (~1.5x). Foydalanuvchi
+// o'z e'lonini boshqalarnikidan darhol ajratib olishi kerak: e'lon qo'ygandan
+// keyin uning belgisi xaritada boshqa mijozlarning belgilari bilan bir xil
+// kichkina ko'rinib qolardi.
+const OWN_ICON_SIZE_LAYOUT = (() => {
+  const out = ORDER_ICON_SIZE_LAYOUT.slice(0, 3);
+  for (let i = 3; i < ORDER_ICON_SIZE_LAYOUT.length; i += 2) {
+    out.push(ORDER_ICON_SIZE_LAYOUT[i], +(ORDER_ICON_SIZE_LAYOUT[i + 1] * 1.5).toFixed(3));
+  }
+  return out;
+})();
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
 const MAP_ICON_PERSON = 'map-icon-person';
@@ -8077,7 +8102,24 @@ function applyMapLayerOwnFilter(prefix, restrictToOwn){
   const clusterFilter = ownFilter ? ['all', ['has', 'point_count'], ownFilter] : ['has', 'point_count'];
   const unclusteredFilter = ownFilter ? ['all', ['!', ['has', 'point_count']], ownFilter] : ['!', ['has', 'point_count']];
   [`${prefix}-clusters`, `${prefix}-cluster-count`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, clusterFilter); });
-  [`${prefix}-unclustered-icon`, `${prefix}-unclustered-label`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, unclusteredFilter); });
+  if (map.getLayer(`${prefix}-unclustered-icon`)) map.setFilter(`${prefix}-unclustered-icon`, unclusteredFilter);
+
+  // ═══ O'ZINING E'LONI AJRALIB TURSIN ═══
+  // 1) Belgi kattaroq chiziladi (OWN_ICON_SIZE_LAYOUT).
+  // 2) Ostidagi "A → B" matni KO'RSATILMAYDI: o'zining marshruti tepadagi
+  //    Qayerdan/Qayerga panelida allaqachon yozib turibdi, xaritada takrorlash
+  //    ortiqcha va e'lonni boshqalar bilan bir xil "kichik" qilib ko'rsatardi.
+  const labelId = `${prefix}-unclustered-label`;
+  if (map.getLayer(labelId)) {
+    map.setFilter(labelId, ownId
+      ? ['all', unclusteredFilter, ['!=', ['get', 'telegramId'], ownId]]
+      : unclusteredFilter);
+  }
+  if (map.getLayer(`${prefix}-unclustered-icon`)) {
+    map.setLayoutProperty(`${prefix}-unclustered-icon`, 'icon-size', ownId
+      ? ['case', ['==', ['get', 'telegramId'], ownId], OWN_ICON_SIZE_LAYOUT, ORDER_ICON_SIZE_LAYOUT]
+      : ORDER_ICON_SIZE_LAYOUT);
+  }
 }
 
 // Yo'lovchiman rejimi faol bo'lganda: yo'lovchi/yuk e'lonlari orasidan
