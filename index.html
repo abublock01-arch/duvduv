@@ -1155,7 +1155,9 @@ body.view-driver .driver-route-bar{
    "shu ilova tugmasi" deb taniydi. O'lchami kattaroq va biroz yuqoriroq. */
 .uni-back-btn{
   position:absolute;left:16px;bottom:22px;z-index:15;
-  width:60px;height:60px;border-radius:50%;
+  /* Cho'zinchoq (stadion) shakl — orqaga va tasdiqlash tugmalari
+     AYNAN bir xil o'lchamda: 96x58, radius yarim balandlik. */
+  width:96px;height:58px;border-radius:29px;
   border:3px solid transparent;
   --btn-mid:#FFFFFF;--btn-base:#F1F2F4;--btn-dark:#C7CBD1;--btn-darkest:#A9AEB6;--btn-text:#33445c;
   background:
@@ -1193,7 +1195,7 @@ body.view-driver .driver-route-bar{
     inset 0 -2px 4px rgba(255,255,255,.12);
 }
 .uni-back-btn svg{
-  width:30px;height:30px;position:relative;z-index:1;
+  width:29px;height:29px;position:relative;z-index:1;
   stroke:var(--btn-text,#33445c);stroke-width:2.9;fill:none;stroke-linecap:round;stroke-linejoin:round;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
@@ -1208,7 +1210,8 @@ body.view-driver .driver-route-bar{
    qiladi. */
 .uni-confirm-btn{
   position:absolute;right:16px;bottom:22px;z-index:15;
-  width:60px;height:60px;border-radius:50%;
+  /* Orqaga tugmasi bilan AYNAN bir xil o'lcham va shakl. */
+  width:96px;height:58px;border-radius:29px;
   border:3px solid transparent;
   background:
     linear-gradient(180deg,#6EE7A8 0%,#22B369 55%,#0E7C46 100%) padding-box,
@@ -1245,7 +1248,7 @@ body.view-driver .driver-route-bar{
     inset 0 -2px 4px rgba(255,255,255,.12);
 }
 .uni-confirm-btn svg{
-  width:28px;height:28px;position:relative;z-index:1;
+  width:29px;height:29px;position:relative;z-index:1;
   stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.3));
 }
@@ -7958,7 +7961,12 @@ function getMapGeoCacheKey(){
     route.from || '',
     route.to || '',
     orders.length,
-    travels.length
+    travels.length,
+    // MUHIM: rejim ham kalitga kiradi — chunki endi qaysi e'lonlar
+    // umuman GeoJSON'ga tushishi rejimga bog'liq (pastga qarang).
+    // Busiz rejim almashganda eski keshlangan to'plam qolib ketardi.
+    activeUniMode || '',
+    telegramUser.id ?? ''
   ].join('|');
 }
 
@@ -7966,8 +7974,28 @@ function buildMapGeoCollections(){
   const key = getMapGeoCacheKey();
   if (cachedMapGeo && cachedMapGeoKey === key) return cachedMapGeo;
 
+  // ═══ YO'LOVCHI/YUK REJIMIDA BOSHQA MIJOZLAR KO'RSATILMAYDI ═══
+  // Mijozga faqat IKKI narsa kerak: (1) o'zining e'loni — tasdiq sifatida,
+  // (2) o'zi belgilagan yo'nalish bo'yicha HAYDOVCHI e'lonlari. Boshqa
+  // yo'lovchi/yuk e'lonlari (na haqiqiy, na sinov uchun qo'yilganlari)
+  // unga umuman kerak emas — ular faqat chalkashtiradi.
+  //
+  // Ilgari bu faqat QATLAM filtri bilan qilinardi (applyMapLayerOwnFilter).
+  // Muammosi shundaki, u filtr faqat ma'lum lahzalarda qayta qo'llanardi va
+  // agar o'sha paytda telegramUser.id hali ma'lum bo'lmasa, filtr umuman
+  // qo'yilmasdan qolib, hamma e'lonlar ko'rinib ketardi. Endi cheklov
+  // MA'LUMOT darajasida: mos kelmagan yozuv GeoJSON'ga umuman tushmaydi,
+  // ya'ni qatlam filtri qachon qo'llanishidan qat'i nazar ishlaydi.
+  const seekerMode = activeUniMode === 'travel' || activeUniMode === 'cargo';
+  const ownId = telegramUser.id != null ? String(telegramUser.id) : null;
+  const keepItem = it => {
+    if (!mapItemMatchesDriverFilter(it)) return false;
+    if (seekerMode) return ownId != null && String(it.telegramId) === ownId;
+    return true;
+  };
+
   const orderFeatures = orders
-    .filter(mapItemMatchesDriverFilter)
+    .filter(keepItem)
     .map(o => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [o.lng, o.lat] },
@@ -7975,7 +8003,7 @@ function buildMapGeoCollections(){
     }));
 
   const travelFeatures = travels
-    .filter(mapItemMatchesDriverFilter)
+    .filter(keepItem)
     .map(t => {
       const coords = travelMapCoords(t);
       if (!coords) return null;
