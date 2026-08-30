@@ -1020,6 +1020,86 @@ body.view-driver .driver-route-bar{
 @media (prefers-reduced-motion:reduce){
   .own-indicator::before,.own-indicator::after{animation:none!important}
 }
+/* ═══════════ E'LON JOYLANGANDAN KEYINGI XABAR ═══════════
+   Uchta qisqa gap ketma-ket chiqadi (~0.5s oralab): uzun matnni ko'pchilik
+   o'qimaydi, qisqa gaplar birin-ketin chiqqanda esa ko'z har biriga alohida
+   tushadi. Uchtadan ortiq gap yo'q — e'tibor shu yerda tugaydi.
+   Belgilar ataylab XOTIRJAM: yaltiroq rangli sharlar emas, balki yumshoq
+   tusli maydonchada ingichka chiziqli belgilar — bu ilovaga jiddiyroq
+   ko'rinish beradi. */
+.post-ok{
+  position:absolute;left:0;right:0;bottom:96px;z-index:16;
+  display:flex;justify-content:center;padding:0 16px;
+  opacity:0;pointer-events:none;transition:opacity .25s ease;
+}
+.post-ok.open{opacity:1;pointer-events:auto}
+.post-ok-card{
+  width:100%;max-width:400px;
+  display:flex;flex-direction:column;gap:13px;
+  padding:19px 18px 16px;border-radius:24px;
+  /* XOSHIYA: aniq ko'rinadigan tashqi chegara + ichki nozik yorug'lik */
+  border:2px solid rgba(15,23,42,.14);
+  background:linear-gradient(180deg,#FFFFFF 0%,#FAFBFC 60%,#F1F3F6 100%);
+  box-shadow:
+    0 5px 0 0 rgba(15,23,42,.10),
+    0 18px 34px -12px rgba(15,23,42,.34),
+    0 3px 8px rgba(15,23,42,.10),
+    inset 0 1px 0 rgba(255,255,255,1),
+    inset 0 0 0 1px rgba(255,255,255,.7);
+}
+.post-ok-head,.post-ok-line{
+  display:flex;align-items:center;gap:12px;
+  opacity:0;transform:translateY(12px);
+}
+.post-ok.open .post-ok-head,
+.post-ok.open .post-ok-line{animation:postOkIn .46s cubic-bezier(.22,1,.36,1) forwards}
+.post-ok.open .post-ok-line--1{animation-delay:.05s}
+.post-ok.open .post-ok-line--2{animation-delay:.55s}
+.post-ok.open .post-ok-line--3{animation-delay:1.05s}
+.post-ok.open .post-ok-line--4{animation-delay:1.55s}
+@keyframes postOkIn{to{opacity:1;transform:none}}
+
+/* Belgi maydonchasi — yumshoq tus + o'z rangidagi ingichka chegara */
+.post-ok-chip{
+  width:40px;height:40px;flex-shrink:0;border-radius:13px;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid;
+}
+.post-ok-chip svg{
+  width:21px;height:21px;fill:none;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round;
+}
+.post-ok-chip--ok  {background:rgba(34,197,94,.10);border-color:rgba(34,197,94,.32)}
+.post-ok-chip--ok   svg{stroke:#16A34A}
+.post-ok-chip--live{background:rgba(42,171,238,.10);border-color:rgba(42,171,238,.32)}
+.post-ok-chip--live svg{stroke:#1B8FCB}
+.post-ok-chip--pick{background:rgba(255,107,74,.10);border-color:rgba(255,107,74,.34)}
+.post-ok-chip--pick svg{stroke:#E0522F}
+
+.post-ok-title{
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:19px;font-weight:800;line-height:1.22;color:#0f172a;letter-spacing:-.015em;
+}
+.post-ok-text{
+  font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
+  font-size:15px;font-weight:600;line-height:1.35;color:#475569;letter-spacing:-.005em;
+}
+.post-ok-card hr{display:none}
+
+.post-ok-btn{
+  margin-top:5px;border:2px solid rgba(15,23,42,.16);border-radius:16px;
+  padding:13px;font-family:inherit;font-size:16px;font-weight:800;
+  color:#0f172a;background:linear-gradient(180deg,#FFFFFF,#EDEFF3);
+  cursor:pointer;-webkit-tap-highlight-color:transparent;
+  box-shadow:0 3px 0 0 rgba(15,23,42,.12),0 6px 12px rgba(15,23,42,.10),
+    inset 0 1px 0 rgba(255,255,255,1);
+  transition:transform .09s ease,box-shadow .09s ease;
+}
+.post-ok-btn:active{transform:translateY(2px);
+  box-shadow:0 1px 0 0 rgba(15,23,42,.12),0 3px 7px rgba(15,23,42,.10)}
+@media (prefers-reduced-motion:reduce){
+  .post-ok.open .post-ok-head,.post-ok.open .post-ok-line{animation-duration:.01s}
+}
 /* Xabar ochilganda yo'nalish paneli TEPAGA chiqadi */
 body.view-driver.uni-active.uni-posted .driver-route-bar{
   top:calc(max(12px, env(safe-area-inset-top)) + 68px);
@@ -2864,6 +2944,31 @@ html, body { font-size: var(--fs-base); }
           <button type="button" class="uni-confirm-btn" id="uniRouteConfirmBtn" onclick="confirmDriverRoute()" aria-label="Tasdiqlash">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 13l4 4L19 7"/></svg>
           </button>
+
+          <!-- E'lon joylangandan keyingi xabar: uch qisqa gap ketma-ket -->
+          <div class="post-ok" id="postOkPanel" aria-live="polite">
+            <div class="post-ok-card">
+              <div class="post-ok-head post-ok-line--1">
+                <span class="post-ok-chip post-ok-chip--ok" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>
+                </span>
+                <span class="post-ok-title" id="postOkTitle">Safaringiz hayrli bo'lsin</span>
+              </div>
+              <div class="post-ok-line post-ok-line--2">
+                <span class="post-ok-chip post-ok-chip--live" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2.4"/><path d="M7.8 16.2a6 6 0 0 1 0-8.4"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4"/><path d="M5 19a10 10 0 0 1 0-14"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+                </span>
+                <span class="post-ok-text" id="postOkLine2">Yo'nalishingizdagi haydovchilar sizni ko'rmoqda</span>
+              </div>
+              <div class="post-ok-line post-ok-line--3">
+                <span class="post-ok-chip post-ok-chip--pick" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 21s7-5.6 7-11a7 7 0 1 0-14 0c0 5.4 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+                </span>
+                <span class="post-ok-text" id="postOkLine3">Xohlasangiz, xaritadan o'zingiz ham tanlaysiz</span>
+              </div>
+              <button type="button" class="post-ok-btn post-ok-line--4" onclick="hidePostOkPanel()">Tushunarli</button>
+            </div>
+          </div>
 
         </div>
         <!-- Eski picker — yashirildi, JS uchun saqlanmoqda -->
@@ -5003,6 +5108,26 @@ function confirmDriverRoute() {
 // uzoqlashadi va e'lon belgisi biroz yuqoriga suriladi, pastda xabarga
 // joy ochiladi; (3) uchta qisqa gap ketma-ket chiqadi.
 // ══════════════════════════════════════════════════════════════════════
+// Xabar matnlari rejimga qarab o'zgaradi: quti "safar qilmaydi", haydovchi
+// esa yo'lovchi emas, mijoz izlaydi — har biriga o'z so'zi.
+const POST_OK_TEXT = {
+  travel: {
+    title: "Safaringiz hayrli bo'lsin",
+    line2: "Yo'nalishingizdagi haydovchilar sizni ko'rmoqda",
+    line3: "Xohlasangiz, xaritadan o'zingiz ham tanlaysiz"
+  },
+  cargo: {
+    title: "Yukingiz omon yetib borsin",
+    line2: "Yo'nalishingizdagi haydovchilar sizni ko'rmoqda",
+    line3: "Xohlasangiz, xaritadan o'zingiz ham tanlaysiz"
+  },
+  driver: {
+    title: "Yo'lingiz oq bo'lsin",
+    line2: "Yo'nalishingizdagi yo'lovchilar sizni ko'rmoqda",
+    line3: "Xaritadan mijozni o'zingiz ham topishingiz mumkin"
+  }
+};
+
 function applyPostedLayout(mode){
   // Yo'nalish paneli TEPAGA chiqadi — endi u "tanlanayotgan" emas,
   // "tasdiqlangan" ma'lumot.
@@ -5010,9 +5135,26 @@ function applyPostedLayout(mode){
   // Xarita uzoqlashadi: atrofdagi haydovchilar ko'rinadigan, lekin o'z
   // belgisi hamon aniq turadigan masofa.
   if (map) map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true });
+  showPostOkPanel(mode);
 }
 
-function hidePostOkPanel(){ /* xabar oynasi olib tashlandi */ }
+function showPostOkPanel(mode){
+  const panel = document.getElementById('postOkPanel');
+  if (!panel) return;
+  const t = POST_OK_TEXT[mode] || POST_OK_TEXT.travel;
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+  set('postOkTitle', t.title);
+  set('postOkLine2', t.line2);
+  set('postOkLine3', t.line3);
+  // Animatsiya har safar boshidan ketishi uchun sinfni qayta qo'yamiz
+  panel.classList.remove('open');
+  void panel.offsetWidth;
+  panel.classList.add('open');
+}
+
+function hidePostOkPanel(){
+  document.getElementById('postOkPanel')?.classList.remove('open');
+}
 
 function confirmListingPostOk(){
   const pending = _pendingListingConfirm;
