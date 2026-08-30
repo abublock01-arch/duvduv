@@ -983,6 +983,41 @@ body.view-driver .driver-route-bar{
    (Yandex/Uber uslubidagi "markaziy pin").
    Oyoqcha uchi konteynerning markaziga (ya'ni map.getCenter() ga)
    to'g'ri kelishi uchun element yuqoriga suriladi. */
+/* ═══ "Bu mening e'lonim" belgisi — SOF CSS, xaritani qayta chizmaydi ═══
+   Animatsiya brauzer kompozitorida (GPU) ishlaydi. Ilgari buni JS taymer
+   qilardi va sekundiga ~11 marta butun xaritani qayta chizishga majbur
+   qilardi — xaritaning sekinlashuvi aynan shundan edi. */
+.own-indicator{width:0;height:0;position:relative;pointer-events:none}
+.own-indicator::before,.own-indicator::after{
+  content:'';position:absolute;left:0;top:0;border-radius:50%;
+  will-change:transform,opacity;
+}
+/* Yuk / Yo'lovchi — nafas oluvchi to'ldirilgan doira */
+.own-indicator[data-kind="seeker"]::before{
+  width:56px;height:56px;margin:-28px 0 0 -28px;
+  background:rgba(42,171,238,.30);
+  animation:ownBreath 2.4s ease-in-out infinite;
+}
+.own-indicator[data-kind="seeker"]::after{content:none}
+/* Haydovchi — radar uslubida kengayib-yo'qoluvchi ikkita halqa */
+.own-indicator[data-kind="driver"]::before,
+.own-indicator[data-kind="driver"]::after{
+  width:44px;height:44px;margin:-22px 0 0 -22px;
+  border:2.5px solid #22C55E;
+  animation:ownRadar 2.2s cubic-bezier(.2,.6,.3,1) infinite;
+}
+.own-indicator[data-kind="driver"]::after{animation-delay:1.1s}
+@keyframes ownBreath{
+  0%,100%{transform:scale(.80);opacity:.45}
+  50%    {transform:scale(1.14);opacity:.15}
+}
+@keyframes ownRadar{
+  0%  {transform:scale(.45);opacity:.9}
+  100%{transform:scale(2.2);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .own-indicator::before,.own-indicator::after{animation:none!important}
+}
 .travel-pin--fixed{
   position:absolute;left:50%;top:50%;
   transform:translate(-50%, calc(-100% - 16px));
@@ -3319,9 +3354,22 @@ html, body { font-size: var(--fs-base); }
 const BUILD_VERSION = '2026-08-27-2020-driverUsers-fix';
 const __appBootTime = Date.now();
 let __didForceFreshReload = false;
+// TEZLIK UCHUN QAYTA SOZLANDI.
+// Ilgari bu chegara 4 SONIYA edi: ilova fondan har qaytganda (Telegramga
+// o'tib qaytish, bildirishnoma ochish — kuniga o'nlab marta) BUTUN sahifa
+// qayta yuklanardi. Har bir qayta yuklash: Mapbox kutubxonasi va uslubi
+// qaytadan yuklanadi, xarita noldan quriladi, 4 ta Firestore ulanishi
+// qaytadan ochilib ~1300 hujjat o'qiladi. Foydalanuvchi buni "ilova
+// qotib qoldi / sekin" deb his qiladi, ustiga Firestore kvotasi ham
+// bekorga sarflanardi.
+//
+// Qayta yuklashning yagona maqsadi — eng oxirgi kod ishlashi. Buning uchun
+// har safar emas, faqat sahifa ANCHA UZOQ ochiq turgan bo'lsa yetarli.
+// Aks holda ma'lumot handleAppReactivated() orqali baribir yangilanadi.
+const FRESH_RELOAD_AFTER_MS = 30 * 60 * 1000; // 30 daqiqa
 function maybeForceFreshReload(){
   if (__didForceFreshReload) return false;
-  if (Date.now() - __appBootTime > 4000) {
+  if (Date.now() - __appBootTime > FRESH_RELOAD_AFTER_MS) {
     __didForceFreshReload = true;
     try { location.reload(); } catch(e) {}
     return true;
@@ -3607,7 +3655,17 @@ function subscribeOwnDriverStateSync(){
     // bo'lsa (bosh ekran) yoki mahalliy marshrut umuman bo'lmasa ishlaydi.
     if (isActive) {
       const current = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-      const userIsEditing = activeUniMode !== null && !!current.from && !!current.to;
+      // MUHIM: shart avval "activeUniMode !== null && current.from && current.to"
+      // edi. Muammo shunda ediki, foydalanuvchi amal tugmasini bosgach A
+      // avtomatik to'ldiriladi, B esa HALI BO'SH bo'ladi — ya'ni aynan pin
+      // surib joy tanlayotgan paytda shart FALSE bo'lib qolardi va
+      // Firestore'dagi eski marshrut mahalliy tanlovni bosib yozardi.
+      // users/<id> ga GPS har 15 soniyada yozilgani uchun bu muqarrar edi:
+      // pinni Farg'onaga surasiz, A "Farg'onadan" bo'ladi, keyin snapshot
+      // kelib uni yana "Toshkentdan" ga qaytarardi.
+      // Endi qoida sodda: rejim FAOL bo'lsa — foydalanuvchi ishlayapti,
+      // mahalliy tanlov ustun.
+      const userIsEditing = activeUniMode !== null;
       if (!userIsEditing && (current.from !== d.routeFrom || current.to !== d.routeTo)) {
         localStorage.setItem(routeKey(), JSON.stringify({ from: d.routeFrom, to: d.routeTo }));
         if (typeof loadDriverRouteState === 'function') loadDriverRouteState();
@@ -3964,10 +4022,33 @@ let travelPinFixedEl = null;
 let uniPinCoord = null;
 
 // Xarita har siljiganda pin ko'rsatayotgan koordinatani yangilaymiz.
+// "Qayerdan" (A manzil) ni berilgan koordinataga qarab to'ldiradi.
+// Bir xil viloyat bo'lsa hech narsa qilmaydi — bekorga qayta chizish va
+// qayta filtrlash bo'lmasin (tezlik uchun muhim).
+function applyFromRegionFromCoords(lng, lat){
+  const regionName = detectRegionFromCoords(lng, lat);
+  if (!regionName) return;
+  const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
+  if (saved.from === regionName) return;          // o'zgarmagan — tegmaymiz
+  saved.from = regionName;
+  localStorage.setItem(routeKey(), JSON.stringify(saved));
+  const fromLbl = document.getElementById('driverFromLabel');
+  if (fromLbl) { fromLbl.textContent = regionWithFromSuffix(regionName); fitPillLabelText(fromLbl); }
+  document.getElementById('driverFromBtn')?.classList.add('has-value');
+  refreshOrderMarkersDebounced();
+}
+
 function syncUniPinCoord(){
   if (!map || !travelPinFixedEl) return;
   const c = map.getCenter();
   uniPinCoord = { lng: c.lng, lat: c.lat };
+  // MUHIM: pin boshqa viloyatga surilsa "Qayerdan" ham o'sha viloyatga
+  // o'zgarishi kerak — ilgari u faqat BIR MARTA, GPS javobida to'ldirilar
+  // va keyin xarita surilsa ham eski viloyatda qolib ketardi.
+  // detectRegionFromCoords arzon (14 ta nuqta bo'yicha oddiy hisob) va
+  // faqat 'moveend' da, ya'ni surish TUGAGANDAN keyin chaqiriladi —
+  // shu sabab surish silliqligiga ta'sir qilmaydi.
+  applyFromRegionFromCoords(c.lng, c.lat);
 }
 
 function removeFixedPin(){
@@ -4069,7 +4150,11 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
 
   const imgRect = iconImg.getBoundingClientRect();
   const mapRect = mapEl.getBoundingClientRect();
-  const pinSize = Math.round(imgRect.width * 1.45); // xaritada biroz kattaroq (7% oshirildi)
+  // ESLATMA: bu — pin DOIRASINING o'lchami, u o'zgarmaydi. 7% kattalashuv
+  // doiraning ICHIDAGI ikonkaga tegishli va u rasmning o'ziga (assets/
+  // icon-*-map.png) qurib berilgan — shu sabab xaritadagi barcha belgilarda
+  // ham bir xil bo'ladi.
+  const pinSize = Math.round(imgRect.width * 1.35);
   const targetX = mapRect.left + mapRect.width / 2 - pinSize / 2;
   // MUHIM: endi pinning OYOQCHA UCHI xaritaning markaziga (ya'ni
   // foydalanuvchining koordinatasiga) tushishi kerak — shu sabab dumaloq
@@ -4138,20 +4223,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
     // Haydovchiman) HAM BIR XIL yuqoridagi Qayerdan/Qayerga panelidan
     // foydalanadi — shuning uchun endi bu avtomatik to'ldirish key'dan
     // qat'i nazar (travel/cargo/driver) barcha uchtasida ham ishlaydi.
-    {
-      const regionName = detectRegionFromCoords(lng, lat);
-      if (regionName) {
-        const fromLbl = document.getElementById('driverFromLabel');
-        if (fromLbl) { fromLbl.textContent = regionWithFromSuffix(regionName); fitPillLabelText(fromLbl); }
-        document.getElementById('driverFromBtn')?.classList.add('has-value');
-        // "Qayerdan" avtomatik to'ldirildi — xaritadagi haydovchi yo'nalishlari
-        // shu manzilga qarab qayta filtrlanadi.
-        const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-        saved.from = regionName;
-        localStorage.setItem(routeKey(), JSON.stringify(saved));
-        refreshOrderMarkersDebounced();
-      }
-    }
+    applyFromRegionFromCoords(lng, lat);
 
     travelPinFlightTimer = setTimeout(() => {
       travelPinFlightTimer = null;
@@ -5345,13 +5417,7 @@ const MAP_ORDER_SOURCE_IDS = ['map-orders', 'map-travels', 'map-driver-routes'];
 const ORDER_MAP_LAYER_IDS = [
   'map-orders-clusters', 'map-orders-cluster-count', 'map-orders-unclustered-icon', 'map-orders-unclustered-label',
   'map-travels-clusters', 'map-travels-cluster-count', 'map-travels-unclustered-icon', 'map-travels-unclustered-label',
-  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label',
-  // "Bu mening e'lonim" belgilari ham shu ro'yxatda bo'lishi SHART: qatlamlar
-  // qayta qurilganda (removeMapOrderLayers) ular ham o'chirilmasa, manbasi
-  // (source) o'chirilgan "yetim" qatlam bo'lib qolib, Mapbox xato beradi va
-  // xaritada hech narsa yo'q joyda pulsatsiya ko'rinib turadi.
-  'map-orders-own-pulse', 'map-travels-own-pulse',
-  'map-driver-routes-own-radar-a', 'map-driver-routes-own-radar-b'
+  'map-driver-routes-clusters', 'map-driver-routes-cluster-count', 'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
 ];
 // Xaritadagi belgilar o'lchami. Uchala ikonka ham endi BIR XIL o'lchamdagi
 // oq doira ichida (assets/icon-*-3d.png rasmlariga doira ichiga qurib
@@ -8013,13 +8079,7 @@ function applyUniModeMapVisibility(){
   ];
   const driverRouteIds = [
     'map-driver-routes-clusters', 'map-driver-routes-cluster-count',
-    'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label',
-    // MUHIM: "bu mening e'lonim" belgisi (radar halqalari) HAR DOIM o'zining
-    // ikonkasi bilan BIRGA yashirinishi/ko'rinishi kerak. Ilgari bu ro'yxatda
-    // yo'q edi va natijada haydovchi orqaga bosganda mashina ikonkasi
-    // yashirinib, uning ostidagi yashil pulsatsiya xaritada yolg'iz qolib
-    // ketardi ("hech narsa yo'q joyda yashil doira pulsatsiya qilyapti").
-    'map-driver-routes-own-radar-a', 'map-driver-routes-own-radar-b'
+    'map-driver-routes-unclustered-icon', 'map-driver-routes-unclustered-label'
   ];
   const isDriverMode = activeUniMode === 'driver';
   // ═══ YAGONA, SIMMETRIK QOIDA ═══
@@ -8037,7 +8097,6 @@ function applyUniModeMapVisibility(){
   //   seeker rejimi  → o'zining yuk/yo'lovchi e'loni + BARCHA mos haydovchilar
   //   driver rejimi  → o'zining mashinasi      + BARCHA mos yuk/yo'lovchilar
   //   bosh ekran     → haydovchi yo'nalishlari yashirin (avvalgidek)
-  orderTravelIds.push('map-orders-own-pulse', 'map-travels-own-pulse');
   orderTravelIds.forEach(id => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', 'visible'); });
   driverRouteIds.forEach(id => {
     if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', (isSeekerMode || isDriverMode) ? 'visible' : 'none');
@@ -8045,6 +8104,7 @@ function applyUniModeMapVisibility(){
   applyMapLayerOwnFilter('map-orders', isSeekerMode);
   applyMapLayerOwnFilter('map-travels', isSeekerMode);
   applyMapLayerOwnFilter('map-driver-routes', isDriverMode);
+  updateOwnIndicator();
 }
 
 function findOrderByMapId(orderId){
@@ -8114,11 +8174,6 @@ const MAP_LABEL_PAINT = {
 
 function removeMapOrderLayers(){
   if (!map) return;
-  // Animatsiya taymerini ham to'xtatamiz — qatlamlar o'chirilgach u bekorga
-  // ishlab turmasin.
-  if (typeof _ownIndicatorTimer !== 'undefined' && _ownIndicatorTimer) {
-    clearInterval(_ownIndicatorTimer); _ownIndicatorTimer = null;
-  }
   [...ORDER_MAP_LAYER_IDS, 'orders-clusters', 'orders-unclustered-icon', 'orders-unclustered-label', 'orders-cluster-count'].forEach(id => {
     if (map.getLayer(id)) map.removeLayer(id);
   });
@@ -8259,112 +8314,63 @@ function bindOrderMapEvents(){
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// "Bu — MENING e'lonim" doimiy vizual belgisi. 3 ta sinov varianti orasidan
-// foydalanuvchi tanladi: hech qanday alohida suzuvchi yorliq/tugma YO'Q —
-// faqat ikonkaning o'zida animatsiya. Yuk yuboraman va Yo'lovchiman bir
-// xil (nafas oluvchi pulsatsiya), Haydovchiman esa boshqacha (radar
-// uslubida kengayib-yo'qoluvchi halqalar).
+// "Bu — MENING e'lonim" belgisi — TEZLIK UCHUN QAYTA YOZILDI.
+//
+// Ilgari bu 4 ta Mapbox "circle" qatlami edi va ularni har 90 ms da
+// ishlaydigan setInterval jonlantirardi: bir tikda setPaintProperty()
+// 10 martagacha chaqirilardi, har biri esa xaritani TO'LIQ qayta chizishga
+// majbur qiladi. Ya'ni sekundiga ~11 marta to'liq qayta chizish — to'xtovsiz,
+// hatto foydalanuvchi hech narsa qilmayotganda ham. Xaritaning sekinlashuvi
+// va "qotishi" aynan shundan edi.
+//
+// Endi bu BITTA DOM elementi (mapboxgl.Marker) va animatsiya sof CSS'da.
+// CSS animatsiyasi brauzerning kompozitorida (GPU) ishlaydi va xaritani
+// umuman qayta chizishga majbur qilmaydi — ya'ni tejash to'liq: 0 ta
+// qo'shimcha qayta chizish. Ko'rinishi esa avvalgidek.
 // ══════════════════════════════════════════════════════════════════════
-let _ownIndicatorTimer = null;
+let ownIndicatorMarker = null;
 
-function ownIndicatorFilter(){
-  const ownId = telegramUser.id != null ? String(telegramUser.id) : null;
-  if (!ownId) return ['==', ['get', 'telegramId'], '__none__'];
-  return ['all', ['!', ['has', 'point_count']], ['==', ['get', 'telegramId'], ownId]];
-}
-
-function removeOwnMapIndicators(){
-  if (!map) return;
-  if (_ownIndicatorTimer) { clearInterval(_ownIndicatorTimer); _ownIndicatorTimer = null; }
-  [
-    'map-orders-own-pulse', 'map-travels-own-pulse',
-    'map-driver-routes-own-radar-a', 'map-driver-routes-own-radar-b'
-  ].forEach(id => { if (map.getLayer(id)) map.removeLayer(id); });
-}
-
-function setupOwnMapIndicators(){
-  if (!map || !map.getLayer('map-orders-unclustered-icon')) return;
-  removeOwnMapIndicators();
-  const filter = ownIndicatorFilter();
-
-  // Yuk yuboraman / Yo'lovchiman - ikonka atrofida nafis "nafas oluvchi"
-  // pulsatsiya qiluvchi doira (ikkalasida ham BIR XIL, qaysi birini
-  // tanlaganingizdan qat'i nazar).
-  ['map-orders', 'map-travels'].forEach(prefix => {
-    const color = prefix === 'map-orders' ? '#2AABEE' : '#E8820A';
-    map.addLayer({
-      id: `${prefix}-own-pulse`, type: 'circle', source: prefix,
-      filter,
-      paint: { 'circle-radius': 15, 'circle-color': color, 'circle-opacity': 0.32, 'circle-stroke-width': 0 }
-    }, `${prefix}-unclustered-icon`);
-  });
-
-  // Haydovchiman - radar uslubida kengayib-yo'qoluvchi ikkita halqa
-  // (chiziqli aylana, to'ldirilmagan).
-  if (map.getLayer('map-driver-routes-unclustered-icon')) {
-    ['a', 'b'].forEach(tag => {
-      map.addLayer({
-        id: `map-driver-routes-own-radar-${tag}`, type: 'circle', source: 'map-driver-routes',
-        filter,
-        paint: { 'circle-radius': 12, 'circle-color': 'transparent', 'circle-stroke-width': 2.5, 'circle-stroke-color': '#22C55E', 'circle-stroke-opacity': 0.85 }
-      }, 'map-driver-routes-unclustered-icon');
-    });
-  }
-
-  let breathT = 0;
-  let radarT = 0;
-  _ownIndicatorTimer = setInterval(() => {
-    if (!map) return;
-    // MUHIM: ikonkaning o'zi zoom bilan kattalashib-kichrayadi
-    // (ORDER_ICON_SIZE_LAYOUT), shu sabab uning atrofidagi pulsatsiya/radar
-    // halqalari ham AYNAN SHU nisbatda o'lchanishi kerak - aks holda
-    // uzoqlashtirilganda halqa ikonkadan kattaligicha qolib, yaqinlashtirilganda
-    // esa ikonka ichida yo'qolib ketardi. ownIconScaleNow() joriy zoom uchun
-    // ikonka koeffitsientini beradi va hamma radiuslar shunga ko'paytiriladi.
-    const k = ownIconScaleNow();
-
-    // Oq doira radiusi icon-size 1.0 da ~16 px - shu sabab pulsatsiya
-    // halqasi ALBATTA shundan kattaroq bo'lishi kerak, aks holda u
-    // doiraning ORQASIDA butunlay yashirinib qolardi va hech narsa
-    // ko'rinmasdi.
-    breathT = (breathT + 0.09) % (Math.PI * 2);
-    const pr = (24 + Math.sin(breathT) * 5) * k;
-    const po = 0.3 - Math.sin(breathT) * 0.15;
-    ['map-orders-own-pulse', 'map-travels-own-pulse'].forEach(id => {
-      if (map.getLayer(id)) { map.setPaintProperty(id, 'circle-radius', pr); map.setPaintProperty(id, 'circle-opacity', po); }
-    });
-
-    radarT = (radarT + 0.018) % 1;
-    ['a', 'b'].forEach((tag, i) => {
-      const id = `map-driver-routes-own-radar-${tag}`;
-      if (!map.getLayer(id)) return;
-      const phase = (radarT + (i === 0 ? 0 : 0.5)) % 1;
-      map.setPaintProperty(id, 'circle-radius', (18 + phase * 26) * k);
-      map.setPaintProperty(id, 'circle-stroke-width', 2.5 * k);
-      map.setPaintProperty(id, 'circle-stroke-opacity', Math.max(0, 0.85 * (1 - phase)));
-    });
-  }, 90);
-}
-
-// ORDER_ICON_SIZE_LAYOUT ichidagi ['interpolate','linear',['zoom'], z1,v1, z2,v2, ...]
-// jadvalidan joriy zoom uchun koeffitsientni hisoblab beradi (Mapbox buni
-// ichida o'zi qiladi, lekin JS tarafda ham kerak - halqalarni ikonka bilan
-// bir xil nisbatda o'lchash uchun).
-function ownIconScaleNow(){
-  if (!map) return 1;
-  const z = map.getZoom();
-  const stops = ORDER_ICON_SIZE_LAYOUT.slice(3);
-  let prevZ = stops[0], prevV = stops[1];
-  if (z <= prevZ) return prevV;
-  for (let i = 2; i < stops.length; i += 2) {
-    const curZ = stops[i], curV = stops[i + 1];
-    if (z <= curZ) {
-      const t = (z - prevZ) / (curZ - prevZ || 1);
-      return prevV + (curV - prevV) * t;
+// Belgi qaysi nuqtada va qanday ko'rinishda turishi kerakligini aniqlaydi.
+// null qaytsa — belgi umuman ko'rsatilmaydi.
+function getOwnIndicatorPoint(){
+  if (!activeUniMode) return null;                 // bosh ekranda kerak emas
+  if (activeUniMode === 'driver') {
+    if (!myDriverState.active) return null;
+    const id = telegramUser.id != null ? String(telegramUser.id) : null;
+    const own = id ? (driverUsers || []).find(d => String(d.telegramId) === id) : null;
+    if (own && own.realLat != null && own.realLng != null) {
+      return { lng: own.realLng, lat: own.realLat, kind: 'driver' };
     }
-    prevZ = curZ; prevV = curV;
+    const g = loadLastGPS();
+    return g ? { lng: g.lng, lat: g.lat, kind: 'driver' } : null;
   }
-  return prevV;
+  const p = getOwnActiveSeekerPoint();
+  return p ? { lng: p.lng, lat: p.lat, kind: 'seeker' } : null;
+}
+
+function updateOwnIndicator(){
+  if (!map) return;
+  const p = getOwnIndicatorPoint();
+  if (!p) {
+    if (ownIndicatorMarker) { ownIndicatorMarker.remove(); ownIndicatorMarker = null; }
+    return;
+  }
+  if (!ownIndicatorMarker) {
+    const el = document.createElement('div');
+    el.className = 'own-indicator';
+    ownIndicatorMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+      .setLngLat([p.lng, p.lat]).addTo(map);
+  } else {
+    ownIndicatorMarker.setLngLat([p.lng, p.lat]);
+  }
+  ownIndicatorMarker.getElement().dataset.kind = p.kind;
+}
+
+// Eski nom saqlanadi (boshqa joylardan chaqiriladi), lekin endi u shunchaki
+// yangi, arzon belgini yangilaydi.
+function setupOwnMapIndicators(){ updateOwnIndicator(); }
+function removeOwnMapIndicators(){
+  if (ownIndicatorMarker) { ownIndicatorMarker.remove(); ownIndicatorMarker = null; }
 }
 // ══════════════════════════════════════════════════════════════════════
 
@@ -8719,6 +8725,7 @@ function refreshOrderMarkers(){
   if (map.getSource('map-driver-routes')) {
     map.getSource('map-driver-routes').setData(buildDriverRouteGeo());
   }
+  updateOwnIndicator();
 }
 
 async function adminDeleteAllOrders(){
