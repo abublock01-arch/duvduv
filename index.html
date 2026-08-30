@@ -72,6 +72,21 @@ html,body{
 }
 
 /* HEADER */
+/* ═══ MATN TANLASHNI O'CHIRISH ═══
+   Bug: tugmani uzoq bosib turilsa Android/iOS matn tanlash menyusini
+   ("Копировать / Выбрать все") ochib yuborardi — u ilova ustida osilib
+   qolar, tanlangan matn ko'k bo'lib qolar va foydalanuvchi hech narsa
+   qila olmasdi. Ilova interfeysida matn tanlashning ma'nosi yo'q, shu
+   sabab butunlay o'chiriladi. Kiritish maydonlari (profil: ism, familiya,
+   telefon) tabiiy ravishda ISTISNO — u yerda tanlash kerak. */
+html, body{
+  -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none;
+  -webkit-touch-callout:none;
+}
+input, textarea, select, [contenteditable="true"]{
+  -webkit-user-select:text; -moz-user-select:text; -ms-user-select:text; user-select:text;
+  -webkit-touch-callout:default;
+}
 .header{
   padding:max(12px,env(safe-area-inset-top)) 20px 8px;
   background:var(--app-bg);z-index:20;position:relative;flex-shrink:0;
@@ -985,40 +1000,58 @@ body.view-driver .driver-route-bar{
    (Yandex/Uber uslubidagi "markaziy pin").
    Oyoqcha uchi konteynerning markaziga (ya'ni map.getCenter() ga)
    to'g'ri kelishi uchun element yuqoriga suriladi. */
-/* ═══ "Bu mening e'lonim" belgisi — SOF CSS, xaritani qayta chizmaydi ═══
-   Animatsiya brauzer kompozitorida (GPU) ishlaydi. Ilgari buni JS taymer
-   qilardi va sekundiga ~11 marta butun xaritani qayta chizishga majbur
-   qilardi — xaritaning sekinlashuvi aynan shundan edi. */
-.own-indicator{width:0;height:0;position:relative;pointer-events:none}
-.own-indicator::before,.own-indicator::after{
-  content:'';position:absolute;left:0;top:0;border-radius:50%;
+/* ═══ O'ZINING E'LONI — jonli, nafis belgi ═══
+   Xaritadagi oddiy belgi (32px ikonka) o'zinikini ajratib ko'rsata olmasdi,
+   kattalashtirilganda ham shunchaki "katta ikonka" bo'lib qolardi.
+   Yechim — harakat: belgi sekin ko'tarilib-tushadi, ostidagi soya esa
+   unga TESKARI ravishda kichrayib-kattayadi (ko'tarilganda soya kichrayadi).
+   Bu ko'zga "tirik" bo'lib tashlanadi, lekin sakramaydi va bezovta qilmaydi.
+   Ustiga sekin kengayib yo'qoladigan halqa qo'shiladi.
+   Butun animatsiya sof CSS — GPU'da ishlaydi, xaritani qayta chizmaydi. */
+.own-mark{
+  position:relative;width:0;height:0;pointer-events:none;
+}
+.own-mark-icon{
+  position:absolute;left:50%;top:50%;width:58px;height:58px;
+  margin:-29px 0 0 -29px;object-fit:contain;display:block;
+  animation:ownFloat 3.2s ease-in-out infinite;
+  will-change:transform;
+}
+.own-mark-shadow{
+  position:absolute;left:50%;top:50%;width:30px;height:9px;
+  margin:20px 0 0 -15px;border-radius:50%;
+  background:rgba(15,23,42,.30);filter:blur(3px);
+  animation:ownFloatShadow 3.2s ease-in-out infinite;
   will-change:transform,opacity;
 }
-/* Yuk / Yo'lovchi — nafas oluvchi to'ldirilgan doira */
-.own-indicator[data-kind="seeker"]::before{
-  width:56px;height:56px;margin:-28px 0 0 -28px;
-  background:rgba(42,171,238,.30);
-  animation:ownBreath 2.4s ease-in-out infinite;
+.own-mark-halo{
+  position:absolute;left:50%;top:50%;width:58px;height:58px;
+  margin:-29px 0 0 -29px;border-radius:50%;
+  border:2px solid var(--own-halo,#2AABEE);
+  animation:ownHalo 2.8s cubic-bezier(.2,.6,.3,1) infinite;
+  will-change:transform,opacity;
 }
-.own-indicator[data-kind="seeker"]::after{content:none}
-/* Haydovchi — radar uslubida kengayib-yo'qoluvchi ikkita halqa */
-.own-indicator[data-kind="driver"]::before,
-.own-indicator[data-kind="driver"]::after{
-  width:44px;height:44px;margin:-22px 0 0 -22px;
-  border:2.5px solid #22C55E;
-  animation:ownRadar 2.2s cubic-bezier(.2,.6,.3,1) infinite;
+.own-mark[data-kind="driver"]{--own-halo:#22C55E}
+.own-mark[data-kind="cargo"] {--own-halo:#2AABEE}
+.own-mark[data-kind="travel"]{--own-halo:#E8820A}
+
+@keyframes ownFloat{
+  0%,100%{transform:translateY(0)}
+  50%    {transform:translateY(-7px)}
 }
-.own-indicator[data-kind="driver"]::after{animation-delay:1.1s}
-@keyframes ownBreath{
-  0%,100%{transform:scale(.80);opacity:.45}
-  50%    {transform:scale(1.14);opacity:.15}
+@keyframes ownFloatShadow{
+  0%,100%{transform:scale(1);opacity:.30}
+  50%    {transform:scale(.76);opacity:.16}
 }
-@keyframes ownRadar{
-  0%  {transform:scale(.45);opacity:.9}
-  100%{transform:scale(2.2);opacity:0}
+@keyframes ownHalo{
+  0%  {transform:scale(.72);opacity:.75}
+  70% {opacity:0}
+  100%{transform:scale(1.75);opacity:0}
 }
 @media (prefers-reduced-motion:reduce){
-  .own-indicator::before,.own-indicator::after{animation:none!important}
+  .own-mark-icon,.own-mark-shadow,.own-mark-halo{animation:none!important}
+}
+
 }
 /* ═══════════ E'LON JOYLANGANDAN KEYINGI XABAR ═══════════
    Uchta qisqa gap ketma-ket chiqadi (~0.5s oralab): uzun matnni ko'pchilik
@@ -4087,6 +4120,31 @@ function enterUniMode(key){
   if (document.getElementById('coachBackdrop')?.classList.contains('open')) {
     closeOnboarding(true);
   }
+
+  // ═══ ALLAQACHON TIRIK E'LON BORMI? ═══
+  // Agar foydalanuvchi shu turdagi e'lonni ALLAQACHON qo'ygan bo'lsa
+  // (orqaga bosib chiqqan, yoki ilovadan chiqib qaytgan), tugmani qayta
+  // bosish YANGI e'lon qo'yish emas — u shunchaki o'z e'loniga qaytmoqchi.
+  // Ilgari bu yerda pin oqimi qaytadan boshlanar va tirik e'lonning
+  // USTIGA yana pin tushardi: foydalanuvchi "yana qo'yayapmanmi yoki
+  // eskisimi?" deb chalkashardi. Endi to'g'ridan-to'g'ri o'sha e'lon
+  // oynasi tiklanadi (resumeUniMode) — GPS ham so'ralmaydi, pin ham
+  // tushmaydi, xarita shunchaki e'lonning ustiga boradi.
+  // Uchala rejim uchun ham bir xil ishlaydi.
+  const live = getOwnLiveListingRoute();
+  if (live && live.mode === key) {
+    try {
+      localStorage.setItem(routeKey(), JSON.stringify({ from: live.from, to: live.to }));
+      const k = userPrefKey('activeMode');
+      if (k) localStorage.setItem(k, key);
+    } catch(_) {}
+    resumeUniMode(key);
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.impactOccurred('light');
+    }
+    return;
+  }
+
   activeUniMode = key;
   syncUniActiveClass();
   // Yo'lovchiman rejimida xaritada faqat haydovchi yo'nalishlari ko'rinsin —
@@ -5530,10 +5588,12 @@ function getOwnActiveSeekerPoint(){
   if (!id) return null;
   const list1 = (typeof orders !== 'undefined') ? orders : [];
   const list2 = (typeof travels !== 'undefined') ? travels : [];
-  const item = list1.find(o => String(o.telegramId) === id && isActiveListing(o))
-            || list2.find(t => String(t.telegramId) === id && isActiveListing(t));
+  const own = list1.find(o => String(o.telegramId) === id && isActiveListing(o));
+  const item = own || list2.find(t => String(t.telegramId) === id && isActiveListing(t));
   if (!item || item.lat == null || item.lng == null) return null;
-  return { lng: item.lng, lat: item.lat };
+  // Qaysi turdagi e'lon ekani ham qaytariladi — belgi uchun to'g'ri
+  // ikonkani tanlashda kerak.
+  return { lng: item.lng, lat: item.lat, kind: own ? 'cargo' : 'travel' };
 }
 
 // Amal-ikonkasi (buyurtma/yo'lovchi e'loni YOKI haydovchi marshruti) xarita
@@ -5626,17 +5686,7 @@ const ORDER_ICON_SIZE_LAYOUT = [
   3, 0.60, 6, 0.72, 9, 0.88, 11, 1.0, 13, 1.18, 15, 1.42, 17, 1.65, 18, 1.78
 ];
 const DRIVER_ICON_SIZE_LAYOUT = ORDER_ICON_SIZE_LAYOUT;
-// O'ZINING e'loni uchun — sezilarli KATTAROQ shkala (~1.5x). Foydalanuvchi
-// o'z e'lonini boshqalarnikidan darhol ajratib olishi kerak: e'lon qo'ygandan
-// keyin uning belgisi xaritada boshqa mijozlarning belgilari bilan bir xil
-// kichkina ko'rinib qolardi.
-const OWN_ICON_SIZE_LAYOUT = (() => {
-  const out = ORDER_ICON_SIZE_LAYOUT.slice(0, 3);
-  for (let i = 3; i < ORDER_ICON_SIZE_LAYOUT.length; i += 2) {
-    out.push(ORDER_ICON_SIZE_LAYOUT[i], +(ORDER_ICON_SIZE_LAYOUT[i + 1] * 1.5).toFixed(3));
-  }
-  return out;
-})();
+
 const MAP_ORDER_COLOR = '#2563EB';
 const MAP_ICON_BOX = 'map-icon-box';
 const MAP_ICON_PERSON = 'map-icon-person';
@@ -8288,21 +8338,17 @@ function applyMapLayerOwnFilter(prefix, restrictToOwn){
   [`${prefix}-clusters`, `${prefix}-cluster-count`].forEach(id => { if (map.getLayer(id)) map.setFilter(id, clusterFilter); });
   if (map.getLayer(`${prefix}-unclustered-icon`)) map.setFilter(`${prefix}-unclustered-icon`, unclusteredFilter);
 
-  // ═══ O'ZINING E'LONI AJRALIB TURSIN ═══
-  // 1) Belgi kattaroq chiziladi (OWN_ICON_SIZE_LAYOUT).
-  // 2) Ostidagi "A → B" matni KO'RSATILMAYDI: o'zining marshruti tepadagi
-  //    Qayerdan/Qayerga panelida allaqachon yozib turibdi, xaritada takrorlash
-  //    ortiqcha va e'lonni boshqalar bilan bir xil "kichik" qilib ko'rsatardi.
+  // ═══ O'ZINING E'LONI XARITA QATLAMIDA CHIZILMAYDI ═══
+  // U alohida, JONLI belgi sifatida chiziladi (updateOwnIndicator —
+  // ko'tarilib-tushadigan ikonka, soya va halqa bilan). Shu sabab bu yerda
+  // o'ziniki ikkala qatlamdan ham — ikonka va "A → B" yozuvidan — chiqarib
+  // tashlanadi, aks holda bir e'lon ikki marta chizilardi.
+  const excludeOwn = f => ownId ? ['all', f, ['!=', ['get', 'telegramId'], ownId]] : f;
   const labelId = `${prefix}-unclustered-label`;
-  if (map.getLayer(labelId)) {
-    map.setFilter(labelId, ownId
-      ? ['all', unclusteredFilter, ['!=', ['get', 'telegramId'], ownId]]
-      : unclusteredFilter);
-  }
+  if (map.getLayer(labelId)) map.setFilter(labelId, excludeOwn(unclusteredFilter));
   if (map.getLayer(`${prefix}-unclustered-icon`)) {
-    map.setLayoutProperty(`${prefix}-unclustered-icon`, 'icon-size', ownId
-      ? ['case', ['==', ['get', 'telegramId'], ownId], OWN_ICON_SIZE_LAYOUT, ORDER_ICON_SIZE_LAYOUT]
-      : ORDER_ICON_SIZE_LAYOUT);
+    map.setFilter(`${prefix}-unclustered-icon`, excludeOwn(unclusteredFilter));
+    map.setLayoutProperty(`${prefix}-unclustered-icon`, 'icon-size', ORDER_ICON_SIZE_LAYOUT);
   }
 }
 
@@ -8586,7 +8632,7 @@ function getOwnIndicatorPoint(){
     return g ? { lng: g.lng, lat: g.lat, kind: 'driver' } : null;
   }
   const p = getOwnActiveSeekerPoint();
-  return p ? { lng: p.lng, lat: p.lat, kind: 'seeker' } : null;
+  return p ? { lng: p.lng, lat: p.lat, kind: p.kind } : null;
 }
 
 function updateOwnIndicator(){
@@ -8598,13 +8644,21 @@ function updateOwnIndicator(){
   }
   if (!ownIndicatorMarker) {
     const el = document.createElement('div');
-    el.className = 'own-indicator';
+    el.className = 'own-mark';
+    el.innerHTML =
+      '<span class="own-mark-halo"></span>' +
+      '<span class="own-mark-shadow"></span>' +
+      '<img class="own-mark-icon" alt="">';
     ownIndicatorMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
       .setLngLat([p.lng, p.lat]).addTo(map);
   } else {
     ownIndicatorMarker.setLngLat([p.lng, p.lat]);
   }
-  ownIndicatorMarker.getElement().dataset.kind = p.kind;
+  const el = ownIndicatorMarker.getElement();
+  el.dataset.kind = p.kind;
+  const img = el.querySelector('.own-mark-icon');
+  const src = UNI_PIN_ICONS[p.kind] || UNI_PIN_ICONS.travel;
+  if (img && img.getAttribute('src') !== src) img.setAttribute('src', src);
 }
 
 // Eski nom saqlanadi (boshqa joylardan chaqiriladi), lekin endi u shunchaki
