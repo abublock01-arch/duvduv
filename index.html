@@ -802,7 +802,9 @@ body.view-driver .driver-route-bar{
     inset 0 -2px 3px rgba(255,255,255,.1);
 }
 #driverFromBtn.has-value{ --btn-mid:#6EC3FF;--btn-base:#2AABEE;--btn-dark:#1C7FB0;--btn-darkest:#135A7D; color:#fff; }
-#driverToBtn.has-value{ --btn-mid:#FFA733;--btn-base:#FF8A00;--btn-dark:#C96800;--btn-darkest:#8F4900; color:#fff; }
+/* "Qayerga" tanlangandagi rang — logotipdagi nuqta rangi (#FF6B4A) asosida.
+   Ilgari to'q sariq (#FF8A00) edi, ya'ni brendga bog'lanmagan tasodifiy rang. */
+#driverToBtn.has-value{ --btn-mid:#FF9B80;--btn-base:#FF6B4A;--btn-dark:#BA4E36;--btn-darkest:#843726; color:#fff; }
 .drv-route-btn:not(.has-value) span{ text-shadow:0 -1px 1px rgba(0,0,0,.12),0 1px 1px rgba(255,255,255,.6); }
 .drv-route-btn.has-value span{ text-shadow:0 1px 2px rgba(0,0,0,.35),0 -1px 0 rgba(255,255,255,.22); }
 /* Rangli nuqta FLEX oqimidan chiqarilib, chap chetga MUTLAQ (absolute)
@@ -4029,13 +4031,26 @@ function applyFromRegionFromCoords(lng, lat){
   const regionName = detectRegionFromCoords(lng, lat);
   if (!regionName) return;
   const saved = JSON.parse(localStorage.getItem(routeKey()) || '{}');
-  if (saved.from === regionName) return;          // o'zgarmagan — tegmaymiz
-  saved.from = regionName;
-  localStorage.setItem(routeKey(), JSON.stringify(saved));
+  const changed = saved.from !== regionName;
+
+  // MUHIM: ilgari bu yerda "agar o'zgarmagan bo'lsa — umuman chiqib ket"
+  // degan shart bor edi (tezlik uchun). Lekin u YORLIQNI yangilashni ham
+  // o'tkazib yuborardi. Natijada: localStorage'da "Toshkent shahar" oldindan
+  // turgan bo'lsa, tugma bosilganda A manzil yozilmay, "Qayerdan?" bo'lib
+  // qolaverardi — faqat orqaga bosib qayta kirgandagina chiqardi (chunki
+  // orqaga bosilganda localStorage tozalanib, qiymat "o'zgargan" bo'lib
+  // qolardi).
+  // Endi ajratildi: YORLIQ har doim yangilanadi (arzon, faqat DOM),
+  // qimmat qismi — localStorage yozuvi va xaritani qayta filtrlash — esa
+  // faqat viloyat haqiqatan o'zgarganda bajariladi.
+  if (changed) {
+    saved.from = regionName;
+    localStorage.setItem(routeKey(), JSON.stringify(saved));
+  }
   const fromLbl = document.getElementById('driverFromLabel');
   if (fromLbl) { fromLbl.textContent = regionWithFromSuffix(regionName); fitPillLabelText(fromLbl); }
   document.getElementById('driverFromBtn')?.classList.add('has-value');
-  refreshOrderMarkersDebounced();
+  if (changed) refreshOrderMarkersDebounced();
 }
 
 function syncUniPinCoord(){
