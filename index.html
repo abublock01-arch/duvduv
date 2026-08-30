@@ -1000,56 +1000,38 @@ body.view-driver .driver-route-bar{
    (Yandex/Uber uslubidagi "markaziy pin").
    Oyoqcha uchi konteynerning markaziga (ya'ni map.getCenter() ga)
    to'g'ri kelishi uchun element yuqoriga suriladi. */
-/* ═══ O'ZINING E'LONI — jonli, nafis belgi ═══
-   Xaritadagi oddiy belgi (32px ikonka) o'zinikini ajratib ko'rsata olmasdi,
-   kattalashtirilganda ham shunchaki "katta ikonka" bo'lib qolardi.
-   Yechim — harakat: belgi sekin ko'tarilib-tushadi, ostidagi soya esa
-   unga TESKARI ravishda kichrayib-kattayadi (ko'tarilganda soya kichrayadi).
-   Bu ko'zga "tirik" bo'lib tashlanadi, lekin sakramaydi va bezovta qilmaydi.
-   Ustiga sekin kengayib yo'qoladigan halqa qo'shiladi.
-   Butun animatsiya sof CSS — GPU'da ishlaydi, xaritani qayta chizmaydi. */
-.own-mark{
-  position:relative;width:0;height:0;pointer-events:none;
-}
+/* ═══ O'ZINING E'LONI ═══
+   Ikki narsa: (1) belgi boshqalarnikidan sezilarli KATTA, (2) uning
+   chetida to'xtovsiz aylanib turadigan halqa. Aylanish — eng tinch
+   "tirik" signali: sakramaydi, chaqnamaydi, lekin ko'z uni darhol
+   ilg'aydi. Halqa to'liq emas, chorak yoy — shu sabab aylanishi
+   ko'rinadi. Sof CSS, GPU'da ishlaydi, xaritani qayta chizmaydi. */
+.own-mark{position:relative;width:0;height:0;pointer-events:none}
 .own-mark-icon{
-  position:absolute;left:50%;top:50%;width:58px;height:58px;
-  margin:-29px 0 0 -29px;object-fit:contain;display:block;
-  animation:ownFloat 3.2s ease-in-out infinite;
-  will-change:transform;
+  position:absolute;left:50%;top:50%;
+  width:58px;height:58px;margin:-29px 0 0 -29px;
+  object-fit:contain;display:block;
 }
-.own-mark-shadow{
-  position:absolute;left:50%;top:50%;width:30px;height:9px;
-  margin:20px 0 0 -15px;border-radius:50%;
-  background:rgba(15,23,42,.30);filter:blur(3px);
-  animation:ownFloatShadow 3.2s ease-in-out infinite;
-  will-change:transform,opacity;
+.own-mark-ring{
+  position:absolute;left:50%;top:50%;
+  width:76px;height:76px;margin:-38px 0 0 -38px;
+  overflow:visible;will-change:transform;
+  animation:ownSpin 2.8s linear infinite;
 }
-.own-mark-halo{
-  position:absolute;left:50%;top:50%;width:58px;height:58px;
-  margin:-29px 0 0 -29px;border-radius:50%;
-  border:2px solid var(--own-halo,#2AABEE);
-  animation:ownHalo 2.8s cubic-bezier(.2,.6,.3,1) infinite;
-  will-change:transform,opacity;
+.own-mark-ring circle{
+  fill:none;stroke:var(--own-halo,#2AABEE);
+  stroke-width:5;stroke-linecap:round;
+  stroke-dasharray:78 205;          /* to'liq aylana ~283 — ya'ni chorak yoy */
+  filter:drop-shadow(0 1px 2px rgba(0,0,0,.22));
 }
 .own-mark[data-kind="driver"]{--own-halo:#22C55E}
 .own-mark[data-kind="cargo"] {--own-halo:#2AABEE}
 .own-mark[data-kind="travel"]{--own-halo:#E8820A}
-
-@keyframes ownFloat{
-  0%,100%{transform:translateY(0)}
-  50%    {transform:translateY(-7px)}
-}
-@keyframes ownFloatShadow{
-  0%,100%{transform:scale(1);opacity:.30}
-  50%    {transform:scale(.76);opacity:.16}
-}
-@keyframes ownHalo{
-  0%  {transform:scale(.72);opacity:.75}
-  70% {opacity:0}
-  100%{transform:scale(1.75);opacity:0}
-}
+@keyframes ownSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){
-  .own-mark-icon,.own-mark-shadow,.own-mark-halo{animation:none!important}
+  .own-mark-ring{animation:none!important}
+}
+
 }
 
 }
@@ -5187,13 +5169,20 @@ const POST_OK_TEXT = {
 };
 
 function applyPostedLayout(mode){
-  // Yo'nalish paneli TEPAGA chiqadi — endi u "tanlanayotgan" emas,
-  // "tasdiqlangan" ma'lumot.
+  // TARTIB MUHIM: xabar ENG AVVAL ko'rsatiladi. Ilgari xarita chaqiruvi
+  // birinchi turardi va u biror sababga ko'ra xato bersa (xarita hali
+  // to'liq tayyor emas, uslub yuklanmagan va h.k.) funksiya shu yerda
+  // uzilib, XABAR UMUMAN CHIQMASDI. Endi xabar avval chiqadi, xaritaga
+  // tegishli qism esa alohida va himoyalangan.
   document.body.classList.add('uni-posted');
-  // Xarita uzoqlashadi: atrofdagi haydovchilar ko'rinadigan, lekin o'z
-  // belgisi hamon aniq turadigan masofa.
-  if (map) map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true });
   showPostOkPanel(mode);
+  // Belgini DARHOL ko'rsatamiz — Firestore javobini kutmasdan. Koordinata
+  // allaqachon ma'lum (uniPinCoord), shu sabab e'lon belgisi bir lahzaga
+  // ham g'oyib bo'lmaydi.
+  try { updateOwnIndicator(); } catch(_) {}
+  try {
+    if (map) map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true });
+  } catch(err) { console.warn('easeTo xatosi:', err && err.message); }
 }
 
 function showPostOkPanel(mode){
@@ -8632,7 +8621,18 @@ function getOwnIndicatorPoint(){
     return g ? { lng: g.lng, lat: g.lat, kind: 'driver' } : null;
   }
   const p = getOwnActiveSeekerPoint();
-  return p ? { lng: p.lng, lat: p.lat, kind: p.kind } : null;
+  if (p) return { lng: p.lng, lat: p.lat, kind: p.kind };
+  // ZAXIRA: e'lon endigina tasdiqlangan bo'lsa, Firestore snapshot'i hali
+  // yetib kelmagan bo'lishi mumkin — bu holda orders/travels massivlarida
+  // hali hech narsa yo'q. Ilgari aynan shu oraliqda belgi butunlay
+  // g'oyib bo'lar va faqat ilova yangilangandan keyin paydo bo'lardi.
+  // Koordinata esa bizga allaqachon ma'lum (pin qayerga qo'yilgani).
+  const savedKey = userPrefKey('activeMode');
+  const justPosted = savedKey && localStorage.getItem(savedKey) === activeUniMode;
+  if (justPosted && uniPinCoord && typeof uniPinCoord.lat === 'number') {
+    return { lng: uniPinCoord.lng, lat: uniPinCoord.lat, kind: activeUniMode };
+  }
+  return null;
 }
 
 function updateOwnIndicator(){
@@ -8646,8 +8646,9 @@ function updateOwnIndicator(){
     const el = document.createElement('div');
     el.className = 'own-mark';
     el.innerHTML =
-      '<span class="own-mark-halo"></span>' +
-      '<span class="own-mark-shadow"></span>' +
+      '<svg class="own-mark-ring" viewBox="0 0 100 100" aria-hidden="true">' +
+        '<circle cx="50" cy="50" r="45"></circle>' +
+      '</svg>' +
       '<img class="own-mark-icon" alt="">';
     ownIndicatorMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
       .setLngLat([p.lng, p.lat]).addTo(map);
