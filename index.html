@@ -967,14 +967,27 @@ body.view-driver .driver-route-bar{
 .travel-pin-img{width:100%;height:100%;display:block;object-fit:contain}
 .travel-pin-stem{
   position:absolute;left:50%;top:100%;transform:translateX(-50%);
-  width:3px;height:15px;border-radius:2px;
+  width:3px;height:16px;border-radius:2px;
   background:#2f3640;box-shadow:0 0 0 1.5px rgba(255,255,255,.95);
 }
 /* uchidagi nuqta */
 .travel-pin-stem::after{
-  content:'';position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
-  width:9px;height:9px;border-radius:50%;
+  content:'';position:absolute;left:50%;bottom:-3.5px;transform:translateX(-50%);
+  width:7px;height:7px;border-radius:50%;
   background:#2f3640;box-shadow:0 0 0 2px rgba(255,255,255,.95);
+}
+/* ═══ Pin EKRANDA QOTIB turadi ═══
+   Xarita surilganda pin joyidan qimirlamaydi — xaritaning o'zi uning
+   ostidan siljiydi. Shu tufayli kerakli joyni tanlash oson: xaritani
+   surasiz, pin qayerni ko'rsatsa — e'lon o'sha yerga qo'yiladi
+   (Yandex/Uber uslubidagi "markaziy pin").
+   Oyoqcha uchi konteynerning markaziga (ya'ni map.getCenter() ga)
+   to'g'ri kelishi uchun element yuqoriga suriladi. */
+.travel-pin--fixed{
+  position:absolute;left:50%;top:50%;
+  transform:translate(-50%, calc(-100% - 16px));
+  z-index:6;pointer-events:none;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.22));
 }
 
 /* "Yuk yuboraman" ikonkasidagi parashyut shamolda salgina tebranayotgandek —
@@ -3946,6 +3959,21 @@ function enterUniMode(key){
 let uniPinToken = 0;
 let uniPinReversing = false;
 let travelPinMarker = null;
+// Ekranga qotib turgan pin elementi va u ko'rsatib turgan koordinata.
+let travelPinFixedEl = null;
+let uniPinCoord = null;
+
+// Xarita har siljiganda pin ko'rsatayotgan koordinatani yangilaymiz.
+function syncUniPinCoord(){
+  if (!map || !travelPinFixedEl) return;
+  const c = map.getCenter();
+  uniPinCoord = { lng: c.lng, lat: c.lat };
+}
+
+function removeFixedPin(){
+  if (map) { try { map.off('moveend', syncUniPinCoord); } catch(_) {} }
+  if (travelPinFixedEl) { travelPinFixedEl.remove(); travelPinFixedEl = null; }
+}
 let travelRouteBarShifted = false;
 let travelPinFlightClone = null;
 let travelPinFlightTimer = null;
@@ -4009,7 +4037,11 @@ const UNI_PIN_ICONS = {
 // shunda uchidagi NUQTANING MARKAZI koordinataga to'g'ri tushadi
 // (nuqtaning pastki cheti emas — aks holda pin nishondan biroz yuqorida
 // turgandek ko'rinardi).
-const PIN_STEM_TOTAL = 15;
+const PIN_STEM_TOTAL = 16;   // oyoqcha 7% uzunroq (15 -> 16)
+// Tugma bosilganda xarita shu darajagacha yaqinlashadi — ilgari 15 edi,
+// ya'ni ko'cha darajasi uchun uzoq. Endi bino/hovli ajralib turadi va
+// kerakli nuqtani aniq tanlash mumkin.
+const UNI_PIN_ZOOM = 17;
 
 function buildPinElement(key, size){
   const wrap = document.createElement('div');
@@ -4037,7 +4069,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
 
   const imgRect = iconImg.getBoundingClientRect();
   const mapRect = mapEl.getBoundingClientRect();
-  const pinSize = Math.round(imgRect.width * 1.35); // xaritada biroz kattaroq ko'rinsin
+  const pinSize = Math.round(imgRect.width * 1.45); // xaritada biroz kattaroq (7% oshirildi)
   const targetX = mapRect.left + mapRect.width / 2 - pinSize / 2;
   // MUHIM: endi pinning OYOQCHA UCHI xaritaning markaziga (ya'ni
   // foydalanuvchining koordinatasiga) tushishi kerak — shu sabab dumaloq
@@ -4092,7 +4124,7 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       return;
     }
     const lng = coords.longitude, lat = coords.latitude;
-    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), 15), duration: TRAVEL_PIN_ANIM_MS, essential: true });
+    map.flyTo({ center: [lng, lat], zoom: Math.max(map.getZoom(), UNI_PIN_ZOOM), duration: TRAVEL_PIN_ANIM_MS, essential: true });
     // "A manzil" — foydalanuvchining ANIQ (haqiqiy GPS) joyi. Buni keyinroq
     // e'lon tasdiqlanganda (_saveSeekerListingToFirestore) xaritadagi
     // nuqta sifatida ishlatish uchun saqlab qo'yamiz — aks holda faqat
@@ -4129,16 +4161,21 @@ function playTravelPinAnimation(activeBtn, allBtns, key, token){
       // amalga o'tgan bo'lishi mumkin — bunday holda eskirgan marker
       // yaratilmasin ("ghost" marker qolib ketmasin).
       if (token !== uniPinToken) return;
-      if (travelPinMarker) { travelPinMarker.remove(); travelPinMarker = null; }
+      // MUHIM O'ZGARISH: ilgari bu mapboxgl.Marker edi, ya'ni pin
+      // koordinataga bog'lanib, xarita surilganda u bilan birga siljirdi.
+      // Endi pin EKRANGA qotib turadi (xarita konteynerining markazida),
+      // xaritaning o'zi esa uning ostidan siljiydi. Foydalanuvchi xaritani
+      // surib, pin ko'rsatgan joyni tanlaydi — e'lon o'sha nuqtaga
+      // qo'yiladi.
+      removeFixedPin();
       const pinEl = buildPinElement(key, pinSize);
-      pinEl.classList.add('travel-pin-marker');
-      // anchor:'center' + offset: elementni yuqoriga suramiz, shunda
-      // OYOQCHA UCHI aynan koordinataga tushadi (dumaloqning markazi emas).
-      travelPinMarker = new mapboxgl.Marker({
-        element: pinEl,
-        anchor: 'center',
-        offset: [0, -(pinSize / 2 + PIN_STEM_TOTAL)]
-      }).setLngLat([lng, lat]).addTo(map);
+      pinEl.classList.add('travel-pin--fixed');
+      (document.getElementById('mapWrap') || document.body).appendChild(pinEl);
+      travelPinFixedEl = pinEl;
+      // Pin turgan nuqta = xaritaning markazi. Har siljishdan keyin
+      // yangilanadi va e'lon tasdiqlanganda aynan shu koordinata yoziladi.
+      uniPinCoord = { lng, lat };
+      map.on('moveend', syncUniPinCoord);
       hideDriverLocationMarker();
       showMapControls();
     }, TRAVEL_PIN_ANIM_MS);
@@ -4321,7 +4358,11 @@ function exitUniMode(){
   // o'lchab olamiz — aks holda DOM'dan ajratilgach o'lchov nolga
   // aylanib qoladi.
   let fromRect = null;
-  if (travelPinMarker) {
+  if (travelPinFixedEl) {
+    fromRect = travelPinFixedEl.getBoundingClientRect();
+    removeFixedPin();
+    uniPinCoord = null;
+  } else if (travelPinMarker) {
     fromRect = travelPinMarker.getElement().getBoundingClientRect();
     travelPinMarker.remove();
     travelPinMarker = null;
@@ -4855,6 +4896,11 @@ function confirmListingPostOk(){
   } else if (isSeekerMode) {
     _saveSeekerListingToFirestore(mode, from, to);
   }
+  // Joy TANLANDI va yozildi — endi "surib tanlash" pini kerak emas, uni
+  // olib tashlaymiz. Aks holda tasdiqlangandan keyin ham ekran markazida
+  // osilib turib, "hali ham joy tanlayapmanmi?" degan chalkashlik berardi.
+  // uniPinCoord esa saqlanadi: e'lon aynan shu nuqtaga yozilgan.
+  removeFixedPin();
   // E'lon (yoki marshrut) tasdiqlangach: Qayerdan/Qayerga paneli avvalgi
   // (yuqori) joyiga qaytadi — uchala rejim (Haydovchiman/Yo'lovchiman/
   // Yuk yuboraman) uchun bir xil. Shuningdek — TASDIQLANGAN rejim
@@ -4968,7 +5014,14 @@ function _saveSeekerListingToFirestore(mode, from, to){
   // uchun barqaror kichik siljish (bir xil "Toshkent shahar"dan chiqqan
   // barcha e'lonlar aynan bitta koordinatada ustma-ust tushib qolmasligi
   // uchun; driverRoutes'da ishlatilgan jitterForRouteId bilan bir xil usul).
-  const realGPS = loadLastGPS();
+  // ENG USTUVOR MANBA: foydalanuvchi pin bilan O'ZI tanlagan nuqta.
+  // Xarita surilganda pin ekranda qotib turadi va uniPinCoord har siljishdan
+  // keyin yangilanadi — ya'ni bu aynan foydalanuvchi "mana shu yerdaman"
+  // deb ko'rsatgan joy. U bo'lmasa (masalan lokatsiya rad etilgan bo'lsa)
+  // eski tartib: haqiqiy GPS keshi, undan keyin viloyat markazi + siljish.
+  const realGPS = (uniPinCoord && typeof uniPinCoord.lat === 'number')
+    ? uniPinCoord
+    : loadLastGPS();
   const [jx, jy] = center ? jitterForRouteId(telegramUser.id, 0.03) : [0, 0];
   const doc = {
     type: mode === 'cargo' ? 'order' : 'travel',
