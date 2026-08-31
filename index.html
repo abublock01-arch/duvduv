@@ -862,6 +862,29 @@ body.view-driver .driver-route-bar{
   92%{transform:translateX(1px)}
 }
 .nudge-wiggle{animation:drvNudgeWiggle .62s cubic-bezier(.36,.07,.19,.97)}
+/* "Qayerga" ko'rsatkichi. Avval tugmaning o'zi silkinardi — bu "xato bo'ldi"
+   degandek tuyulardi. Endi tugma joyidan qimirlamaydi, uning USTIDA katta oq
+   strelka pastga qarab sekin tebranadi: "shuni bos" degani bir qarashda
+   tushunarli. Animatsiya faqat transform — GPU'da ishlaydi, xaritani
+   sekinlashtirmaydi. */
+.to-hint{
+  position:absolute;bottom:calc(100% + 6px);
+  left:calc(50% + 22px);right:10px;
+  display:none;align-items:flex-end;justify-content:center;
+  pointer-events:none;z-index:25;
+}
+.to-hint.show{display:flex}
+.to-hint svg{
+  width:46px;height:55px;display:block;
+  fill:#fff;stroke:#10254A;stroke-width:5;stroke-linejoin:round;
+  filter:drop-shadow(0 5px 9px rgba(0,0,0,.34));
+  animation:toHintBob 1s ease-in-out infinite;
+}
+@keyframes toHintBob{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(9px)}
+}
+@media (prefers-reduced-motion:reduce){ .to-hint svg{animation:none} }
 /* Ikki nuqta ("Qayerdan"/"Qayerga") orasidagi strelka avval oddiy
    ingichka chiziq edi — oq fonda deyarli sezilmas, "yo'nalish" ma'nosi
    darhol tushunarli bo'lmas edi. Endi u alohida kichik glossy doira
@@ -2935,6 +2958,11 @@ html, body { font-size: var(--fs-base); }
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Qayerga?</span>
           </button>
+          <!-- "Shuni bos" ko'rsatkichi: tugmaning O'ZI qimirlamaydi, uning
+               ustida katta oq strelka pastga qarab sekin tebranib turadi. -->
+          <div class="to-hint" id="toHint" aria-hidden="true">
+            <svg viewBox="0 0 100 120"><path d="M28 6 h44 v52 h24 L50 114 L4 58 h24 z"/></svg>
+          </div>
         </div>
 
         <div class="map-wrap" id="mapWrap">
@@ -4238,23 +4266,34 @@ const TRAVEL_EASE = 'cubic-bezier(.22,.61,.16,1)'; // silliq, plavniy "ease-out"
 // (uchala amal — Yo'lovchiman, Yuk yuboraman, Haydovchiman — uchun ham
 // bir xil, chunki panelning o'zi barchasida bir xil tushadi).
 let qayergaNudgeTimer = null;
+function syncQayergaHint(){
+  const hint = document.getElementById('toHint');
+  if (!hint) return;
+  const toBtn = document.getElementById('driverToBtn');
+  const need = !!activeUniMode
+            && !document.body.classList.contains('uni-posted')
+            && !!toBtn && !toBtn.classList.contains('has-value');
+  hint.classList.toggle('show', need);
+}
 function scheduleQayergaNudge(token){
   cancelQayergaNudge();
+  syncQayergaHint();
+  // Yengil qorovul: B manzil boshqa yo'l bilan to'ldirilsa yoki rejimdan
+  // chiqilsa strelka o'zi yo'qoladi. Faqat class o'qiladi — hech qanday
+  // layout/repaint yo'q, shuning uchun xaritaga ta'siri yo'q.
   qayergaNudgeTimer = setInterval(() => {
-    // Shu orada foydalanuvchi allaqachon chiqib ketgan yoki boshqa
-    // amalga o'tgan bo'lishi mumkin — eskirgan chaqiruv bo'lsa to'xtatamiz.
     if (token !== uniPinToken) { cancelQayergaNudge(); return; }
+    syncQayergaHint();
     const toBtn = document.getElementById('driverToBtn');
-    if (!toBtn || toBtn.classList.contains('has-value')) { cancelQayergaNudge(); return; }
-    toBtn.classList.remove('nudge-wiggle');
-    void toBtn.offsetWidth; // reflow — animatsiyani qaytadan ishga tushirish uchun
-    toBtn.classList.add('nudge-wiggle');
-  }, 2500);
+    if (toBtn && toBtn.classList.contains('has-value')) cancelQayergaNudge();
+  }, 900);
 }
 function cancelQayergaNudge(){
   if (qayergaNudgeTimer) { clearInterval(qayergaNudgeTimer); qayergaNudgeTimer = null; }
   document.getElementById('driverToBtn')?.classList.remove('nudge-wiggle');
+  document.getElementById('toHint')?.classList.remove('show');
 }
+
 // Bosh ekranda (hali hech qanday amal tanlanmagan, yo'nalish paneli
 // yuqorida turgan payt) tepadagi Qayerdan/Qayerga pillari HALI ISHLAMAYDI
 // — ular faqat amal tanlangach, panel pastga tushgandan keyin funksional
@@ -5088,7 +5127,7 @@ function selectDriverRegion(region) {
     saved.to = region;
     const lbl = document.getElementById('driverToLabel');
     if (lbl) { lbl.textContent = regionWithToSuffix(region); fitPillLabelText(lbl); }
-    document.getElementById('driverToBtn')?.classList.add('has-value');
+    document.getElementById('driverToBtn')?.classList.add('has-value'); try{ syncQayergaHint(); }catch(_){}
   }
   localStorage.setItem(routeKey(), JSON.stringify(saved));
   closeDriverRegionPicker();
@@ -5419,12 +5458,12 @@ function loadDriverRouteState() {
     if (fromLbl) { fromLbl.textContent = regionWithFromSuffix(saved.from); fitPillLabelText(fromLbl); }
     document.getElementById('driverFromBtn')?.classList.add('has-value');
     if (toLbl) { toLbl.textContent = regionWithToSuffix(saved.to); fitPillLabelText(toLbl); }
-    document.getElementById('driverToBtn')?.classList.add('has-value');
+    document.getElementById('driverToBtn')?.classList.add('has-value'); try{ syncQayergaHint(); }catch(_){}
   } else {
     if (fromLbl) { fromLbl.textContent = 'Qayerdan?'; fitPillLabelText(fromLbl); }
     document.getElementById('driverFromBtn')?.classList.remove('has-value');
     if (toLbl) { toLbl.textContent = 'Qayerga?'; fitPillLabelText(toLbl); }
-    document.getElementById('driverToBtn')?.classList.remove('has-value');
+    document.getElementById('driverToBtn')?.classList.remove('has-value'); try{ syncQayergaHint(); }catch(_){}
   }
   document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
 }
