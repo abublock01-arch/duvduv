@@ -1049,7 +1049,7 @@ body.view-driver .driver-route-bar{
 }
 .own-mark-ring circle{
   fill:none;stroke:var(--own-halo,#2AABEE);
-  stroke-width:7;stroke-linecap:round;
+  stroke-width:3.5;stroke-linecap:round;
   stroke-dasharray:78 205;          /* to'liq aylana ~283 — ya'ni chorak yoy */
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.22));
 }
@@ -1064,6 +1064,114 @@ body.view-driver .driver-route-bar{
 }
 
 }
+/* ═══════════ SIGNAL: halqa 4 ga bo'linib haydovchilarga uchadi ═══════════
+   Har bo'lak — xarita ustidagi mapboxgl.Marker, ya'ni u geografik nuqtaga
+   yopishgan holda "yer ustida" uchadi: shu sabab xarita ayni paytda
+   uzoqlashsa ham bo'laklar joyidan sirg'anib ketmaydi. Har kadrda faqat
+   marker koordinatasi yangilanadi — xarita qayta chizilmaydi. */
+.drv-signal{width:34px;height:34px;pointer-events:none;will-change:transform}
+.drv-signal-inner{display:block;width:100%;height:100%;transform-origin:50% 50%}
+.drv-signal svg{width:100%;height:100%;display:block;overflow:visible}
+.drv-signal circle{
+  fill:none;stroke:var(--sig,#2AABEE);stroke-width:7;stroke-linecap:round;
+  stroke-dasharray:70.7 212;stroke-dashoffset:35.3;
+  filter:drop-shadow(0 1px 3px rgba(0,0,0,.28));
+}
+/* Signal uchayotgan paytda o'z belgisidagi halqa vaqtincha o'chadi —
+   "halqa bo'linib ketdi" degan ma'no shundan chiqadi. */
+body.signal-flying .own-mark-ring{opacity:0;transition:opacity .22s ease}
+
+/* ═══════════ TOPILGAN HAYDOVCHILAR PANELI ═══════════
+   Post-ok xabaridan keyin uning o'rnini egallaydi. Uslub post-ok bilan bir
+   xil tilda: oq karta, 24px radius, aniq xoshiya, qavatli soya. */
+.drv-found{
+  position:absolute;left:0;right:0;bottom:96px;z-index:17;
+  display:flex;justify-content:center;padding:0 16px;
+  opacity:0;pointer-events:none;transition:opacity .28s ease;
+}
+.drv-found.open{opacity:1;pointer-events:auto}
+.drv-found-card{
+  position:relative;width:100%;max-width:400px;
+  display:flex;flex-direction:column;gap:12px;
+  padding:18px 16px 14px;border-radius:24px;
+  border:2px solid rgba(15,23,42,.14);
+  background:linear-gradient(180deg,#FFFFFF 0%,#FAFBFC 60%,#F1F3F6 100%);
+  box-shadow:
+    0 5px 0 0 rgba(15,23,42,.10),
+    0 18px 34px -12px rgba(15,23,42,.34),
+    0 3px 8px rgba(15,23,42,.10),
+    inset 0 1px 0 rgba(255,255,255,1);
+  transform:translateY(16px) scale(.97);
+  transition:transform .34s cubic-bezier(.22,1,.36,1);
+}
+.drv-found.open .drv-found-card{transform:none}
+.drv-found-x{
+  position:absolute;top:10px;right:10px;width:32px;height:32px;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid rgba(15,23,42,.14);border-radius:11px;
+  background:linear-gradient(180deg,#fff,#EEF0F4);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;padding:0;
+}
+.drv-found-x svg{width:15px;height:15px;fill:none;stroke:#64748B;stroke-width:2.2;stroke-linecap:round}
+.drv-found-x:active{transform:translateY(1px)}
+.drv-found-head{display:flex;align-items:center;gap:12px;padding-right:36px}
+.drv-found-badge{
+  width:42px;height:42px;flex-shrink:0;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(34,197,94,.10);border:1.5px solid rgba(34,197,94,.32);
+}
+.drv-found-badge svg{width:23px;height:23px;fill:#16A34A;stroke:none}
+.drv-found-title{
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:18px;font-weight:800;line-height:1.2;color:#0f172a;letter-spacing:-.015em;
+}
+.drv-found-sub{
+  font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
+  font-size:14px;font-weight:600;line-height:1.3;color:#475569;margin-top:2px;
+}
+.drv-found-list{display:flex;flex-direction:column;gap:8px}
+.drv-found-row{
+  display:flex;align-items:center;gap:11px;width:100%;text-align:left;
+  padding:10px 12px;border-radius:16px;cursor:pointer;
+  border:1.5px solid rgba(15,23,42,.12);
+  background:linear-gradient(180deg,#FFFFFF,#F2F4F7);
+  box-shadow:0 2px 0 0 rgba(15,23,42,.09),inset 0 1px 0 rgba(255,255,255,1);
+  -webkit-tap-highlight-color:transparent;font-family:inherit;
+  opacity:0;transform:translateY(10px);
+  transition:transform .09s ease,box-shadow .09s ease;
+}
+.drv-found.open .drv-found-row{animation:drvRowIn .4s cubic-bezier(.22,1,.36,1) forwards}
+@keyframes drvRowIn{to{opacity:1;transform:none}}
+.drv-found-row:active{transform:translateY(2px);box-shadow:0 0 0 0 rgba(15,23,42,.09)}
+.drv-found-ava{
+  width:36px;height:36px;flex-shrink:0;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 32% 26%,#FFFFFF 0%,#EAF6FF 55%,#CFE9FB 100%);
+  border:1.5px solid rgba(15,23,42,.10);
+  font-family:'SF Pro Rounded',system-ui,sans-serif;font-size:15px;font-weight:800;color:#1B8FCB;
+}
+.drv-found-body{min-width:0;flex:1;display:flex;flex-direction:column}
+.drv-found-name{
+  display:block;
+  font-family:'SF Pro Rounded',system-ui,sans-serif;font-size:15px;font-weight:800;color:#0f172a;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.drv-found-route{
+  display:block;
+  font-family:-apple-system,system-ui,sans-serif;font-size:13px;font-weight:600;color:#64748B;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px;
+}
+.drv-found-far{
+  flex-shrink:0;font-family:'SF Pro Rounded',system-ui,sans-serif;
+  font-size:12px;font-weight:800;color:#16A34A;
+  background:rgba(34,197,94,.10);border:1.5px solid rgba(34,197,94,.28);
+  border-radius:9px;padding:4px 7px;
+}
+@media (prefers-reduced-motion:reduce){
+  .drv-found-row{animation:none!important;opacity:1;transform:none}
+  .drv-found-card{transition:none}
+}
+
 /* ═══════════ E'LON JOYLANGANDAN KEYINGI XABAR ═══════════
    Uchta qisqa gap ketma-ket chiqadi (~0.5s oralab): uzun matnni ko'pchilik
    o'qimaydi, qisqa gaplar birin-ketin chiqqanda esa ko'z har biriga alohida
@@ -3035,6 +3143,26 @@ html, body { font-size: var(--fs-base); }
             </div>
           </div>
 
+          <!-- E'lon qo'yilgach signal 4 ta haydovchiga yetib borgandan keyin
+               shu panel chiqadi: eng yaqin haydovchilar bir joyga yig'iladi. -->
+          <div class="drv-found" id="drvFoundPanel" aria-live="polite">
+            <div class="drv-found-card">
+              <button type="button" class="drv-found-x" onclick="hideDriverFoundPanel()" aria-label="Yopish">
+                <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>
+              </button>
+              <div class="drv-found-head">
+                <span class="drv-found-badge" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
+                </span>
+                <div class="drv-found-headtext">
+                  <div class="drv-found-title" id="drvFoundTitle">4 ta haydovchi topildi</div>
+                  <div class="drv-found-sub">Ular bilan hoziroq bog'lanishingiz mumkin</div>
+                </div>
+              </div>
+              <div class="drv-found-list" id="drvFoundList"></div>
+            </div>
+          </div>
+
         </div>
         <!-- Eski picker — yashirildi, JS uchun saqlanmoqda -->
         <div class="driver-picker-zone" aria-hidden="true">
@@ -4598,6 +4726,8 @@ function exitUniMode(){
   activeUniMode = null;
   syncUniActiveClass();
   hidePostOkPanel();
+  hideDriverFoundPanel();
+  document.body.classList.remove('signal-flying');
   document.body.classList.remove('uni-posted');
   hideMapControls();
   cancelQayergaNudge();
@@ -5229,6 +5359,167 @@ const POST_OK_TEXT = {
   }
 };
 
+// ══════════════════════════════════════════════════════════════════════
+// E'LON QO'YILGANDAN KEYINGI "SIGNAL" — halqa 4 ga bo'linib, eng yaqin
+// 4 haydovchiga uchib boradi, ayni paytda xarita silliq uzoqlashadi va
+// hammasi ekranga sig'adi. Oxirida o'sha 4 haydovchi bitta panelga
+// yig'iladi. Bu — "e'loningiz haydovchilarga yetib bordi" degan g'oyani
+// gapirmasdan, harakat bilan ko'rsatish.
+// ══════════════════════════════════════════════════════════════════════
+const NEAREST_DRIVER_COUNT = 4;
+const SIGNAL_FLY_MS = 1650;
+const OWN_HALO_BY_MODE = { driver:'#22C55E', cargo:'#2AABEE', travel:'#E8820A' };
+
+function geoDistanceKm(a, b){
+  const R = 6371, rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const la1 = a.lat * rad, la2 = b.lat * rad;
+  const h = Math.sin(dLat/2)**2 + Math.cos(la1)*Math.cos(la2)*Math.sin(dLng/2)**2;
+  return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+// Xaritada AYNI PAYTDA ko'rinadigan (ya'ni A/B yo'nalishga mos) haydovchilar
+// ichidan e'lon nuqtasiga eng yaqin 4 tasi.
+function findNearestDriversForOwnListing(){
+  const origin = getOwnIndicatorPoint() || uniPinCoord;
+  if (!origin || typeof origin.lat !== 'number') return [];
+  let geo;
+  try { geo = buildDriverRouteGeo(); } catch(_) { return []; }
+  if (!geo || !geo.features) return [];
+  return geo.features
+    .map(f => {
+      const c = f.geometry && f.geometry.coordinates;
+      if (!c) return null;
+      const pt = { lng: c[0], lat: c[1] };
+      return { lng: pt.lng, lat: pt.lat, props: f.properties || {}, km: geoDistanceKm(origin, pt) };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.km - b.km)
+    .slice(0, NEAREST_DRIVER_COUNT);
+}
+
+function runDriverSignalAnimation(targets, mode){
+  return new Promise(resolve => {
+    const origin = getOwnIndicatorPoint() || uniPinCoord;
+    if (!map || !window.mapboxgl || !origin || !targets.length) { resolve(); return; }
+    const color = OWN_HALO_BY_MODE[mode] || '#2AABEE';
+    document.body.classList.add('signal-flying');
+
+    const pieces = targets.map(t => {
+      const el = document.createElement('div');
+      el.className = 'drv-signal';
+      el.style.setProperty('--sig', color);
+      // Yoyni harakat yo'nalishiga qaratamiz — u "to'lqin" bo'lib oldinga
+      // qarab uchayotgandek ko'rinadi. Kenglik bo'yicha masshtab (cos)
+      // hisobga olinadi, aks holda burchak xato chiqadi.
+      const dx = (t.lng - origin.lng) * Math.cos(origin.lat * Math.PI / 180);
+      const dy = -(t.lat - origin.lat);
+      const deg = Math.atan2(dy, dx) * 180 / Math.PI;
+      el.innerHTML = '<span class="drv-signal-inner" style="transform:rotate(' + deg.toFixed(1) + 'deg)">' +
+                     '<svg viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="45"></circle></svg></span>';
+      let marker = null;
+      try { marker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+                       .setLngLat([origin.lng, origin.lat]).addTo(map); } catch(_) {}
+      return { el, marker, t };
+    }).filter(x => x.marker);
+
+    if (!pieces.length) { document.body.classList.remove('signal-flying'); resolve(); return; }
+
+    // Xarita ayni paytda silliq uzoqlashadi va o'zi + 4 haydovchi ekranga
+    // to'liq sig'adi. Panel pastda joy egallagani uchun pastki bo'shliq katta.
+    try {
+      const b = new mapboxgl.LngLatBounds([origin.lng, origin.lat], [origin.lng, origin.lat]);
+      targets.forEach(t => b.extend([t.lng, t.lat]));
+      map.fitBounds(b, {
+        padding: { top: 130, bottom: 300, left: 60, right: 60 },
+        duration: SIGNAL_FLY_MS + 250, maxZoom: 12.5, essential: true
+      });
+    } catch(_) {
+      try { map.easeTo({ zoom: POST_OK_ZOOM, duration: SIGNAL_FLY_MS, essential: true }); } catch(__) {}
+    }
+
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(_) {}
+    }
+
+    const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
+    let done = false;
+    const finish = () => {
+      if (done) return; done = true;
+      pieces.forEach(x => { try { x.marker.remove(); } catch(_) {} });
+      document.body.classList.remove('signal-flying');
+      resolve();
+    };
+    // Xavfsizlik to'ri: rAF to'xtab qolsa ham oqim davom etsin.
+    const guard = setTimeout(finish, SIGNAL_FLY_MS + 1200);
+
+    const step = now => {
+      const k = Math.min(1, ((now || Date.now()) - t0) / SIGNAL_FLY_MS);
+      const e = 1 - Math.pow(1 - k, 3);           // ease-out — jadal chiqib, yumshoq qo'nadi
+      pieces.forEach(({ marker, el, t }) => {
+        try {
+          marker.setLngLat([
+            origin.lng + (t.lng - origin.lng) * e,
+            origin.lat + (t.lat - origin.lat) * e
+          ]);
+        } catch(_) {}
+        const inner = el.firstChild;
+        const fade = k < .10 ? k / .10 : (k > .84 ? Math.max(0, (1 - k) / .16) : 1);
+        el.style.opacity = String(fade);
+        if (inner) {
+          const sc = 0.55 + 0.75 * e;             // uchib borgan sari kattalashadi
+          const base = inner.style.transform.match(/rotate\([-\d.]+deg\)/);
+          inner.style.transform = (base ? base[0] : '') + ' scale(' + sc.toFixed(3) + ')';
+        }
+      });
+      if (k < 1) requestAnimationFrame(step);
+      else { clearTimeout(guard); finish(); }
+    };
+    requestAnimationFrame(step);
+  });
+}
+
+function showDriverFoundPanel(targets){
+  const panel = document.getElementById('drvFoundPanel');
+  const list = document.getElementById('drvFoundList');
+  if (!panel || !list || !targets.length) return;
+  const title = document.getElementById('drvFoundTitle');
+  if (title) title.textContent = targets.length + " ta haydovchi topildi";
+  list.innerHTML = '';
+  targets.forEach((t, i) => {
+    const p = t.props || {};
+    const name = (p.driverName || p.telegramUsername || '').toString().replace('@','').trim() || 'Haydovchi';
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'drv-found-row';
+    row.style.animationDelay = (0.10 + i * 0.09).toFixed(2) + 's';
+    row.onclick = () => openDriverFromFoundPanel(String(p.orderId || ''));
+    const far = t.km < 1 ? '<1 km' : (t.km < 10 ? t.km.toFixed(1) + ' km' : Math.round(t.km) + ' km');
+    row.innerHTML =
+      '<span class="drv-found-ava">' + escapeHtml(name.charAt(0).toUpperCase()) + '</span>' +
+      '<span class="drv-found-body">' +
+        '<span class="drv-found-name">' + escapeHtml(name) + '</span>' +
+        '<span class="drv-found-route">' + escapeHtml((p.mapFrom || '—') + ' → ' + (p.mapTo || '—')) + '</span>' +
+      '</span>' +
+      '<span class="drv-found-far">' + far + '</span>';
+    list.appendChild(row);
+  });
+  panel.classList.remove('open');
+  void panel.offsetWidth;
+  panel.classList.add('open');
+}
+
+function hideDriverFoundPanel(){
+  document.getElementById('drvFoundPanel')?.classList.remove('open');
+}
+
+function openDriverFromFoundPanel(orderId){
+  const item = findOrderByMapId(orderId);
+  if (!item) return;
+  openTravelMapSheet(item);
+}
+
 function applyPostedLayout(mode){
   // TARTIB MUHIM: xabar ENG AVVAL ko'rsatiladi. Ilgari xarita chaqiruvi
   // birinchi turardi va u biror sababga ko'ra xato bersa (xarita hali
@@ -5241,6 +5532,28 @@ function applyPostedLayout(mode){
   // allaqachon ma'lum (uniPinCoord), shu sabab e'lon belgisi bir lahzaga
   // ham g'oyib bo'lmaydi.
   try { updateOwnIndicator(); } catch(_) {}
+  hideDriverFoundPanel();
+
+  // Yo'lovchi/yuk e'loni bo'lsa — 3 qator o'qilib bo'lgach signal uchadi.
+  const seeker = mode === 'travel' || mode === 'cargo';
+  let targets = [];
+  if (seeker) { try { targets = findNearestDriversForOwnListing(); } catch(_) { targets = []; } }
+
+  if (seeker && targets.length) {
+    const token = uniPinToken;
+    setTimeout(() => {
+      // Shu orada foydalanuvchi chiqib ketgan bo'lishi mumkin.
+      if (token !== uniPinToken || !document.body.classList.contains('uni-posted')) return;
+      runDriverSignalAnimation(targets, mode).then(() => {
+        if (token !== uniPinToken || !document.body.classList.contains('uni-posted')) return;
+        hidePostOkPanel();
+        showDriverFoundPanel(targets);
+      });
+    }, 2000);
+    return;
+  }
+
+  // Haydovchi rejimi yoki mos haydovchi topilmadi — avvalgidek oddiy uzoqlashish.
   try {
     if (map) map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true });
   } catch(err) { console.warn('easeTo xatosi:', err && err.message); }
@@ -8313,6 +8626,7 @@ function driverRouteMapProps(route){
     itemType: 'driverRoute',
     telegramId: route.telegramId != null ? String(route.telegramId) : '',
     thumbUrl: '',
+    driverName: route.driverName || route.firstName || '',
     telegramUsername: route.telegramUsername || ''
   };
 }
@@ -8448,7 +8762,11 @@ function findOrderByMapId(orderId){
   const key = String(orderId);
   return orders.find(o => String(o.firestoreId || o.id) === key)
     || travels.find(t => String(t.firestoreId || t.id) === key)
-    || driverRoutes.find(r => String(r.firestoreId || r.id) === key);
+    || driverRoutes.find(r => String(r.firestoreId || r.id) === key)
+    // Xaritadagi haydovchilar asosan shu ro'yxatdan chiziladi (users
+    // kolleksiyasi, driverActive=true). Ilgari bu qator yo'q edi — shu
+    // sababli xaritadagi mashina belgisini bosganda HECH NARSA ochilmasdi.
+    || driverUsers.find(d => String(d.firestoreId || d.id) === key);
 }
 
 function loadMapMarkerImage(map, id, source){
