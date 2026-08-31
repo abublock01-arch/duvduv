@@ -834,7 +834,7 @@ body.view-driver .driver-route-bar{
   width:12px;height:12px;border-radius:50%;
 }
 .drv-dot--a{background:#2AABEE;box-shadow:0 0 0 3px rgba(42,171,238,.22)}
-.drv-dot--b{background:#FF8C00;box-shadow:0 0 0 3px rgba(255,140,0,.2)}
+.drv-dot--b{background:#FF6B4A;box-shadow:0 0 0 3px rgba(255,107,74,.24)}
 .drv-route-btn span{
   flex:1;text-align:center;text-transform:uppercase;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap;position:relative;z-index:1;
@@ -875,11 +875,17 @@ body.view-driver .driver-route-bar{
 }
 .to-hint.show{display:flex}
 .to-hint svg{
-  width:46px;height:55px;display:block;
-  fill:#fff;stroke:#10254A;stroke-width:5;stroke-linejoin:round;
-  filter:drop-shadow(0 5px 9px rgba(0,0,0,.34));
+  width:50px;height:60px;display:block;overflow:visible;
+  filter:drop-shadow(0 5px 9px rgba(0,0,0,.30));
   animation:toHintBob 1s ease-in-out infinite;
 }
+/* Ikki qatlam: pastdagi qalin yashil "shtrix" — yumaloq burchakli silueti
+   va ingichka xoshiya beradi; ustidagi tugma gradienti bilan to'ldirilgan
+   qatlam ichini "Qayerga" tugmasi bilan bir xil qiladi. Tepadagi oq
+   yaltirash — 3D hajm hissi uchun. */
+.to-hint-edge{ fill:#8CC153;stroke:#8CC153;stroke-width:16;stroke-linejoin:round;stroke-linecap:round; }
+.to-hint-body{ fill:url(#toHintBody);stroke:url(#toHintBody);stroke-width:10;stroke-linejoin:round;stroke-linecap:round; }
+.to-hint-gloss{ fill:url(#toHintGloss);stroke:url(#toHintGloss);stroke-width:8;stroke-linejoin:round;opacity:.75; }
 @keyframes toHintBob{
   0%,100%{transform:translateY(0)}
   50%{transform:translateY(9px)}
@@ -2387,7 +2393,7 @@ body.view-sender.theme-telegram .toggle,
 .theme-telegram .scene{background:transparent!important}
 .theme-telegram #driverView{background:var(--app-bg)!important}
 .theme-telegram .drv-route-arrow{color:var(--tg-btn,#2AABEE)!important}
-.theme-telegram .drv-dot--b{background:#FF8C00!important;box-shadow:0 0 0 3px rgba(255,140,0,.2)!important}
+.theme-telegram .drv-dot--b{background:#FF6B4A!important;box-shadow:0 0 0 3px rgba(255,107,74,.24)!important}
 .theme-telegram #driverView .region-picker--horizontal{
   background:#fff!important;--picker-fade:#fff!important;
   border-color:#2AABEE!important;
@@ -2961,7 +2967,23 @@ html, body { font-size: var(--fs-base); }
           <!-- "Shuni bos" ko'rsatkichi: tugmaning O'ZI qimirlamaydi, uning
                ustida katta oq strelka pastga qarab sekin tebranib turadi. -->
           <div class="to-hint" id="toHint" aria-hidden="true">
-            <svg viewBox="0 0 100 120"><path d="M28 6 h44 v52 h24 L50 114 L4 58 h24 z"/></svg>
+            <svg viewBox="0 0 100 120">
+              <defs>
+                <linearGradient id="toHintBody" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#FCFCFD"/>
+                  <stop offset="42%" stop-color="#EFF0F3"/>
+                  <stop offset="72%" stop-color="#DADDE3"/>
+                  <stop offset="100%" stop-color="#BEC2C9"/>
+                </linearGradient>
+                <linearGradient id="toHintGloss" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#fff" stop-opacity=".85"/>
+                  <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <path class="to-hint-edge" d="M30 8 H70 V63 H92 L50 112 L8 63 H30 Z"/>
+              <path class="to-hint-body" d="M30 8 H70 V63 H92 L50 112 L8 63 H30 Z"/>
+              <path class="to-hint-gloss" d="M33 14 H67 V42 H33 Z"/>
+            </svg>
           </div>
         </div>
 
