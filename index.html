@@ -883,7 +883,7 @@ body.view-driver .driver-route-bar{
    va ingichka xoshiya beradi; ustidagi tugma gradienti bilan to'ldirilgan
    qatlam ichini "Qayerga" tugmasi bilan bir xil qiladi. Tepadagi oq
    yaltirash — 3D hajm hissi uchun. */
-.to-hint-edge{ fill:#8CC153;stroke:#8CC153;stroke-width:16;stroke-linejoin:round;stroke-linecap:round; }
+.to-hint-edge{ fill:#8CC153;stroke:#8CC153;stroke-width:19;stroke-linejoin:round;stroke-linecap:round; }
 .to-hint-body{ fill:url(#toHintBody);stroke:url(#toHintBody);stroke-width:10;stroke-linejoin:round;stroke-linecap:round; }
 .to-hint-gloss{ fill:url(#toHintGloss);stroke:url(#toHintGloss);stroke-width:8;stroke-linejoin:round;opacity:.75; }
 @keyframes toHintBob{
@@ -1039,17 +1039,17 @@ body.view-driver .driver-route-bar{
 .own-mark-icon{
   position:absolute;left:50%;top:50%;
   width:58px;height:58px;margin:-29px 0 0 -29px;
-  object-fit:contain;display:block;
+  object-fit:contain;display:block;z-index:1;
 }
 .own-mark-ring{
   position:absolute;left:50%;top:50%;
-  width:76px;height:76px;margin:-38px 0 0 -38px;
-  overflow:visible;will-change:transform;
+  width:56px;height:56px;margin:-28px 0 0 -28px;
+  overflow:visible;will-change:transform;z-index:2;
   animation:ownSpin 2.8s linear infinite;
 }
 .own-mark-ring circle{
   fill:none;stroke:var(--own-halo,#2AABEE);
-  stroke-width:5;stroke-linecap:round;
+  stroke-width:7;stroke-linecap:round;
   stroke-dasharray:78 205;          /* to'liq aylana ~283 — ya'ni chorak yoy */
   filter:drop-shadow(0 1px 2px rgba(0,0,0,.22));
 }
