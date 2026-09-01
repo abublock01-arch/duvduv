@@ -1375,16 +1375,6 @@ body.view-driver.uni-active.uni-posted .driver-route-bar{
 .drv-region-btn.selected{
   border-color:#2AABEE;background:#2AABEE;color:#fff;
 }
-/* Route saqlandi banner */
-.drv-saved-banner{
-  position:fixed;bottom:calc(20px + env(safe-area-inset-bottom));
-  left:50%;transform:translateX(-50%) translateY(20px);
-  background:#22c55e;color:#fff;padding:12px 24px;
-  border-radius:14px;font-size:14px;font-weight:600;
-  z-index:600;opacity:0;transition:opacity .25s,transform .25s;
-  white-space:nowrap;pointer-events:none;
-}
-.drv-saved-banner.show{opacity:1;transform:translateX(-50%) translateY(0);}
 #driverView .region-picker{width:100%;margin:0;--picker-fade:#fff}
 /* Viloyat drum-roll picker (haydovchi) */
 .region-picker{
@@ -3322,7 +3312,6 @@ html, body { font-size: var(--fs-base); }
   </div>
   <div class="drv-picker-grid" id="driverPickerGrid"></div>
 </div>
-<div class="drv-saved-banner" id="drvSavedBanner"></div>
 
 <!-- JO'NATMA DETAL SHEET -->
 <div class="sheet-overlay sheet-overlay--detail" id="detailSheetOverlay" onclick="if(event.target===this)closeShipmentDetail()">
@@ -5193,7 +5182,8 @@ function findMatchingDriversSorted(limit){
   const origin = getOwnIndicatorPoint() || uniPinCoord;
   if (!origin || typeof origin.lat !== 'number') return [];
   let geo;
-  try { geo = buildDriverRouteGeo(); } catch(_) { return []; }
+  try { geo = buildDriverRouteGeo(); }
+  catch(err) { logPermEvent('XARITA', 'buildDriverRouteGeo xatosi: ' + (err && err.message)); return []; }
   if (!geo || !geo.features) return [];
   return geo.features
     .map(f => {
@@ -5206,22 +5196,35 @@ function findMatchingDriversSorted(limit){
     .slice(0, limit || 12);
 }
 
-const DRIVER_REVEAL_MS = 1900;
-const DRIVER_POP_STEP  = 190;
+const DRIVER_REVEAL_MS = 2000;   // xaritaning uzoqlashish davomiyligi
+const DRIVER_POP_STEP  = 170;    // har bir haydovchi orasidagi tanaffus
+// MUHIM: pop uzoqlashishning O'RTASIDAN boshlanadi. Ilgari u darhol
+// boshlanardi — o'sha paytda xarita hali juda yaqin (z17) bo'lgani uchun
+// haydovchilar ekrandan tashqarida qolib, animatsiya KO'RINMASDAN tugab
+// ketardi. Endi kamera yetarlicha uzoqlashgach ular birin-ketin chiqadi.
+const DRIVER_POP_START = 1150;
 
 // E'lon qo'yilgach: xarita SILLIQ uzoqlashadi va ayni shu paytda haydovchi
 // e'lonlari birin-ketin "pop" bo'lib paydo bo'ladi (o'yinlardagidek).
 // Haqiqiy Mapbox qatlami shu davrga yashiriladi va animatsiya tugagach
 // qaytariladi — shu sabab hech narsa ikki marta chizilmaydi.
-function revealDriversAfterPost(){
-  if (!map || !window.mapboxgl) return;
+function revealDriversAfterPost(attempt){
+  const tryNo = attempt || 1;
+  if (!map || !window.mapboxgl) { logPermEvent('XARITA', 'reveal: xarita hali tayyor emas'); return; }
   const origin = getOwnIndicatorPoint() || uniPinCoord;
-  if (!origin) return;
+  if (!origin) { logPermEvent('XARITA', 'reveal: o\'z nuqtasi topilmadi'); return; }
   const all = findMatchingDriversSorted(12);
+  logPermEvent('XARITA', `reveal #${tryNo}: driverUsers=${driverUsers.length}, mos=${all.length}`);
   if (!all.length) {
-    try { map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true }); } catch(_) {}
+    // 1-urinishda baribir uzoqlashamiz, keyin Firestore javobini kutib
+    // yana bir-ikki marta tekshiramiz (ro'yxat hali kelmagan bo'lishi mumkin).
+    if (tryNo === 1) { try { map.easeTo({ zoom: POST_OK_ZOOM, duration: 900, essential: true }); } catch(_) {} }
+    if (tryNo < 4) setTimeout(() => { try { revealDriversAfterPost(tryNo + 1); } catch(_) {} }, 850);
     return;
   }
+  // Faqat ekranga sig'adigan (kadrga olinadigan) haydovchilarni pop qilamiz —
+  // aks holda uzoqdagilari ekran tashqarisida "sakrab", ko'rinmay qolardi.
+  const shown = all.slice(0, 6);
   const iconLayer  = 'map-driver-routes-unclustered-icon';
   const labelLayer = 'map-driver-routes-unclustered-label';
   const setVis = (id, v) => { try { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', v); } catch(_) {} };
@@ -5231,7 +5234,7 @@ function revealDriversAfterPost(){
   // Xarita: o'zi + eng yaqin 4 haydovchi ekranga sig'adigan darajada uzoqlashadi.
   try {
     const b = new mapboxgl.LngLatBounds([origin.lng, origin.lat], [origin.lng, origin.lat]);
-    all.slice(0, NEAREST_DRIVER_COUNT).forEach(t => b.extend([t.lng, t.lat]));
+    shown.forEach(t => b.extend([t.lng, t.lat]));
     map.fitBounds(b, {
       padding: { top: 130, bottom: 150, left: 60, right: 60 },
       duration: DRIVER_REVEAL_MS, maxZoom: 12.5, essential: true
@@ -5241,12 +5244,12 @@ function revealDriversAfterPost(){
   }
 
   const markers = [];
-  all.forEach((t, i) => {
+  shown.forEach((t, i) => {
     const el = document.createElement('div');
     el.className = 'drv-pop';
     const inner = document.createElement('span');
     inner.className = 'drv-pop-in';
-    inner.style.animationDelay = (0.35 + i * (DRIVER_POP_STEP / 1000)).toFixed(2) + 's';
+    inner.style.animationDelay = ((DRIVER_POP_START + i * DRIVER_POP_STEP) / 1000).toFixed(2) + 's';
     const img = document.createElement('img');
     img.src = UNI_PIN_ICONS.driver; img.alt = '';
     inner.appendChild(img); el.appendChild(inner);
@@ -5255,12 +5258,13 @@ function revealDriversAfterPost(){
   });
 
   if (window.Telegram?.WebApp?.HapticFeedback) {
-    all.slice(0, 5).forEach((_, i) => setTimeout(() => {
+    shown.forEach((_, i) => setTimeout(() => {
       try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(__) {}
-    }, 350 + i * DRIVER_POP_STEP));
+    }, DRIVER_POP_START + i * DRIVER_POP_STEP));
   }
 
-  const total = 350 + all.length * DRIVER_POP_STEP + 650;
+  logPermEvent('XARITA', `reveal: ${shown.length} ta haydovchi pop bo'lyapti (jami mos ${all.length})`);
+  const total = DRIVER_POP_START + shown.length * DRIVER_POP_STEP + 700;
   setTimeout(() => {
     markers.forEach(m => { try { m.remove(); } catch(_) {} });
     setVis(iconLayer, 'visible');
@@ -5315,16 +5319,20 @@ function confirmListingPostOk(){
   if (mode) {
     try { localStorage.setItem(userPrefKey('activeMode'), mode); } catch(_) {}
   }
-  showDrvSavedBanner(`${regionWithFromSuffix(from)} → ${regionWithToSuffix(to)}`);
-  document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
-  if (window.Telegram?.WebApp?.HapticFeedback) {
-    Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-  }
-  _pendingListingConfirm = null;
-  playListingConfirmFlyAnimation();
-  // Yo'nalish paneli tepaga chiqadi va xarita uzoqlashadi (ikkalasi ham
-  // alohida so'ralgan edi). Xabar oynasi esa ko'rsatilmaydi.
+  // MUHIM TARTIB: ekran holatini o'zgartirish ENG BIRINCHI bajariladi.
+  // Ilgari undan oldin haptika va animatsiya turardi — ulardan biri xato
+  // bersa (ba'zi Telegram mijozlarida HapticFeedback qo'llab-quvvatlanmaydi
+  // va istisno tashlaydi), butun oqim shu yerda uzilib, e'lon qo'yilgandan
+  // keyingi ko'rinish UMUMAN ishlamay qolardi.
   applyPostedLayout(mode);
+  document.getElementById('uniRouteConfirmBtn')?.classList.remove('visible');
+  try {
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+    }
+  } catch(_) {}
+  _pendingListingConfirm = null;
+  try { playListingConfirmFlyAnimation(); } catch(_) {}
 }
 
 // OK karta kichrayib, "Mening e'lonlarim" belgisi tomon uchib, shu yerda
@@ -5459,13 +5467,6 @@ function _saveDriverRouteToFirestore(from, to) {
   _archiveAllSeekerListings();
 }
 
-function showDrvSavedBanner(text) {
-  const el = document.getElementById('drvSavedBanner');
-  if (!el) return;
-  el.textContent = '✅  Йўналиш сақланди: ' + text;
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 3000);
-}
 
 // Ilova HAR SAFAR ochilganda "Qayerdan"/"Qayerga" panellari yangidan
 // boshlanadi — avvalgi safar saqlangan (localStorage'dagi) qiymat endi
