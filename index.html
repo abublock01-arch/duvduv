@@ -904,6 +904,118 @@ body.view-driver .driver-route-bar{
 }
 @media (prefers-reduced-motion:reduce){ .to-hint--ok svg{animation:none;transform:rotate(-90deg)} }
 
+/* ═══════════ E'LON QO'YILGANDAN KEYINGI HOLAT ═══════════
+   Ikki qism: (1) tepada A/B QULFLANADI va ostida jonli "E'lon faol"
+   belgisi turadi — "men qo'ydimmi?" degan savol qolmaydi; (2) pastda
+   boshqaruv kartasi — o'zgartirish va o'chirish shu yerda. */
+
+/* (1) A/B qulflangan holat: bosilmaydi, bosiladigan 3D hissi ham yo'q —
+   endi bu "tanlanayotgan tugma" emas, "tasdiqlangan ma'lumot". */
+body.uni-posted .drv-route-btn{
+  pointer-events:none;
+  transform:translateY(3px);
+  box-shadow:
+    0 2px 0 0 var(--btn-darkest),
+    0 5px 10px rgba(0,0,0,.16),
+    inset 0 1px 0 rgba(255,255,255,.45);
+}
+.route-live{
+  position:absolute;top:calc(100% + 7px);left:50%;transform:translateX(-50%);
+  display:none;align-items:center;gap:7px;z-index:22;white-space:nowrap;
+  padding:6px 13px;border-radius:999px;
+  background:rgba(255,255,255,.96);
+  border:1.5px solid rgba(34,197,94,.38);
+  box-shadow:0 3px 10px rgba(15,23,42,.18),inset 0 1px 0 rgba(255,255,255,1);
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:13px;font-weight:800;color:#15803D;letter-spacing:-.01em;
+}
+body.uni-posted .route-live{display:flex}
+.route-live-dot{
+  width:9px;height:9px;border-radius:50%;background:#22C55E;flex-shrink:0;
+  animation:liveDot 1.9s ease-out infinite;
+}
+@keyframes liveDot{
+  0%  {box-shadow:0 0 0 0 rgba(34,197,94,.55)}
+  70% {box-shadow:0 0 0 9px rgba(34,197,94,0)}
+  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
+}
+
+/* (2) Pastdagi boshqaruv kartasi — post-ok bilan bir xil dizayn tili:
+   oq karta, 24px radius, aniq xoshiya, qavatli soya. */
+.listing-card{
+  position:absolute;left:16px;right:16px;bottom:92px;z-index:16;
+  opacity:0;pointer-events:none;transition:opacity .28s ease;
+}
+.listing-card.open{opacity:1;pointer-events:auto}
+.listing-card-inner{
+  position:relative;
+  display:flex;flex-direction:column;gap:13px;
+  padding:16px 16px 14px;border-radius:24px;
+  border:2px solid rgba(15,23,42,.14);
+  background:linear-gradient(180deg,#FFFFFF 0%,#FAFBFC 60%,#F1F3F6 100%);
+  box-shadow:
+    0 5px 0 0 rgba(15,23,42,.10),
+    0 18px 34px -12px rgba(15,23,42,.34),
+    0 3px 8px rgba(15,23,42,.10),
+    inset 0 1px 0 rgba(255,255,255,1);
+  transform:translateY(18px) scale(.97);
+  transition:transform .36s cubic-bezier(.22,1,.36,1);
+}
+.listing-card.open .listing-card-inner{transform:none}
+.lc-handle{
+  position:absolute;top:9px;right:10px;width:30px;height:30px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border:1.5px solid rgba(15,23,42,.13);border-radius:10px;
+  background:linear-gradient(180deg,#fff,#EEF0F4);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .25s cubic-bezier(.22,1,.36,1);
+}
+.lc-handle svg{width:16px;height:16px;fill:none;stroke:#64748B;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.listing-card.collapsed .lc-handle{transform:rotate(180deg)}
+.lc-head{display:flex;align-items:center;gap:12px;padding-right:34px}
+.lc-check{
+  width:42px;height:42px;flex-shrink:0;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(34,197,94,.10);border:1.5px solid rgba(34,197,94,.32);
+}
+.lc-check svg{width:22px;height:22px;fill:none;stroke:#16A34A;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.lc-title{
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:18px;font-weight:800;line-height:1.2;color:#0f172a;letter-spacing:-.015em;
+}
+.lc-sub{
+  font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
+  font-size:14px;font-weight:600;line-height:1.32;color:#475569;margin-top:2px;
+}
+.lc-actions{display:flex;gap:9px}
+.listing-card.collapsed .lc-actions,
+.listing-card.collapsed .lc-sub{display:none}
+.lc-btn{
+  flex:1;min-width:0;padding:13px 8px;border-radius:16px;cursor:pointer;
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:15px;font-weight:800;letter-spacing:-.01em;
+  -webkit-tap-highlight-color:transparent;
+  transition:transform .09s ease,box-shadow .09s ease;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.lc-btn:active{transform:translateY(2px)}
+.lc-btn--edit{
+  color:#0f172a;border:2px solid rgba(15,23,42,.16);
+  background:linear-gradient(180deg,#FFFFFF,#EDEFF3);
+  box-shadow:0 3px 0 0 rgba(15,23,42,.12),0 6px 12px rgba(15,23,42,.10),inset 0 1px 0 rgba(255,255,255,1);
+}
+.lc-btn--edit:active{box-shadow:0 1px 0 0 rgba(15,23,42,.12),0 3px 7px rgba(15,23,42,.10)}
+.lc-btn--del{
+  color:#B4321C;border:2px solid rgba(255,107,74,.42);
+  background:linear-gradient(180deg,#FFF6F3,#FFE7E0);
+  box-shadow:0 3px 0 0 rgba(186,78,54,.22),0 6px 12px rgba(186,78,54,.14),inset 0 1px 0 rgba(255,255,255,.9);
+}
+.lc-btn--del:active{box-shadow:0 1px 0 0 rgba(186,78,54,.22),0 3px 7px rgba(186,78,54,.14)}
+@media (prefers-reduced-motion:reduce){
+  .listing-card-inner{transition:none}
+  .route-live-dot{animation:none}
+}
+
 /* ═══ HAYDOVCHI E'LONLARI "POP" BO'LIB CHIQADI ═══
    Xarita uzoqlashayotgan paytda har bir haydovchi navbat bilan o'yindagidek
    sakrab paydo bo'ladi. Har biri — mapboxgl.Marker, animatsiya esa sof CSS
@@ -911,10 +1023,22 @@ body.view-driver .driver-route-bar{
    ya'ni xarita qayta chizilmaydi. */
 .drv-pop{width:34px;height:34px;pointer-events:none}
 .drv-pop-in{
-  display:block;width:100%;height:100%;opacity:0;transform-origin:50% 50%;
+  position:relative;display:block;width:100%;height:100%;opacity:0;transform-origin:50% 50%;
   animation:drvPop .60s cubic-bezier(.18,1.5,.42,1) forwards;
 }
 .drv-pop img{width:100%;height:100%;display:block;filter:drop-shadow(0 3px 7px rgba(0,0,0,.30))}
+/* Ikonka bilan BIR VAQTDA chiqadigan yozuv. Ilgari yozuv Mapbox qatlami
+   qaytarilgandagina paydo bo'lardi — natijada avval ikonkalar sakrab
+   chiqib, keyin ostiga matnlar "qo'shilardi". Endi ikkalasi bitta
+   bo'lakda, birga pop bo'ladi. Uslub xaritadagi yozuv bilan bir xil:
+   qora matn, oq halqa. */
+.drv-pop-label{
+  position:absolute;top:calc(100% + 1px);left:50%;transform:translateX(-50%);
+  white-space:nowrap;text-align:center;line-height:1.15;
+  font-family:-apple-system,'SF Pro Text',system-ui,sans-serif;
+  font-size:10px;font-weight:500;color:#111;letter-spacing:.1px;
+  text-shadow:0 0 2px #fff,0 0 2px #fff,0 0 3px #fff,1px 1px 2px #fff,-1px -1px 2px #fff,1px -1px 2px #fff,-1px 1px 2px #fff;
+}
 @keyframes drvPop{
   0%  {opacity:0;transform:scale(.15) translateY(12px)}
   50% {opacity:1;transform:scale(1.20) translateY(-5px)}
@@ -1095,10 +1219,6 @@ body.view-driver .driver-route-bar{
 @keyframes ownSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){
   .own-mark-ring{animation:none!important}
-}
-
-}
-
 }
 
 /* Xabar ochilganda yo'nalish paneli TEPAGA chiqadi */
@@ -2911,6 +3031,10 @@ html, body { font-size: var(--fs-base); }
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Qayerga?</span>
           </button>
+          <!-- E'lon qo'yilgach A/B qulflanadi va shu jonli belgi chiqadi. -->
+          <div class="route-live" id="routeLiveChip" aria-hidden="true">
+            <span class="route-live-dot"></span><span>E'lon faol</span>
+          </div>
           <!-- "Shuni bos" ko'rsatkichi: tugmaning O'ZI qimirlamaydi, uning
                ustida katta oq strelka pastga qarab sekin tebranib turadi. -->
           <div class="to-hint" id="toHint" aria-hidden="true">
@@ -2958,6 +3082,29 @@ html, body { font-size: var(--fs-base); }
           </button>
           <!-- B manzil tanlangach ko'rsatkich shu yerga o'tadi: yotiq holda
                yashil tasdiq tugmasini ko'rsatib turadi. -->
+          <!-- E'lon boshqaruv kartasi: holat + ikkita amal. E'longa tegishli
+               hamma narsa shu bitta joyda — keyinchalik "Haydovchi topildi",
+               "Qo'ng'iroq" kabi qatorlar ham shu kartaga qo'shiladi. -->
+          <div class="listing-card" id="listingCard" aria-live="polite">
+            <div class="listing-card-inner">
+              <button type="button" class="lc-handle" onclick="toggleListingCard()" aria-label="Yig'ish">
+                <svg viewBox="0 0 24 24"><path d="M7 10l5 5 5-5"/></svg>
+              </button>
+              <div class="lc-head">
+                <span class="lc-check" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8.2 12.3l2.6 2.6 5-5.2"/></svg>
+                </span>
+                <div class="lc-headtext">
+                  <div class="lc-title">E'loningiz joylandi</div>
+                  <div class="lc-sub" id="listingCardSub">Yo'nalishingizdagi haydovchilar sizni ko'rmoqda</div>
+                </div>
+              </div>
+              <div class="lc-actions">
+                <button type="button" class="lc-btn lc-btn--edit" onclick="editMyListing()">O'zgartirish</button>
+                <button type="button" class="lc-btn lc-btn--del" onclick="deleteMyListing()">E'lonni o'chirish</button>
+              </div>
+            </div>
+          </div>
           <div class="to-hint to-hint--ok" id="okHint" aria-hidden="true">
             <svg viewBox="0 0 100 120">
               <defs>
@@ -4543,6 +4690,7 @@ function exitUniMode(){
   activeUniMode = null;
   syncUniActiveClass();
   document.body.classList.remove('uni-posted');
+  hideListingCard();
   hideMapControls();
   cancelQayergaNudge();
   // Qaytish animatsiyasi boshlanmoqda — bu davrda yangi rejimga kirish
@@ -4683,6 +4831,7 @@ function resumeUniMode(key){
   // paneli "tasdiqlangan" holatda, ya'ni tepada turishi kerak (xabar
   // qaytadan ko'rsatilmaydi, u faqat bir marta, joylagan lahzada bo'ladi).
   document.body.classList.add('uni-posted');
+  showListingCard(key);
   applyUniModeMapVisibility();
   invalidateMapGeoCache();
 
@@ -5236,7 +5385,7 @@ function revealDriversAfterPost(attempt){
     const b = new mapboxgl.LngLatBounds([origin.lng, origin.lat], [origin.lng, origin.lat]);
     shown.forEach(t => b.extend([t.lng, t.lat]));
     map.fitBounds(b, {
-      padding: { top: 130, bottom: 150, left: 60, right: 60 },
+      padding: { top: 150, bottom: 265, left: 60, right: 60 },
       duration: DRIVER_REVEAL_MS, maxZoom: 12.5, essential: true
     });
   } catch(_) {
@@ -5252,7 +5401,17 @@ function revealDriversAfterPost(attempt){
     inner.style.animationDelay = ((DRIVER_POP_START + i * DRIVER_POP_STEP) / 1000).toFixed(2) + 's';
     const img = document.createElement('img');
     img.src = UNI_PIN_ICONS.driver; img.alt = '';
-    inner.appendChild(img); el.appendChild(inner);
+    inner.appendChild(img);
+    const pr = t.props || {};
+    if (pr.mapFrom || pr.mapTo) {
+      const lb = document.createElement('span');
+      lb.className = 'drv-pop-label';
+      lb.textContent = (pr.mapFrom || '—');
+      lb.appendChild(document.createElement('br'));
+      lb.appendChild(document.createTextNode(pr.mapTo || '—'));
+      inner.appendChild(lb);
+    }
+    el.appendChild(inner);
     try { markers.push(new mapboxgl.Marker({ element: el, anchor: 'center' })
                           .setLngLat([t.lng, t.lat]).addTo(map)); } catch(_) {}
   });
@@ -5272,10 +5431,65 @@ function revealDriversAfterPost(attempt){
   }, Math.max(total, DRIVER_REVEAL_MS));
 }
 
+// ── E'lon boshqaruv kartasi ──────────────────────────────────────────
+function showListingCard(mode){
+  const card = document.getElementById('listingCard');
+  if (!card) return;
+  const sub = document.getElementById('listingCardSub');
+  if (sub) sub.textContent = (mode === 'driver')
+    ? "Yo'nalishingizdagi yo'lovchilar sizni ko'rmoqda"
+    : "Yo'nalishingizdagi haydovchilar sizni ko'rmoqda";
+  card.classList.remove('collapsed');
+  card.classList.remove('open');
+  void card.offsetWidth;
+  card.classList.add('open');
+}
+function hideListingCard(){
+  document.getElementById('listingCard')?.classList.remove('open');
+}
+function toggleListingCard(){
+  document.getElementById('listingCard')?.classList.toggle('collapsed');
+}
+
+// "O'zgartirish" — e'lon O'CHIRILMAYDI, shunchaki tahrir holatiga qaytadi:
+// A/B qulfi ochiladi, yashil ✓ qaytadi. Yangi tanlov ✓ bilan tasdiqlanganda
+// eski e'lonning o'rniga yoziladi (hujjat ID doimiy).
+function editMyListing(){
+  hideListingCard();
+  document.body.classList.remove('uni-posted');
+  document.getElementById('uniRouteConfirmBtn')?.classList.add('visible');
+  try { syncQayergaHint(); } catch(_) {}
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(_) {}
+  }
+}
+
+function deleteMyListing(){
+  hideListingCard();
+  if (activeUniMode === 'driver') { deactivateMyDriverRoute(); return; }
+  _archiveAllSeekerListings();
+  // Mahalliy ro'yxatlarni Firestore javobini kutmasdan darhol yangilaymiz —
+  // aks holda exitUniMode() ichidagi getOwnLiveListingRoute() hali "faol"
+  // e'lonni ko'rib, endigina o'chirilgan holatni qayta tiklab qo'yardi.
+  const id = telegramUser.id != null ? String(telegramUser.id) : null;
+  if (id) {
+    [orders, travels].forEach(arr => arr.forEach(it => {
+      if (String(it.telegramId) === id) { it.archived = true; it.status = 'Arxiv'; }
+    }));
+  }
+  try { localStorage.removeItem(routeKey()); } catch(_) {}
+  try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
+  try { invalidateMapGeoCache(); } catch(_) {}
+  exitUniMode();
+  try { renderShipments(); } catch(_) {}
+  showToast("E'lon o'chirildi");
+}
+
 function applyPostedLayout(mode){
   document.body.classList.add('uni-posted');
   try { updateOwnIndicator(); } catch(_) {}
   syncQayergaHint();
+  showListingCard(mode);
   const seeker = mode === 'travel' || mode === 'cargo';
   if (seeker) { try { revealDriversAfterPost(); return; } catch(err) { console.warn('reveal xatosi:', err && err.message); } }
   try {
