@@ -5370,7 +5370,9 @@ function revealDriversAfterPost(attempt){
 function applySkin(v){
   document.body.classList.toggle('skin-v2', v === 'v2');
   const b = document.getElementById('skinSwitch');
-  if (b) b.textContent = (v === 'v2') ? 'v2 ✓' : 'v1';
+  // Tugma NIMA BO'LISHINI yozadi (hozirgi holatni emas) — aks holda
+  // "v1" degan yozuv holat belgisidek tuyulib, bosilmay qolardi.
+  if (b) b.textContent = (v === 'v2') ? '← eski ko\'rinish' : 'yangi ko\'rinish →';
   try { localStorage.setItem('duvduv_skin', v); } catch(_) {}
 }
 function toggleSkin(){
