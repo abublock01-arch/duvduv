@@ -904,62 +904,6 @@ body.view-driver .driver-route-bar{
 }
 @media (prefers-reduced-motion:reduce){ .to-hint--ok svg{animation:none;transform:rotate(-90deg)} }
 
-/* ═══════════ E'LON QO'YILGANDAN KEYIN: TUGMANING O'ZI HOLAT ═══════════
-   Yangi element qo'shilmaydi. E'lon qo'yilgach o'sha amal tugmasi pastga
-   qaytadi, lekin endi "yonib" turadi: yashil pulsatsiyalanuvchi nuqta va
-   "faol" yozuvi. Ekranga bir qarashda ma'lum bo'ladi — e'lon bormi yo'qmi.
-   Tugma orqaga tugmasi ustidan tushmasligi uchun biroz tepaga suriladi. */
-body.uni-posted .unified-actions{
-  padding-bottom:calc(max(16px,env(safe-area-inset-bottom)) + 66px);
-}
-body.uni-posted .uni-action-btn.uni-live{
-  opacity:1!important;
-  transform:none!important;
-  pointer-events:auto!important;
-  transition:opacity .4s ease .15s,transform .45s cubic-bezier(.22,1,.36,1) .15s!important;
-  padding-right:104px;
-}
-body.uni-posted .uni-action-btn.uni-live.uni-armed{padding-right:158px}
-body.uni-posted .uni-action-btn.uni-live .uni-action-label{
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-}
-.uni-live-badge{
-  position:absolute;right:14px;top:50%;transform:translateY(-50%);
-  display:flex;align-items:center;gap:6px;z-index:3;
-  padding:5px 11px;border-radius:999px;
-  background:rgba(255,255,255,.94);
-  box-shadow:0 2px 6px rgba(0,0,0,.20),inset 0 0 0 1.5px rgba(34,197,94,.35);
-  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
-  font-size:12px;font-weight:800;color:#15803D;letter-spacing:-.01em;white-space:nowrap;
-  transition:background .2s ease,color .2s ease,box-shadow .2s ease;
-}
-.uni-live-badge i{
-  width:8px;height:8px;border-radius:50%;background:#22C55E;flex-shrink:0;
-  animation:liveDot 1.9s ease-out infinite;
-}
-@keyframes liveDot{
-  0%  {box-shadow:0 0 0 0 rgba(34,197,94,.55)}
-  70% {box-shadow:0 0 0 8px rgba(34,197,94,0)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
-}
-/* Tasdiq holati: bir marta bosilgach tugmaning o'zi so'raydi — alohida
-   oyna ochilmaydi. 3 soniyadan keyin o'z-o'zidan orqaga qaytadi. */
-.uni-action-btn.uni-armed .uni-live-badge{
-  background:#FFECE7;color:#B4321C;
-  box-shadow:0 2px 6px rgba(0,0,0,.20),inset 0 0 0 1.5px rgba(255,107,74,.55);
-}
-.uni-action-btn.uni-armed .uni-live-badge i{background:#FF6B4A;animation:none}
-.uni-action-btn.uni-armed{animation:armedShake .4s ease}
-@keyframes armedShake{
-  0%,100%{transform:translateX(0)}
-  25%{transform:translateX(-4px)}
-  60%{transform:translateX(3px)}
-}
-@media (prefers-reduced-motion:reduce){
-  .uni-live-badge i{animation:none}
-  .uni-action-btn.uni-armed{animation:none}
-}
-
 /* ═══ HAYDOVCHI E'LONLARI "POP" BO'LIB CHIQADI ═══
    Xarita uzoqlashayotgan paytda har bir haydovchi navbat bilan o'yindagidek
    sakrab paydo bo'ladi. Har biri — mapboxgl.Marker, animatsiya esa sof CSS
@@ -4148,12 +4092,6 @@ function enterUniMode(key){
   // rejimga kirishga yo'l qo'ymaymiz — aks holda ikkita animatsiya bir
   // xil tugmada bir-biriga qarshi kelib, ikonka g'alati "chaqnab" ketishi
   // yoki xarita kutilmaganda sakrab ketishi mumkin edi.
-  // E'lon allaqachon qo'yilgan va shu tugma "faol" bo'lib yonib turibdi —
-  // uni bosish yangi e'lon emas, e'lonni TO'XTATISH so'rovi.
-  if (document.body.classList.contains('uni-posted') && key === activeUniMode) {
-    handleLiveActionTap(key);
-    return;
-  }
   if (activeUniMode || uniPinReversing) return; // rejim allaqachon faol — qayta bosishni e'tiborsiz qoldiramiz
   const meta = uniModeMeta()[key];
   if (!meta) return;
@@ -4613,8 +4551,6 @@ function exitUniMode(){
   activeUniMode = null;
   syncUniActiveClass();
   document.body.classList.remove('uni-posted');
-  clearLiveButton();
-  clearOwnRouteLine();
   hideMapControls();
   cancelQayergaNudge();
   // Qaytish animatsiyasi boshlanmoqda — bu davrda yangi rejimga kirish
@@ -4755,8 +4691,6 @@ function resumeUniMode(key){
   // paneli "tasdiqlangan" holatda, ya'ni tepada turishi kerak (xabar
   // qaytadan ko'rsatilmaydi, u faqat bir marta, joylagan lahzada bo'ladi).
   document.body.classList.add('uni-posted');
-  setLiveButton(key);
-  setTimeout(() => { try { drawOwnRouteLine(key, false); } catch(_) {} }, 700);
   applyUniModeMapVisibility();
   invalidateMapGeoCache();
 
@@ -5310,7 +5244,7 @@ function revealDriversAfterPost(attempt){
     const b = new mapboxgl.LngLatBounds([origin.lng, origin.lat], [origin.lng, origin.lat]);
     shown.forEach(t => b.extend([t.lng, t.lat]));
     map.fitBounds(b, {
-      padding: { top: 130, bottom: 185, left: 60, right: 60 },
+      padding: { top: 130, bottom: 150, left: 60, right: 60 },
       duration: DRIVER_REVEAL_MS, maxZoom: 12.5, essential: true
     });
   } catch(_) {
@@ -5356,164 +5290,10 @@ function revealDriversAfterPost(attempt){
   }, Math.max(total, DRIVER_REVEAL_MS));
 }
 
-// ══════════════════════════════════════════════════════════════════════
-// (1) YO'NALISH CHIZIG'I — e'lon qo'yilgach o'z belgingizdan B manzilga
-// qarab xaritada chiziq O'ZI chiziladi. Bu — "bo'ldi" degan lahza va ayni
-// paytda foydali ma'lumot: e'loningiz qayergacha yetib borishi ko'rinadi.
-// Hech qanday oyna yoki panel yo'q — xaritaning o'zi gapiradi.
-// ══════════════════════════════════════════════════════════════════════
-const ROUTE_LINE_SRC = 'own-route-line';
-const ROUTE_LINE_COLORS = { travel:'#E8820A', cargo:'#2AABEE', driver:'#22C55E' };
-
-// To'g'ri chiziq emas, yengil yoy — "bog'lanish" ma'nosini yaxshiroq beradi
-// va xaritadagi yo'llar bilan chalkashmaydi.
-function routeArcPoints(a, b, steps){
-  const mx = (a.lng + b.lng) / 2, my = (a.lat + b.lat) / 2;
-  const dx = b.lng - a.lng, dy = b.lat - a.lat;
-  const k = 0.13;
-  const cx = mx - dy * k, cy = my + dx * k;
-  const pts = [];
-  for (let i = 0; i <= steps; i++){
-    const t = i / steps, u = 1 - t;
-    pts.push([
-      u*u*a.lng + 2*u*t*cx + t*t*b.lng,
-      u*u*a.lat + 2*u*t*cy + t*t*b.lat
-    ]);
-  }
-  return pts;
-}
-
-function emptyLineData(){
-  return { type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:[] } };
-}
-
-function ensureRouteLineLayers(){
-  if (!map) return false;
-  if (map.getSource(ROUTE_LINE_SRC)) return true;
-  try {
-    map.addSource(ROUTE_LINE_SRC, { type:'geojson', data: emptyLineData() });
-    // Belgilar (ikonkalar) chiziq USTIDA qolishi uchun uni eng pastdagi
-    // e'lon qatlamidan oldin qo'shamiz.
-    const before = map.getLayer('map-orders-clusters') ? 'map-orders-clusters' : undefined;
-    map.addLayer({
-      id:'own-route-casing', type:'line', source:ROUTE_LINE_SRC,
-      layout:{ 'line-cap':'round', 'line-join':'round' },
-      paint:{ 'line-color':'#FFFFFF', 'line-width':9, 'line-opacity':.9 }
-    }, before);
-    map.addLayer({
-      id:'own-route-main', type:'line', source:ROUTE_LINE_SRC,
-      layout:{ 'line-cap':'round', 'line-join':'round' },
-      paint:{ 'line-color':'#E8820A', 'line-width':4.5 }
-    }, before);
-    return true;
-  } catch(err) { logPermEvent('XARITA', 'chiziq qatlami: ' + (err && err.message)); return false; }
-}
-
-function clearOwnRouteLine(){
-  try { const src = map && map.getSource(ROUTE_LINE_SRC); if (src) src.setData(emptyLineData()); } catch(_) {}
-}
-
-function drawOwnRouteLine(mode, animate){
-  if (!map) return;
-  const origin = getOwnIndicatorPoint() || uniPinCoord;
-  const saved = getDriverRouteFilter();
-  const toName = String(saved.to || '').split(' — ')[0].trim();
-  const c = REGION_CENTERS[toName];
-  if (!origin || typeof origin.lat !== 'number' || !c) { clearOwnRouteLine(); return; }
-  if (!ensureRouteLineLayers()) return;
-  try { map.setPaintProperty('own-route-main', 'line-color', ROUTE_LINE_COLORS[mode] || '#E8820A'); } catch(_) {}
-  const pts = routeArcPoints(origin, { lng:c[0], lat:c[1] }, 64);
-  const src = map.getSource(ROUTE_LINE_SRC);
-  if (!src) return;
-  const put = n => {
-    try { src.setData({ type:'Feature', properties:{},
-      geometry:{ type:'LineString', coordinates: pts.slice(0, Math.max(2, n)) } }); } catch(_) {}
-  };
-  if (!animate) { put(pts.length); return; }
-  const DUR = 1250;
-  const t0 = (typeof performance !== 'undefined' ? performance.now() : Date.now());
-  put(2);
-  const step = now => {
-    const k = Math.min(1, ((now || Date.now()) - t0) / DUR);
-    put(Math.round((1 - Math.pow(1 - k, 2.2)) * pts.length));
-    if (k < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-
-// ══════════════════════════════════════════════════════════════════════
-// (2) TUGMANING O'ZI HOLAT — e'lon qo'yilgach o'sha amal tugmasi pastga
-// qaytadi va "faol" bo'lib yonadi. Uni bosish e'lonni to'xtatadi, lekin
-// tasodifan bosilmasin deb IKKI QADAMDA: birinchi bosishda tugmaning
-// o'zi "to'xtatilsinmi?" deb so'raydi, ikkinchi bosishda bajaradi.
-// ══════════════════════════════════════════════════════════════════════
-let _stopArmTimer = null;
-function ensureLiveBadge(btn){
-  if (!btn || btn.querySelector('.uni-live-badge')) return;
-  const b = document.createElement('span');
-  b.className = 'uni-live-badge';
-  b.innerHTML = '<i></i><span class="uni-live-text">faol</span>';
-  btn.appendChild(b);
-}
-function setLiveButton(mode){
-  document.querySelectorAll('.uni-action-btn').forEach(b => b.classList.remove('uni-live','uni-armed'));
-  if (!mode) return;
-  const btn = document.querySelector('.uni-action-btn[data-uni-key="' + mode + '"]');
-  if (!btn) return;
-  ensureLiveBadge(btn);
-  const t = btn.querySelector('.uni-live-text'); if (t) t.textContent = 'faol';
-  btn.classList.add('uni-live');
-}
-function clearLiveButton(){
-  if (_stopArmTimer) { clearTimeout(_stopArmTimer); _stopArmTimer = null; }
-  document.querySelectorAll('.uni-action-btn').forEach(b => b.classList.remove('uni-live','uni-armed'));
-}
-function disarmStopListing(){
-  if (_stopArmTimer) { clearTimeout(_stopArmTimer); _stopArmTimer = null; }
-  document.querySelectorAll('.uni-action-btn.uni-armed').forEach(b => {
-    b.classList.remove('uni-armed');
-    const t = b.querySelector('.uni-live-text'); if (t) t.textContent = 'faol';
-  });
-}
-function handleLiveActionTap(mode){
-  const btn = document.querySelector('.uni-action-btn[data-uni-key="' + mode + '"]');
-  if (!btn) return;
-  if (btn.classList.contains('uni-armed')) { disarmStopListing(); stopMyListing(); return; }
-  disarmStopListing();
-  btn.classList.add('uni-armed');
-  const t = btn.querySelector('.uni-live-text'); if (t) t.textContent = "to'xtatish?";
-  _stopArmTimer = setTimeout(disarmStopListing, 3200);
-  if (window.Telegram?.WebApp?.HapticFeedback) {
-    try { Telegram.WebApp.HapticFeedback.impactOccurred('medium'); } catch(_) {}
-  }
-}
-function stopMyListing(){
-  clearLiveButton();
-  clearOwnRouteLine();
-  if (activeUniMode === 'driver') { deactivateMyDriverRoute(); return; }
-  _archiveAllSeekerListings();
-  // Mahalliy holatni Firestore javobini kutmasdan darhol yangilaymiz, aks
-  // holda exitUniMode() hali "tirik" e'lonni ko'rib holatni qayta tiklardi.
-  const id = telegramUser.id != null ? String(telegramUser.id) : null;
-  if (id) {
-    [orders, travels].forEach(arr => arr.forEach(it => {
-      if (String(it.telegramId) === id) { it.archived = true; it.status = 'Arxiv'; }
-    }));
-  }
-  try { localStorage.removeItem(routeKey()); } catch(_) {}
-  try { localStorage.removeItem(userPrefKey('activeMode')); } catch(_) {}
-  try { invalidateMapGeoCache(); } catch(_) {}
-  exitUniMode();
-  try { renderShipments(); } catch(_) {}
-  showToast("E'lon to'xtatildi");
-}
-
 function applyPostedLayout(mode){
   document.body.classList.add('uni-posted');
   try { updateOwnIndicator(); } catch(_) {}
   syncQayergaHint();
-  setLiveButton(mode);
-  setTimeout(() => { try { drawOwnRouteLine(mode, true); } catch(_) {} }, 260);
   const seeker = mode === 'travel' || mode === 'cargo';
   if (seeker) { try { revealDriversAfterPost(); return; } catch(err) { console.warn('reveal xatosi:', err && err.message); } }
   try {
