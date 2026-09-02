@@ -904,6 +904,82 @@ body.view-driver .driver-route-bar{
 }
 @media (prefers-reduced-motion:reduce){ .to-hint--ok svg{animation:none;transform:rotate(-90deg)} }
 
+/* ═══════════════════ VAQTINCHALIK: "v2" KO'RINISH ═══════════════════
+   Uch narsani hal qiladi: (1) tugmalar ekran markazidan pastga tushadi va
+   bitta qatorga yig'iladi — xarita ~180px ko'proq ochiladi; (2) 3D chuqurlik
+   ANIQ bo'ladi: tagida qattiq to'q "poydevor" qatlami, tepasida ingichka
+   aniq yorug'lik, bosilganda tugma haqiqatan poydevorga cho'kadi;
+   (3) ranglar tinchlanadi — qalin xrom halqa olib tashlanadi, bitta to'q
+   ko'k oila qoladi. Yuqoridagi "v1/v2" tugmasi bilan solishtiriladi. */
+body.skin-v2 .unified-actions{
+  top:auto;bottom:0;
+  display:flex;flex-direction:row;align-items:flex-end;justify-content:center;
+  gap:10px;row-gap:0;
+  padding:0 10px calc(max(14px,env(safe-area-inset-bottom)) + 14px);
+  align-content:flex-end;align-items:stretch;
+}
+body.skin-v2 .uni-action-btn{
+  width:112px;min-height:0;flex:0 0 auto;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:9px;column-gap:0;
+  padding:13px 4px 12px;
+  border:none;border-radius:24px;
+  background:linear-gradient(180deg,#5A90D2 0%,#2E63AC 48%,#1F4A86 100%);
+  box-shadow:
+    0 8px 0 0 #12305A,
+    0 9px 0 1px rgba(9,25,48,.35),
+    0 18px 24px -8px rgba(11,30,58,.55),
+    0 4px 8px rgba(11,30,58,.30),
+    inset 0 1.5px 0 rgba(255,255,255,.60),
+    inset 0 -12px 16px -10px rgba(0,0,0,.50);
+  transition:transform .08s ease,box-shadow .08s ease;
+}
+/* Bosilganda haqiqiy klavisha kabi poydevorga cho'kadi */
+body.skin-v2 .uni-action-btn:active{
+  transform:translateY(8px);
+  box-shadow:
+    0 0 0 0 #12305A,
+    0 4px 8px rgba(11,30,58,.38),
+    inset 0 1.5px 0 rgba(255,255,255,.35),
+    inset 0 -8px 12px -8px rgba(0,0,0,.55);
+}
+/* Yumshoq yaltirash — kichik va aniq, katta xira dog' emas */
+body.skin-v2 .uni-action-btn::before{
+  left:10%;right:10%;top:6%;height:26%;
+  background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0) 90%);
+  border-radius:50%/60%;
+}
+body.skin-v2 .uni-action-icon,
+body.skin-v2 .uni-action-btn--cargo .uni-action-icon{
+  width:56px;height:56px;border:none;
+  background:radial-gradient(circle at 34% 26%,#FFFFFF 0%,#FFFFFF 52%,#E9EBEF 100%);
+  box-shadow:
+    0 2px 0 0 rgba(9,25,48,.30),
+    0 5px 9px rgba(9,25,48,.34),
+    inset 0 2px 2px rgba(255,255,255,1),
+    inset 0 -4px 6px rgba(0,0,0,.14);
+}
+body.skin-v2 .uni-action-label{
+  text-align:center;white-space:nowrap;
+  font-size:10px;font-weight:900;line-height:1.1;letter-spacing:0;
+  color:#FFFFFF;
+  text-shadow:0 1px 2px rgba(9,25,48,.55);
+}
+/* Orqaga / tasdiq tugmalari pastdagi qator bilan to'qnashmasin */
+body.skin-v2.uni-active .unified-actions{padding-bottom:calc(max(14px,env(safe-area-inset-bottom)) + 8px)}
+
+/* Vaqtinchalik almashtirgich */
+.skin-switch{
+  position:absolute;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 60px);
+  z-index:40;padding:7px 13px;border-radius:999px;cursor:pointer;
+  border:1.5px solid rgba(15,23,42,.16);
+  background:linear-gradient(180deg,#fff,#EDEFF3);
+  box-shadow:0 3px 0 0 rgba(15,23,42,.12),0 6px 12px rgba(15,23,42,.14);
+  font-family:'SF Pro Rounded',system-ui,sans-serif;font-size:13px;font-weight:800;color:#0f172a;
+  -webkit-tap-highlight-color:transparent;
+}
+.skin-switch:active{transform:translateY(2px);box-shadow:0 1px 0 0 rgba(15,23,42,.12)}
+
 /* ═══ HAYDOVCHI E'LONLARI "POP" BO'LIB CHIQADI ═══
    Xarita uzoqlashayotgan paytda har bir haydovchi navbat bilan o'yindagidek
    sakrab paydo bo'ladi. Har biri — mapboxgl.Marker, animatsiya esa sof CSS
@@ -5289,6 +5365,34 @@ function revealDriversAfterPost(attempt){
     setVis(labelLayer, 'visible');
   }, Math.max(total, DRIVER_REVEAL_MS));
 }
+
+// ── VAQTINCHALIK: ko'rinish almashtirgichi (v1 = hozirgi, v2 = yangi) ──
+function applySkin(v){
+  document.body.classList.toggle('skin-v2', v === 'v2');
+  const b = document.getElementById('skinSwitch');
+  if (b) b.textContent = (v === 'v2') ? 'v2 ✓' : 'v1';
+  try { localStorage.setItem('duvduv_skin', v); } catch(_) {}
+}
+function toggleSkin(){
+  const cur = document.body.classList.contains('skin-v2') ? 'v2' : 'v1';
+  applySkin(cur === 'v2' ? 'v1' : 'v2');
+  if (window.Telegram?.WebApp?.HapticFeedback) {
+    try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(_) {}
+  }
+}
+function initSkinSwitch(){
+  if (document.getElementById('skinSwitch')) return;
+  const host = document.querySelector('#driverView') || document.body;
+  const b = document.createElement('button');
+  b.type = 'button'; b.id = 'skinSwitch'; b.className = 'skin-switch';
+  b.onclick = toggleSkin;
+  host.appendChild(b);
+  let v = 'v1';
+  try { v = localStorage.getItem('duvduv_skin') || 'v1'; } catch(_) {}
+  applySkin(v);
+}
+document.addEventListener('DOMContentLoaded', initSkinSwitch);
+if (document.readyState !== 'loading') initSkinSwitch();
 
 function applyPostedLayout(mode){
   document.body.classList.add('uni-posted');
