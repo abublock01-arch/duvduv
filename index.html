@@ -904,81 +904,45 @@ body.view-driver .driver-route-bar{
 }
 @media (prefers-reduced-motion:reduce){ .to-hint--ok svg{animation:none;transform:rotate(-90deg)} }
 
-/* ═══════════════════ VAQTINCHALIK: "v2" KO'RINISH ═══════════════════
-   Uch narsani hal qiladi: (1) tugmalar ekran markazidan pastga tushadi va
-   bitta qatorga yig'iladi — xarita ~180px ko'proq ochiladi; (2) 3D chuqurlik
-   ANIQ bo'ladi: tagida qattiq to'q "poydevor" qatlami, tepasida ingichka
-   aniq yorug'lik, bosilganda tugma haqiqatan poydevorga cho'kadi;
-   (3) ranglar tinchlanadi — qalin xrom halqa olib tashlanadi, bitta to'q
-   ko'k oila qoladi. Yuqoridagi "v1/v2" tugmasi bilan solishtiriladi. */
-body.skin-v2 .unified-actions{
-  top:auto;bottom:0;
-  display:flex;flex-direction:row;align-items:flex-end;justify-content:center;
-  gap:10px;row-gap:0;
-  padding:0 10px calc(max(14px,env(safe-area-inset-bottom)) + 14px);
-  align-content:flex-end;align-items:stretch;
-}
-body.skin-v2 .uni-action-btn{
-  width:112px;min-height:0;flex:0 0 auto;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:9px;column-gap:0;
-  padding:13px 4px 12px;
-  border:none;border-radius:24px;
-  background:linear-gradient(180deg,#5A90D2 0%,#2E63AC 48%,#1F4A86 100%);
-  box-shadow:
-    0 8px 0 0 #12305A,
-    0 9px 0 1px rgba(9,25,48,.35),
-    0 18px 24px -8px rgba(11,30,58,.55),
-    0 4px 8px rgba(11,30,58,.30),
-    inset 0 1.5px 0 rgba(255,255,255,.60),
-    inset 0 -12px 16px -10px rgba(0,0,0,.50);
-  transition:transform .08s ease,box-shadow .08s ease;
-}
-/* Bosilganda haqiqiy klavisha kabi poydevorga cho'kadi */
-body.skin-v2 .uni-action-btn:active{
-  transform:translateY(8px);
-  box-shadow:
-    0 0 0 0 #12305A,
-    0 4px 8px rgba(11,30,58,.38),
-    inset 0 1.5px 0 rgba(255,255,255,.35),
-    inset 0 -8px 12px -8px rgba(0,0,0,.55);
-}
-/* Yumshoq yaltirash — kichik va aniq, katta xira dog' emas */
-body.skin-v2 .uni-action-btn::before{
-  left:10%;right:10%;top:6%;height:26%;
-  background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,0) 90%);
-  border-radius:50%/60%;
-}
-body.skin-v2 .uni-action-icon,
-body.skin-v2 .uni-action-btn--cargo .uni-action-icon{
-  width:56px;height:56px;border:none;
-  background:radial-gradient(circle at 34% 26%,#FFFFFF 0%,#FFFFFF 52%,#E9EBEF 100%);
-  box-shadow:
-    0 2px 0 0 rgba(9,25,48,.30),
-    0 5px 9px rgba(9,25,48,.34),
-    inset 0 2px 2px rgba(255,255,255,1),
-    inset 0 -4px 6px rgba(0,0,0,.14);
-}
-body.skin-v2 .uni-action-label{
-  text-align:center;white-space:nowrap;
-  font-size:10px;font-weight:900;line-height:1.1;letter-spacing:0;
-  color:#FFFFFF;
-  text-shadow:0 1px 2px rgba(9,25,48,.55);
-}
-/* Orqaga / tasdiq tugmalari pastdagi qator bilan to'qnashmasin */
-body.skin-v2.uni-active .unified-actions{padding-bottom:calc(max(14px,env(safe-area-inset-bottom)) + 8px)}
-
-/* Vaqtinchalik almashtirgich */
-.skin-switch{
-  position:absolute;left:12px;top:calc(max(12px,env(safe-area-inset-top)) + 60px);
-  z-index:40;padding:7px 13px;border-radius:999px;cursor:pointer;
+/* ═══════════ E'LON QO'YILGACH: A/B QULFLANADI ═══════════
+   Ko'rinishi o'zgarmaydi — shunchaki bosilmaydi. Tasodifan tegib ketib
+   marshrut o'zgarib qolmasligi uchun. O'zgartirish faqat pastdagi
+   alohida tugma orqali. */
+body.uni-posted .drv-route-btn{pointer-events:none}
+.route-edit-btn{
+  position:absolute;top:calc(100% + 8px);right:10px;z-index:22;
+  display:none;align-items:center;gap:6px;
+  padding:7px 13px 7px 10px;border-radius:999px;cursor:pointer;
   border:1.5px solid rgba(15,23,42,.16);
-  background:linear-gradient(180deg,#fff,#EDEFF3);
-  box-shadow:0 3px 0 0 rgba(15,23,42,.12),0 6px 12px rgba(15,23,42,.14);
-  font-family:'SF Pro Rounded',system-ui,sans-serif;font-size:13px;font-weight:800;color:#0f172a;
+  background:linear-gradient(180deg,#FFFFFF,#EDEFF3);
+  box-shadow:0 3px 0 0 rgba(15,23,42,.12),0 6px 12px rgba(15,23,42,.16),
+    inset 0 1px 0 rgba(255,255,255,1);
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:13px;font-weight:800;color:#33445c;letter-spacing:-.01em;white-space:nowrap;
   -webkit-tap-highlight-color:transparent;
+  transition:transform .09s ease,box-shadow .09s ease;
 }
-.skin-switch:active{transform:translateY(2px);box-shadow:0 1px 0 0 rgba(15,23,42,.12)}
+body.uni-posted .route-edit-btn{display:flex}
+.route-edit-btn svg{width:15px;height:15px;fill:none;stroke:#33445c;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.route-edit-btn:active{transform:translateY(2px);box-shadow:0 1px 0 0 rgba(15,23,42,.12),0 3px 7px rgba(15,23,42,.14)}
+
+/* ═══════════ BOSH EKRANDA: FAOL E'LON BELGISI ═══════════
+   Orqaga bosilib bosh ekranga qaytilganda, qaysi amalda faol e'lon borligi
+   tugmaning burchagidagi yashil nuqtadan ko'rinadi. Xaritada esa e'lonning
+   o'zi (aylanuvchi yoy bilan) markazda turadi. */
+.uni-action-btn.has-listing::after{
+  content:"";position:absolute;top:9px;right:12px;z-index:4;
+  width:12px;height:12px;border-radius:50%;
+  background:#22C55E;border:2.5px solid #fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.35);
+  animation:listingDot 2s ease-out infinite;
+}
+@keyframes listingDot{
+  0%  {box-shadow:0 1px 3px rgba(0,0,0,.35),0 0 0 0 rgba(34,197,94,.55)}
+  70% {box-shadow:0 1px 3px rgba(0,0,0,.35),0 0 0 10px rgba(34,197,94,0)}
+  100%{box-shadow:0 1px 3px rgba(0,0,0,.35),0 0 0 0 rgba(34,197,94,0)}
+}
+@media (prefers-reduced-motion:reduce){ .uni-action-btn.has-listing::after{animation:none} }
 
 /* ═══ HAYDOVCHI E'LONLARI "POP" BO'LIB CHIQADI ═══
    Xarita uzoqlashayotgan paytda har bir haydovchi navbat bilan o'yindagidek
@@ -2995,6 +2959,12 @@ html, body { font-size: var(--fs-base); }
             <div class="drv-dot drv-dot--b"></div>
             <span id="driverToLabel">Qayerga?</span>
           </button>
+          <!-- E'lon qo'yilgach A/B bosilmaydi. O'zgartirish uchun ATAYLAB
+               alohida tugma — tasodifan tegib ketib marshrut buzilmasin. -->
+          <button type="button" class="route-edit-btn" id="routeEditBtn" onclick="unlockRouteEditing()" aria-label="Yo'nalishni o'zgartirish">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l4 4"/></svg>
+            <span>O'zgartirish</span>
+          </button>
           <!-- "Shuni bos" ko'rsatkichi: tugmaning O'ZI qimirlamaydi, uning
                ustida katta oq strelka pastga qarab sekin tebranib turadi. -->
           <div class="to-hint" id="toHint" aria-hidden="true">
@@ -4733,6 +4703,25 @@ function exitUniMode(){
   if (!hasOwnVisibleMarker) showDriverLocationMarker();
   document.querySelectorAll('.travel-pin-fly').forEach(el => el.remove());
   playTravelPinReverseAnimation(activeBtn, fromRect);
+
+  // ═══ BOSH EKRANDA E'LON YAQQOL KO'RINSIN ═══
+  // Ilgari orqaga bosilgach xaritada e'londan hech qanday iz qolmasdi va
+  // "men e'lon qo'ygandimmi?" degan savol tug'ilardi. Endi: (1) e'lon
+  // belgisi (aylanuvchi yoy bilan) xaritada qoladi, (2) xarita o'sha
+  // e'lon ustiga yaqin rakursda markazlashadi, (3) tegishli amal
+  // tugmasining burchagida pulsatsiyalanuvchi yashil nuqta chiqadi.
+  setTimeout(() => {
+    try { syncActiveListingBadges(); } catch(_) {}
+    try { updateOwnIndicator(); } catch(_) {}
+    try {
+      let saved = null;
+      try { saved = getSavedActiveMode(); } catch(_) {}
+      if (saved && !activeUniMode) {
+        const p = getOwnIndicatorPoint();
+        if (p && map) map.easeTo({ center: [p.lng, p.lat], zoom: OWN_LISTING_ZOOM, duration: 700, essential: true });
+      }
+    } catch(_) {}
+  }, 620);
 }
 
 // Foydalanuvchi ALLAQACHON tasdiqlagan (e'lon qo'ygan) rejimni qaytaradi —
@@ -4803,6 +4792,16 @@ function resumeUniMode(key){
   centerMapOnRouteFrom();
   hideDriverLocationMarker();
   ++uniPinToken;
+  syncActiveListingBadges();
+  // Chiqib qayta kirilganda ham xuddi e'lon endigina qo'yilgandek:
+  // o'z belgisi chiqadi, xarita silliq uzoqlashadi va yo'nalishdagi
+  // haydovchilar birin-ketin "pop" bo'lib paydo bo'ladi.
+  setTimeout(() => {
+    try { updateOwnIndicator(); } catch(_) {}
+    if (key === 'travel' || key === 'cargo') {
+      try { revealDriversAfterPost(); } catch(err) { console.warn('reveal:', err && err.message); }
+    }
+  }, 900);
 }
 
 function renderDriverRoutesList(){
@@ -5366,40 +5365,34 @@ function revealDriversAfterPost(attempt){
   }, Math.max(total, DRIVER_REVEAL_MS));
 }
 
-// ── VAQTINCHALIK: ko'rinish almashtirgichi (v1 = hozirgi, v2 = yangi) ──
-function applySkin(v){
-  document.body.classList.toggle('skin-v2', v === 'v2');
-  const b = document.getElementById('skinSwitch');
-  // Tugma NIMA BO'LISHINI yozadi (hozirgi holatni emas) — aks holda
-  // "v1" degan yozuv holat belgisidek tuyulib, bosilmay qolardi.
-  if (b) b.textContent = (v === 'v2') ? '← eski ko\'rinish' : 'yangi ko\'rinish →';
-  try { localStorage.setItem('duvduv_skin', v); } catch(_) {}
-}
-function toggleSkin(){
-  const cur = document.body.classList.contains('skin-v2') ? 'v2' : 'v1';
-  applySkin(cur === 'v2' ? 'v1' : 'v2');
+// E'lon qo'yilgach A/B bosilmaydi. "O'zgartirish" tugmasi qulfni ochadi:
+// e'lon o'chirilmaydi, shunchaki tahrir holatiga qaytiladi va yashil ✓
+// qaytadi — yangi tanlov tasdiqlanganda eskisining o'rniga yoziladi.
+function unlockRouteEditing(){
+  document.body.classList.remove('uni-posted');
+  document.getElementById('uniRouteConfirmBtn')?.classList.add('visible');
+  try { syncQayergaHint(); } catch(_) {}
   if (window.Telegram?.WebApp?.HapticFeedback) {
     try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(_) {}
   }
 }
-function initSkinSwitch(){
-  if (document.getElementById('skinSwitch')) return;
-  const host = document.querySelector('#driverView') || document.body;
-  const b = document.createElement('button');
-  b.type = 'button'; b.id = 'skinSwitch'; b.className = 'skin-switch';
-  b.onclick = toggleSkin;
-  host.appendChild(b);
-  let v = 'v1';
-  try { v = localStorage.getItem('duvduv_skin') || 'v1'; } catch(_) {}
-  applySkin(v);
+
+// Bosh ekranda: qaysi amalda faol e'lon borligini tugma burchagidagi
+// yashil nuqta ko'rsatadi.
+function syncActiveListingBadges(){
+  let saved = null;
+  try { saved = getSavedActiveMode(); } catch(_) { saved = null; }
+  const show = !activeUniMode && !!saved;
+  document.querySelectorAll('.uni-action-btn').forEach(btn => {
+    btn.classList.toggle('has-listing', show && btn.dataset.uniKey === saved);
+  });
 }
-document.addEventListener('DOMContentLoaded', initSkinSwitch);
-if (document.readyState !== 'loading') initSkinSwitch();
 
 function applyPostedLayout(mode){
   document.body.classList.add('uni-posted');
   try { updateOwnIndicator(); } catch(_) {}
   syncQayergaHint();
+  syncActiveListingBadges();
   const seeker = mode === 'travel' || mode === 'cargo';
   if (seeker) { try { revealDriversAfterPost(); return; } catch(err) { console.warn('reveal xatosi:', err && err.message); } }
   try {
@@ -8814,8 +8807,13 @@ let ownIndicatorMarker = null;
 // Belgi qaysi nuqtada va qanday ko'rinishda turishi kerakligini aniqlaydi.
 // null qaytsa — belgi umuman ko'rsatilmaydi.
 function getOwnIndicatorPoint(){
-  if (!activeUniMode) return null;                 // bosh ekranda kerak emas
-  if (activeUniMode === 'driver') {
+  // Bosh ekranda ham ko'rinsin: orqaga bosib chiqilganda foydalanuvchi
+  // o'z e'lonini xaritada YAQQOL ko'rib turishi kerak. Rejim faol
+  // bo'lmasa, saqlangan (tasdiqlangan) rejim asos qilib olinadi.
+  let mode = activeUniMode;
+  if (!mode) { try { mode = getSavedActiveMode(); } catch(_) { mode = null; } }
+  if (!mode) return null;
+  if (mode === 'driver') {
     if (!myDriverState.active) return null;
     const id = telegramUser.id != null ? String(telegramUser.id) : null;
     const own = id ? (driverUsers || []).find(d => String(d.telegramId) === id) : null;
@@ -8833,9 +8831,9 @@ function getOwnIndicatorPoint(){
   // g'oyib bo'lar va faqat ilova yangilangandan keyin paydo bo'lardi.
   // Koordinata esa bizga allaqachon ma'lum (pin qayerga qo'yilgani).
   const savedKey = userPrefKey('activeMode');
-  const justPosted = savedKey && localStorage.getItem(savedKey) === activeUniMode;
+  const justPosted = savedKey && localStorage.getItem(savedKey) === mode;
   if (justPosted && uniPinCoord && typeof uniPinCoord.lat === 'number') {
-    return { lng: uniPinCoord.lng, lat: uniPinCoord.lat, kind: activeUniMode };
+    return { lng: uniPinCoord.lng, lat: uniPinCoord.lat, kind: mode };
   }
   return null;
 }
