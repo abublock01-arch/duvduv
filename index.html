@@ -910,13 +910,6 @@ body.view-driver .driver-route-bar{
    chirog'i kabi. Bu bir qarashda "e'loningiz efirda" degan ma'noni beradi,
    hech qanday yozuvsiz. Bosilmaydi ham — tasodifan buzilmasin. */
 body.uni-posted .drv-route-btn{pointer-events:none}
-body.uni-posted .driver-route-bar{gap:0}
-body.uni-posted .drv-route-arrow{
-  width:0;opacity:0;margin:0;pointer-events:none;
-  transition:width .3s ease,opacity .2s ease;
-}
-body.uni-posted #driverFromBtn{border-top-right-radius:6px;border-bottom-right-radius:6px}
-body.uni-posted #driverToBtn  {border-top-left-radius:6px; border-bottom-left-radius:6px}
 body.uni-posted .drv-route-btn{
   background:
     linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
@@ -956,63 +949,67 @@ body.uni-posted .route-tools{display:flex}
 }
 .rt-btn svg{width:20px;height:20px;fill:none;stroke:#33445c;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .rt-btn:active{transform:translateY(3px);box-shadow:0 0 0 0 rgba(15,23,42,.13),0 3px 7px rgba(15,23,42,.16)}
-.rt-btn--del{border-color:rgba(255,107,74,.42);background:linear-gradient(180deg,#FFF7F5,#FFE9E2)}
-.rt-btn--del svg{stroke:#C2402A}
-/* Bir marta bosilganda "rostdanmi?" holatiga o'tadi — alohida oyna yo'q */
+.rt-btn--del{
+  border-color:rgba(255,107,74,.42);background:linear-gradient(180deg,#FFF7F5,#FFE9E2);
+  overflow:hidden;position:relative;gap:0;
+  transition:width .28s cubic-bezier(.22,1,.36,1),background .22s ease,border-color .22s ease,
+             transform .09s ease,box-shadow .09s ease;
+}
+.rt-btn--del svg{stroke:#C2402A;flex-shrink:0}
+/* Bir marta bosilganda tugma KENGAYIB o'zi so'raydi: "O'chirilsinmi?" —
+   alohida oyna ochilmaydi. Pastdagi ingichka chiziq esa qancha vaqt
+   qolganini ko'rsatib qisqarib boradi; tugasa savol o'z-o'zidan yopiladi.
+   Ya'ni tasdiq ham tushunarli, ham qaytarib bo'ladigan. */
+.rt-del-word{
+  max-width:0;opacity:0;overflow:hidden;white-space:nowrap;
+  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
+  font-size:14px;font-weight:900;color:#fff;letter-spacing:-.01em;
+  transition:max-width .28s cubic-bezier(.22,1,.36,1),opacity .18s ease,margin .28s ease;
+}
+.rt-del-bar{
+  position:absolute;left:0;bottom:0;height:3px;width:0;
+  background:rgba(255,255,255,.85);border-radius:2px;
+}
 .rt-btn--del.armed{
+  width:auto;padding:0 15px 0 12px;
   background:linear-gradient(180deg,#FF8467,#E24A2B);
   border-color:#B4321C;
   box-shadow:0 3px 0 0 #8E2614,0 7px 13px rgba(186,78,54,.35);
-  animation:rtShake .38s ease;
 }
 .rt-btn--del.armed svg{stroke:#fff}
-@keyframes rtShake{0%,100%{transform:translateX(0)}30%{transform:translateX(-4px)}65%{transform:translateX(3px)}}
+.rt-btn--del.armed .rt-del-word{max-width:160px;opacity:1;margin-left:8px}
+.rt-btn--del.armed .rt-del-bar{width:100%;animation:rtCountdown 3.2s linear forwards}
+@keyframes rtCountdown{from{width:100%}to{width:0}}
 @media (prefers-reduced-motion:reduce){
   body.uni-posted .drv-route-btn{animation:none}
-  .rt-btn--del.armed{animation:none}
+  .rt-btn--del.armed .rt-del-bar{animation:none;width:100%}
 }
 
 /* ═══════════ BOSH EKRANDA: FAOL E'LON BELGISI ═══════════
    Orqaga bosilib bosh ekranga qaytilganda, qaysi amalda faol e'lon borligi
    tugmaning burchagidagi yashil nuqtadan ko'rinadi. Xaritada esa e'lonning
    o'zi (aylanuvchi yoy bilan) markazda turadi. */
-/* Yalang'och nuqta "nima demoqchi?" degan savol tug'dirardi. Endi u
-   yozuvli belgi: yashil nuqta + "E'LONIM" — ma'nosi izohsiz tushunarli. */
-.uni-action-btn.has-listing{padding-right:106px}
-.listing-flag{
-  position:absolute;right:12px;top:50%;transform:translateY(-50%);z-index:4;
-  display:flex;align-items:center;gap:6px;
-  padding:5px 10px 5px 9px;border-radius:999px;
-  background:rgba(255,255,255,.95);
-  box-shadow:0 2px 6px rgba(0,0,0,.22),inset 0 0 0 1.5px rgba(34,197,94,.40);
-  font-family:'SF Pro Rounded','Segoe UI Rounded',-apple-system,system-ui,sans-serif;
-  font-size:11px;font-weight:900;color:#15803D;letter-spacing:.02em;white-space:nowrap;
-  text-shadow:none;
+/* Yorliq ham, nuqta ham qo'shilmaydi — tugmaning O'LCHAMI o'zgarmasligi
+   kerak. O'rniga tugmaning o'z metall halqasi YASHIL bo'ladi va atrofida
+   sekin yashil to'lqin tarqaladi. Bu A/B tugmalaridagi "online" tili bilan
+   AYNI XIL — ya'ni foydalanuvchi bu belgini allaqachon biladi. */
+.uni-action-btn.has-listing{
+  background:
+    linear-gradient(180deg,var(--btn-mid) 0%,var(--btn-base) 55%,var(--btn-dark) 100%) padding-box,
+    linear-gradient(180deg,#D8F7E4 0%,#5FE39A 32%,#16A34A 56%,#C9F5DC 100%) border-box;
 }
-.listing-flag i{
-  width:8px;height:8px;border-radius:50%;background:#22C55E;flex-shrink:0;
-  animation:listingDot 2s ease-out infinite;
+.uni-action-btn.has-listing::after{
+  content:"";position:absolute;inset:-3px;border-radius:37px;z-index:2;
+  pointer-events:none;
+  animation:listingHalo 2.4s ease-out infinite;
 }
-@keyframes listingDot{
-  0%  {box-shadow:0 0 0 0 rgba(34,197,94,.60)}
-  70% {box-shadow:0 0 0 8px rgba(34,197,94,0)}
+@keyframes listingHalo{
+  0%  {box-shadow:0 0 0 0 rgba(34,197,94,.45)}
+  70% {box-shadow:0 0 0 9px rgba(34,197,94,0)}
   100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
 }
-/* Xaritadagi belgining halqasi ham "online" — yashil va nafas oladi */
-.own-mark.is-live{--own-halo:#22C55E}
-.own-mark.is-live::before{
-  content:"";position:absolute;left:50%;top:50%;
-  width:58px;height:58px;margin:-29px 0 0 -29px;border-radius:50%;
-  animation:ownLive 2.2s ease-out infinite;pointer-events:none;
-}
-@keyframes ownLive{
-  0%  {box-shadow:0 0 0 0 rgba(34,197,94,.50)}
-  70% {box-shadow:0 0 0 14px rgba(34,197,94,0)}
-  100%{box-shadow:0 0 0 0 rgba(34,197,94,0)}
-}
-@media (prefers-reduced-motion:reduce){
-  .listing-flag i,.own-mark.is-live::before{animation:none}
-}
+@media (prefers-reduced-motion:reduce){ .uni-action-btn.has-listing::after{animation:none} }
+
 
 /* ═══ HAYDOVCHI E'LONLARI "POP" BO'LIB CHIQADI ═══
    Xarita uzoqlashayotgan paytda har bir haydovchi navbat bilan o'yindagidek
@@ -1199,24 +1196,32 @@ body.uni-posted .route-tools{display:flex}
   width:58px;height:58px;margin:-29px 0 0 -29px;
   object-fit:contain;display:block;z-index:1;
 }
-.own-mark-ring{
+/* MENING E'LONIM — bezaksiz yechim. Halqa ham, pulsatsiya ham yo'q.
+   Belgi shunchaki yerdan bir oz UZILIB, sekin suzib turadi; ostida esa
+   haqiqiy soya u bilan birga nafas oladi. Xaritada boshqa hech narsa
+   qimirlamaydi — shu sabab ko'z avtomatik shunga tushadi. Tabiiy,
+   kamtarona va izohsiz tushunarli: "bu meniki, bu tirik". */
+.own-mark-icon{
+  animation:ownFloat 2.8s ease-in-out infinite;
+  filter:drop-shadow(0 3px 5px rgba(0,0,0,.28));
+}
+.own-mark-shadow{
   position:absolute;left:50%;top:50%;
-  width:56px;height:56px;margin:-28px 0 0 -28px;
-  overflow:visible;will-change:transform;z-index:2;
-  animation:ownSpin 2.8s linear infinite;
+  width:30px;height:9px;margin:27px 0 0 -15px;
+  border-radius:50%;background:rgba(15,23,42,.30);
+  filter:blur(2.5px);z-index:0;
+  animation:ownFloatShadow 2.8s ease-in-out infinite;
 }
-.own-mark-ring circle{
-  fill:none;stroke:var(--own-halo,#2AABEE);
-  stroke-width:3.5;stroke-linecap:round;
-  stroke-dasharray:78 205;          /* to'liq aylana ~283 — ya'ni chorak yoy */
-  filter:drop-shadow(0 1px 2px rgba(0,0,0,.22));
+@keyframes ownFloat{
+  0%,100%{transform:translateY(0)}
+  50%    {transform:translateY(-6px)}
 }
-.own-mark[data-kind="driver"]{--own-halo:#22C55E}
-.own-mark[data-kind="cargo"] {--own-halo:#2AABEE}
-.own-mark[data-kind="travel"]{--own-halo:#E8820A}
-@keyframes ownSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+@keyframes ownFloatShadow{
+  0%,100%{transform:scaleX(1)   ;opacity:.34}
+  50%    {transform:scaleX(.74) ;opacity:.18}
+}
 @media (prefers-reduced-motion:reduce){
-  .own-mark-ring{animation:none!important}
+  .own-mark-icon,.own-mark-shadow{animation:none}
 }
 
 /* Xabar ochilganda yo'nalish paneli TEPAGA chiqadi */
@@ -3034,6 +3039,8 @@ html, body { font-size: var(--fs-base); }
           <div class="route-tools" id="routeTools" aria-hidden="true">
             <button type="button" class="rt-btn rt-btn--del" id="routeDelBtn" onclick="askDeleteListing()" aria-label="E'lonni o'chirish">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 4h4a1 1 0 0 1 1 1v2H9V5a1 1 0 0 1 1-1z"/><path d="M6 7l1 12.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5L18 7"/><path d="M10 11v6M14 11v6"/></svg>
+              <span class="rt-del-word">O'chirilsinmi?</span>
+              <span class="rt-del-bar"></span>
             </button>
             <button type="button" class="rt-btn rt-btn--edit" onclick="unlockRouteEditing()" aria-label="Yo'nalishni o'zgartirish">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z"/><path d="M13.5 6.5l4 4"/></svg>
@@ -5430,11 +5437,18 @@ function revealDriversAfterPost(attempt){
   // Endi butun voqea uchun ATIGI IKKI signal: birinchi ikonka chiqqanda
   // yengil "boshlandi", hammasi chiqib bo'lgach bitta yumshoq "tayyor".
   // Haydovchi soni 5 bo'lsa ham, 500 bo'lsa ham — o'zgarmaydi.
+  // VIBRATSIYA: har bir ikonka chiqqanda titrash — bu his zo'r, shu sabab
+  // SAQLANADI. Muammo faqat sonda edi: 50 ta bo'lsa uzluksiz titroqqa
+  // aylanadi. Yechim — titrash SONINI cheklaymiz: birinchi 5 tasi uchun
+  // alohida "chiq-chiq", qolganlari jim chiqadi, oxirida esa bitta
+  // yumshoq "tayyor". Ya'ni his ham qoladi, halaqit ham bermaydi.
   if (window.Telegram?.WebApp?.HapticFeedback) {
-    setTimeout(() => { try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(__) {} },
-               DRIVER_POP_START);
+    const HAPTIC_LIMIT = 5;
+    shown.slice(0, HAPTIC_LIMIT).forEach((_, i) => setTimeout(() => {
+      try { Telegram.WebApp.HapticFeedback.impactOccurred('light'); } catch(__) {}
+    }, DRIVER_POP_START + i * DRIVER_POP_STEP));
     setTimeout(() => { try { Telegram.WebApp.HapticFeedback.notificationOccurred('success'); } catch(__) {} },
-               DRIVER_POP_START + shown.length * DRIVER_POP_STEP + 260);
+               DRIVER_POP_START + shown.length * DRIVER_POP_STEP + 300);
   }
 
   logPermEvent('XARITA', `reveal: ${shown.length} ta haydovchi pop bo'lyapti (jami mos ${all.length})`);
@@ -5466,17 +5480,10 @@ function syncActiveListingBadges(){
   try { saved = getSavedActiveMode(); } catch(_) { saved = null; }
   const show = !activeUniMode && !!saved;
   document.querySelectorAll('.uni-action-btn').forEach(btn => {
-    const on = show && btn.dataset.uniKey === saved;
-    btn.classList.toggle('has-listing', on);
-    let flag = btn.querySelector('.listing-flag');
-    if (on && !flag) {
-      flag = document.createElement('span');
-      flag.className = 'listing-flag';
-      flag.innerHTML = '<i></i>E\'LONIM';
-      btn.appendChild(flag);
-    } else if (!on && flag) {
-      flag.remove();
-    }
+    // Faqat sinf qo'shiladi — hech qanday yangi element yo'q, shu sabab
+    // tugmaning o'lchami zarracha ham o'zgarmaydi.
+    btn.classList.toggle('has-listing', show && btn.dataset.uniKey === saved);
+    btn.querySelector('.listing-flag')?.remove();
   });
 }
 
@@ -5492,7 +5499,7 @@ function askDeleteListing(){
   if (btn.classList.contains('armed')) { disarmDeleteListing(); deleteMyListing(); return; }
   btn.classList.remove('armed'); void btn.offsetWidth;
   btn.classList.add('armed');
-  _delArmTimer = setTimeout(disarmDeleteListing, 3200);
+  _delArmTimer = setTimeout(disarmDeleteListing, 3200); // .rt-del-bar bilan bir xil
   if (window.Telegram?.WebApp?.HapticFeedback) {
     try { Telegram.WebApp.HapticFeedback.impactOccurred('medium'); } catch(_) {}
   }
@@ -8979,9 +8986,7 @@ function updateOwnIndicator(){
     const el = document.createElement('div');
     el.className = 'own-mark';
     el.innerHTML =
-      '<svg class="own-mark-ring" viewBox="0 0 100 100" aria-hidden="true">' +
-        '<circle cx="50" cy="50" r="45"></circle>' +
-      '</svg>' +
+      '<span class="own-mark-shadow" aria-hidden="true"></span>' +
       '<img class="own-mark-icon" alt="">';
     ownIndicatorMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
       .setLngLat([p.lng, p.lat]).addTo(map);
@@ -8990,10 +8995,6 @@ function updateOwnIndicator(){
   }
   const el = ownIndicatorMarker.getElement();
   el.dataset.kind = p.kind;
-  // E'lon TASDIQLANGAN bo'lsa halqa yashil bo'lib nafas oladi — "online".
-  let liveMode = null;
-  try { liveMode = getSavedActiveMode(); } catch(_) {}
-  el.classList.toggle('is-live', !!liveMode);
   const img = el.querySelector('.own-mark-icon');
   const src = UNI_PIN_ICONS[p.kind] || UNI_PIN_ICONS.travel;
   if (img && img.getAttribute('src') !== src) img.setAttribute('src', src);
